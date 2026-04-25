@@ -1,0 +1,51 @@
+%% 共享前导 —— 由 figures.tex（整本编译）与 build/<name>.tex（并行单图编译）共用
+%% 注意：本文件只放包/颜色/tikzset，不出现 \documentclass / \begin{document}
+
+\usepackage{fontspec}
+\setmainfont{TeX Gyre Termes}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{geometry}
+\geometry{a4paper, margin=1cm}
+\usepackage{amsmath,amssymb}
+
+% 无页码（整本/单图都无标题栏）
+\pagestyle{empty}
+
+% 定义颜色 - 统一配色方案
+\definecolor{deepblue}{RGB}{81, 132, 178}      % 深蓝 - 管理层/标题
+\definecolor{lightblue}{RGB}{170, 212, 248}    % 浅蓝 - 一般模块
+\definecolor{skyblue}{RGB}{154, 220, 255}      % 天蓝 - 流程块
+\definecolor{inputyellow}{RGB}{255, 248, 154}  % 浅黄 - 输入层
+\definecolor{outputpink}{RGB}{255, 178, 166}   % 浅橙粉 - 输出层
+\definecolor{improvedpink}{RGB}{255, 138, 174} % 粉红 - 改进模块
+\definecolor{lightpink}{RGB}{241, 167, 181}    % 淡粉 - 子模块
+\definecolor{deeppink}{RGB}{213, 82, 118}      % 深粉 - 强调标记
+\definecolor{bglight}{RGB}{242, 245, 250}      % 浅灰蓝 - 背景
+\definecolor{lightgreen}{RGB}{180, 230, 180}   % 浅绿 - 可行域/改进
+\definecolor{lightorange}{RGB}{255, 210, 140}  % 浅橙 - 动态障碍物
+\definecolor{dangerred}{RGB}{230, 100, 100}    % 危险红 - 障碍物/警告
+
+% 统一 tikz 样式
+\tikzset{
+  mod/.style            = {rectangle, rounded corners=2pt, draw=deepblue, fill=lightblue, minimum height=0.9cm, align=center, font=\small},
+  modimp/.style         = {rectangle, rounded corners=2pt, draw=deeppink, fill=improvedpink, minimum height=0.9cm, align=center, font=\small},
+  modin/.style          = {rectangle, draw=deepblue, fill=inputyellow, minimum height=0.9cm, align=center, font=\small},
+  modout/.style         = {rectangle, draw=deeppink, fill=outputpink, minimum height=0.9cm, align=center, font=\small},
+  axx/.style            = {->, thick, black!80},
+  flow/.style           = {-Stealth, thick, deepblue},
+  flowimp/.style        = {-Stealth, thick, deeppink},
+  obsstatic/.style      = {fill=dangerred!70, draw=dangerred, thick},
+  obsdyn/.style         = {fill=lightorange, draw=dangerred, thick},
+  obsbuf/.style         = {draw=dangerred!70, dashed, thick},
+  bandok/.style         = {fill=lightgreen, opacity=0.55},
+  bandbad/.style        = {fill=dangerred!30, opacity=0.55},
+  egopt/.style          = {fill=deepblue, draw=deepblue},
+  reflinestyle/.style   = {deepblue, very thick},
+}

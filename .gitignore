@@ -332,3 +332,5 @@ TSWLatexianTemp*
 
 *.pdf
 !定稿/*.pdf
+
+build/
