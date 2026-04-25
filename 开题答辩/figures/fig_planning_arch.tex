@@ -1,0 +1,83 @@
+% ============================================================
+% fig_planning_arch.tex  Planning 模块总体架构图（Beamer版）
+% 依赖：fig_colors.tex 中定义的颜色
+% 用法：\input{figures/fig_planning_arch.tex}
+% 设计尺寸：约 11cm × 6.2cm，适合单页 Beamer 帧
+% ============================================================
+\begin{tikzpicture}[
+  manager/.style={rectangle, draw=deepblue, fill=deepblue!65,
+                  minimum width=2.85cm, minimum height=0.72cm,
+                  font=\scriptsize\bfseries, text=white},
+  task/.style={rectangle, draw=deepblue, fill=lightblue,
+               minimum width=2.95cm, minimum height=0.68cm,
+               font=\scriptsize},
+  improved/.style={rectangle, draw=deeppink, fill=improvedpink,
+                   minimum width=2.95cm, minimum height=0.68cm,
+                   font=\scriptsize},
+  final/.style={rectangle, draw=deepblue, fill=outputpink,
+                minimum width=3.8cm, minimum height=0.72cm,
+                font=\scriptsize\bfseries},
+  arrow/.style={thick, -Stealth, deepblue}
+]
+
+%% ── 管理层 ──────────────────────────────────────────────────
+\node[manager] (scenario) at (-3.5, 0)
+  {\parbox{2.7cm}{\centering Scenario\\Manager}};
+\node[manager] (stage)    at ( 0.0, 0)
+  {\parbox{2.7cm}{\centering Stage\\Manager}};
+\node[manager] (taskrun)  at ( 3.5, 0)
+  {\parbox{2.7cm}{\centering Task\\Runner}};
+
+\node[font=\tiny, below=0.06cm of scenario] {场景识别切换};
+\node[font=\tiny, below=0.06cm of stage]    {阶段状态管理};
+\node[font=\tiny, below=0.06cm of taskrun]  {任务执行调度};
+
+\draw[arrow] (scenario) -- (stage);
+\draw[arrow] (stage) -- (taskrun);
+
+%% ── 分隔线 ──────────────────────────────────────────────────
+\draw[thick, dashed, deepblue] (-5.5, -1.05) -- (5.5, -1.05);
+\node[font=\scriptsize\bfseries, color=deepblue] at (0, -1.35)
+  {核心 Task 模块};
+
+%% ── 左列：路径相关 ───────────────────────────────────────────
+\node[font=\tiny\bfseries, color=deepblue!80] at (-3.3, -1.7)
+  {路径规划链路};
+\node[task]     (refprov)  at (-3.3, -2.2)
+  {\parbox{2.8cm}{\centering Reference Line Provider}};
+\node[task]     (pathdec)  at (-3.3, -3.1)
+  {\parbox{2.8cm}{\centering Path Decider}};
+\node[task]     (pathopt)  at (-3.3, -4.0)
+  {\parbox{2.8cm}{\centering Piecewise Jerk\\Path Optimizer}};
+
+%% ── 右列：速度相关 ───────────────────────────────────────────
+\node[font=\tiny\bfseries, color=deepblue!80] at ( 3.3, -1.7)
+  {速度规划链路};
+\node[task]     (pathbnd)  at ( 3.3, -2.2)
+  {\parbox{2.8cm}{\centering Path Bounds Decider}};
+\node[improved] (speedbnd) at ( 3.3, -3.1)
+  {\parbox{2.8cm}{\centering Speed Bounds Decider\\（改进）}};
+\node[task]     (speedopt) at ( 3.3, -4.0)
+  {\parbox{2.8cm}{\centering Piecewise Jerk\\Speed Optimizer}};
+
+%% 改进标注
+\node[font=\tiny\bfseries, color=deeppink] at (5.6, -3.1)
+  {$\leftarrow$\,改进重点};
+
+%% ── 汇聚：轨迹拼接 ──────────────────────────────────────────
+\node[final] (stitcher) at (0, -5.2)
+  {\parbox{3.6cm}{\centering Trajectory Stitcher}};
+
+%% 左列箭头
+\draw[arrow] (refprov) -- (pathdec);
+\draw[arrow] (pathdec) -- (pathopt);
+
+%% 右列箭头
+\draw[arrow] (pathbnd)  -- (speedbnd);
+\draw[arrow] (speedbnd) -- (speedopt);
+
+%% 汇聚箭头
+\draw[arrow] (pathopt.south)  -- ++(0,-0.35) -| (stitcher.north west);
+\draw[arrow] (speedopt.south) -- ++(0,-0.35) -| (stitcher.north east);
+
+\end{tikzpicture}

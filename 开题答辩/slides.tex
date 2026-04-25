@@ -1,0 +1,466 @@
+﻿% ============================================================
+%  开题报告答辩 Beamer PPT（修订版 v2）
+%  编译方式：xelatex slides.tex（运行两次）
+% ============================================================
+\documentclass{beamer}
+
+\usepackage{ctex}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{colortbl}          % 表格行着色
+\usepackage{tikz}
+\usepackage{pifont}            % \ding{} 圆圈数字
+\usepackage{url}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc}
+\input{figures/fig_colors.tex}  % 统一配色方案
+
+\usetheme{Madrid}
+\setbeamertemplate{navigation symbols}{}
+
+% 圆圈数字宏（\cn{1}=①  \cn{7}=⑦）
+\newcommand{\cn}[1]{\ding{\numexpr 191+#1\relax}}
+
+% ============================================================
+%  元信息
+% ============================================================
+\title[Apollo多障碍物场景路径规划]{基于Apollo的多障碍物场景下路径规划算法实现}
+\subtitle{毕业论文开题报告答辩}
+\author[廖嘉旺]{廖嘉旺}
+\institute[计算机工程学院]{计算机工程学院 \quad 计科2211\\[4pt]指导教师：孙成娇}
+\date{2026年3月12日}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+%% ---- 幻灯片 1：标题 ----
+\frame{\titlepage}
+
+%% ---- 幻灯片 2：目录 ----
+\begin{frame}{目录}
+  \tableofcontents
+\end{frame}
+
+% ==============================================================
+\section{研究背景与意义}
+% ==============================================================
+
+%% ---- 幻灯片 3：研究背景（一） ----
+\begin{frame}[shrink=3]{研究背景（一）：自动驾驶与Apollo平台}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{自动驾驶发展现状}
+      \begin{itemize}
+        \item 人工智能、传感器、计算机视觉技术快速发展
+        \item 自动驾驶从实验室走向商业化应用阶段
+        \item \alert{路径规划}是决定行驶轨迹的安全关键模块
+      \end{itemize}
+    \end{block}
+    \vspace{0.1em}
+    \begin{block}{百度Apollo平台}
+      \begin{itemize}
+        \item 全球领先的\textbf{开源}自动驾驶平台
+        \item 完整的感知--预测--规划--控制技术栈
+        \item \textbf{Planning模块}：基于凸优化的局部轨迹规划
+      \end{itemize}
+    \end{block}
+
+    \column{0.45\textwidth}
+    \begin{alertblock}{城市多障碍物场景的复杂性}
+      \begin{itemize}
+        \item \textbf{动态障碍物}：机动车、行人、非机动车，数量多、状态多变
+        \item \textbf{静态障碍物}：施工区域、临时路障、违停车辆
+        \item 传统规划算法：复杂度高、避障策略过于保守
+      \end{itemize}
+    \end{alertblock}
+    \begin{exampleblock}{研究聚焦}
+      Apollo Planning模块在\alert{多障碍物密集场景}下的性能优化
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+%% ---- 幻灯片 4：研究背景（二）+ ST图示意 ----
+\begin{frame}{研究背景（二）：多障碍物场景三大挑战}
+  \begin{columns}[T]
+    \column{0.56\textwidth}
+    \begin{columns}[c]
+      \column{0.3\textwidth}
+      \begin{alertblock}{\centering 挑战一\\可行域压缩}
+        \centering\small
+        ST边界独立\\扩展安全距离\\$\Rightarrow$边界叠加\\$\Rightarrow$可行域趋零
+      \end{alertblock}
+      \column{0.3\textwidth}
+      \begin{alertblock}{\centering 挑战二\\决策耦合}
+        \centering\small
+        PathDecider\\逐障碍物贪心\\$\Rightarrow$缺全局最优\\$\Rightarrow$STOP频发
+      \end{alertblock}
+      \column{0.3\textwidth}
+      \begin{alertblock}{\centering 挑战三\\实时约束}
+        \centering\small
+        计算量随障碍\\物数量增长\\$\Rightarrow$耗时上升\\$\Rightarrow$实时性差
+      \end{alertblock}
+    \end{columns}
+    \vspace{0.4em}
+    \begin{block}{研究动机}
+      \small Apollo在多障碍物密集场景下\alert{保守性过强、通行效率低}，规划频繁失败，亟需针对性改进
+    \end{block}
+
+    \column{0.42\textwidth}
+    \centering
+    {\small\textbf{ST边界叠加问题直观示意}}\\[3pt]
+    \input{figures/fig_st_problem.tex}\\[2pt]
+    \footnotesize{\textit{多障碍物安全缓冲叠加$\Rightarrow$可行域极度压缩}}
+  \end{columns}
+\end{frame}
+
+%% ---- 幻灯片 5：研究意义与目标 ----
+\begin{frame}{研究意义与研究目标}
+  \begin{columns}[T]
+    \column{0.46\textwidth}
+    \begin{block}{理论意义}
+      \begin{itemize}
+        \item 深入剖析Apollo Planning模块算法架构与实现机制
+        \item 识别凸优化$+$ST图方法的多障碍物性能瓶颈
+        \item 为路径规划改进研究提供分析方法参考
+      \end{itemize}
+    \end{block}
+    \vspace{0.3em}
+    \begin{block}{实践意义}
+      \begin{itemize}
+        \item 基于Apollo工程平台实现改进算法
+        \item 提升多障碍物密集场景通行效率
+        \item 减少不必要停车，改善乘坐舒适性
+      \end{itemize}
+    \end{block}
+
+    \column{0.52\textwidth}
+    \begin{exampleblock}{研究目标（四步递进）}
+      \begin{enumerate}
+        \item \textbf{深入分析} Apollo Planning模块架构\\
+              与核心算法实现机制
+        \item \textbf{识别问题}：ST边界重叠、\\
+              PathDecider决策保守、场景切换滞后
+        \item \textbf{设计改进算法}：基于动态权重\\
+              的多障碍物处理与时空走廊优化
+        \item \textbf{仿真验证}：多类型场景下与\\
+              Apollo原算法的定量对比分析
+      \end{enumerate}
+    \end{exampleblock}
+  \end{columns}
+\end{frame}
+
+% ==============================================================
+\section{国内外研究现状}
+% ==============================================================
+
+%% ---- 幻灯片 6：国外研究现状 ----
+\begin{frame}{国外研究现状：四类主流路径规划方法}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{\cn{1} 图搜索方法}
+      \begin{itemize}
+        \item \textbf{Hybrid A*} [Dolgov, 2010]：连续空间$+$离散搜索，满足运动学约束
+        \item Apollo应用：Open Space Planner（泊车/掉头）
+      \end{itemize}
+    \end{block}
+    \vspace{0.1em}
+    \begin{block}{\cn{2} 采样规划方法}
+      \begin{itemize}
+        \item \textbf{Frenet轨迹规划} [Werling, 2010]：横纵向独立采样，评估筛选
+        \item Apollo应用：Lattice Planner（城市道路）
+      \end{itemize}
+    \end{block}
+
+    \column{0.45\textwidth}
+    \begin{block}{\cn{3} 凸优化方法}
+      \begin{itemize}
+        \item \textbf{QP二次规划} [Chen, 2019]：OSQP求解器高效求解
+        \item Apollo应用：PublicRoadPlanner路径-速度解耦优化\\
+              （\alert{本文改进核心对象}）
+      \end{itemize}
+    \end{block}
+    \vspace{0.1em}
+    \begin{block}{\cn{4} 学习型方法}
+      \begin{itemize}
+        \item 深度/强化学习端到端规划
+        \item 可解释性差，安全验证困难，工业部署受限
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+%% ---- 幻灯片 7：国内研究现状与切入点 ----
+\begin{frame}{国内研究现状与研究切入点}
+  \begin{columns}[T]
+    \column{0.48\textwidth}
+    \textbf{国内研究进展}
+    \begin{itemize}
+      \item Apollo源码分析与特定场景（泊车/高速）优化
+      \item \textbf{时空走廊轨迹规划} [王鹏, 2023]\\
+            构建安全通道简化多障碍物约束处理
+      \item \textbf{Transformer预测性运动规划} [张华, 2024]\\
+            提升动态场景下预测与规划适应性
+      \item \textbf{横纵向协同避障研究} [陈志远, 2024]\\
+            复杂道路环境下横纵向联合优化
+    \end{itemize}
+
+    \column{0.49\textwidth}
+    \begin{alertblock}{现有研究不足（本文切入点）}
+      \begin{enumerate}
+        \item \textbf{ST边界优化不足}\\
+              多障碍物独立边界叠加\\
+              $\rightarrow$ 速度规划可行域过度压缩
+        \item \textbf{障碍物交互建模有限}\\
+              独立处理各障碍物，\\
+              缺乏有效的交互关系量化与分级
+        \item \textbf{场景切换机制不灵活}\\
+              Scenario-based架构切换滞后，\\
+              密集交通场景响应速度受限
+      \end{enumerate}
+    \end{alertblock}
+  \end{columns}
+\end{frame}
+
+% ==============================================================
+\section{主要研究内容}
+% ==============================================================
+
+%% ---- 幻灯片 8：主要研究内容 ----
+\begin{frame}{主要研究内容（四个方面）}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{（1）Apollo Planning模块深入分析}
+      \begin{itemize}
+        \item Routing与Planning数据交互机制
+        \item Scenario-Stage-Task三级管理架构
+        \item 路径-速度解耦两阶段优化（路径QP$+$速度QP）
+        \item PathDecider / SpeedBoundsDecider实现细节
+      \end{itemize}
+    \end{block}
+    \vspace{0.1em}
+    \begin{block}{（2）多障碍物场景问题识别}
+      \begin{itemize}
+        \item ST边界重叠机制的定量分析
+        \item PathDecider保守决策根本原因溯源
+        \item 场景切换滞后问题定位
+      \end{itemize}
+    \end{block}
+
+    \column{0.45\textwidth}
+    \begin{block}{（3）\alert{改进算法设计与实现（核心）}}
+      \begin{itemize}
+        \item 多因素威胁评估模型（5维量化）
+        \item 分级障碍物决策框架（3级差异处理）
+        \item 时空可通行走廊算法（扫描线$+$回溯）
+      \end{itemize}
+    \end{block}
+    \vspace{0.05em}
+    \begin{block}{（4）算法验证与对比分析}
+      \begin{itemize}
+        \item 四类仿真场景：纵向/横向/动静混合/路口
+        \item 与Apollo原算法对比：成功率/速度/停车次数
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ==============================================================
+\section{技术路线与系统架构}
+% ==============================================================
+
+%% ---- 幻灯片 9：系统架构 ----
+\begin{frame}{改进后系统架构（三层设计）}
+  \centering
+  \vspace{-0.2em}
+  \input{figures/fig_sys_arch.tex}
+\end{frame}
+
+%% ---- 幻灯片 10：改进算法概览 ----
+\begin{frame}{改进算法概览}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{多因素威胁评估模型}
+      五维加权评分：
+      \[
+        T_{\mathrm{score}} = \sum_{i=1}^{5} w_i \cdot f_i
+      \]
+      \begin{itemize}
+        \item $f_1$：TTC（碰撞时间）
+        \item $f_2$：横向重叠率
+        \item $f_3$：相对速度分量
+        \item $f_4$：障碍物类型权重
+        \item $f_5$：交互密度因子
+      \end{itemize}
+    \end{block}
+
+    \column{0.45\textwidth}
+    \begin{block}{分级决策框架}
+      \small
+      \begin{tabular}{@{}lll@{}}
+        \toprule
+        级别 & 威胁程度 & 处理策略 \\
+        \midrule
+        \alert{CRITICAL} & 高 & 优先，严格约束 \\
+        IMPORTANT        & 中 & 标准处理 \\
+        MINOR            & 低 & 简化/忽略 \\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \vspace{0.4em}
+    \begin{block}{时空可通行走廊（核心创新）}
+      \begin{itemize}
+        \item 扫描线法构造连通时空走廊
+        \item 回溯机制确保走廊端到端连通性
+        \item 以\alert{单一线性约束替代}多个\\
+              独立ST边界叠加约束
+        \item 从根本上解决可行域压缩问题
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+%% ---- 幻灯片 11：时空可通行走廊（核心创新）----
+\begin{frame}{时空可通行走廊：核心创新原理}
+  \centering
+  \vspace{-0.5em}
+  \input{figures/fig_corridor.tex}
+  \vspace{0.1em}
+  {\footnotesize
+   \textcolor{deeppink}{\textbf{关键}}：障碍 A 早到早走、障碍 B 晚到
+   $\Rightarrow$ 走廊算法找到时序间隙
+   $\Rightarrow$ 引导车辆加速穿越夹缝，以单一走廊约束替代多个独立边界}
+\end{frame}
+
+%% ---- 幻灯片 12：Planning模块总体架构 ----
+\begin{frame}{Planning 模块总体架构}
+  \centering
+  \vspace{-0.3em}
+  \input{figures/fig_planning_arch.tex}
+\end{frame}
+
+%% ---- 幻灯片 13：技术路线 ----
+\begin{frame}{技术路线（七个阶段）}
+  \centering
+  \vspace{-0.4em}
+  \input{figures/fig_tech_route.tex}
+\end{frame}
+
+% ==============================================================
+\section{进度安排}
+% ==============================================================
+
+%% ---- 幻灯片 14：开发环境 ----
+\begin{frame}{开发环境}
+  \begin{columns}[T]
+    \column{0.45\textwidth}
+    \begin{block}{软件环境}
+      \begin{itemize}
+        \item 操作系统：Ubuntu 18.04/20.04 LTS
+        \item 核心语言：C++14/17（Apollo核心代码）
+        \item 脚本语言：Python 3.6+（数据分析）
+        \item 构建系统：Bazel 3.7+（Apollo统一构建）
+        \item 版本控制：Git
+      \end{itemize}
+    \end{block}
+    \vspace{0.3em}
+    \begin{block}{IDE与调试工具}
+      VS Code（C++插件）/ CLion；GDB、Valgrind
+    \end{block}
+
+    \column{0.45\textwidth}
+    \begin{block}{仿真测试工具}
+      \begin{itemize}
+        \item \textbf{Dreamview}\\
+              Apollo可视化工具；\\
+              场景构建、轨迹可视化、参数调整
+        \item \textbf{PNC Simulation}\\
+              规划与控制仿真模块；\\
+              支持离线仿真和场景回放
+        \item \textbf{Apollo日志系统}\\
+              数据提取与对比分析脚本
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ==============================================================
+\section{主要参考文献}
+% ==============================================================
+
+%% ---- 幻灯片 15：参考文献（合并为一页） ----
+\begin{frame}{主要参考文献}
+  \begin{thebibliography}{10}
+    \scriptsize
+    \setlength{\itemsep}{0pt}
+    \setlength{\parskip}{1pt}
+
+    \bibitem{apollo2024}
+    百度Apollo团队.
+    Apollo Planning模块技术文档[EB/OL].
+    GitHub: ApolloAuto/apollo, 2024.
+
+    \bibitem{werling2010}
+    Werling M, Ziegler J, Kammel S, et al.
+    Optimal trajectory generation for dynamic street scenarios in a Frenet frame[C].
+    \textit{IEEE ICRA}, 2010: 987--993.
+
+    \bibitem{dolgov2010}
+    Dolgov D, Thrun S, Montemerlo M, et al.
+    Path planning for autonomous vehicles in unknown semi-structured environments[J].
+    \textit{Int. J. Robot. Res.}, 2010, 29(5): 485--501.
+
+    \bibitem{kessler2023}
+    Kessler T, Esterle K, Knoll A.
+    Mixed-integer motion planning on German roads within the Apollo driving stack[J].
+    \textit{IEEE Trans. Intell. Veh.}, 2023, 8(2): 1527--1539.
+
+    \bibitem{li2023}
+    Li H, De Cristofaro F, et al.
+    Quantitative analysis of Baidu Apollo parameterization on trajectory planning[J].
+    \textit{Transp. Res. Procedia}, 2023, 72: 2974--2981.
+
+    \bibitem{chen2019}
+    Chen J, Zhan W, Tomizuka M.
+    Iterative EM planning: A flexible motion planning platform for autonomous driving[J].
+    \textit{IEEE Trans. Intell. Veh.}, 2019, 4(3): 405--417.
+
+    \bibitem{wang2023}
+    王鹏, 张涛, 李飞.
+    基于时空走廊的非结构化环境智能车辆轨迹规划[J].
+    \textit{机械工程学报}, 2023, 59(12): 89--98.
+
+    \bibitem{zhang2024}
+    张华, 李明, 王强.
+    基于Transformer的智能网联车辆预测性运动规划[J].
+    \textit{汽车工程}, 2024, 46(3): 456--465.
+
+    \bibitem{chen2024}
+    陈志远, 黄海波.
+    复杂道路环境下智能车辆横纵向避障问题研究[J].
+    \textit{交通运输工程学报}, 2024, 24(1): 178--190.
+
+  \end{thebibliography}
+\end{frame}
+
+%% ---- 幻灯片 16：致谢 ----
+\begin{frame}{}
+  \centering
+  \vspace{0.4em}
+  {\huge\bfseries 汇报完毕}
+
+  \vspace{0.6em}
+  {\large 敬请各位评委老师批评指正！}
+
+  \vspace{0.8em}
+  \begin{block}{汇报内容回顾}
+    \begin{enumerate}
+      \item \textbf{研究背景与意义}：多障碍物场景下Apollo规划三大核心挑战
+      \item \textbf{国内外研究现状}：四类方法综述与现有研究三个不足
+      \item \textbf{主要研究内容}：威胁评估$+$分级决策$+$时空走廊$+$速度优化
+      \item \textbf{系统架构与算法}：三层架构与走廊创新原理
+      \item \textbf{技术路线}：七阶段递进式研究路线（核心为阶段四、五）
+    \end{enumerate}
+  \end{block}
+\end{frame}
+
+\end{document}

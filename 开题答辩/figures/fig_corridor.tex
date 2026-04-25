@@ -1,0 +1,146 @@
+% ============================================================
+% fig_corridor.tex  时空可通行走廊：改进前后对比（Beamer版，修订版）
+%
+% 场景说明：
+%   障碍A（慢速前车）：高位置 s，持续时间早  → s=2.7~3.6, t=0~2.5
+%   障碍B（侧方并入）：低位置 s，持续时间晚  → s=0.8~1.8, t=2.0~5.0
+%   两者缓冲区在 t=2.0~2.8 之间形成"夹缝"（宽约0.4个单位）
+%
+% 改进前：直线等速路径被缓冲区夹住，规划失败
+% 改进后：走廊引导车辆"先加速越过A，再穿越夹缝"，成功通过
+% ============================================================
+\begin{tikzpicture}[
+  obs/.style={rectangle, draw=none},
+  arr/.style={-Stealth, thick}
+]
+
+%% ===== 共用尺寸常量（避免魔法数字）=========================
+%% 左面板 x 范围 0~5.2，y 范围 0~4.4
+%% 右面板 xshift=7.4，相同尺寸
+%% 轴标签偏移
+
+%% ===== 左侧面板：改进前（独立 ST 边界叠加）=================
+\begin{scope}
+
+  %% 面板标题
+  \node[font=\footnotesize\bfseries, align=center] at (2.6, 4.75)
+    {改进前\\[-2pt]{\scriptsize（独立 ST 缓冲各自叠加）}};
+
+  %% 坐标轴
+  \draw[arr, thick] (0,0) -- (5.4, 0)
+    node[right, font=\tiny, align=left] {时间\\[-1pt]$t$};
+  \draw[arr, thick] (0,0) -- (0, 4.3)
+    node[above, font=\tiny, align=center] {纵向\\[-1pt]位置 $s$};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  %% —— 障碍 A：慢速前车（高位置 s，早时段）——
+  \fill[red!55, opacity=0.9]
+    (0.5, 2.7) rectangle (2.6, 3.6);
+  \node[font=\tiny\bfseries, white] at (1.55, 3.15) {障碍 A};
+  %% A 的安全缓冲（虚线）
+  \fill[red!20, opacity=0.6]
+    (0, 2.3) rectangle (3.0, 4.0);
+  \draw[red!60, dashed, thick]
+    (0, 2.3) rectangle (3.0, 4.0);
+  \node[font=\tiny, red!70!black] at (1.5, 4.12) {缓冲 A};
+
+  %% —— 障碍 B：侧方并入（低位置 s，晚时段）——
+  \fill[blue!55, opacity=0.9]
+    (2.1, 0.8) rectangle (5.0, 1.8);
+  \node[font=\tiny\bfseries, white] at (3.55, 1.3) {障碍 B};
+  %% B 的安全缓冲（虚线）
+  \fill[blue!20, opacity=0.6]
+    (1.7, 0.4) rectangle (5.3, 2.2);
+  \draw[blue!60, dashed, thick]
+    (1.7, 0.4) rectangle (5.3, 2.2);
+  \node[font=\tiny, blue!70!black] at (4.5, 0.18) {缓冲 B};
+
+  %% —— 缓冲叠加区（紫色高亮）——
+  %% 叠加区：x=1.7~3.0, y=2.2~2.3 → 极窄带，再加上 y=2.3~2.2 gap
+  %% 实际上这里的夹缝是 s=2.2~2.3，宽度 0.1——几乎不可用
+  \fill[purple!50, opacity=0.75]
+    (1.7, 2.2) rectangle (3.0, 2.3);
+  \node[font=\tiny\bfseries, purple!80!black] at (2.35, 2.08)
+    {缓冲叠加：可行域趋零};
+
+  %% —— 被阻断的等速路径（直线，从左下到右上）——
+  \draw[gray!60, thick, dashed]
+    (0.1, 0.1) -- (5.1, 4.1);
+  %% 被阻处画红 X
+  \fill[red!70!black] (2.4, 1.9) circle (0.12);
+  \draw[red!70!black, very thick]
+    (2.22, 1.72) -- (2.58, 2.08)
+    (2.22, 2.08) -- (2.58, 1.72);
+  \node[font=\tiny\bfseries, red!70!black, right] at (2.65, 1.9)
+    {路径受阻};
+
+\end{scope}
+
+
+%% ===== 中间箭头（改进算法介入）============================
+\draw[-Stealth, line width=2.2pt, deepblue] (5.6, 2.1) -- (7.1, 2.1);
+\node[font=\scriptsize\bfseries, deepblue, align=center] at (6.35, 2.55)
+  {走廊\\[-1pt]算法};
+
+
+%% ===== 右侧面板：改进后（时空可通行走廊）==================
+\begin{scope}[xshift=7.5cm]
+
+  %% 面板标题
+  \node[font=\footnotesize\bfseries, align=center] at (2.6, 4.75)
+    {改进后\\[-2pt]{\scriptsize（统一时空可通行走廊）}};
+
+  %% 坐标轴
+  \draw[arr, thick] (0,0) -- (5.4, 0)
+    node[right, font=\tiny, align=left] {时间\\[-1pt]$t$};
+  \draw[arr, thick] (0,0) -- (0, 4.3)
+    node[above, font=\tiny, align=center] {纵向\\[-1pt]位置 $s$};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  %% —— 同样的障碍（颜色更淡，无缓冲框）——
+  \fill[red!25,  opacity=0.7] (0.5, 2.7) rectangle (2.6, 3.6);
+  \fill[blue!25, opacity=0.7] (2.1, 0.8) rectangle (5.0, 1.8);
+  \node[font=\tiny, red!60!black]  at (1.55, 3.15) {障碍 A};
+  \node[font=\tiny, blue!60!black] at (3.55, 1.3)  {障碍 B};
+
+  %% —— 时空可通行走廊（绿色带）——
+  %% 走廊路径：从 (0,0.1) 出发，先上坡穿越 A 上方，再穿越 A/B 夹缝，最终到达终点
+  %% 走廊上沿
+  \fill[green!35, opacity=0.72]
+    (0.0, 0.3)    % 起点下沿
+    -- (1.5, 2.05) % 快速爬升
+    -- (3.0, 2.45) % 穿越夹缝
+    -- (5.2, 2.8)  % 上坡至终点
+    -- (5.2, 3.3)  % 终点上沿
+    -- (3.0, 2.95) % 回到夹缝上
+    -- (1.5, 2.55) % 夹缝上沿
+    -- (0.0, 0.75) % 起点上沿
+    -- cycle;
+  \draw[green!55!black, thick]
+    (0.0, 0.3) -- (1.5, 2.05) -- (3.0, 2.45) -- (5.2, 2.8);
+  \draw[green!55!black, thick]
+    (0.0, 0.75) -- (1.5, 2.55) -- (3.0, 2.95) -- (5.2, 3.3);
+  \node[font=\tiny\bfseries, green!50!black, align=center] at (2.6, 3.5)
+    {时空可通行走廊};
+
+  %% —— 走廊宽度双箭头标注（在夹缝处）——
+  \draw[<->, green!60!black, thick] (5.35, 2.8) -- (5.35, 3.3);
+  \node[font=\tiny, green!60!black, rotate=90] at (5.62, 3.05) {走廊};
+
+  %% —— 速度 QP 最优轨迹（穿越走廊的曲线）——
+  \draw[deeppink, very thick, -Stealth]
+    (0.1, 0.52)
+    .. controls (0.8, 1.5) and (1.2, 2.15) ..
+    (2.0, 2.45)
+    .. controls (3.0, 2.7) and (4.0, 2.85) ..
+    (5.1, 3.05);
+  \node[font=\tiny\bfseries, deeppink] at (3.3, 2.42)
+    {速度 QP 最优轨迹};
+
+  %% —— 成功标记 ——
+  \node[font=\scriptsize\bfseries, green!50!black] at (4.5, 0.4)
+    {\checkmark\, 规划成功};
+
+\end{scope}
+
+\end{tikzpicture}

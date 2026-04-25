@@ -1,0 +1,58 @@
+% ============================================================
+% fig_tech_route.tex  七阶段技术路线流程图（Beamer版）
+% 依赖：fig_colors.tex 中定义的颜色
+% 用法：\input{figures/fig_tech_route.tex}
+% 设计尺寸：约 9.5cm × 5.6cm，适合单页 Beamer 帧（居中使用）
+% ============================================================
+\begin{tikzpicture}[
+  node distance=0.15cm,
+  block/.style={rectangle, draw=deepblue, fill=skyblue,
+                text width=9.5cm, align=center,
+                rounded corners=3pt, minimum height=0.55cm,
+                font=\footnotesize},
+  coreblock/.style={rectangle, draw=deeppink, fill=improvedpink,
+                    text width=9.5cm, align=center,
+                    rounded corners=3pt, minimum height=0.55cm,
+                    font=\footnotesize\bfseries},
+  endblock/.style={rectangle, draw=deepblue, fill=outputpink,
+                   text width=9.5cm, align=center,
+                   rounded corners=3pt, minimum height=0.55cm,
+                   font=\footnotesize},
+  arrow/.style={thick, -Stealth, deepblue}
+]
+
+\node (s1) [block]
+  {\textbf{阶段一：文献调研与资料收集}\enspace
+   阅读 Apollo 官方文档与源码；收集路径规划相关学术论文};
+
+\node (s2) [block, below=of s1]
+  {\textbf{阶段二：Apollo 源码分析与理解}\enspace
+   Planning 模块解析；核心数据结构与算法流程梳理};
+
+\node (s3) [block, below=of s2]
+  {\textbf{阶段三：问题识别与定量分析}\enspace
+   多障碍物场景性能瓶颈定位；ST 边界与 PathDecider 问题分析};
+
+\node (s4) [coreblock, below=of s3]
+  {\textbf{阶段四：改进算法设计（核心）}\enspace
+   威胁评估模型；时空可通行走廊算法；Apollo 集成方案};
+
+\node (s5) [coreblock, below=of s4]
+  {\textbf{阶段五：算法实现与调试（核心）}\enspace
+   代码开发与模块集成；参数调优；单元与功能测试};
+
+\node (s6) [block, below=of s5]
+  {\textbf{阶段六：实验验证与分析}\enspace
+   仿真场景设计与数据采集；性能指标对比与结果分析};
+
+\node (s7) [endblock, below=of s6]
+  {\textbf{阶段七：论文撰写与答辩}};
+
+\draw[arrow] (s1) -- (s2);
+\draw[arrow] (s2) -- (s3);
+\draw[arrow] (s3) -- (s4);
+\draw[arrow] (s4) -- (s5);
+\draw[arrow] (s5) -- (s6);
+\draw[arrow] (s6) -- (s7);
+
+\end{tikzpicture}
