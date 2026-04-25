@@ -1,0 +1,765 @@
+
+╭─── Claude Code v2.1.42 ──────────────────────────────────────────────────────╮
+│                                                    │ Tips for getting        │
+│               Welcome back Redstone!               │ started                 │
+│                                                    │ Run /init to create a … │
+│                      ▗ ▗   ▖ ▖                     │ ─────────────────────── │
+│                                                    │ Recent activity         │
+│                        ▘▘ ▝▝                       │ No recent activity      │
+│                                                    │                         │
+│               Opus 4.6 · Claude Max                │                         │
+│   ~/…/基于Apollo的多障碍物场景下路径规划算法实现   │                         │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+❯ 我现在想写一篇 以这个名字为标题的毕业论文                                 
+  当前文件夹有我现在为止收集到的资料 请看看我该怎么写论文                   
+
+⏺ Read 1 file (ctrl+o to expand)
+
+⏺ Explore(Explore all thesis materials)
+  ⎿  Done (20 tool uses · 87.2k tokens · 51s)
+  (ctrl+o to expand)
+
+⏺ 我已经仔细阅读了你所有的资料。你的准备工作相当充分，包括开题报告、大纲、文献搜
+  索、技术路线图、与AI的讨论记录等。下面是我对论文撰写的建议：
+
+  ---
+  论文标题：基于Apollo的多障碍物场景下路径规划算法实现
+
+  建议的论文结构与写作重点
+
+  第1章 绪论（约3000-4000字）
+
+  - 研究背景：自动驾驶发展现状，多障碍物场景的挑战
+  - 研究意义：Apollo Planning模块在复杂场景下的不足（ST边界重叠、PathDecider保守
+  决策、场景切换延迟）
+  - 国内外研究现状：你的开题报告第二部分已有很好的基础，按图搜索法、采样法、凸优
+  化法、学习法分类展开
+  - 研究内容与章节安排
+
+  第2章 相关技术与理论基础（约5000-6000字）
+
+  - Frenet坐标系
+  - 凸优化与QP问题
+  - ST图（Speed-Time Graph）原理
+  - Apollo平台架构概述（Cyber RT框架、Routing与Planning的关系）
+
+  第3章 Apollo Planning模块深度分析（约6000-8000字）⭐ 核心章节
+
+  - Planning模块总体架构（你已有架构图 3_Planning模块总体架构图.svg）
+  - Reference Line Smoother（QP样条平滑）
+  - EM Planner 两阶段优化：路径QP + 速度QP
+  - Lattice Planner 采样评估机制
+  - PathDecider（STOP/Nudge/Ignore）逻辑
+  - Speed Bounds Decider（ST图构建）
+  - 关键：结合Apollo源码分析，引用具体的类和函数（如 lattice_planner.cc、qp_spli
+  ne_path_optimizer、path_decider、speed_bounds_decider）
+
+  第4章 多障碍物场景下的问题分析（约4000-5000字）
+
+  - 多障碍物ST边界重叠导致可行域压缩
+  - PathDecider在密集障碍物下的保守判断
+  - Scenario Manager切换延迟
+  - 用具体场景举例说明（如路口多车交汇、高速多车道变道）
+
+  第5章 改进算法设计与实现（约6000-8000字）⭐ 核心章节
+
+  - 改进方案：动态权重ST边界优化机制（你开题报告中提到的核心创新点）
+  - 算法流程设计（配合技术路线图 1_技术路线图.svg）
+  - 改进后的系统架构（2_改进后的系统架构图.svg）
+  - 关键代码实现说明
+  - 算法复杂度分析
+
+  第6章 实验与结果分析（约4000-5000字）
+
+  - 实验环境（Ubuntu + Apollo + DreamView）
+  - 实验场景设计（多障碍物静态/动态场景）
+  - 评价指标：路径平滑度、避障安全距离、计算耗时、速度连续性
+  - 与原始Apollo算法的对比实验
+  - 结果分析与讨论
+
+  第7章 总结与展望（约1500-2000字）
+
+  ---
+  写作优先级建议
+
+  1. 先写第3章（Apollo源码分析）——这是你最需要投入时间的部分，需要深入阅读Apollo
+  源码
+  2. 再写第4章（问题分析）——从源码分析中自然引出问题
+  3. 然后写第5章（改进算法）——这是论文的核心贡献
+  4. 第6章实验——需要实际跑通Apollo仿真
+  5. 第2章理论基础和第1章绪论可以后写
+
+  当前需要补充的工作
+
+  缺口: Apollo源码实操
+  说明: 你的资料中讨论了源码结构，但还需要实际编译运行Apollo并跑通Planning模块
+  ────────────────────────────────────────
+  缺口: 具体改进算法的数学表述
+  说明: 动态权重ST边界优化的具体公式还需要明确定义
+  ────────────────────────────────────────
+  缺口: 实验数据
+  说明: 需要在DreamView/PNC Simulation中构造多障碍物场景并收集数据
+  ────────────────────────────────────────
+  缺口: 英文文献补充
+  说明: Google Scholar已有25+篇，但直接与Apollo Planning相关的核心论文（如"Baidu
+
+    Apollo EM motion planner"）需要精读
+
+  字数预估
+
+  按上述结构，正文约 30000-35000 字，符合本科毕业论文的一般要求。
+
+  要我帮你具体展开某一章的详细写作框架，或者帮你分析Apollo的某个具体源码模块吗？
+
+✻ Brewed for 1m 27s
+
+❯ 假设你来阅读代码 请帮我生成几个prompt 我来把这些prompt的结果再喂给你 这样 
+
+⏺ 好的，根据你的论文结构和开题报告中提到的关键模块，我给你生成以下几组
+  prompt。你拿去让 AI 阅读 Apollo 源码后把结果贴回来即可。
+
+  ---
+  Prompt 1：Planning 模块总体架构
+
+  请阅读 Apollo Planning 模块的入口和架构代码，重点关注以下文件：
+
+  - modules/planning/planning_component.cc
+  - modules/planning/planning_component.h
+  - modules/planning/on_lane_planning.cc
+  - modules/planning/common/dependency_injector.h
+  - modules/planning/scenarios/ 目录结构
+
+  请回答：
+  1. Planning 模块的主入口函数是什么？数据流从输入到输出经过了哪些关键步骤？
+  2. Scenario / Stage / Task 三层架构是怎么组织的？请画出调用关系。
+  3. DependencyInjector 注入了哪些依赖？
+  4. Planning 模块接收了哪些输入数据（定位、感知、路由等）？输出的 ADCTrajectory
+   包含什么？
+  5. 请列出所有可用的 Scenario 类型及其触发条件。
+
+  Prompt 2：Reference Line 处理与平滑
+
+  请阅读 Apollo 中 Reference Line 相关代码，重点关注：
+
+  - modules/planning/reference_line/reference_line_provider.cc
+  - modules/planning/reference_line/reference_line_smoother.h
+  - modules/planning/math/smoothing_spline/spline_2d_solver.cc
+  - modules/planning/reference_line/qp_spline_reference_line_smoother.cc
+
+  请回答：
+  1. Reference Line 是怎么从 Routing 结果生成的？经过了哪些处理步骤？
+  2. QP 样条平滑的目标函数和约束条件是什么？请写出数学公式。
+  3. 平滑过程中的 knot（节点）是怎么划分的？
+  4. Reference Line 的数据结构包含哪些字段（s, x, y, heading, kappa 等）？
+  5. 有哪些可配置参数影响平滑效果？默认值是什么？
+
+  Prompt 3：EM Planner 路径与速度规划
+
+  请阅读 Apollo EM Planner 的核心实现，重点关注：
+
+  - modules/planning/tasks/optimizers/path_time_heuristic/
+  - modules/planning/tasks/optimizers/qp_spline_path/
+  - modules/planning/tasks/optimizers/qp_spline_st_speed/
+  - modules/planning/math/smoothing_spline/
+
+  请回答：
+  1. EM Planner 的"两阶段"优化具体是怎么工作的？Path 阶段和 Speed
+  阶段分别做什么？
+  2. 路径 QP 优化的目标函数是什么？包含哪些代价项（平滑度、偏离参考线、避障等）
+  ？请写出数学公式。
+  3. 速度 QP 优化的目标函数和约束是什么？ST 图在其中扮演什么角色？
+  4. DP（动态规划）是怎么为 QP 提供初始解的？
+  5. 这两个阶段之间是怎么传递信息的？迭代几次？
+
+  Prompt 4：PathDecider 障碍物决策
+
+  请阅读 Apollo PathDecider 相关代码，重点关注：
+
+  - modules/planning/tasks/deciders/path_decider/path_decider.cc
+  - modules/planning/tasks/deciders/path_bounds_decider/path_bounds_decider.cc
+  - modules/planning/common/obstacle.h
+  - modules/planning/common/path_decision.h
+
+  请回答：
+  1. PathDecider 对障碍物的决策类型有哪些（STOP / NUDGE / IGNORE
+  等）？每种的触发条件是什么？
+  2. 障碍物是怎么从感知数据映射到 Frenet 坐标系（SL 坐标）的？
+  3. PathBoundsDecider
+  是怎么构建路径边界的？当多个障碍物存在时，边界是怎么合并的？
+  4. 对于横向距离不足的情况，决策逻辑是怎样的？阈值是多少？
+  5. 静态障碍物和动态障碍物的处理有什么区别？
+
+  Prompt 5：Speed Bounds Decider 与 ST 图
+
+  请阅读 Apollo Speed Bounds Decider 和 ST 图相关代码，重点关注：
+
+  - modules/planning/tasks/deciders/speed_bounds_decider/speed_bounds_decider.cc
+  - modules/planning/tasks/deciders/speed_bounds_decider/st_boundary_mapper.cc
+  - modules/planning/common/speed/st_boundary.h
+  - modules/planning/common/st_graph_data.h
+
+  请回答：
+  1. ST 图的横轴和纵轴分别代表什么？ST boundary 是怎么构建的？
+  2. 每个障碍物的 ST boundary 是怎么计算的？动态障碍物和静态障碍物分别怎么映射？
+  3. 当多个障碍物的 ST boundary 发生重叠时，当前代码是怎么处理的？
+  4. speed_bounds_decider 输出了什么？这些边界怎么传递给后续的速度优化器？
+  5. 有哪些参数控制 ST boundary 的生成（安全距离、时间范围等）？
+  6. 请指出当前实现中在多障碍物密集场景下可能导致可行域过度压缩的具体代码位置。
+
+  Prompt 6：Lattice Planner（补充对比用）
+
+  请阅读 Apollo Lattice Planner 的实现，重点关注：
+
+  - modules/planning/planner/lattice/lattice_planner.cc
+  - modules/planning/lattice/trajectory_generation/
+  - modules/planning/lattice/behavior/
+
+  请回答：
+  1. Lattice Planner 的整体流程是什么？从采样到输出轨迹经过哪些步骤？
+  2. 横向和纵向轨迹分别是怎么采样的？采样的终端状态有哪些？
+  3. 轨迹评估的代价函数包含哪些项？各自的权重是多少？
+  4. 碰撞检测是怎么实现的？
+  5. 与 EM Planner 相比，Lattice Planner 的优缺点是什么？
+
+  ---
+  使用建议
+
+  - 按顺序喂：1 → 2 → 3 → 4 → 5 → 6，因为后面的 prompt 依赖前面的上下文
+  - Apollo 版本：建议基于 Apollo 7.0 或 8.0 的代码，在 prompt 前注明版本
+  - 结果格式：让 AI 尽量贴出关键代码片段 + 数学公式 +
+  调用流程图，这样我后续帮你组织成论文内容时更高效
+  - Prompt 5 是你论文改进算法的直接切入点，结果最重要
+
+  拿到结果后贴回来，我帮你整理成论文各章节的内容。
+
+✻ Worked for 38s
+
+❯ /extra-usage 
+  ⎿  Login interrupted
+
+❯ @response.md  
+  ⎿  Read response.md (1557 lines)
+
+⏺ 很好，你已经拿到了所有 5 个 prompt 的源码分析结果。内容非常扎实，覆盖了 Apollo
+   11.0 的核心模块。让我帮你梳理一下这些结果如何对应到论文各章节。
+
+  ---
+  素材与论文章节映射
+
+  ┌──────────────┬──────────────┬──────────────────────────────────────────────┐
+  │ 源码分析结果 │ 对应论文章节 │               可直接使用的内容               │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 1:    │              │ 数据流图、Scenario/Stage/Task                │
+  │ Planning     │ 第3章 §3.1   │ 三层架构、输入输出定义                       │
+  │ 总体架构     │              │                                              │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 2:    │              │                                              │
+  │ Reference    │ 第3章 §3.2   │ QP 样条平滑公式、约束条件、参数表            │
+  │ Line         │              │                                              │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 3: EM │ 第3章 §3.3   │ 两阶段优化流程、DP+QP 目标函数公式、代价项   │
+  │  Planner     │              │                                              │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 4:    │ 第3章 §3.4 + │ STOP/NUDGE/IGNORE                            │
+  │ PathDecider  │  第4章核心   │ 决策逻辑、多障碍物边界合并策略               │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 5: ST │ 第3章 §3.5 + │ ST boundary                                  │
+  │  图          │  第4章核心 + │ 构建、多障碍物重叠未处理的问题、可行域压缩的 │
+  │              │  第5章切入点 │  3 个具体代码位置                            │
+  ├──────────────┼──────────────┼──────────────────────────────────────────────┤
+  │ Prompt 6:    │ 第3章 §3.6 + │ 采样流程、代价函数权重表、与 EM Planner      │
+  │ Lattice      │  第6章对比   │ 对比表                                       │
+  │ Planner      │              │                                              │
+  └──────────────┴──────────────┴──────────────────────────────────────────────┘
+
+  ---
+  关键发现（直接支撑你的论文创新点）
+
+  Prompt 5 的第 6 题指出了 3
+  个可行域过度压缩的具体问题，这正是你论文改进算法的切入点：
+
+  1. 重复安全距离扩展 (st_boundary_mapper.cc:408-458) — 每个障碍物先加
+  point_extension(1.0m)，再 ExpandByS(characteristic_length)，密集场景下累积过度
+  2. 无重叠检测和合并 (speed_bounds_decider.cc:82-95) — 所有 ST boundary
+  直接放入 vector，没有合并逻辑
+  3. 横向缓冲区叠加 (st_boundary_mapper.cc:487-488) — 每个障碍物独立加
+  l_buffer，密集场景过于保守
+
+  ---
+  下一步建议
+
+  你现在有两条路可以走：
+
+  A. 直接开始写论文 —
+  我可以帮你把这些素材组织成论文的具体章节文字（带公式、图表、代码引用）
+
+  B. 先补充改进算法的设计 — 基于上面 3
+  个问题，我帮你设计具体的改进方案（动态权重 ST boundary
+  优化的数学公式和算法流程），然后再写论文
+
+  你想先做哪个？还是说你已经有改进算法的具体思路了？
+
+❯ 我需要你来帮我写一篇 然后我来审查你写的 要不先进行B 
+
+⏺ 好，我们先把改进算法设计清楚，这是论文第5章的核心，也决定了第4章问题分析怎么写
+  。
+
+  让我基于源码分析发现的 3 个问题，设计具体的改进方案。
+
+  ---
+  改进算法设计：密度感知的动态 ST 边界优化
+
+  问题回顾
+
+  从源码分析中，我们发现原始 Apollo 在多障碍物密集场景下存在 3 个问题：
+
+  P1: 每个障碍物独立扩展安全距离 → 累积过度膨胀
+  P2: ST boundary 无合并机制 → 重叠区域重复计算
+  P3: 横向缓冲固定值 → 密集场景过于保守
+
+  改进方案概要
+
+  我设计了 三个子改进，对应解决上述三个问题：
+
+  ---
+  改进1：ST Boundary 重叠检测与合并
+
+  原始做法（speed_bounds_decider.cc:82-95）：
+  boundaries = [B₁, B₂, B₃, ...]  // 直接收集，不处理
+
+  改进做法：对时间轴上有重叠的相邻 ST boundary 进行合并。
+
+  定义两个 ST boundary $B_i$ 和 $B_j$ 可合并的条件：
+
+  $$
+  \exists t \in [0, T], \quad B_i^{upper}(t) + \delta_{merge} \geq
+  B_j^{lower}(t)
+  $$
+
+  其中 $\delta_{merge}$ 是合并阈值（建议取 point_extension 的值，即 1.0m）。
+
+  合并后的新边界：
+
+  $$
+  B_{merged}^{lower}(t) = \min(B_i^{lower}(t), B_j^{lower}(t))
+  $$
+
+  $$
+  B_{merged}^{upper}(t) = \max(B_i^{upper}(t), B_j^{upper}(t))
+  $$
+
+  关键：合并后的 boundary 只在外侧边缘施加一次
+  point_extension，而不是每个子障碍物各施加一次。这直接解决了 P1
+  的累积膨胀问题。
+
+  ---
+  改进2：基于障碍物密度的动态安全距离
+
+  原始做法（st_boundary_mapper.cc:269）：
+  low_s - point_extension()   // 固定 1.0m，不区分场景
+
+  改进做法：引入局部障碍物密度 $\rho$，动态调整安全距离。
+
+  密度定义：在以自车为中心的感知窗口 $[s_{ego}, s_{ego} + L_{window}] \times
+  [t_0, t_0 + T_{window}]$ 内：
+
+  $$
+  \rho = \frac{N_{obs}}{L_{window} \cdot T_{window}}
+  $$
+
+  其中 $N_{obs}$ 是窗口内 ST boundary 的数量。
+
+  动态安全距离：
+
+  $$
+  d_{safe}(\rho) = d_{min} + (d_{max} - d_{min}) \cdot e^{-\alpha \cdot \rho}
+  $$
+
+  ┌───────────┬────────────────────────┬──────────────────────────────┐
+  │   参数    │          含义          │            建议值            │
+  ├───────────┼────────────────────────┼──────────────────────────────┤
+  │ $d_{max}$ │ 稀疏场景下最大安全距离 │ 1.0m（原始 point_extension） │
+  ├───────────┼────────────────────────┼──────────────────────────────┤
+  │ $d_{min}$ │ 密集场景下最小安全距离 │ 0.3m                         │
+  ├───────────┼────────────────────────┼──────────────────────────────┤
+  │ $\alpha$  │ 衰减系数               │ 2.0                          │
+  └───────────┴────────────────────────┴──────────────────────────────┘
+
+  直觉：
+  - 前方只有 1 个障碍物 → $\rho$ 小 → $d_{safe} \approx 1.0m$（与原始一致）
+  - 前方有 5 个密集障碍物 → $\rho$ 大 → $d_{safe} \approx
+  0.3m$（避免可行域被压缩为零）
+
+  ---
+  改进3：自适应横向缓冲
+
+  原始做法（st_boundary_mapper.cc:487-488）：
+  vehicle_param_.width() + l_buffer * 2  // 固定缓冲
+
+  改进做法：横向缓冲根据障碍物横向间距自适应调整。
+
+  定义自车在 s 处的可用横向空间：
+
+  $$
+  W_{avail}(s) = l_{road}^{right}(s) - l_{road}^{left}(s) - \sum_{k}
+  w_{obs,k}(s)
+  $$
+
+  自适应缓冲：
+
+  $$
+  l_{buffer}^{*}(s) = l_{buffer} \cdot \min\left(1.0,
+  \frac{W_{avail}(s)}{W_{vehicle} + 2 \cdot l_{buffer}}\right)
+  $$
+
+  当可用空间充足时 $l_{buffer}^* =
+  l_{buffer}$（不变），当可用空间紧张时按比例缩减。同时设下限：
+
+  $$
+  l_{buffer}^{*}(s) \geq l_{buffer,min} = 0.1m
+  $$
+
+  ---
+  整体算法流程
+
+  输入: 原始 ST boundaries {B₁, B₂, ..., Bₙ}, 路径数据, 车辆状态
+
+  Step 1: 计算局部障碍物密度 ρ
+  Step 2: 计算动态安全距离 d_safe(ρ)
+  Step 3: 用 d_safe 替代固定 point_extension 构建各 ST boundary
+  Step 4: 计算自适应横向缓冲 l_buffer*(s) 用于碰撞检测
+  Step 5: 按时间轴排序所有 ST boundary
+  Step 6: 扫描检测重叠，合并可合并的 boundary
+  Step 7: 对合并后的 boundary 仅在外侧施加一次 d_safe
+
+  输出: 优化后的 ST boundaries {B'₁, B'₂, ..., B'ₘ}  (m ≤ n)
+
+  ---
+  理论分析
+
+  安全性保证：$d_{min} > 0$ 确保任何情况下都有安全裕度。合并操作取 min/max
+  不会缩小禁止区域，只是减少重复膨胀。
+
+  计算复杂度：
+  - 密度计算：$O(n)$
+  - 排序：$O(n \log n)$
+  - 合并扫描：$O(n)$
+  - 总体：$O(n \log n)$，相比原始 $O(n)$ 增加不大
+
+  可行域改善：设原始方案在密集场景下的可行域面积为 $A_{orig}$，改进后为
+  $A_{improved}$：
+
+  $$
+  A_{improved} \geq A_{orig} + \sum_{i,j \in overlap} (d_{max} - d_{safe}) \cdot
+   \Delta t_{overlap}
+  $$
+
+  即每对重叠障碍物都能释放一定的可行域面积。
+
+  ---
+  你需要审查的几个点
+
+  1. $d_{min} = 0.3m$ 是否合理？
+  这是密集场景下的最小安全距离，实际取决于控制模块的跟踪精度
+  2. 合并阈值 $\delta_{merge}$ 用 1.0m 是否合适？
+  太大会过度合并，太小则改进效果不明显
+  3. 衰减系数 $\alpha = 2.0$
+  控制密度对安全距离的影响速度，可以画出曲线看看是否符合直觉
+  4. 是否需要区分静态/动态障碍物？
+  当前方案统一处理，也可以对动态障碍物保留更大的安全裕度
+
+  你觉得这个方案的方向对吗？有没有哪里需要调整？确认后我就开始写论文正文。
+
+✻ Brewed for 53s
+
+❯ 这个改进感觉不够啊 不用管开题报告 主要创新度要够 
+
+⏺ 你说得对，前面那个方案本质上只是参数调优和简单合并，创新度不够。让我重新设计一
+  个更有深度的改进方案。
+
+  ---
+  重新审视问题
+
+  Apollo 当前多障碍物处理的根本问题不仅是参数层面的，而是架构层面的：
+
+  1. 每个障碍物被独立处理，没有考虑障碍物之间的关联关系
+  2. 决策是贪心的：PathDecider 对每个障碍物单独做
+  STOP/NUDGE/IGNORE，没有全局最优
+  3. 路径-速度完全解耦：路径规划时不考虑时间维度，速度规划时路径已经固定，密集场
+  景下这种解耦容易产生死锁
+  4. ST 图只是被动记录障碍物占据区域，没有主动构建可通行走廊
+
+  ---
+  新方案：基于威胁度评估的多障碍物时空走廊规划算法
+
+  整体框架（4个子创新）
+
+  感知输入 (障碍物列表 + 预测轨迹)
+      │
+      ▼
+  ┌─────────────────────────────┐
+  │  创新1: 多因子威胁度评估模型  │  ← 给每个障碍物打分排序
+  └──────────────┬──────────────┘
+                 │
+                 ▼
+  ┌─────────────────────────────┐
+  │  创新2: 分层决策框架          │  ← 按威胁等级分配不同处理策略
+  └──────────────┬──────────────┘
+                 │
+                 ▼
+  ┌─────────────────────────────┐
+  │  创新3: 时空可通行走廊生成    │  ← 替代独立ST boundary，构建统一走廊
+  └──────────────┬──────────────┘
+                 │
+                 ▼
+  ┌─────────────────────────────┐
+  │  创新4: 走廊约束下的速度优化  │  ← 改进QP公式，用走廊替代独立boundary约束
+  └──────────────┬──────────────┘
+                 │
+                 ▼
+            优化后的轨迹
+
+  ---
+  创新1：多因子威胁度评估模型
+
+  Apollo 原始方案对所有障碍物一视同仁。改进为：对每个障碍物计算综合威胁度分数
+  $\Theta_i$。
+
+  $$
+  \Theta_i = w_1 \cdot f_{TTC}(i) + w_2 \cdot f_{overlap}(i) + w_3 \cdot
+  f_{vel}(i) + w_4 \cdot f_{type}(i) + w_5 \cdot f_{interaction}(i)
+  $$
+
+  5 个因子：
+
+  (1) TTC 因子（碰撞时间倒数）：
+
+  $$
+  f_{TTC}(i) = \begin{cases} 1.0 & \text{if } TTC_i \leq T_{critical} \
+  \frac{T_{max} - TTC_i}{T_{max} - T_{critical}} & \text{if } T_{critical} <
+  TTC_i < T_{max} \ 0 & \text{if } TTC_i \geq T_{max} \end{cases}
+  $$
+
+  其中 $TTC_i = \frac{s_i - s_{ego}}{\dot{s}{ego} - \dot{s}i}$，$T{critical} = 
+  2s$，$T{max} = 7s$
+
+  (2) 横向重叠率：
+
+  $$
+  f_{overlap}(i) = \frac{\max(0, \min(l_i^{upper}, l_{ego}^{upper}) -
+  \max(l_i^{lower}, l_{ego}^{lower}))}{W_{vehicle}}
+  $$
+
+  衡量障碍物与自车在横向上的重叠程度，0 表示完全不重叠，1 表示完全重叠。
+
+  (3) 相对速度因子：
+
+  $$
+  f_{vel}(i) = \sigma\left(\frac{v_{rel,i}}{v_{max}}\right), \quad \sigma(x) =
+  \frac{1}{1 + e^{-5x}}
+  $$
+
+  对向来车（$v_{rel} > 0$）威胁高，同向远离（$v_{rel} < 0$）威胁低。
+
+  (4) 障碍物类型因子：
+
+  ┌─────────────┬────────────┬──────────────────┐
+  │    类型     │ $f_{type}$ │       理由       │
+  ├─────────────┼────────────┼──────────────────┤
+  │ 行人/自行车 │ 1.0        │ 运动不确定性最大 │
+  ├─────────────┼────────────┼──────────────────┤
+  │ 车辆        │ 0.7        │ 运动相对可预测   │
+  ├─────────────┼────────────┼──────────────────┤
+  │ 静态障碍物  │ 0.3        │ 无运动不确定性   │
+  └─────────────┴────────────┴──────────────────┘
+
+  (5) 交互因子（这是区别于简单打分的关键）：
+
+  $$
+  f_{interaction}(i) = \frac{1}{N} \sum_{j \neq i} \mathbb{1}[d_{ij} <
+  d_{cluster}] \cdot \frac{d_{cluster} - d_{ij}}{d_{cluster}}
+  $$
+
+  衡量障碍物 $i$ 周围有多少其他障碍物聚集。孤立障碍物 $f_{interaction} \approx
+  0$，处于车群中的障碍物 $f_{interaction}$
+  高。这反映了密集场景下障碍物间的关联效应，是 Apollo 原始方案完全缺失的。
+
+  ---
+  创新2：基于威胁等级的分层决策框架
+
+  根据 $\Theta_i$ 将障碍物分为三个层级，对应不同的处理策略：
+
+  $$
+  Level(i) = \begin{cases} \text{CRITICAL} & \Theta_i \geq \theta_{high} \
+  \text{IMPORTANT} & \theta_{low} \leq \Theta_i < \theta_{high} \ \text{MINOR} &
+   \Theta_i < \theta_{low} \end{cases}
+  $$
+
+  建议 $\theta_{high} = 0.7$, $\theta_{low} = 0.3$。
+
+  分层处理策略：
+
+  威胁等级: CRITICAL
+  ST boundary 精度: 精细构建（小时间步长 0.05s）
+  安全裕度: $d_{safe}^{max}$
+  决策策略: 必须明确决策（STOP/YIELD/FOLLOW）
+  ────────────────────────────────────────
+  威胁等级: IMPORTANT
+  ST boundary 精度: 标准构建（0.1s）
+  安全裕度: $d_{safe}^{std}$
+  决策策略: 标准决策流程
+  ────────────────────────────────────────
+  威胁等级: MINOR
+  ST boundary 精度: 简化构建（0.2s）
+  安全裕度: $d_{safe}^{min}$
+  决策策略: 可延迟决策或 IGNORE
+
+  与 Apollo 原始方案的区别：
+  - Apollo 对所有障碍物用相同精度和相同安全裕度处理
+  - 分层方案让计算资源集中在高威胁障碍物上，同时避免低威胁障碍物过度压缩可行域
+
+  ---
+  创新3：时空可通行走廊生成（核心创新）
+
+  这是最核心的改进。Apollo 原始方案是收集一堆独立的 ST boundary 丢给优化器，优化
+  器自己想办法在缝隙中找路。改进为：主动构建一条保证可通行的时空走廊。
+
+  定义：时空走廊 $\mathcal{C}$ 是 ST 空间中的一个连通区域，满足：
+  - 不与任何障碍物 ST boundary 相交
+  - 从初始状态 $(s_0, t_0)$ 到终端状态连通
+  - 满足动力学可行性（速度、加速度约束）
+
+  构建算法：基于扫描线的走廊生成
+
+  算法: SweepLineCorridorGeneration
+
+  输入: 排序后的 ST boundaries {B₁, ..., Bₙ}, 初始状态 (s₀, v₀, a₀)
+  输出: 走廊 C = {(s_lower(t), s_upper(t)) | t ∈ [0, T]}
+
+  1. 时间离散化: t_k = k · Δt, k = 0, 1, ..., K
+
+  2. 初始化: s_lower(0) = s₀, s_upper(0) = s₀
+
+  3. For each t_k from Δt to T:
+     a. 动力学可达集:
+        s_reach_lower(t_k) = s_lower(t_{k-1}) + v_min · Δt
+        s_reach_upper(t_k) = s_upper(t_{k-1}) + v_max · Δt
+
+     b. 收集在 t_k 时刻活跃的所有 ST boundary 的截面:
+        obstacles_at_t = {[B_i^lower(t_k), B_i^upper(t_k)] | B_i active at t_k}
+
+     c. 将 [s_reach_lower, s_reach_upper] 按 obstacles_at_t 切割为若干段自由区间
+
+     d. 选择与上一时刻走廊连通性最好的自由区间:
+        选择标准: 与 [s_lower(t_{k-1}), s_upper(t_{k-1})] 重叠面积最大
+
+     e. 更新: s_lower(t_k), s_upper(t_k) = 选中的自由区间
+
+  4. 如果在某个 t_k 无可行区间 → 回溯修改之前的走廊选择
+
+  关键区别：
+  - Apollo 原始：把所有 boundary 丢给 QP，QP 可能找不到解或得到退化解
+  - 改进方案：先保证走廊连通，再在走廊内优化，分离了可行性保证和最优性求解
+
+  走廊选择的启发式：当某个时刻存在多个自由区间时（比如两个障碍物之间的缝隙 vs
+  所有障碍物上方），使用评价函数：
+
+  $$
+  Score(interval) = w_a \cdot \text{width} + w_b \cdot \text{continuity} + w_c
+  \cdot \text{speed_feasibility}
+  $$
+
+  - width: 区间宽度，越宽越好
+  - continuity: 与上一时刻走廊的重叠度
+  - speed_feasibility: 区间中点对应的速度是否接近期望巡航速度
+
+  ---
+  创新4：走廊约束下的改进 QP 速度优化
+
+  将原始 Apollo 的 QP 速度优化中的独立 boundary 约束替换为走廊约束。
+
+  原始 Apollo QP 约束：
+  $$
+  s(t) \notin \bigcup_{i=1}^{n} B_i \quad \text{（n 个独立不等式约束）}
+  $$
+
+  这是非凸约束（不在多个区域的并集内），QP 求解器难以直接处理。Apollo 依赖 DP
+  的初始解来间接处理。
+
+  改进后的走廊约束：
+  $$
+  s_{lower}^{\mathcal{C}}(t_k) \leq s(t_k) \leq s_{upper}^{\mathcal{C}}(t_k),
+  \quad \forall k
+  $$
+
+  这是线性约束，直接可以加入 QP。优势：
+  1. 约束数量从 $O(n \cdot K)$ 降为 $O(K)$（$n$ 为障碍物数，$K$ 为时间步数）
+  2. 凸约束，保证 QP 有唯一最优解
+  3. 走廊已保证可行性，QP 一定有解
+
+  改进后的 QP 公式：
+
+  $$
+  \min_{s, v, a} \sum_{k=0}^{K} \left[ w_s(s_k - s_{ref,k})^2 + w_v(v_k -
+  v_{ref,k})^2 + w_a \cdot a_k^2 + w_j \cdot j_k^2 \right]
+  $$
+
+  $$
+  \text{s.t.} \quad s_{lower}^{\mathcal{C}}(t_k) \leq s_k \leq
+  s_{upper}^{\mathcal{C}}(t_k)
+  $$
+
+  $$
+  v_{min} \leq v_k \leq v_{limit}(s_k)
+  $$
+
+  $$
+  a_{min} \leq a_k \leq a_{max}
+  $$
+
+  $$
+  j_{min} \leq j_k \leq j_{max}
+  $$
+
+  $$
+  s_{k+1} = s_k + v_k \Delta t + \frac{1}{2} a_k \Delta t^2
+  $$
+
+  其中 $s_{ref,k}$ 可取走廊中心线 $\frac{s_{lower}^{\mathcal{C}}(t_k) +
+  s_{upper}^{\mathcal{C}}(t_k)}{2}$，引导轨迹在走廊中间行驶。
+
+  ---
+  与原始方案的整体对比
+
+  ┌────────────────┬───────────────────────────┬─────────────────────┐
+  │      维度      │        Apollo 原始        │      本文改进       │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ 障碍物处理     │ 一视同仁                  │ 威胁度分级          │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ 决策方式       │ 逐个贪心决策              │ 分层策略 + 全局走廊 │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ ST 空间利用    │ 被动记录障碍物区域        │ 主动构建可通行走廊  │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ QP 约束        │ 非凸（多个独立 boundary） │ 凸（统一走廊）      │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ 可行性保证     │ 依赖 DP 初始解            │ 走廊生成阶段保证    │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ 密集场景可行域 │ 容易被压缩为零            │ 走廊保证连通性      │
+  ├────────────────┼───────────────────────────┼─────────────────────┤
+  │ 计算资源分配   │ 均匀                      │ 按威胁等级分配      │
+  └────────────────┴───────────────────────────┴─────────────────────┘
+
+  论文可以声称的创新点
+
+  1. 提出了多因子威胁度评估模型，引入交互因子量化障碍物间关联，解决了 Apollo
+  对障碍物独立处理的局限
+  2. 设计了基于扫描线的时空可通行走廊生成算法，将可行性保证与最优性求解分离，避
+  免密集场景下可行域过度压缩
+  3. 将走廊约束引入 QP 
+  速度优化，将非凸约束转化为线性约束，提升求解效率和解的质量
+
+  ---
+  这个方案的创新度够吗？你觉得哪个部分需要加强或者调整？
+
+✻ Cooked for 1m 37s
