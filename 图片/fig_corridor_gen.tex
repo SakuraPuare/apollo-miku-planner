@@ -1,0 +1,111 @@
+% 时空走廊生成过程示意图
+\begin{tikzpicture}[scale=0.65, transform shape]
+  % ===== 步骤1：扫描可达集 =====
+  \node[font=\small\bfseries] at (3.5, 7.8) {步骤1：计算各$s$处可达间隙};
+  \draw[-Stealth, thick] (0,0) -- (7.5,0) node[right, font=\tiny] {$t$};
+  \draw[-Stealth, thick] (0,0) -- (0,7.5) node[above, font=\tiny] {$s$};
+
+  % 动态障碍物A（斜向多边形——慢速前车）
+  \fill[dangerred!30, draw=dangerred]
+    (0.5, 2.0) -- (3.0, 2.8) -- (6.5, 3.8) -- (6.5, 3.2) -- (3.0, 2.2) -- (0.5, 1.4) -- cycle;
+  \node[dangerred, font=\tiny\bfseries] at (3.5, 2.2) {A};
+
+  % 动态障碍物B（斜向多边形——横穿行人）
+  \fill[lightorange!40, draw=lightorange!70]
+    (0, 5.0) -- (2.5, 5.8) -- (4.0, 6.4) -- (4.0, 5.8) -- (2.5, 5.2) -- (0, 4.4) -- cycle;
+  \node[lightorange!80!black, font=\tiny\bfseries] at (2.0, 5.8) {B};
+
+  % 扫描线
+  \draw[very thick, deeppink, dashed] (1, 0) -- (1, 7.5);
+  \node[deeppink, font=\tiny] at (1, -0.4) {$s_1$};
+
+  % 可达间隙（绿色竖线段）
+  \draw[very thick, lightgreen!70!black, |-|] (1, 0.2) -- (1, 1.35);
+  \draw[very thick, lightgreen!70!black, |-|] (1, 2.85) -- (1, 4.65);
+  \draw[very thick, lightgreen!70!black, |-|] (1, 5.55) -- (1, 7.2);
+
+  % 间隙标注
+  \node[lightgreen!70!black, font=\tiny, right] at (1.1, 0.75) {$g_0$};
+  \node[lightgreen!70!black, font=\tiny, right] at (1.1, 3.7) {$g_1$};
+  \node[lightgreen!70!black, font=\tiny, right] at (1.1, 6.4) {$g_2$};
+
+  % 起点
+  \fill[deepblue] (0, 0.5) circle (4pt);
+  \node[deepblue, font=\tiny, left] at (0, 0.5) {$s_0$};
+
+  % ===== 步骤2：选择最优间隙 =====
+  \begin{scope}[xshift=9cm]
+    \node[font=\small\bfseries] at (3.5, 7.8) {步骤2：选择最大间隙 $p^\star$};
+    \draw[-Stealth, thick] (0,0) -- (7.5,0) node[right, font=\tiny] {$t$};
+    \draw[-Stealth, thick] (0,0) -- (0,7.5) node[above, font=\tiny] {$s$};
+
+    % 障碍物（淡化）
+    \fill[dangerred!20, draw=dangerred!50]
+      (0.5, 2.0) -- (3.0, 2.8) -- (6.5, 3.8) -- (6.5, 3.2) -- (3.0, 2.2) -- (0.5, 1.4) -- cycle;
+    \fill[lightorange!20, draw=lightorange!50]
+      (0, 5.0) -- (2.5, 5.8) -- (4.0, 6.4) -- (4.0, 5.8) -- (2.5, 5.2) -- (0, 4.4) -- cycle;
+
+    % 已选最优间隙区域（高亮）
+    \fill[lightgreen!25]
+      (0, 2.85) -- (1, 2.85) -- (3, 3.5) -- (5, 4.2) -- (5, 4.8) -- (3, 5.0) -- (1, 4.65) -- (0, 4.65) -- cycle;
+    \draw[lightgreen!70!black, thick]
+      (0, 2.85) -- (1, 2.85) -- (3, 3.5) -- (5, 4.2);
+    \draw[lightgreen!70!black, thick]
+      (0, 4.65) -- (1, 4.65) -- (3, 5.0) -- (5, 4.8);
+
+    % 两条扫描线
+    \draw[very thick, deeppink, dashed] (1, 0) -- (1, 7.5);
+    \draw[very thick, deeppink, dashed] (3, 0) -- (3, 7.5);
+    \node[deeppink, font=\tiny] at (1, -0.4) {$s_1$};
+    \node[deeppink, font=\tiny] at (3, -0.4) {$s_2$};
+
+    % 最优间隙标注
+    \draw[very thick, lightgreen!70!black] (1, 2.85) -- (1, 4.65);
+    \node[lightgreen!70!black, font=\tiny\bfseries, right] at (1.1, 3.7) {$g_1^\star$};
+
+    % 非最优间隙（灰色）
+    \draw[thick, gray] (1, 0.2) -- (1, 1.35);
+    \node[gray, font=\tiny, right] at (1.1, 0.75) {$g_0$};
+  \end{scope}
+
+  % ===== 步骤3：合成走廊 =====
+  \begin{scope}[xshift=18cm]
+    \node[font=\small\bfseries] at (3.5, 7.8) {步骤3：合成走廊 $\Omega$};
+    \draw[-Stealth, thick] (0,0) -- (7.5,0) node[right, font=\tiny] {$t$};
+    \draw[-Stealth, thick] (0,0) -- (0,7.5) node[above, font=\tiny] {$s$};
+
+    % 障碍物（更淡）
+    \fill[dangerred!15, draw=dangerred!30]
+      (0.5, 2.0) -- (3.0, 2.8) -- (6.5, 3.8) -- (6.5, 3.2) -- (3.0, 2.2) -- (0.5, 1.4) -- cycle;
+    \fill[lightorange!15, draw=lightorange!30]
+      (0, 5.0) -- (2.5, 5.8) -- (4.0, 6.4) -- (4.0, 5.8) -- (2.5, 5.2) -- (0, 4.4) -- cycle;
+
+    % 完整走廊
+    \fill[lightgreen!25]
+      plot[smooth, tension=0.5] coordinates {(0,2.85) (1,2.9) (2,3.2) (3,3.5) (4,3.9) (5,4.2) (6,4.5) (7,4.7)}
+      -- plot[smooth, tension=0.5] coordinates {(7,5.1) (6,5.0) (5,4.8) (4,4.6) (3,5.0) (2,4.85) (1,4.65) (0,4.65)}
+      -- cycle;
+
+    \draw[very thick, lightgreen!70!black]
+      plot[smooth, tension=0.5] coordinates {(0,2.85) (1,2.9) (2,3.2) (3,3.5) (4,3.9) (5,4.2) (6,4.5) (7,4.7)};
+    \draw[very thick, lightgreen!70!black]
+      plot[smooth, tension=0.5] coordinates {(0,4.65) (1,4.65) (2,4.85) (3,5.0) (4,4.6) (5,4.8) (6,5.0) (7,5.1)};
+
+    % 到达时间曲线 τ(s)
+    \draw[deepblue, thick, densely dashed]
+      plot[smooth, tension=0.5] coordinates {(0,0.5) (1,1.5) (2,2.5) (3,3.5) (4,4.5) (5,5.5) (6,6.5)};
+    \node[deepblue, font=\tiny\bfseries] at (5.5, 6.8) {$\tau(s)$};
+
+    % 最优轨迹
+    \draw[very thick, deeppink, -{Stealth}]
+      plot[smooth, tension=0.5] coordinates {(0,3.5) (1,3.6) (2,3.8) (3,4.2) (4,4.3) (5,4.5) (6,4.75) (7,4.9)};
+    \node[deeppink, font=\tiny\bfseries] at (5, 4.0) {QP最优轨迹};
+
+    % 走廊标注
+    \node[lightgreen!70!black, font=\footnotesize\bfseries] at (3.5, 2.4) {走廊 $\Omega$};
+  \end{scope}
+
+  % 流程箭头
+  \draw[-Stealth, ultra thick, deepblue] (7.8, 3.5) -- (8.7, 3.5);
+  \draw[-Stealth, ultra thick, deepblue] (16.8, 3.5) -- (17.7, 3.5);
+\end{tikzpicture}

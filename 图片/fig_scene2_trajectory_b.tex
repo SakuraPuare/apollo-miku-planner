@@ -1,0 +1,19 @@
+% 场景二 S2-C 改进中央通过（子图 b）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  \fill[bglight] (0,-1.5) rectangle (12,1.5);
+  \draw[deepblue, very thick] (0,-1.5) -- (12,-1.5);
+  \draw[deepblue, very thick] (0, 1.5) -- (12, 1.5);
+  \draw[deepblue, dashed, thin] (0,0) -- (12,0);
+
+  \fill[obsstatic] (4.5,0.6) rectangle (7.5,1.2);
+  \fill[obsstatic] (4.5,-1.2) rectangle (7.5,-0.6);
+
+  \fill[lightgreen!30] (0,-0.35) rectangle (12,0.35);
+
+  \draw[deeppink, very thick] (0.3,0) -- (11.7,0);
+
+  \fill[egopt] (0.3,-0.2) rectangle (0.9,0.2);
+  \fill[deeppink] (11.7,0) circle (3pt);
+
+  \node[lightgreen!40!black, font=\scriptsize\bfseries, anchor=west] at (0.1,0.55) {最大中央间隙};
+\end{tikzpicture}

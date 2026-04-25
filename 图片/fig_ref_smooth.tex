@@ -1,0 +1,74 @@
+% 参考线平滑过程示意图
+\begin{tikzpicture}[scale=0.85, transform shape]
+
+  % ===== 上半：原始 vs 平滑 对比 =====
+
+  % 原始车道中心线（明显锯齿/折线感）
+  \draw[thick, gray, dashed]
+    plot[smooth, tension=0.15] coordinates
+      {(0,0.1) (0.6,0.35) (1.0,-0.1) (1.6,0.5) (2.0,0.15) (2.6,0.7) (3.2,0.3)
+       (3.8,0.85) (4.2,0.5) (4.8,1.0) (5.4,0.6) (6.0,1.15) (6.6,0.8) (7.2,1.3)
+       (7.8,0.95) (8.4,1.45) (9.0,1.2)};
+
+  % 锚点（5m间距采样）
+  \foreach \x/\y in {0/0.05, 1.5/0.2, 3.0/0.5, 4.5/0.75, 6.0/1.0, 7.5/1.15, 9.0/1.2} {
+    \fill[deeppink] (\x, \y) circle (2.5pt);
+    \draw[deeppink!50, thin] (\x, {\y-0.35}) -- (\x, {\y+0.35});
+  }
+
+  % 平滑后的参考线（光滑曲线）
+  \draw[very thick, deepblue]
+    plot[smooth, tension=0.6] coordinates
+      {(0,0.05) (1.5,0.2) (3.0,0.5) (4.5,0.75) (6.0,1.0) (7.5,1.15) (9.0,1.2)};
+
+  % 横向约束范围标注
+  \draw[lightgreen!70!black, thin, {Stealth}-{Stealth}] (6.0, 0.55) -- (6.0, 1.45);
+  \node[lightgreen!70!black, font=\tiny, left] at (5.95, 1.0) {$\pm\Delta l$};
+
+  % 偏差标注
+  \draw[dangerred, thin, {Stealth}-{Stealth}] (2.6, 0.42) -- (2.6, 0.7);
+  \node[dangerred, font=\tiny, right] at (2.65, 0.56) {偏差};
+
+  % ===== 图例（右上角） =====
+  \begin{scope}[shift={(9.5, 1.6)}]
+    \draw[thick, gray, dashed] (0, 0) -- (0.8, 0);
+    \node[font=\scriptsize, anchor=west] at (1.0, 0) {原始中心线};
+
+    \draw[very thick, deepblue] (0, -0.4) -- (0.8, -0.4);
+    \node[font=\scriptsize, anchor=west] at (1.0, -0.4) {平滑参考线};
+
+    \fill[deeppink] (0.4, -0.8) circle (2.5pt);
+    \node[font=\scriptsize, anchor=west] at (1.0, -0.8) {锚点};
+
+    \draw[lightgreen!70!black, thin, {Stealth}-{Stealth}] (0.2, -1.3) -- (0.6, -1.3);
+    \node[font=\scriptsize, anchor=west] at (1.0, -1.3) {横向约束 $\pm\Delta l$};
+  \end{scope}
+
+  % ===== 下半：5步流程（左右与上半齐平：0 ~ 12） =====
+
+  \node[rectangle, rounded corners=3pt, draw=deepblue, fill=inputyellow,
+        minimum height=0.7cm, font=\footnotesize, align=center, text width=1.6cm]
+    (s1) at (0.8, -2.2) {获取\\路由段};
+
+  \node[rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue,
+        minimum height=0.7cm, font=\footnotesize, align=center, text width=1.6cm]
+    (s2) at (3.4, -2.2) {生成原始\\参考线};
+
+  \node[rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue,
+        minimum height=0.7cm, font=\footnotesize, align=center, text width=1.6cm]
+    (s3) at (6.0, -2.2) {按5m采样\\锚点};
+
+  \node[rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink,
+        minimum height=0.7cm, font=\footnotesize, align=center, text width=1.6cm]
+    (s4) at (8.6, -2.2) {QP样条\\平滑};
+
+  \node[rectangle, rounded corners=3pt, draw=deepblue, fill=outputpink,
+        minimum height=0.7cm, font=\footnotesize, align=center, text width=1.6cm]
+    (s5) at (11.2, -2.2) {验证\\与裁剪};
+
+  \draw[-Stealth, thick, deepblue] (s1) -- (s2);
+  \draw[-Stealth, thick, deepblue] (s2) -- (s3);
+  \draw[-Stealth, thick, deepblue] (s3) -- (s4);
+  \draw[-Stealth, thick, deeppink] (s4) -- (s5);
+
+\end{tikzpicture}

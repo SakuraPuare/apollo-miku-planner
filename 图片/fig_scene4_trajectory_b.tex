@@ -1,0 +1,20 @@
+% 场景四 S4-C 改进蛇形避让（子图 b）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  \fill[bglight] (0,-1.5) rectangle (12,1.5);
+  \draw[deepblue, very thick] (0,-1.5) -- (12,-1.5);
+  \draw[deepblue, very thick] (0, 1.5) -- (12, 1.5);
+  \draw[deepblue, dashed, thin] (0,0) -- (12,0);
+
+  \fill[obsdyn] (4.5,0.5) rectangle (5.3,1.0);
+  \fill[obsdyn] (5.8,-0.9) rectangle (6.6,-0.4);
+  \fill[obsdyn] (7.5,0.2) rectangle (8.3,0.7);
+  \fill[obsdyn] (3.0,-0.7) rectangle (3.8,-0.2);
+  \fill[obsstatic] (9.5,0.1) rectangle (10.1,0.7);
+  \fill[obsstatic] (9.5,-0.7) rectangle (10.1,-0.1);
+
+  \draw[deeppink, very thick]
+    plot[smooth, tension=0.5] coordinates {(0.3,0) (2.0,-0.3) (3.5,-0.95) (5.0,-0.2) (6.5,0.95) (8.0,-0.2) (9.5,-0.95) (11.7,-0.3)};
+
+  \fill[egopt] (0.3,-0.2) rectangle (0.9,0.2);
+  \fill[deeppink] (11.7,-0.3) circle (3pt);
+\end{tikzpicture}

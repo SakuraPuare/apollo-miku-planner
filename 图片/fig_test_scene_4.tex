@@ -1,0 +1,35 @@
+% 场景四：高密度交叉路口
+\begin{tikzpicture}[scale=0.7, transform shape]
+  % 十字路口
+  \fill[bglight] (0, -0.5) rectangle (9, 3.5);
+  \fill[bglight] (2.8, -2.5) rectangle (6.2, 5.0);
+  \draw[thick, gray] (0, 3.5) -- (2.8, 3.5);
+  \draw[thick, gray] (6.2, 3.5) -- (9, 3.5);
+  \draw[thick, gray] (0, -0.5) -- (2.8, -0.5);
+  \draw[thick, gray] (6.2, -0.5) -- (9, -0.5);
+  \draw[thick, gray] (2.8, 5.0) -- (2.8, 3.5);
+  \draw[thick, gray] (6.2, 5.0) -- (6.2, 3.5);
+  \draw[thick, gray] (2.8, -2.5) -- (2.8, -0.5);
+  \draw[thick, gray] (6.2, -2.5) -- (6.2, -0.5);
+
+  % 自车
+  \fill[deepblue, rounded corners=2pt] (0.5, 1.1) rectangle (1.7, 1.9);
+  \draw[-Stealth, thick, deepblue] (1.7, 1.5) -- (2.6, 1.5);
+  \node[white, font=\tiny] at (1.1, 1.5) {自车};
+
+  % 对向来车
+  \fill[dangerred!60, draw=dangerred, rounded corners=1pt] (7.0, 1.7) rectangle (8.0, 2.3);
+  \draw[-Stealth, thick, dangerred] (7.0, 2.0) -- (6.3, 2.0);
+
+  % 纵向来车
+  \fill[lightorange!70, draw=lightorange!80!black, rounded corners=1pt] (4.0, 4.3) rectangle (4.8, 3.5);
+  \draw[-Stealth, thick, lightorange!80!black] (4.4, 3.5) -- (4.4, 2.5);
+
+  \fill[lightgreen!70, draw=lightgreen!80!black, rounded corners=1pt] (3.5, -2.0) rectangle (4.3, -1.2);
+  \draw[-Stealth, thick, lightgreen!80!black] (3.9, -1.2) -- (3.9, -0.3);
+
+  % 行人
+  \fill[deeppink] (5.2, 0.5) circle (4pt);
+  \fill[deeppink] (3.5, 3.0) circle (4pt);
+  \draw[-Stealth, thin, deeppink] (5.2, 0.5) -- (4.3, 0.5);
+\end{tikzpicture}

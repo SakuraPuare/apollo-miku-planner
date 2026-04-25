@@ -1,0 +1,23 @@
+% 四项创新贡献汇总 四层堆叠结构
+\begin{tikzpicture}[scale=0.9, transform shape,
+    layer/.style={rectangle, rounded corners=4pt, draw=deeppink, fill=improvedpink, minimum width=8cm, minimum height=1.2cm, font=\small\bfseries, align=center},
+    capbadge/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=deeppink, text=white, minimum width=2.0cm, minimum height=0.7cm, font=\small\bfseries, align=center},
+]
+
+\node[layer] (sys)    at (0,6) {ST 走廊与速度规划协调};
+\node[capbadge]       at (-5.5,6) {系统};
+
+\node[layer] (safety) at (0,4) {威胁度分级与动态安全距离};
+\node[capbadge]       at (-5.5,4) {安全};
+
+\node[layer] (algo)   at (0,2) {扫描线分组与时变 SL 投影};
+\node[capbadge]       at (-5.5,2) {算法};
+
+\node[layer] (theory) at (0,0) {最大间隙最优性定理};
+\node[capbadge]       at (-5.5,0) {理论};
+
+\draw[-Stealth, very thick, deeppink] (theory.north) -- (algo.south);
+\draw[-Stealth, very thick, deeppink] (algo.north)   -- (safety.south);
+\draw[-Stealth, very thick, deeppink] (safety.north) -- (sys.south);
+
+\end{tikzpicture}

@@ -1,0 +1,110 @@
+% 四类测试场景布局示意图
+\begin{tikzpicture}[scale=0.55, transform shape]
+  % ===== 场景一：纵向密集静态 =====
+  \node[font=\small\bfseries] at (4, 4.5) {场景一：纵向密集静态障碍物};
+
+  % 道路
+  \fill[bglight] (0, -1.5) rectangle (8, 1.5);
+  \draw[thick, gray] (0,1.5) -- (8,1.5);
+  \draw[thick, gray] (0,-1.5) -- (8,-1.5);
+  \draw[dashed, gray] (0,0) -- (8,0);
+
+  % 自车
+  \fill[deepblue, rounded corners=1pt] (0.3,-0.35) rectangle (1.2,0.35);
+  \node[white, font=\tiny] at (0.75,0) {E};
+
+  % 纵向排列的障碍物
+  \foreach \x in {2.5, 4.0, 5.5, 7.0} {
+    \fill[dangerred!60, rounded corners=1pt] (\x,-0.3) rectangle (\x+0.8,0.3);
+  }
+  \draw[{Stealth}-{Stealth}, thin, deeppink] (3.3, -0.7) -- (4.0, -0.7);
+  \node[deeppink, font=\tiny] at (3.65, -1.1) {间距};
+
+  % ===== 场景二：横向密集 =====
+  \begin{scope}[xshift=10cm]
+    \node[font=\small\bfseries] at (4, 4.5) {场景二：横向密集障碍物};
+
+    \fill[bglight] (0, -2.5) rectangle (8, 2.5);
+    \draw[thick, gray] (0,2.5) -- (8,2.5);
+    \draw[thick, gray] (0,-2.5) -- (8,-2.5);
+    \draw[dashed, gray] (0,0) -- (8,0);
+
+    % 自车
+    \fill[deepblue, rounded corners=1pt] (0.3,-0.35) rectangle (1.2,0.35);
+    \node[white, font=\tiny] at (0.75,0) {E};
+
+    % 上方障碍物
+    \fill[dangerred!60, rounded corners=1pt] (3, 0.8) rectangle (5.5, 2.0);
+    % 下方障碍物
+    \fill[lightorange!70, rounded corners=1pt] (3.5, -2.0) rectangle (6, -0.8);
+
+    % 窄通道
+    \fill[lightgreen!20] (3, -0.8) rectangle (6, 0.8);
+    \draw[{Stealth}-{Stealth}, thin, lightgreen!70!black] (6.3, -0.8) -- (6.3, 0.8);
+    \node[lightgreen!70!black, font=\tiny, right] at (6.4, 0) {窄通道};
+  \end{scope}
+
+  % ===== 场景三：混合动静态 =====
+  \begin{scope}[yshift=-7cm]
+    \node[font=\small\bfseries] at (4, 4.5) {场景三：混合动静态障碍物};
+
+    \fill[bglight] (0, -1.5) rectangle (8, 1.5);
+    \draw[thick, gray] (0,1.5) -- (8,1.5);
+    \draw[thick, gray] (0,-1.5) -- (8,-1.5);
+    \draw[dashed, gray] (0,0) -- (8,0);
+
+    % 自车
+    \fill[deepblue, rounded corners=1pt] (0.3,-0.35) rectangle (1.2,0.35);
+    \node[white, font=\tiny] at (0.75,0) {E};
+
+    % 静态障碍物
+    \fill[dangerred!60, rounded corners=1pt] (3, 0.6) rectangle (3.8, 1.2);
+    \node[font=\tiny] at (3.4, 0.3) {静态};
+
+    % 动态障碍物（带速度箭头）
+    \fill[lightorange!70, rounded corners=1pt] (5, -0.3) rectangle (5.8, 0.3);
+    \draw[-Stealth, thick, lightorange!80!black] (5.8, 0) -- (6.5, 0);
+    \node[font=\tiny] at (6.2, -0.4) {动态};
+
+    % 行人
+    \fill[deeppink] (6.5, 1.0) circle (4pt);
+    \draw[-Stealth, thin, deeppink] (6.5, 1.0) -- (6.5, 0.3);
+    \node[font=\tiny, deeppink] at (7.2, 1.0) {行人};
+  \end{scope}
+
+  % ===== 场景四：交叉路口 =====
+  \begin{scope}[xshift=10cm, yshift=-7cm]
+    \node[font=\small\bfseries] at (4, 4.5) {场景四：高密度交叉路口};
+
+    % 交叉路口
+    \fill[bglight] (0, -0.5) rectangle (8, 3.5);
+    \fill[bglight] (2.5, -2.5) rectangle (5.5, 4.5);
+    \draw[thick, gray] (0, 3.5) -- (2.5, 3.5);
+    \draw[thick, gray] (5.5, 3.5) -- (8, 3.5);
+    \draw[thick, gray] (0, -0.5) -- (2.5, -0.5);
+    \draw[thick, gray] (5.5, -0.5) -- (8, -0.5);
+    \draw[thick, gray] (2.5, 4.5) -- (2.5, 3.5);
+    \draw[thick, gray] (5.5, 4.5) -- (5.5, 3.5);
+    \draw[thick, gray] (2.5, -2.5) -- (2.5, -0.5);
+    \draw[thick, gray] (5.5, -2.5) -- (5.5, -0.5);
+
+    % 自车（从左进入）
+    \fill[deepblue, rounded corners=1pt] (0.5, 1.2) rectangle (1.5, 1.8);
+    \draw[-Stealth, thick, deepblue] (1.5, 1.5) -- (2.3, 1.5);
+
+    % 多方向来车
+    \fill[dangerred!60, rounded corners=1pt] (6, 1.7) rectangle (7, 2.3);
+    \draw[-Stealth, thick, dangerred] (6, 2.0) -- (5.3, 2.0);
+
+    \fill[lightorange!70, rounded corners=1pt] (3.7, 4.0) rectangle (4.3, 3.2);
+    \draw[-Stealth, thick, lightorange!80!black] (4.0, 3.2) -- (4.0, 2.5);
+
+    \fill[lightgreen!60!black, rounded corners=1pt] (3.2, -2.0) rectangle (3.8, -1.2);
+    \draw[-Stealth, thick, lightgreen!60!black] (3.5, -1.2) -- (3.5, -0.3);
+
+    % 行人
+    \fill[deeppink] (4.5, 0.5) circle (3pt);
+    \fill[deeppink] (3.0, 2.8) circle (3pt);
+    \draw[-Stealth, thin, deeppink] (4.5, 0.5) -- (3.8, 0.5);
+  \end{scope}
+\end{tikzpicture}

@@ -1,0 +1,32 @@
+% 论文版技术路线图（七步研究路线，对齐 Ch4/Ch5/Ch6 双层框架）
+\begin{tikzpicture}[
+    node distance=0.35cm,
+    scale=1.05, transform shape,
+    block/.style={rectangle, draw=deepblue, fill=skyblue, text width=10cm, text centered, rounded corners, minimum height=0.9cm, font=\normalsize},
+    coreblock/.style={rectangle, draw=deeppink, fill=improvedpink, text width=10cm, text centered, rounded corners, minimum height=0.9cm, font=\normalsize},
+    endblock/.style={rectangle, draw=deepblue, fill=outputpink, text width=10cm, text centered, rounded corners, minimum height=0.9cm, font=\normalsize},
+    arrow/.style={thick, -Stealth, deepblue}
+]
+
+\node (s1) [block] {\textbf{Apollo Planning 源码级分析}};
+
+\node (s2) [block, below=of s1] {\textbf{多障碍物场景缺陷识别}};
+
+\node (s3) [block, below=of s2] {\textbf{时变最优通行带统一建模}};
+
+\node (s4) [coreblock, below=of s3] {\textbf{最优通行带求解算法设计}};
+
+\node (s5) [coreblock, below=of s4] {\textbf{时空可通行走廊与速度协调}};
+
+\node (s6) [block, below=of s5] {\textbf{Apollo 集成实现}};
+
+\node (s7) [endblock, below=of s6] {\textbf{多场景仿真对比与验证}};
+
+\draw[arrow] (s1) -- (s2);
+\draw[arrow] (s2) -- (s3);
+\draw[arrow] (s3) -- (s4);
+\draw[arrow] (s4) -- (s5);
+\draw[arrow] (s5) -- (s6);
+\draw[arrow] (s6) -- (s7);
+
+\end{tikzpicture}

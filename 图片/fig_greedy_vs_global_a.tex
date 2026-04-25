@@ -1,0 +1,47 @@
+% 贪心独立决策 → BLOCKED（子图 a）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % 道路
+  \fill[bglight] (-0.5,-2.5) rectangle (8.5,2.5);
+  \draw[gray, thick] (-0.5, 2.5) -- (8.5, 2.5);
+  \draw[gray, thick] (-0.5,-2.5) -- (8.5,-2.5);
+  \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+  \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+  % O_a（上方靠边）y=[0.5, 1.0]
+  \fill[dangerred!70, draw=dangerred, thick] (3.2, 0.5) rectangle (4.8, 1.0);
+  \node[font=\scriptsize, white] at (4.0, 0.75) {$O_a$};
+
+  % O_b（下方靠边）y=[-1.0, -0.5]
+  \fill[dangerred!70, draw=dangerred, thick] (3.2,-1.0) rectangle (4.8,-0.5);
+  \node[font=\scriptsize, white] at (4.0,-0.75) {$O_b$};
+
+  % 膨胀虚线 δ=0.4
+  \draw[dangerred!60, dashed, thick] (2.8, 0.1) rectangle (5.2, 1.4);
+  \draw[dangerred!60, dashed, thick] (2.8,-1.4) rectangle (5.2,-0.1);
+
+  % 决策标注
+  \node[deepblue, font=\scriptsize\bfseries] at (5.5, 0.75) {R};
+  \node[deeppink, font=\scriptsize\bfseries] at (2.5,-0.75) {L};
+
+  % 独立决策：O_a 右绕 → 上界压到 0.1-0.1=0.0
+  %           O_b 左绕 → 下界抬到 -0.1+0.1=0.0
+  % l+ ≈ l- → BLOCKED
+
+  % 上界 l+(s) 凹字形（offset 区分）
+  \draw[deeppink, very thick]
+    (-0.5, 2.5) -- (2.6, 2.5) -- (2.6, 0.0) -- (5.4, 0.0) -- (5.4, 2.5) -- (8.5, 2.5);
+  \node[deeppink, font=\scriptsize] at (7.5, 2.1) {$l^+(s)$};
+
+  % 下界 l-(s) 凸字形
+  \draw[deepblue, very thick]
+    (-0.5,-2.5) -- (2.6,-2.5) -- (2.6, 0.0) -- (5.4, 0.0) -- (5.4,-2.5) -- (8.5,-2.5);
+  \node[deepblue, font=\scriptsize] at (7.5,-2.1) {$l^-(s)$};
+
+  % BLOCKED 标注
+  \node[dangerred, font=\scriptsize\bfseries] at (4.0, 1.8) {$l^+ \leq l^-$ $\Rightarrow$ BLOCKED};
+
+  % 自车
+  \fill[deepblue, opacity=0.4] (0.3,-0.3) rectangle (1.8,0.3);
+  \draw[deepblue, thick, rounded corners=1pt] (0.3,-0.3) rectangle (1.8,0.3);
+  \node[deepblue, font=\tiny\bfseries] at (1.05,0) {自车};
+\end{tikzpicture}

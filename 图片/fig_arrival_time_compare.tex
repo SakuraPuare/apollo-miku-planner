@@ -1,0 +1,54 @@
+% 到达时间估计：匀速 vs 二阶运动学
+\begin{tikzpicture}
+\begin{axis}[
+    width=11cm, height=7cm,
+    xlabel={$s - s_{ego}$ \;(m)}, ylabel={$\tau(s)$ \;(s)},
+    xmin=0, xmax=30, ymin=0, ymax=6,
+    grid=both, grid style={gray!25},
+    legend style={at={(0.02,0.98)}, anchor=north west, font=\small, draw=deepblue},
+    axis line style={thick},
+    tick label style={font=\footnotesize},
+    label style={font=\small},
+]
+
+% 匀速假设 tau_0 = s/v_ego, v_ego=5
+\addplot[deepblue, very thick, samples=50, domain=0:30] {x/5};
+\addlegendentry{$\tau_0(s)=s/v_{ego}$ 匀速假设}
+
+% 二阶模型 tau = (-v + sqrt(v^2 + 2 a s))/a, v=5, a=2
+\addplot[deeppink, very thick, samples=80, domain=0:30] {(-5 + sqrt(25 + 4*x))/2};
+\addlegendentry{$\tau(s)$ 二阶运动学}
+
+% 原始速度曲线反推: v(t)=5+2(1-e^{-t}), s(t)=7t-2+2 e^{-t}
+% 取参数 t 等距采样得 (s, tau) 对
+\addplot[lightgreen!55!black, very thick, densely dashed] coordinates {
+  (0, 0) (2.71, 0.5) (5.74, 1.0) (8.95, 1.5) (12.27, 2.0)
+  (15.66, 2.5) (19.10, 3.0) (22.56, 3.5) (26.04, 4.0) (29.52, 4.5)
+};
+\addlegendentry{$\tau_{\mathrm{true}}(s)$ 原始速度曲线反推}
+
+% 误差标注（在 s=20 处）
+% tau0(20)=4.0, tau_true(20)≈3.13, tau(20)≈2.91
+\draw[dangerred, thick, densely dashed] (axis cs:20,0) -- (axis cs:20,4);
+
+% 匀速误差 = 4.0 - 3.13 ≈ 0.87 s
+\draw[<->, thick, dangerred] (axis cs:20,3.13) -- (axis cs:20,4);
+\node[dangerred, font=\footnotesize, anchor=west] at (axis cs:20.3,3.56) {匀速误差 ${\approx}\,0.87$ s};
+
+% 二阶残差 = 3.13 - 2.91 ≈ 0.22 s
+\draw[<->, thick, lightorange!80!black] (axis cs:20,2.91) -- (axis cs:20,3.13);
+\node[lightorange!80!black, font=\footnotesize, anchor=west] at (axis cs:20.3,3.02) {二阶残差 ${\approx}\,0.22$ s};
+
+% 关键点
+\addplot[deepblue, mark=*, mark size=2pt, only marks] coordinates {(20,4)};
+\addplot[lightgreen!55!black, mark=*, mark size=2pt, only marks] coordinates {(20,3.13)};
+\addplot[deeppink, mark=*, mark size=2pt, only marks] coordinates {(20,2.91)};
+
+\node[deepblue, font=\scriptsize, anchor=south] at (axis cs:20,4.08) {$\tau_0{=}4.0$};
+\node[deeppink, font=\scriptsize, anchor=north] at (axis cs:20,2.83) {$\tau{=}2.91$};
+
+% 参数标注
+\node[rectangle, draw=deepblue, fill=bglight, rounded corners=3pt, font=\footnotesize, align=left] at (axis cs:22,1) {$v_{ego}=5$ m/s\\$a_{ego}=2$ m/s$^2$};
+
+\end{axis}
+\end{tikzpicture}

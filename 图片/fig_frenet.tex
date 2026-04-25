@@ -1,0 +1,53 @@
+% Frenet坐标系示意图
+\begin{tikzpicture}[scale=0.9, transform shape]
+  % 参考线（弯曲道路）
+  \draw[very thick, deepblue]
+    plot[smooth, tension=0.6] coordinates {(0,0) (2,0.8) (4,1.8) (6,2.0) (8,1.5) (10,1.2)};
+  \node[deepblue, font=\small\bfseries] at (10.5,1.6) {参考线};
+
+  % s方向标注（直接落在样条控制点上，与参考线严格重合）
+  \foreach \pt in {(0,0), (2,0.8), (6,2.0), (8,1.5)} {
+    \fill[deepblue] \pt circle (2pt);
+  }
+
+  % 在 s=4 处标注详细坐标
+  \coordinate (Pref) at (4,1.8);
+  \fill[deepblue] (Pref) circle (3pt);
+  \node[deepblue, below right=2pt and 2pt, font=\small] at (Pref) {$P_{ref}(s)$};
+
+  % 画航向角方向（切线）
+  \draw[-Stealth, thick, deepblue!70] (Pref) -- ++(35:1.8) node[above, font=\small] {$\theta_{ref}(s)$};
+
+  % 画法线方向（l方向）
+  \draw[-Stealth, thick, deeppink, dashed] (Pref) -- ++(125:2.0) node[left, font=\small] {$l > 0$};
+  \draw[-Stealth, thick, deeppink!50, dashed] (Pref) -- ++(-55:1.2) node[right, font=\small] {$l < 0$};
+
+  % 车辆位置
+  \coordinate (Car) at (5.0,3.6);
+  \fill[dangerred] (Car) circle (3pt);
+  \node[dangerred, above right=1pt, font=\small\bfseries] at (Car) {车辆 $(x, y)$};
+
+  % 投影连线
+  \draw[thick, deeppink, -{Stealth}] (Pref) -- (Car) node[midway, left=2pt, font=\small] {$l$};
+
+  % s方向弧线标注
+  \draw[thick, deepblue!70, decorate, decoration={brace, amplitude=6pt, mirror}]
+    (0,-0.3) -- (4,1.5) node[midway, below right=4pt, font=\small] {$s$};
+
+  % 笛卡尔坐标系
+  \draw[-Stealth, thick, gray] (-0.8,-0.8) -- (2.0,-0.8) node[right, font=\small] {$x$};
+  \draw[-Stealth, thick, gray] (-0.8,-0.8) -- (-0.8,1.5) node[above, font=\small] {$y$};
+  \node[gray, font=\small] at (0.6,-1.2) {笛卡尔坐标系};
+
+  % 道路边界（虚线）
+  \draw[gray, dashed, thick]
+    plot[smooth, tension=0.6] coordinates {(0,0.8) (2,1.6) (4,2.6) (6,2.8) (8,2.3) (10,2.0)};
+  \draw[gray, dashed, thick]
+    plot[smooth, tension=0.6] coordinates {(0,-0.8) (2,0.0) (4,1.0) (6,1.2) (8,0.7) (10,0.4)};
+  \node[gray, font=\footnotesize] at (10.6,2.3) {车道边界};
+
+  % 图例
+  \draw[very thick, deepblue] (0.5,-2.0) -- (1.5,-2.0) node[right, font=\footnotesize, black] {参考线};
+  \draw[thick, deeppink, dashed] (4,-2.0) -- (5,-2.0) node[right, font=\footnotesize, black] {横向偏移 $l$};
+  \draw[thick, deepblue!70] (7.5,-2.0) -- (8.5,-2.0) node[right, font=\footnotesize, black] {纵向弧长 $s$};
+\end{tikzpicture}

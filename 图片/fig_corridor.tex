@@ -1,0 +1,118 @@
+% 时空走廊改进前后对比（与式\eqref{eq:st_corridor} 定义的 Ω 严格一致）
+\begin{tikzpicture}[
+  scale=1.3, transform shape,
+  arr/.style={-Stealth, thick}
+]
+
+%% ===== 左面板：Apollo Baseline（独立 ST boundary + YIELD/OVERTAKE 组合 + DP）=====
+\begin{scope}
+
+  %% 面板标题
+  \node[font=\footnotesize\bfseries, align=center] at (2.7, 4.75)
+    {Apollo Baseline\\[-2pt]{\scriptsize 逐障碍物 ST 边界 + YIELD/OVERTAKE 组合}};
+
+  %% 坐标轴
+  \draw[arr, thick] (0,0) -- (5.4, 0) node[right, font=\tiny] {$t$/s};
+  \draw[arr, thick] (0,0) -- (0, 4.3) node[above, font=\tiny] {$s$/m};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  %% 障碍 A 的 ST boundary（慢速前车斜向多边形）
+  \fill[dangerred!55, opacity=0.85]
+    (0.3, 2.4) -- (2.0, 3.0) -- (4.2, 3.8) -- (4.2, 3.2) -- (2.0, 2.4) -- (0.3, 1.8) -- cycle;
+  \node[font=\tiny\bfseries, dangerred] at (2.2, 2.85) {ST\,boundary\,A};
+
+  %% 障碍 B 的 ST boundary（横穿行人短时段）
+  \fill[lightorange!80, opacity=0.85]
+    (1.0, 0.6) -- (3.2, 1.6) -- (3.2, 1.0) -- (1.0, 0.0) -- cycle;
+  \node[font=\tiny\bfseries, lightorange!60!black] at (2.1, 0.65) {ST\,boundary\,B};
+
+  %% A 的 YIELD 生成 s_ub 约束线
+  \draw[dangerred, very thick, densely dashed]
+    (0, 1.8) -- (0.3, 1.8) -- (2.0, 2.4) -- (4.2, 3.2);
+  \node[font=\tiny, dangerred, anchor=south west] at (3.5, 3.25) {$s_j^{ub}$(A)};
+
+  %% B 的 YIELD 生成 s_ub 约束线
+  \draw[lightorange!60!black, very thick, densely dashed]
+    (0, 0.0) -- (1.0, 0.0) -- (3.2, 1.0);
+  \node[font=\tiny, lightorange!60!black, anchor=north west] at (2.8, 0.75) {$s_j^{ub}$(B)};
+
+  %% 合成上界（两线取 min）——凸但分段
+  \draw[dangerred, ultra thick]
+    (0, 0.0) -- (1.0, 0.0) -- (2.0, 0.6);
+  \draw[dangerred, ultra thick]
+    (2.0, 0.6) -- (3.2, 1.0);
+  \node[font=\tiny\bfseries, dangerred, align=center, anchor=west] at (4.35, 1.6)
+    {$s_j^{ub}$ 分段};
+
+  %% DP 启发式在 YIELD/OVERTAKE 组合空间中搜索
+  \draw[gray!60, thick, densely dotted]
+    (0.1, 0.1) -- (1.0, 0.2) -- (2.5, 1.8) -- (4.5, 3.2);
+  \node[font=\tiny, gray!50!black, anchor=south] at (1.8, 1.5) {DP 搜索};
+  \node[font=\tiny, gray!55!black, anchor=west] at (0.1, 4.0) {$2^n$ 组合};
+
+\end{scope}
+
+
+%% ===== 中间箭头 =====
+\draw[-Stealth, line width=2.2pt, deepblue] (5.6, 2.1) -- (7.1, 2.1);
+\node[font=\scriptsize\bfseries, deepblue, align=center] at (6.35, 2.55)
+  {走廊\\[-1pt]算法};
+
+
+%% ===== 右面板：本文方法（Ω 楔形，与式 \eqref{eq:st_corridor} 一致）=====
+\begin{scope}[xshift=7.5cm]
+
+  %% 面板标题
+  \node[font=\footnotesize\bfseries, align=center] at (2.7, 4.75)
+    {本文方法\\[-2pt]{\scriptsize 时空可通行走廊 $\Omega$，$p^\star$ 全局选定}};
+
+  %% 坐标轴
+  \draw[arr, thick] (0,0) -- (5.4, 0) node[right, font=\tiny] {$t$/s};
+  \draw[arr, thick] (0,0) -- (0, 4.3) node[above, font=\tiny] {$s$/m};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  %% Ω 楔形：t ≥ τ(s)，即 s ≤ v_ego·t；取 v_ego ≈ 0.9（图中单位） → 画至 (5.2, 4.2)
+  %% 禁行切片在 s ∈ [2.6, 3.0]（C 宽阻挡产生的水平缺口）
+  %% 下半: s ∈ [0, 2.6]
+  \fill[lightgreen!45, opacity=0.8]
+    (0, 0) -- (2.9, 2.6) -- (5.2, 2.6) -- (5.2, 0) -- cycle;
+  %% 上半: s ∈ [3.0, 4.2]
+  \fill[lightgreen!45, opacity=0.8]
+    (3.35, 3.0) -- (4.7, 4.2) -- (5.2, 4.2) -- (5.2, 3.0) -- cycle;
+
+  %% τ(s) 边界线
+  \draw[deepblue, very thick, densely dashed] (0, 0) -- (4.7, 4.2);
+  \node[font=\tiny, deepblue, rotate=42, anchor=south] at (2.2, 2.1) {$\tau(s)$};
+
+  %% 禁行切片：s ∈ [2.6, 3.0] 全时段禁行
+  \fill[dangerred!25] (0, 2.6) rectangle (5.2, 3.0);
+  \draw[dangerred, thick, dashed] (0, 2.6) -- (5.2, 2.6);
+  \draw[dangerred, thick, dashed] (0, 3.0) -- (5.2, 3.0);
+  \node[font=\tiny, dangerred, anchor=west] at (3.6, 2.8) {$g_{p^*}{<}W_{ego}$};
+
+  %% 不可达区（τ 左上方）
+  \fill[gray!18] (0, 0) -- (4.7, 4.2) -- (0, 4.2) -- cycle;
+
+  %% Ω 标注
+  \node[font=\small\bfseries, lightgreen!50!black] at (4.1, 1.1) {$\Omega$};
+  \node[font=\tiny, gray!55!black] at (0.8, 3.7) {不可达};
+
+  %% QP 最优轨迹：沿 τ 右侧爬升，在禁行切片下沿 s=2.6 终止
+  \draw[deeppink, very thick, -Stealth]
+    (0.05, 0)
+    .. controls (0.6, 0.3) and (1.2, 0.9) ..
+    (1.8, 1.5)
+    .. controls (2.3, 1.9) and (2.6, 2.2) ..
+    (2.85, 2.55);
+  \node[font=\tiny\bfseries, deeppink, anchor=west] at (1.9, 1.2)
+    {QP 轨迹};
+
+  %% 单一约束标注
+  \node[font=\tiny\bfseries, lightgreen!50!black, anchor=east] at (5.2, 0.5)
+    {\checkmark\;凸 QP 直接求解};
+  \node[font=\tiny, lightgreen!50!black, anchor=east] at (5.2, 0.15)
+    {无需 $2^n$ 组合枚举};
+
+\end{scope}
+
+\end{tikzpicture}

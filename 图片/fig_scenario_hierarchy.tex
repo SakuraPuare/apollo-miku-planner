@@ -1,0 +1,58 @@
+% Scenario-Stage-Task层次结构图
+\begin{tikzpicture}[
+    scale=0.85, transform shape,
+    level 1/.style={sibling distance=5.5cm, level distance=2cm},
+    level 2/.style={sibling distance=3cm, level distance=2cm},
+    level 3/.style={sibling distance=2.2cm, level distance=2cm},
+    scenar/.style={rectangle, draw=deepblue, fill=deepblue!60, text=white, font=\small\bfseries, rounded corners, minimum width=2.5cm, minimum height=0.8cm, align=center},
+    stag/.style={rectangle, draw=deepblue, fill=skyblue, font=\small, rounded corners, minimum width=2.2cm, minimum height=0.8cm, align=center},
+    tas/.style={rectangle, draw=deepblue, fill=lightblue, font=\footnotesize, rounded corners, minimum width=1.8cm, minimum height=0.7cm, align=center},
+    mgr/.style={rectangle, draw=deeppink, fill=improvedpink, font=\small\bfseries, rounded corners, minimum width=3.5cm, minimum height=0.9cm, align=center}
+]
+
+  % ScenarioManager
+  \node[mgr] (mgr) at (0, 1.5) {ScenarioManager};
+
+  % Scenarios
+  \node[scenar] (lf) at (-4, -0.5) {LANE\_FOLLOW};
+  \node[scenar] (tl) at (0, -0.5) {TRAFFIC\_LIGHT\\PROTECTED};
+  \node[scenar] (ss) at (4, -0.5) {STOP\_SIGN\\UNPROTECTED};
+  \node[font=\small, gray] at (7, -0.5) {$\cdots$（共19种）};
+
+  % Stages for LANE_FOLLOW
+  \node[stag] (stage1) at (-4, -2.5) {LaneFollow\\Stage};
+
+  % Tasks
+  \node[tas] (t1) at (-7.8, -4.5) {LaneFollow\\Path};
+  \node[tas] (t2) at (-5.3, -4.5) {Path\\Decider};
+  \node[tas] (t3) at (-2.8, -4.5) {SpeedBounds\\Decider};
+  \node[tas] (t4) at (-0.3, -4.5) {PiecewiseJerk\\Speed};
+  \node[font=\footnotesize, gray] at (1.6, -4.5) {$\cdots$};
+
+  % Stages for STOP_SIGN
+  \node[stag] (ss1) at (3, -2.5) {Approach};
+  \node[stag] (ss2) at (5.5, -2.5) {Creep};
+
+  % 连线
+  \draw[-Stealth, thick, deeppink] (mgr) -- (lf);
+  \draw[-Stealth, thick, deeppink] (mgr) -- (tl);
+  \draw[-Stealth, thick, deeppink] (mgr) -- (ss);
+
+  \draw[-Stealth, thick, deepblue] (lf) -- (stage1);
+  \draw[-Stealth, thick, deepblue] (ss) -- (ss1);
+  \draw[-Stealth, thick, deepblue] (ss) -- (ss2);
+
+  \draw[-Stealth, thick, deepblue!60] (stage1) -- (t1);
+  \draw[-Stealth, thick, deepblue!60] (stage1) -- (t2);
+  \draw[-Stealth, thick, deepblue!60] (stage1) -- (t3);
+  \draw[-Stealth, thick, deepblue!60] (stage1) -- (t4);
+
+  % 层次标注
+  \node[font=\small\bfseries, deepblue, rotate=90] at (-9.8, -0.5) {Scenario层};
+  \node[font=\small\bfseries, deepblue, rotate=90] at (-9.8, -2.5) {Stage层};
+  \node[font=\small\bfseries, deepblue, rotate=90] at (-9.8, -4.5) {Task层};
+
+  % 虚线分隔
+  \draw[dashed, gray] (-9.3, -1.5) -- (7.5, -1.5);
+  \draw[dashed, gray] (-9.3, -3.5) -- (7.5, -3.5);
+\end{tikzpicture}

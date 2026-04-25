@@ -1,0 +1,50 @@
+% LEFT_NUDGE 决策对边界影响（子图 b）
+% 障碍物在参考线下方，左绕 → 下界被抬高至 v_i = l_i^max + δ
+\begin{tikzpicture}[scale=1.0, transform shape]
+
+  % 道路背景
+  \fill[bglight] (0,-2.5) rectangle (7.5,2.5);
+
+  % 道路边界
+  \draw[gray, thick] (0, 2.5) -- (7.5, 2.5);
+  \node[gray, font=\scriptsize, above left] at (7.5, 2.5) {$l_{road}^+$};
+  \draw[gray, thick] (0,-2.5) -- (7.5,-2.5);
+  \node[gray, font=\scriptsize, below left] at (7.5,-2.5) {$l_{road}^-$};
+
+  % 参考线
+  \draw[gray, dashed] (0,0) -- (7.5,0);
+  \node[gray, font=\scriptsize, right] at (7.5,0) {$l{=}0$};
+
+  % l 轴
+  \draw[-{Stealth}, thick] (0.3,-2.5) -- (0.3,2.8) node[above, font=\footnotesize] {$l$};
+
+  % 障碍物 O_i（参考线下方）
+  \fill[dangerred!70, draw=dangerred, thick] (2.5,-1.5) rectangle (4.5,-0.5);
+  \node[white, font=\footnotesize\bfseries] at (3.5,-1.0) {$O_i$};
+
+  % 障碍物膨胀虚线框
+  \draw[dangerred!70, dashed, thick] (2.2,-1.9) rectangle (4.8,-0.1);
+  \node[dangerred!70, font=\scriptsize, right] at (4.9,-1.5) {$+\delta$};
+
+  % 下界 l-(s)：从道路下界 → 抬高到 v_i → 恢复道路下界
+  % 与道路边界连起来
+  \draw[deepblue, very thick]
+    (0,-2.5) -- (2.2,-2.5) -- (2.2,-0.1) -- (4.8,-0.1) -- (4.8,-2.5) -- (7.5,-2.5);
+  \node[deepblue, font=\small] at (3.5,0.3) {$l^-(s) = v_i$};
+
+  % 上界 l+(s)：保持道路上界不变
+  \draw[deeppink, very thick, dashed]
+    (0, 2.5) -- (7.5, 2.5);
+  \node[deeppink, font=\small, below left] at (7.5, 2.3) {$l^+(s)$};
+
+  % v_i 标注
+  \draw[{Stealth}-{Stealth}, thin, deepblue] (5.2,-2.5) -- (5.2,-0.1);
+  \node[deepblue, font=\scriptsize, right] at (5.3,-1.3) {被压缩};
+
+  % 自车轨迹：起点终点在 l=0，向上远离障碍物弯曲
+  \draw[deepblue, very thick, -{Stealth}]
+    plot[smooth, tension=0.55] coordinates
+      {(0.5, 0) (1.5, 0.3) (2.5, 0.8) (3.5, 1.0) (4.5, 0.8) (5.5, 0.3) (6.5, 0)};
+  \node[deepblue, font=\footnotesize\bfseries, above] at (3.5,1.2) {自车轨迹};
+
+\end{tikzpicture}

@@ -1,0 +1,111 @@
+% 威胁度五因子函数曲线
+% 每个 tikzpicture 用 \useasboundingbox 统一尺寸，\resizebox 缩放不变形
+
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {TTC (s)};
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {$f_{\text{TTC}}$};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, below] at (0.6,0) {2};
+  \node[font=\scriptsize, below] at (2.1,0) {7};
+  \draw[gray, thin] (0.6,-0.08) -- (0.6,0.08);
+  \draw[gray, thin] (2.1,-0.08) -- (2.1,0.08);
+  \draw[deeppink, very thick] (0,2.4) -- (0.6,2.4) -- (2.1,0) -- (2.6,0);
+  \draw[gray, dashed, thin] (0.6,0) -- (0.6,2.4);
+  \node[font=\scriptsize] at (0.6,2.65) {$T_{crit}$};
+  \node[font=\scriptsize] at (2.1,0.25) {$T_{max}$};
+\end{tikzpicture}%
+}
+\caption{碰撞时间因子}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {重叠率};
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {$f_{\text{ov}}$};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, below] at (2.4,0) {1.0};
+  \node[font=\scriptsize, below] at (0,0) {0};
+  \draw[deeppink, very thick] (0,0) -- (2.4,2.4);
+\end{tikzpicture}%
+}
+\caption{横向重叠率因子}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  % 内容居中: sigmoid 画在 [0.4, 2.8] 范围, 对称轴在 1.6
+  \draw[->, thick] (0.2,0) -- (3.0,0) node[right,font=\scriptsize] {$v_{rel}/v_{max}$};
+  \draw[->, thick] (0.2,0) -- (0.2,2.8) node[above,font=\scriptsize] {$f_{vel}$};
+  \node[font=\scriptsize, left] at (0.2,2.4) {1.0};
+  \draw[gray, thin] (0.12,2.4) -- (0.28,2.4);
+  \node[font=\scriptsize, left] at (0.2,1.2) {0.5};
+  \draw[gray, thin] (0.12,1.2) -- (0.28,1.2);
+  % v_rel/v_max: -1 → x=0.4, 0 → x=1.6, 1 → x=2.8
+  \draw[deeppink, very thick]
+    plot[smooth, domain=0.4:2.8, samples=50] (\x, {2.4/(1+exp(-5*(\x-1.6)/1.2))});
+  \node[font=\scriptsize, below] at (0.4,0) {$-1$};
+  \node[font=\scriptsize, below] at (1.6,0) {$0$};
+  \node[font=\scriptsize, below] at (2.8,0) {$1$};
+  \draw[gray, dashed, thin] (1.6,0) -- (1.6,1.2);
+\end{tikzpicture}%
+}
+\caption{相对速度因子}
+\end{subfigure}
+
+\vspace{0.8cm}
+
+\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0);
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {$f_{\text{type}}$};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, left] at (0,1.68) {0.7};
+  \draw[gray, thin] (-0.08,1.68) -- (0.08,1.68);
+  \node[font=\scriptsize, left] at (0,0.72) {0.3};
+  \draw[gray, thin] (-0.08,0.72) -- (0.08,0.72);
+  \fill[dangerred!60] (0.2,0) rectangle (0.7,2.4);
+  \fill[lightorange!80] (0.9,0) rectangle (1.4,1.68);
+  \fill[deepblue!40] (1.6,0) rectangle (2.1,0.72);
+  \node[font=\scriptsize] at (0.45,-0.35) {行人};
+  \node[font=\scriptsize] at (1.15,-0.35) {车辆};
+  \node[font=\scriptsize] at (1.85,-0.35) {静态};
+\end{tikzpicture}%
+}
+\caption{障碍物类型因子}
+\end{subfigure}
+\hspace{0.02\textwidth}
+\begin{subfigure}[b]{0.32\textwidth}
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {$d_{ij}$ (m)};
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {贡献};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, below] at (2.4,0) {$d_{cl}{=}10$};
+  \draw[gray, thin] (2.4,-0.08) -- (2.4,0.08);
+  \draw[deeppink, very thick] (0,2.4) -- (2.4,0) -- (2.7,0);
+  \node[font=\scriptsize, deeppink] at (1.6,2.0) {$\frac{d_{cl}-d_{ij}}{d_{cl}}$};
+\end{tikzpicture}%
+}
+\caption{单邻居交互贡献}
+\end{subfigure}
+\hfill

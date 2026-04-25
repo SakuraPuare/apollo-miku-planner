@@ -1,0 +1,62 @@
+% u_i / v_i 几何定义图
+\begin{tikzpicture}[scale=1.0, transform shape]
+
+% 坐标系（先画，不被遮挡）
+\draw[->, thick] (0,0) -- (9.7,0) node[right,font=\footnotesize] {$s$};
+\draw[->, thick] (0,-2.5) -- (0,3.3) node[above,font=\footnotesize] {$l$};
+
+% 道路背景带（与其他 SL 图统一）
+\begin{scope}[on background layer]
+  \fill[bglight] (0.05,-2.3) rectangle (9.3,3.0);
+\end{scope}
+
+% 道路边界
+\draw[gray, thick] (0.05,3.0) -- (9.3,3.0) node[right, font=\footnotesize] {$l_{road}^+$};
+\draw[gray, thick] (0.05,-2.3) -- (9.3,-2.3) node[right, font=\footnotesize] {$l_{road}^-$};
+
+% 参考线 l=0
+\draw[dashed, gray!60] (0.05,0) -- (9.3,0);
+\node[gray, font=\scriptsize, right] at (9.3,-0.25) {$l{=}0$};
+
+% 障碍物矩形 [s_i^-, s_i^+] x [l_i^-, l_i^+]
+\fill[obsstatic] (3,-0.8) rectangle (6,1.2);
+\node[white, font=\small\bfseries] at (4.5,0.2) {$O_i$};
+
+% s 标注（紧贴障碍物底边，不与轨迹干扰）
+\node[font=\scriptsize] at (3,-0.55) {$s_i^-$};
+\node[font=\scriptsize] at (6,-0.55) {$s_i^+$};
+
+% l 标注（右侧引线）
+\draw[-, thin, gray] (6,-0.8) -- (7.8,-0.8);
+\draw[-, thin, gray] (6, 1.2) -- (7.8, 1.2);
+\node[font=\scriptsize, anchor=west] at (7.8,-0.8) {$l_i^-$};
+\node[font=\scriptsize, anchor=west] at (7.8, 1.2) {$l_i^+$};
+
+% 安全裕度扩展
+\draw[obsbuf] (3,-1.4) rectangle (6,1.8);
+\draw[<->, thin, dangerred] (2.5,-0.8) -- (2.5,-1.4);
+\node[dangerred, font=\scriptsize, left] at (2.5,-1.1) {$\delta$};
+\draw[<->, thin, dangerred] (2.5,1.2) -- (2.5,1.8);
+\node[dangerred, font=\scriptsize, left] at (2.5,1.5) {$\delta$};
+
+% u_i 线（下方安全边界）
+\draw[deepblue, very thick] (3,-1.4) -- (6,-1.4);
+\node[deepblue, font=\scriptsize, anchor=west] at (6.2,-1.4) {$u_i = l_i^- - \delta$};
+
+% v_i 线（上方安全边界）
+\draw[deeppink, very thick] (3,1.8) -- (6,1.8);
+\node[deeppink, font=\scriptsize, anchor=west] at (6.2,1.8) {$v_i = l_i^+ + \delta$};
+
+% 右绕示意路径（起终点在参考线 l=0，与 u_i 保持明显间距）
+\draw[deepblue, very thick, densely dashed]
+  plot[smooth, tension=0.55] coordinates {(0.5,0) (1.2,-0.6) (2.0,-1.6) (4.5,-2.0) (7.0,-1.6) (7.8,-0.6) (8.5,0)};
+\fill[deepblue] (0.5,0) circle (2.5pt);
+\node[deepblue, font=\scriptsize] at (1.5,-1.2) {右绕轨迹};
+
+% 左绕示意路径（对称，与 v_i 保持明显间距）
+\draw[deeppink, very thick, densely dashed]
+  plot[smooth, tension=0.55] coordinates {(0.5,0) (1.2,0.6) (2.0,1.6) (4.5,2.6) (7.0,1.6) (7.8,0.6) (8.5,0)};
+\fill[deeppink] (0.5,0) circle (2.5pt);
+\node[deeppink, font=\scriptsize] at (4.5,2.8) {左绕轨迹};
+
+\end{tikzpicture}

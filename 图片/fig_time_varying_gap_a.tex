@@ -1,0 +1,47 @@
+% Baseline 仅看 t=0 → 行人堵死（子图 a）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % 道路（略加 offset 与 b 图区分：±1.95）
+  \fill[bglight] (-0.5,-2.35) rectangle (8.5,2.35);
+  \draw[gray, thick] (-0.5, 1.95) -- (8.5, 1.95);
+  \draw[gray, thick] (-0.5,-1.95) -- (8.5,-1.95);
+  \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+  \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+  % 行人 t=0 位置（车道中央）y=[-0.25, 0.25]
+  \fill[lightorange, draw=lightorange!80!black, thick] (3.5,-0.25) rectangle (4.5,0.25);
+  \node[font=\scriptsize\bfseries] at (4.0,0) {行人};
+
+  % 行人运动方向
+  \draw[-Stealth, thick, dangerred] (4.0,0.35) -- (4.0,1.2);
+  \node[dangerred, font=\scriptsize, right] at (4.5,0.8) {1.2 m/s};
+
+  % 膨胀 δ=1.2 四周等距
+  % 行人: (3.5,-0.25)~(4.5,0.25), +1.2 → (2.3,-1.45)~(5.7,1.45)
+  \draw[dangerred!60, dashed, thick] (2.3,-1.45) rectangle (5.7,1.45);
+
+  % 上界 l+(s)：压到膨胀下缘 -1.55；两侧道路段略内缩 0.08 避免与道路边界重合
+  \draw[deeppink, very thick]
+    (-0.5, 1.87) -- (2.1, 1.87) -- (2.1, -1.55) -- (5.9, -1.55) -- (5.9, 1.87) -- (8.5, 1.87);
+  \node[deeppink, font=\scriptsize] at (7.5, 1.55) {$l^+(s)$};
+
+  % 下界 l-(s)：抬到膨胀上缘 1.55；两侧道路段略内缩 0.08
+  \draw[deepblue, very thick]
+    (-0.5,-1.87) -- (2.1,-1.87) -- (2.1, 1.55) -- (5.9, 1.55) -- (5.9,-1.87) -- (8.5,-1.87);
+  \node[deepblue, font=\scriptsize] at (7.5,-1.55) {$l^-(s)$};
+
+  % l+ < l- 标注
+  \node[dangerred, font=\scriptsize\bfseries] at (4.0, 1.85) {$l^+ < l^-$};
+
+  % 残余间隙标注
+  \draw[{Stealth}-{Stealth}, thin, dangerred] (6.2, -1.55) -- (6.2, -1.95);
+  \node[dangerred, font=\tiny, anchor=west] at (6.3,-1.75) {0.40m};
+  \draw[{Stealth}-{Stealth}, thin, dangerred] (6.2, 1.55) -- (6.2, 1.95);
+  \node[dangerred, font=\tiny, anchor=west] at (6.3,1.75) {0.40m};
+
+  % 自车
+  \fill[deepblue, opacity=0.4] (0.2,-0.3) rectangle (1.6,0.3);
+  \draw[deepblue, thick, rounded corners=1pt] (0.2,-0.3) rectangle (1.6,0.3);
+  \node[deepblue, font=\tiny\bfseries] at (0.9,0) {自车};
+
+  \node[dangerred, font=\small\bfseries] at (4.0,-2.1) {$t{=}0$ 快照，停车};
+\end{tikzpicture}

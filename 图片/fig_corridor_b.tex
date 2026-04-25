@@ -1,0 +1,44 @@
+% 本文方法统一时空可通行走廊（子图 b）
+\begin{tikzpicture}[scale=1.2, transform shape, arr/.style={-Stealth, thick}]
+
+  \draw[arr, thick] (0,0) -- (5.4, 0) node[right, font=\tiny] {$t$/s};
+  \draw[arr, thick] (0,0) -- (0, 4.3) node[above, font=\tiny] {$s$/m};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  % 障碍淡化显示
+  \fill[dangerred!30, opacity=0.6]
+    (0.3, 2.4) -- (2.0, 3.0) -- (4.2, 3.8) -- (4.2, 3.2) -- (2.0, 2.4) -- (0.3, 1.8) -- cycle;
+  \fill[lightorange!55, opacity=0.6]
+    (1.0, 0.6) -- (3.2, 1.6) -- (3.2, 1.0) -- (1.0, 0.0) -- cycle;
+  \node[font=\tiny, dangerred!80!black]  at (2.2, 2.85) {A};
+  \node[font=\tiny, lightorange!70!black] at (2.1, 0.65) {B};
+
+  % 走廊
+  \fill[lightgreen, opacity=0.5]
+    (0.0, 0.1) -- (1.0, 0.1) -- (1.8, 1.0) -- (2.2, 2.2)
+    -- (3.5, 3.0) -- (5.2, 3.9)
+    -- (5.2, 4.2) -- (3.5, 3.4) -- (2.2, 2.6) -- (1.0, 1.6) -- (0.0, 1.5) -- cycle;
+  \draw[lightgreen!50!black, thick]
+    (0.0, 0.1) -- (1.0, 0.1) -- (1.8, 1.0) -- (2.2, 2.2) -- (3.5, 3.0) -- (5.2, 3.9);
+  \draw[lightgreen!50!black, thick]
+    (0.0, 1.5) -- (1.0, 1.6) -- (2.2, 2.6) -- (3.5, 3.4) -- (5.2, 4.2);
+  \node[font=\tiny\bfseries, lightgreen!50!black] at (3.8, 4.35) {走廊 $\Omega$};
+
+  % 走廊宽度
+  \draw[{Stealth}-{Stealth}, lightgreen!60!black, thick] (5.35, 3.9) -- (5.35, 4.2);
+  \node[font=\tiny, lightgreen!60!black, rotate=90] at (5.55, 4.05) {宽度};
+
+  % QP 最优轨迹
+  \draw[deeppink, very thick, -Stealth]
+    (0.05, 0.8)
+    .. controls (0.8, 1.0) and (1.2, 1.3) ..
+    (1.8, 1.5)
+    .. controls (2.2, 2.35) and (2.8, 2.9) ..
+    (3.5, 3.2)
+    .. controls (4.0, 3.4) and (4.5, 3.6) ..
+    (5.1, 4.0);
+  \node[font=\tiny\bfseries, deeppink] at (0.8, 1.55) {QP 最优轨迹};
+
+  \node[font=\tiny\bfseries, lightgreen!50!black] at (4.5, 0.4) {\checkmark\;凸 QP 直接求解};
+
+\end{tikzpicture}

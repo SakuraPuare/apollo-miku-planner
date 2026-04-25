@@ -1,0 +1,55 @@
+% 改进后的系统架构图（三层设计）
+\begin{tikzpicture}[
+    node distance=0.6cm,
+    scale=1.05, transform shape,
+    module/.style={rectangle, draw=deepblue, minimum width=3.2cm, minimum height=1.2cm, fill=lightblue, font=\normalsize, align=center, text width=3cm},
+    submod/.style={rectangle, draw=deepblue, minimum width=3.5cm, minimum height=1cm, fill=skyblue, font=\small, align=center, text width=3.3cm},
+    improved/.style={rectangle, draw=deeppink, minimum width=3.5cm, minimum height=1cm, fill=improvedpink, font=\small, align=center, text width=3.3cm},
+    arrow/.style={thick, -Stealth, deepblue}
+]
+
+% 输入层标题
+\node[font=\Large\bfseries] (input_title) at (0, 2) {输入层};
+
+% 输入模块
+\node[module, fill=inputyellow] (routing) at (-5.2, 0.8) {Routing\\参考线};
+\node[module, fill=inputyellow] (perception) at (-1.7, 0.8) {感知\\障碍物};
+\node[module, fill=inputyellow] (prediction) at (1.7, 0.8) {预测\\轨迹};
+\node[module, fill=inputyellow] (vehicle) at (5.2, 0.8) {车辆状态};
+
+% 处理层大框（标题在框内顶部）
+\node[rectangle, draw=deepblue, minimum width=15cm, minimum height=7.6cm, fill=bglight] (process_box) at (0, -4.6) {};
+\node[font=\Large\bfseries] at (0, -1.4) {处理层（Planning模块）};
+
+% 参考线处理
+\node[submod, minimum width=13cm, text width=12.5cm] (ref_process) at (0, -2.6) {参考线处理：接收 $\rightarrow$ 平滑 $\rightarrow$ Frenet坐标系转换};
+
+% 障碍物处理标题
+\node[font=\normalsize\bfseries] (obs_title) at (0, -3.8) {障碍物处理（改进模块）};
+
+% 障碍物处理子模块
+\node[submod] (obs_fusion) at (-4.5, -5.0) {障碍物融合\\与分类};
+\node[improved] (threat_eval) at (0, -5.0) {威胁度评估\\（改进）};
+\node[improved] (st_bound) at (4.5, -5.0) {动态权重\\ST边界构建};
+
+% 路径速度规划
+\node[submod, minimum width=13cm, text width=12.5cm] (path_speed) at (0, -6.6) {路径-速度规划：路径QP $\rightarrow$ 速度QP $\rightarrow$ 轨迹耦合};
+
+% 输出层（框外最下方）
+\node[module, fill=outputpink, minimum width=13cm, text width=12.5cm] (output) at (0, -9.4) {ADCTrajectory（位置、速度、加速度、时间戳）};
+\node[font=\Large\bfseries] (output_title) at (0, -10.6) {输出层};
+
+% 箭头：输入→处理层框
+\draw[arrow] (routing.south) -- ++(0,-0.9);
+\draw[arrow] (perception.south) -- ++(0,-0.9);
+\draw[arrow] (prediction.south) -- ++(0,-0.9);
+\draw[arrow] (vehicle.south) -- ++(0,-0.9);
+
+% 箭头：内部
+\draw[arrow] (obs_fusion) -- (threat_eval);
+\draw[arrow] (threat_eval) -- (st_bound);
+
+% 箭头：处理层→输出层
+\draw[arrow] (path_speed.south) -- ++(0,-1.0) -- (output.north);
+
+\end{tikzpicture}

@@ -1,0 +1,58 @@
+% 路径与速度规划之间的单向信息传递与时空约束缺口
+\begin{tikzpicture}[scale=0.95, transform shape,
+    infobox/.style={rectangle, rounded corners=4pt, draw=deepblue, fill=lightblue!30,
+        minimum width=3.8cm, align=left, font=\small, inner sep=8pt},
+    recvbox/.style={rectangle, rounded corners=4pt, draw=deepblue, fill=bglight,
+        minimum width=3.8cm, align=left, font=\small, inner sep=8pt},
+    lostitem/.style={rectangle, rounded corners=2pt, draw=dangerred!70, fill=dangerred!8,
+        font=\small, inner sep=4pt},
+]
+
+% ===== Left: Path 阶段产生的决策信息 =====
+\node[infobox, minimum height=3.8cm] (pathbox) at (0, 0) {%
+    \textbf{Path 阶段产生的决策信息}\\[5pt]
+    \textcolor{deepblue}{\textbullet}~避让方向 $d_i$\\[3pt]
+    \textcolor{deepblue}{\textbullet}~横向边界 $[l^-(s),\,l^+(s)]$\\[3pt]
+    \textcolor{deepblue}{\textbullet}~时间前提 $t_{\mathrm{clear}}$\\[3pt]
+    \textcolor{deepblue}{\textbullet}~威胁度评估 $\theta_i$%
+};
+
+% ===== Right: Speed 阶段接收的信息 =====
+\node[recvbox, minimum height=3.0cm] (speedbox) at (11.5, 0) {%
+    \textbf{Speed 阶段接收的信息}\\[5pt]
+    \textcolor{deepblue}{\textbullet}\;$[l^-(s),\,l^+(s)]$\\[1pt]
+    {\footnotesize\textcolor{deepblue}{知道路径在哪里}}\\[6pt]
+    \textcolor{dangerred}{\texttimes}\;$d_i,\;t_{\mathrm{clear}},\;\theta_i$\\[1pt]
+    {\footnotesize\textcolor{dangerred}{不知道路径为什么在那里}}%
+};
+
+% ===== Middle: 传递瓶颈（漏斗形，内部干净） =====
+\coordinate (fTL) at (4.6, 1.9);
+\coordinate (fBL) at (4.6,-1.9);
+\coordinate (fTR) at (7.8, 0.55);
+\coordinate (fBR) at (7.8,-0.55);
+
+\fill[bglight, draw=deepblue!60, thick]
+    (fTL) -- (fTR) -- (fBR) -- (fBL) -- cycle;
+
+\node[font=\small\bfseries, deepblue!80] at (6.1, 2.3) {传递瓶颈};
+
+% 一根蓝色箭头从 pathbox 穿过漏斗到 speedbox
+\draw[deepblue, very thick, -Stealth] (pathbox.east) -- (speedbox.west)
+    node[midway, above, font=\small\bfseries, deepblue] {$[l^-(s),\,l^+(s)]$};
+
+% ===== 丢失的信息：漏斗上下方标注，箭头撞向漏斗壁 =====
+% 上方
+\node[lostitem] (ld) at (5.0, 3.2) {$d_i$\;避让方向};
+\node[lostitem] (lt) at (8.0, 3.2) {$t_{\mathrm{clear}}$\;时间前提};
+\draw[dangerred, thick, -|] (ld.south) -- ($(fTL)!0.2!(fTR)$)
+    node[pos=0.4, right, font=\small\bfseries, dangerred] {\texttimes};
+\draw[dangerred, thick, -|] (lt.south) -- ($(fTL)!0.7!(fTR)$)
+    node[pos=0.4, right, font=\small\bfseries, dangerred] {\texttimes};
+
+% 下方
+\node[lostitem] (lth) at (6.3, -3.2) {$\theta_i$\;威胁度评估};
+\draw[dangerred, thick, -|] (lth.north) -- ($(fBL)!0.4!(fBR)$)
+    node[pos=0.4, right, font=\small\bfseries, dangerred] {\texttimes};
+
+\end{tikzpicture}

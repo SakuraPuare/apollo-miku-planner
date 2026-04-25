@@ -1,0 +1,55 @@
+% 扫描线按 s_i^- 升序合并连通分量的过程
+\begin{tikzpicture}[scale=0.95, transform shape,
+    obs/.style={fill=dangerred!70, draw=dangerred, thick, rounded corners=1pt},
+    grp/.style={draw=deeppink, very thick, dashed, rounded corners=3pt},
+]
+
+% s 轴
+\draw[-Stealth, thick] (0,0) -- (14.5,0) node[right, font=\small] {$s$};
+\foreach \x/\lab in {0/0, 2/10, 4/20, 6/30, 8/40, 10/50, 12/60, 14/70}
+    \draw[thick] (\x,-0.1) -- (\x,0.1) node[below=0.1cm, font=\scriptsize] {\lab};
+
+% 六个障碍物的 [s^-, s^+] 区间（按 s^- 升序）
+% O1: [5, 15]  O2: [10, 22]  O3: [30, 38]  O4: [34, 44]  O5: [42, 50]  O6: [60, 68]
+\fill[obs] (1,0.6) rectangle (3,1.1);
+\node[white, font=\scriptsize\bfseries] at (2,0.85) {$O_1$};
+
+\fill[obs] (2,1.4) rectangle (4.4,1.9);
+\node[white, font=\scriptsize\bfseries] at (3.2,1.65) {$O_2$};
+
+\fill[obs] (6,0.6) rectangle (7.6,1.1);
+\node[white, font=\scriptsize\bfseries] at (6.8,0.85) {$O_3$};
+
+\fill[obs] (6.8,1.4) rectangle (8.8,1.9);
+\node[white, font=\scriptsize\bfseries] at (7.8,1.65) {$O_4$};
+
+\fill[obs] (8.4,0.6) rectangle (10,1.1);
+\node[white, font=\scriptsize\bfseries] at (9.2,0.85) {$O_5$};
+
+\fill[obs] (12,0.6) rectangle (13.6,1.1);
+\node[white, font=\scriptsize\bfseries] at (12.8,0.85) {$O_6$};
+
+% s_max 扫描线（当前最大上界）
+\draw[deepblue, very thick, densely dotted] (4.4,-0.3) -- (4.4,3.0);
+\node[deepblue, font=\scriptsize, anchor=south] at (4.4,3.0) {$s_{\max}=22$};
+
+\draw[deepblue, very thick, densely dotted] (10,-0.3) -- (10,3.0);
+\node[deepblue, font=\scriptsize, anchor=south] at (10,3.0) {$s_{\max}=50$};
+
+\draw[deepblue, very thick, densely dotted] (13.6,-0.3) -- (13.6,3.0);
+\node[deepblue, font=\scriptsize, anchor=south] at (13.6,3.0) {$s_{\max}=68$};
+
+% 三个连通分量分组框
+\draw[grp] (0.7,0.4) rectangle (4.7,2.1);
+\node[deeppink, font=\small\bfseries, anchor=south] at (2.7,2.1) {$C_1=\{O_1,O_2\}$};
+\node[deeppink!80, font=\scriptsize, anchor=north west] at (0.78,0.43) {$s_{\min}{=}5$};
+
+\draw[grp] (5.7,0.4) rectangle (10.3,2.1);
+\node[deeppink, font=\small\bfseries, anchor=south] at (8,2.1) {$C_2=\{O_3,O_4,O_5\}$};
+\node[deeppink!80, font=\scriptsize, anchor=north west] at (5.78,0.43) {$s_{\min}{=}30$};
+
+\draw[grp] (11.7,0.4) rectangle (13.9,2.1);
+\node[deeppink, font=\small\bfseries, anchor=south] at (12.8,2.1) {$C_3=\{O_6\}$};
+\node[deeppink!80, font=\scriptsize, anchor=north west] at (11.78,0.43) {$s_{\min}{=}60$};
+
+\end{tikzpicture}

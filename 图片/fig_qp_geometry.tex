@@ -1,0 +1,36 @@
+% 凸二次规划几何示意
+\begin{tikzpicture}[scale=1.0, transform shape]
+
+% 坐标轴
+\draw[->, thick] (-0.3,0) -- (7.2,0) node[right,font=\footnotesize] {$x_1$};
+\draw[->, thick] (0,-0.3) -- (0,5.7) node[above,font=\footnotesize] {$x_2$};
+
+% 可行域多边形（浅绿半透明）
+\fill[lightgreen, opacity=0.55]
+  (1.2,0.6) -- (5.6,0.9) -- (6.4,2.8) -- (4.8,4.6) -- (1.8,4.2) -- (0.8,2.4) -- cycle;
+\draw[deepblue, very thick]
+  (1.2,0.6) -- (5.6,0.9) -- (6.4,2.8) -- (4.8,4.6) -- (1.8,4.2) -- (0.8,2.4) -- cycle;
+
+\node[deepblue, font=\small\bfseries] at (3.2,3.5) {$\mathcal{F}$ 可行域};
+\node[deepblue, font=\footnotesize] at (6.3,0.25) {$a_i^\top x \leq b_i$};
+
+% 目标函数等高线（椭圆族）
+\foreach \r in {0.4, 0.85, 1.35, 1.9, 2.5, 3.1} {
+  \draw[deeppink!70, thick, rotate around={-18:(3.8,2.4)}]
+    (3.8,2.4) ellipse ({\r*1.3} and \r);
+}
+\node[deeppink!80!black, font=\footnotesize] at (0.6,4.9) {$\frac{1}{2}x^\top P x + q^\top x$ 等值线};
+
+% 无约束最小点
+\fill[deeppink] (3.8,2.4) circle (2.2pt);
+\node[deeppink, font=\footnotesize, above right=-1pt and -1pt] at (3.8,2.4) {$x^\star_{\text{uncon}}$};
+
+% 约束最优解（在可行域边界上）
+\fill[deepblue] (4.85,0.95) circle (3pt);
+\draw[deepblue, thick] (4.85,0.95) circle (6pt);
+\node[deepblue, font=\footnotesize\bfseries, below=2pt] at (4.85,0.75) {$x^\star$ 最优解};
+
+% 从无约束最优点到有约束最优点的短箭头
+\draw[->, thick, gray, dashed] (3.8,2.4) -- (4.75,1.05);
+
+\end{tikzpicture}

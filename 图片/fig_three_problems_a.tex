@@ -1,0 +1,36 @@
+% 问题一 安全裕度一刀切（子图 a）
+\begin{tikzpicture}[scale=0.95, transform shape]
+  % 统一边界框：与子图 b/c 对齐
+  \useasboundingbox (0,-1.9) rectangle (6.0,1.9);
+
+  % 道路
+  \fill[bglight] (0,-1.8) rectangle (6.0,1.8);
+  \draw[deepblue, thick] (0,-1.8) -- (6.0,-1.8);
+  \draw[deepblue, thick] (0, 1.8) -- (6.0, 1.8);
+  \draw[deepblue, dashed, thin] (0,0) -- (6.0,0);
+  \node[gray, font=\tiny, left] at (0,0) {$l{=}0$};
+
+  % 路锥（小三角，低威胁）
+  \fill[dangerred!70] (2.5,-0.15) -- (2.9,-0.15) -- (2.7,0.2) -- cycle;
+  \node[font=\scriptsize, dangerred!70!black, above] at (2.7,0.3) {路锥};
+
+  % 膨胀框（统一 δ=1.2m，和大车一样大）
+  \draw[dangerred!70, dashed, thick] (1.8,-0.9) rectangle (3.6,0.9);
+
+  % 垂直箭头标注膨胀距离
+  \draw[{Stealth}-{Stealth}, dangerred!70, thick] (3.9, 0.2) -- (3.9, 0.9);
+  \node[dangerred!70!black, font=\scriptsize, right] at (4.0, 0.55) {$\delta{=}1.2$m};
+  \draw[{Stealth}-{Stealth}, dangerred!70, thick] (3.9, -0.15) -- (3.9, -0.9);
+  \node[dangerred!70!black, font=\scriptsize, right] at (4.0, -0.52) {$\delta{=}1.2$m};
+
+  % 通行带被压缩标注（道路下方）
+  \draw[{Stealth}-{Stealth}, lightgreen!60!black, thick] (0.8, -0.9) -- (0.8, -1.8);
+  \node[font=\scriptsize, lightgreen!60!black, left] at (0.7, -1.35) {残余};
+
+  \draw[{Stealth}-{Stealth}, lightgreen!60!black, thick] (5.2, -0.9) -- (5.2, -1.8);
+  \node[font=\scriptsize, lightgreen!60!black, right] at (5.3, -1.35) {残余};
+
+  % 标注放到道路底部残余通道内（y∈[-1.8,-0.9]）
+  \node[font=\scriptsize\bfseries, lightgreen!60!black] at (3.0,-1.35) {通行带被过度压缩};
+
+\end{tikzpicture}

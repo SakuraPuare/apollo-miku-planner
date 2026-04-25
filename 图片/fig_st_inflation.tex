@@ -1,0 +1,74 @@
+% ST边界累积膨胀示意图
+\begin{tikzpicture}[scale=0.75, transform shape]
+  % ===== 左图：独立扩展 =====
+  \node[font=\small\bfseries] at (4, 7.5) {(a) 独立扩展（Apollo原始）};
+
+  % 坐标轴
+  \draw[-Stealth, thick] (0,0) -- (8.5,0) node[right, font=\footnotesize] {$t$};
+  \draw[-Stealth, thick] (0,0) -- (0,7) node[above, font=\footnotesize] {$s$};
+
+  % 障碍物1（实际）
+  \fill[dangerred!40] (0,1.5) rectangle (7.5,2.5);
+  \node[font=\tiny, dangerred] at (1.2, 2.0) {Obs 1};
+
+  % 障碍物1 扩展区域
+  \fill[dangerred!15] (0,0.5) rectangle (7.5,1.5);
+  \fill[dangerred!15] (0,2.5) rectangle (7.5,3.5);
+
+  % 障碍物2（实际）
+  \fill[lightorange!60] (0,3.8) rectangle (7.5,4.8);
+  \node[font=\tiny, lightorange!80!black] at (1.2, 4.3) {Obs 2};
+
+  % 障碍物2 扩展区域
+  \fill[lightorange!30] (0,2.8) rectangle (7.5,3.8);
+  \fill[lightorange!30] (0,4.8) rectangle (7.5,5.8);
+
+  % 障碍物3（实际）
+  \fill[deepblue!40] (0,6.0) rectangle (7.5,6.5);
+  \node[font=\tiny, deepblue] at (1.2, 6.25) {Obs 3};
+
+  % 障碍物3 扩展区域
+  \fill[deepblue!15] (0,5.0) rectangle (7.5,6.0);
+
+  % 重叠区域标注
+  \draw[very thick, deeppink, <->] (8.0, 2.5) -- (8.0, 3.5);
+  \node[deeppink, font=\tiny, right] at (8.0, 3.0) {重叠};
+
+  \draw[very thick, deeppink, <->] (8.0, 4.8) -- (8.0, 5.8);
+  \node[deeppink, font=\tiny, right] at (8.0, 5.3) {重叠};
+
+  % 扩展距离标注
+  \draw[{Stealth}-{Stealth}, thick, gray] (-0.6, 1.5) -- (-0.6, 0.5);
+  \node[gray, font=\tiny, left] at (-0.6, 1.0) {$d_{ext}$};
+
+  % ===== 右图：合并后 =====
+  \begin{scope}[xshift=11cm]
+    \node[font=\small\bfseries] at (4, 7.5) {(b) 合并后（改进方案）};
+
+    \draw[-Stealth, thick] (0,0) -- (8.5,0) node[right, font=\footnotesize] {$t$};
+    \draw[-Stealth, thick] (0,0) -- (0,7) node[above, font=\footnotesize] {$s$};
+
+    % 合并后的整体边界
+    \fill[dangerred!25] (0,0.5) rectangle (7.5,6.5);
+
+    % 实际障碍物
+    \fill[dangerred!50] (0,1.5) rectangle (7.5,2.5);
+    \fill[lightorange!70] (0,3.8) rectangle (7.5,4.8);
+    \fill[deepblue!50] (0,6.0) rectangle (7.5,6.5);
+
+    % 只在整体边界外扩展一次
+    \draw[very thick, lightgreen!70!black, dashed] (0,0.5) -- (7.5,0.5);
+    \draw[very thick, lightgreen!70!black, dashed] (0,6.5) -- (7.5,6.5);
+
+    % 标注
+    \draw[{Stealth}-{Stealth}, thick, lightgreen!70!black] (-0.6, 0.5) -- (-0.6, 6.5);
+    \node[lightgreen!70!black, font=\tiny, left, align=center] at (-0.6, 3.5) {合并区域\\仅外扩一次};
+
+    % 可行域标注
+    \fill[lightgreen!20] (0,0) rectangle (7.5,0.5);
+    \node[lightgreen!70!black, font=\tiny] at (3.8, 0.25) {可行域};
+  \end{scope}
+
+  % 箭头连接
+  \draw[-Stealth, ultra thick, deeppink] (9, 3.5) -- (10.5, 3.5) node[midway, above, font=\footnotesize\bfseries] {合并};
+\end{tikzpicture}

@@ -1,0 +1,55 @@
+% SL空间中障碍物投影与路径边界示意图
+\begin{tikzpicture}[scale=0.9, transform shape]
+    \fill[bglight] (0.1,-2.8) rectangle (10.5,2.8);
+    % 坐标轴
+    \draw[-{Stealth}, thick] (0,0) -- (11,0) node[right, font=\small\bfseries] {$s$};
+    \draw[-{Stealth}, thick] (0,-3.5) -- (0,3.5) node[above, font=\small\bfseries] {$l$};
+
+    % 道路背景
+
+    % 道路边界
+    \draw[thick, gray] (0,2.8) -- (10.5,2.8) node[right, font=\small] {$l_{road}^+$};
+    \draw[thick, gray] (0,-2.8) -- (10.5,-2.8) node[right, font=\small] {$l_{road}^-$};
+    \draw[dashed, gray!50] (0,0) -- (10.5,0);
+    \node[gray, font=\footnotesize] at (10.8, 0) {参考线};
+
+    % 障碍物A（右上方）
+    \fill[dangerred!30, draw=dangerred, thick, rounded corners=2pt] (2,0.3) rectangle (4.2,1.5);
+    \node[font=\small\bfseries] at (3.1,0.9) {$O_a$};
+
+    % 障碍物A安全裕度虚线
+    \draw[dangerred!60, dashed, thin] (2,-0.3) -- (4.2,-0.3);
+    \draw[dangerred!60, dashed, thin] (2,2.1) -- (4.2,2.1);
+    \draw[{Stealth}-{Stealth}, dangerred!60, thin] (4.4, 1.5) -- (4.4, 2.1);
+    \node[dangerred!70, font=\tiny, right] at (4.5, 1.8) {$\delta$};
+
+    % 障碍物B（左下方）
+    \fill[lightorange!50, draw=lightorange!80!black, thick, rounded corners=2pt] (5.5,-1.8) rectangle (8,-0.5);
+    \node[font=\small\bfseries] at (6.75,-1.15) {$O_b$};
+
+    % 障碍物B安全裕度虚线
+    \draw[lightorange!60, dashed, thin] (5.5,0.1) -- (8,0.1);
+    \draw[lightorange!60, dashed, thin] (5.5,-2.4) -- (8,-2.4);
+
+    % 路径上界 l+(s) — 对A取右绕
+    \draw[deepblue, very thick]
+        (0,2.8) -- (1.8,2.8) -- (2,-0.3) -- (4.2,-0.3) -- (4.4,2.8) -- (10.5,2.8);
+
+    % 路径下界 l-(s) — 对B取右绕
+    \draw[deepblue, very thick, dashed]
+        (0,-2.8) -- (5.3,-2.8) -- (5.5,-2.4) -- (8,-2.4) -- (8.2,-2.8) -- (10.5,-2.8);
+
+    % 标注 l+ 和 l-
+    \node[font=\small, deepblue] at (3.1, -0.7) {$l^+(s)$};
+    \node[font=\small, deepblue] at (6.75, -2.7) {$l^-(s)$};
+
+    % 通行带宽度标注
+    \fill[lightgreen!20] (4.6, -2.8) rectangle (5.2, 2.8);
+    \draw[{Stealth}-{Stealth}, thick, lightgreen!70!black] (4.9, 2.8) -- (4.9, -2.8);
+    \node[right, font=\small, lightgreen!70!black] at (5.0, 0) {$W(s)$};
+
+    % 规划路径
+    \draw[very thick, deeppink, -{Stealth}]
+        plot[smooth, tension=0.5] coordinates {(0.5, 0) (1.5, -0.2) (3, -0.8) (4.2, -0.5) (5.5, 0) (6.5, -2.6) (8, -2.6) (9.5, -1.5)};
+    \node[deeppink, font=\footnotesize\bfseries] at (9.5, -2.1) {规划路径 $l(s)$};
+\end{tikzpicture}

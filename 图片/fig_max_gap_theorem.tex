@@ -1,0 +1,115 @@
+% 引理1+定理1 几何图证（1D 横向数轴）
+\begin{tikzpicture}[scale=1.0, transform shape]
+
+% 障碍物位置设计: g₂ 为最大间隙
+% O₁@1.5, O₂@3.0, O₃@6.5, O₄@8.0 (中心)
+% 半宽 0.35, δ 扩展 0.55
+% l_road⁻=0, l_road⁺=9.5
+
+% === 上图: 排序后的障碍物横向投影 ===
+
+% 道路区域淡色背景（先画，避免盖住坐标轴）
+\fill[bglight] (0,-0.7) rectangle (9.5,0.7);
+
+% l 轴
+\draw[->, thick] (-0.5,0) -- (10.2,0) node[right,font=\footnotesize] {$l$};
+
+% 道路边界（垂直于 l 轴的竖线）
+\draw[deepblue, very thick] (0,-0.9) -- (0,0.9);
+\node[deepblue, font=\scriptsize, below] at (0,-0.95) {$l_{road}^-$};
+\draw[deepblue, very thick] (9.5,-0.9) -- (9.5,0.9);
+\node[deepblue, font=\scriptsize, below] at (9.5,-0.95) {$l_{road}^+$};
+
+% 4 个障碍物（按 u_i 排序）
+\fill[obsstatic] (1.15,-0.35) rectangle (1.85,0.35);
+\node[white, font=\scriptsize\bfseries] at (1.5,0) {$O_1$};
+
+\fill[obsstatic] (2.65,-0.35) rectangle (3.35,0.35);
+\node[white, font=\scriptsize\bfseries] at (3.0,0) {$O_2$};
+
+\fill[obsstatic] (6.15,-0.35) rectangle (6.85,0.35);
+\node[white, font=\scriptsize\bfseries] at (6.5,0) {$O_3$};
+
+\fill[obsstatic] (7.65,-0.35) rectangle (8.35,0.35);
+\node[white, font=\scriptsize\bfseries] at (8.0,0) {$O_4$};
+
+% u_i / v_i 膨胀区
+\draw[obsbuf, dashed] (0.95,-0.55) rectangle (2.05,0.55);
+\draw[obsbuf, dashed] (2.45,-0.55) rectangle (3.55,0.55);
+\draw[obsbuf, dashed] (5.95,-0.55) rectangle (7.05,0.55);
+\draw[obsbuf, dashed] (7.45,-0.55) rectangle (8.55,0.55);
+
+% u_i / v_i 标注（选择性标注避免拥挤）
+\node[deepblue, font=\tiny] at (0.95,0.75) {$u_1$};
+\node[deeppink, font=\tiny] at (2.05,0.75) {$v_1$};
+\node[deepblue, font=\tiny] at (2.45,0.75) {$u_2$};
+\node[deeppink, font=\tiny] at (3.55,0.75) {$v_2$};
+\node[deepblue, font=\tiny] at (5.95,0.75) {$u_3$};
+\node[deeppink, font=\tiny] at (7.05,0.75) {$v_3$};
+\node[deepblue, font=\tiny] at (7.45,0.75) {$u_4$};
+\node[deeppink, font=\tiny] at (8.55,0.75) {$v_4$};
+
+% 5 个间隙标注（在下方）
+% g₀ = u₁ - l_road⁻ = 0.95
+\draw[<->, thick, lightgreen!60!black] (0,-1.2) -- (0.95,-1.2);
+\node[font=\scriptsize, lightgreen!60!black] at (0.475,-1.5) {$g_0$};
+
+% g₁ = u₂ - v₁ = 0.40
+\draw[<->, thick, lightgreen!60!black] (2.05,-1.2) -- (2.45,-1.2);
+\node[font=\scriptsize, lightgreen!60!black] at (2.25,-1.5) {$g_1$};
+
+% g₂ = u₃ - v₂ = 2.40 ← 最大间隙
+\draw[<->, very thick, deeppink] (3.55,-1.2) -- (5.95,-1.2);
+\node[font=\small\bfseries, deeppink] at (4.75,-1.5) {$g_2^\star$};
+
+% g₃ = u₄ - v₃ = 0.40
+\draw[<->, thick, lightgreen!60!black] (7.05,-1.2) -- (7.45,-1.2);
+\node[font=\scriptsize, lightgreen!60!black] at (7.25,-1.5) {$g_3$};
+
+% g₄ = l_road⁺ - v₄ = 0.95
+\draw[<->, thick, lightgreen!60!black] (8.55,-1.2) -- (9.5,-1.2);
+\node[font=\scriptsize, lightgreen!60!black] at (9.025,-1.5) {$g_4$};
+
+% 最优分割线
+\draw[deeppink, thick, dashed] (4.75,-0.9) -- (4.75,0.9);
+
+\node[font=\scriptsize] at (4.75,-1.9) {$k{=}4$ 个障碍物，$k{+}1{=}5$ 个候选间隙，$g_2^\star$ 最大};
+
+% === 下图: 决策向量 ===
+\begin{scope}[shift={(0,-3.8)}]
+
+  % R 群背景
+  \fill[lightgreen!20] (0,-0.6) rectangle (4.75,0.6);
+  % L 群背景
+  \fill[improvedpink!25] (4.75,-0.6) rectangle (9.5,0.6);
+
+  % 4 个障碍物
+  \fill[obsstatic] (1.15,-0.35) rectangle (1.85,0.35);
+  \node[white, font=\scriptsize\bfseries] at (1.5,0) {$O_1$};
+  \node[deepblue, font=\scriptsize\bfseries] at (1.5,-0.65) {$d_1{=}R$};
+
+  \fill[obsstatic] (2.65,-0.35) rectangle (3.35,0.35);
+  \node[white, font=\scriptsize\bfseries] at (3.0,0) {$O_2$};
+  \node[deepblue, font=\scriptsize\bfseries] at (3.0,-0.65) {$d_2{=}R$};
+
+  \fill[obsstatic] (6.15,-0.35) rectangle (6.85,0.35);
+  \node[white, font=\scriptsize\bfseries] at (6.5,0) {$O_3$};
+  \node[deeppink, font=\scriptsize\bfseries] at (6.5,-0.65) {$d_3{=}L$};
+
+  \fill[obsstatic] (7.65,-0.35) rectangle (8.35,0.35);
+  \node[white, font=\scriptsize\bfseries] at (8.0,0) {$O_4$};
+  \node[deeppink, font=\scriptsize\bfseries] at (8.0,-0.65) {$d_4{=}L$};
+
+  % 分割线
+  \draw[deeppink, thick, dashed] (4.75,-0.8) -- (4.75,0.8);
+  \node[deeppink, font=\scriptsize] at (4.75,1.0) {$p^\star{=}2$};
+
+  % 群标注
+  \node[deepblue, font=\scriptsize] at (2.25,-1.1) {$\mathcal{R}{=}\{O_1,O_2\}$};
+  \node[deeppink, font=\scriptsize] at (7.25,-1.1) {$\mathcal{L}{=}\{O_3,O_4\}$};
+
+  % 连续性说明
+  \node[font=\scriptsize] at (4.75,-1.5) {$\mathbf{d}^\star{=}(R,R,L,L)$，排序中连续，无交错};
+\end{scope}
+
+\end{tikzpicture}

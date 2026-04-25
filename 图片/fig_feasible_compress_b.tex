@@ -1,0 +1,51 @@
+% 4 个障碍物 通行带狭窄（子图 b）
+\begin{tikzpicture}[scale=0.7, transform shape]
+  \draw[-Stealth, thick] (0,-2.5) -- (8.5,-2.5) node[right, font=\footnotesize] {$s$};
+  \draw[-Stealth, thick] (0,-2.5) -- (0,2.5) node[above, font=\footnotesize] {$l$};
+
+  \draw[gray, thick] (0,1.875) -- (8,1.875);
+  \draw[gray, thick] (0,-1.875) -- (8,-1.875);
+  \draw[gray, dashed] (0,0) -- (8,0);
+
+  \begin{scope}[on background layer]
+    \fill[bglight] (0,-1.875) rectangle (8,1.875);
+  \end{scope}
+
+  % O1（上方靠边）y=[0.5, 1.1], s=[1, 2.5]
+  \fill[dangerred!70, draw=dangerred, thick] (1,0.5) rectangle (2.5,1.1);
+  \node[white, font=\tiny\bfseries] at (1.75,0.8) {$O_1$};
+
+  % O2（下方靠边）y=[-1.0, -0.4], s=[2.5, 4]
+  \fill[dangerred!70, draw=dangerred, thick] (2.5,-1.0) rectangle (4,-0.4);
+  \node[white, font=\tiny\bfseries] at (3.25,-0.7) {$O_2$};
+
+  % O3（上方靠边）y=[0.4, 0.9], s=[4.5, 6]
+  \fill[dangerred!70, draw=dangerred, thick] (4.5,0.4) rectangle (6,0.9);
+  \node[white, font=\tiny\bfseries] at (5.25,0.65) {$O_3$};
+
+  % O4（下方靠边）y=[-0.8, -0.2], s=[6, 7.5]
+  \fill[dangerred!70, draw=dangerred, thick] (6,-0.8) rectangle (7.5,-0.2);
+  \node[white, font=\tiny\bfseries] at (6.75,-0.5) {$O_4$};
+
+  % 上界 l+(s)：O1右绕压到0.1, O3右绕压到0.0
+  \draw[deeppink, very thick]
+    (0,1.875) -- (0.8,1.875) -- (0.8,0.1) -- (2.7,0.1)
+    -- (2.7,1.875) -- (4.3,1.875) -- (4.3,0.0) -- (6.2,0.0)
+    -- (6.2,1.875) -- (8,1.875);
+
+  % 下界 l-(s)：O2左绕抬到0.0, O4左绕抬到0.2
+  \draw[deepblue, very thick]
+    (0,-1.875) -- (2.3,-1.875) -- (2.3,0.0) -- (4.2,0.0)
+    -- (4.2,-1.875) -- (5.8,-1.875) -- (5.8,0.2) -- (7.7,0.2)
+    -- (7.7,-1.875) -- (8,-1.875);
+
+  % 窄处标注
+  \draw[lightorange, ultra thick] (2.5,0.0) -- (2.5,0.1);
+  \node[lightorange!80!black, font=\tiny\bfseries, anchor=west] at (2.6,0.05) {窄};
+  \draw[lightorange, ultra thick] (6,0.0) -- (6,0.2);
+  \node[lightorange!80!black, font=\tiny\bfseries, anchor=west] at (6.1,0.1) {窄};
+
+  \node[deeppink, font=\tiny] at (0.5, 2.1) {$l^+(s)$};
+  \node[deepblue, font=\tiny] at (7.5, -2.1) {$l^-(s)$};
+  \node[lightorange!80!black, font=\footnotesize\bfseries] at (4,-1.5) {多次收缩 通行带退化};
+\end{tikzpicture}

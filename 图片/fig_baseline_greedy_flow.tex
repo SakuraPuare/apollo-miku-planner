@@ -1,0 +1,33 @@
+% Apollo Baseline 贪心策略流程
+\begin{tikzpicture}[scale=0.95, transform shape,
+    box/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue, minimum width=5.0cm, minimum height=0.9cm, font=\small, align=center},
+    dec/.style={diamond, draw=deepblue, fill=inputyellow, aspect=2.2, inner sep=2pt, font=\small, align=center},
+    bad/.style={rectangle, rounded corners=3pt, draw=dangerred, fill=dangerred!25, minimum width=4.2cm, minimum height=0.9cm, font=\small, align=center},
+    arr/.style={-Stealth, thick, deepblue},
+    arrbad/.style={-Stealth, thick, dangerred},
+]
+
+\node[box] (init) at (0,8.4) {初始化 $l^{\pm}(s)=l^{\pm}_{road}(s)$};
+\node[box] (loop) at (0,6.8) {遍历活跃障碍物 $O_i$};
+\node[dec]  (side) at (0,4.8) {仅单侧可通行?};
+\node[box] (greedy) at (5.5,4.8) {比较 $\frac{l_i^-+l_i^+}{2}$ 与 $l_{last\_nudge}$};
+\node[box] (assign) at (0,2.8) {指派 $d_i \in \{L,R\}$，更新 $l^{\pm}$};
+\node[dec]  (blk) at (0,0.8) {$l^+ < l^-$?};
+\node[bad] (trim) at (5.5,0.8) {\texttt{TrimPathBounds} 截断};
+\node[bad] (fb) at (5.5,-0.8) {FallbackPath 停车};
+\node[box] (more) at (0,-0.8) {下一个 $O_i$};
+\node[rectangle, rounded corners=3pt, draw=deeppink, fill=outputpink, minimum width=5.0cm, minimum height=0.9cm, font=\small\bfseries, align=center] (out) at (0,-2.6) {输出 path\_boundary};
+
+\draw[arr] (init) -- (loop);
+\draw[arr] (loop) -- (side);
+\draw[arr] (side.east) -- node[above, font=\scriptsize] {否} (greedy.west);
+\draw[arr] (greedy.south) |- (assign.east);
+\draw[arr] (side.south) -- node[right, font=\scriptsize] {是，直接赋可通侧} (assign.north);
+\draw[arr] (assign) -- (blk);
+\draw[arrbad] (blk.east) -- node[above, font=\scriptsize] {是} (trim.west);
+\draw[arrbad] (trim) -- (fb);
+\draw[arr] (blk.west) -| node[above left=0.05cm, font=\scriptsize] {否} ++(-2.5,0) |- (more.west);
+\draw[arr] (more.west) -- ++(-2.5,0) |- (loop.west);
+\draw[arr] (more) -- node[right, font=\scriptsize] {遍历结束} (out);
+
+\end{tikzpicture}

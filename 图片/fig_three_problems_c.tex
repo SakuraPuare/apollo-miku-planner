@@ -1,0 +1,32 @@
+% 问题三 动态障碍物排除（子图 c）
+\begin{tikzpicture}[scale=0.95, transform shape]
+  % 统一边界框：与子图 a/b 对齐
+  \useasboundingbox (0,-1.9) rectangle (6.0,1.9);
+
+  % 道路
+  \fill[bglight] (0,-1.8) rectangle (6.0,1.8);
+  \draw[deepblue, thick] (0,-1.8) -- (6.0,-1.8);
+  \draw[deepblue, thick] (0, 1.8) -- (6.0, 1.8);
+  \draw[deepblue, dashed, thin] (0,0) -- (6.0,0);
+
+  % 行人（动态障碍物）
+  \fill[obsdyn] (3.5,0.1) rectangle (4.0,0.7);
+  \draw[-Stealth, thick, dangerred] (3.75,0.7) -- (3.75,1.4);
+  \node[font=\scriptsize, dangerred!70!black, right] at (4.1,1.15) {行人 1.2m/s};
+
+  % Path阶段排除标记：× 叠在行人上，文字移到道路内右上方
+  \node[dangerred, font=\Large, opacity=0.85] at (3.75,0.4) {\textbf{$\times$}};
+  \node[font=\scriptsize, dangerred!80!black, right] at (4.1,0.4) {Path阶段排除};
+
+  % 自车
+  \fill[deepblue] (0.6,-0.35) rectangle (1.2,0.35);
+  \node[deepblue, font=\tiny, below] at (0.9,-0.4) {自车};
+  \draw[-Stealth, thick, deepblue] (1.3,0) -- (3.2,0);
+  \node[font=\scriptsize, deepblue, above] at (2.25,0.05) {8 m/s};
+
+  % Speed阶段才发现标注
+  \draw[dangerred, very thick, dashed] (3.2,-0.6) rectangle (4.3,0.9);
+  \node[dangerred, font=\scriptsize\bfseries] at (2.2,-1.25) {Speed阶段才发现};
+  \draw[dangerred, thin] (3.0,-1.15) -- (3.2,-0.7);
+
+\end{tikzpicture}

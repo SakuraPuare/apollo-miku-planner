@@ -1,0 +1,64 @@
+% Planning模块总体架构图
+\begin{tikzpicture}[
+    node distance=0.9cm,
+    scale=1.0, transform shape,
+    manager/.style={rectangle, draw=deepblue, minimum width=3.5cm, minimum height=1.2cm, fill=deepblue!60, font=\normalsize\bfseries, align=center, text width=3.3cm, text=white},
+    task/.style={rectangle, draw=deepblue, minimum width=3.8cm, minimum height=1.2cm, fill=lightblue, font=\normalsize, align=center, text width=3.6cm},
+    improved/.style={rectangle, draw=deeppink, minimum width=3.8cm, minimum height=1.2cm, fill=improvedpink, font=\normalsize, align=center, text width=3.6cm},
+    final/.style={rectangle, draw=deepblue, minimum width=5cm, minimum height=1.2cm, fill=outputpink, font=\normalsize\bfseries, align=center, text width=4.8cm},
+    arrow/.style={thick, -Stealth, deepblue}
+]
+
+% 标题
+\node[font=\Large\bfseries] (title) at (0, 2) {Planning 模块总体架构};
+
+% 管理层
+\node[manager] (scenario) at (-5.2, 0) {Scenario\\Manager};
+\node[manager] (stage) at (0, 0) {Stage\\Manager};
+\node[manager] (task_runner) at (5.2, 0) {Task\\Runner};
+
+% 管理层标签
+\node[font=\small, below=0.15cm of scenario] {场景识别切换};
+\node[font=\small, below=0.15cm of stage] {阶段状态管理};
+\node[font=\small, below=0.15cm of task_runner] {任务执行调度};
+
+% 箭头 - 管理层
+\draw[arrow] (scenario) -- (stage);
+\draw[arrow] (stage) -- (task_runner);
+
+% 分隔线
+\draw[thick, dashed, deepblue] (-8, -2) -- (8, -2);
+\node[font=\large\bfseries, color=deepblue] at (0, -2.5) {核心Task模块};
+
+% 左列 - 路径相关
+\node[task] (ref_provider) at (-4, -4) {Reference Line\\Provider};
+\node[task] (path_decider) at (-4, -6) {Path Decider};
+\node[task] (path_optimizer) at (-4, -8) {Piecewise Jerk\\Path Optimizer};
+
+% 右列 - 速度相关
+\node[task] (path_bounds) at (4, -4) {Path Bounds\\Decider};
+\node[improved] (speed_bounds) at (4, -6) {Speed Bounds\\Decider（改进）};
+\node[task] (speed_optimizer) at (4, -8) {Piecewise Jerk\\Speed Optimizer};
+
+% 改进标记
+\node[font=\small\bfseries, color=deeppink] at (7.5, -6) {$\leftarrow$ 改进重点};
+
+% 最终输出
+\node[final] (stitcher) at (0, -10) {Trajectory Stitcher};
+
+% 箭头 - Task流程
+\draw[arrow] (ref_provider) -- (path_decider);
+\draw[arrow] (path_decider) -- (path_optimizer);
+\draw[arrow] (path_bounds) -- (speed_bounds);
+\draw[arrow] (speed_bounds) -- (speed_optimizer);
+
+% 汇聚箭头
+\draw[arrow] (path_optimizer.south) -- ++(0, -0.3) -| ([xshift=-0.7cm]stitcher.north);
+\draw[arrow] (speed_optimizer.south) -- ++(0, -0.3) -| ([xshift=0.7cm]stitcher.north);
+
+% 外框
+\begin{scope}[on background layer]
+\node[rectangle, draw=deepblue, dashed, inner sep=0.6cm, fit=(title)(scenario)(stage)(task_runner)(ref_provider)(path_bounds)(path_optimizer)(speed_optimizer)(stitcher), fill=bglight] {};
+\end{scope}
+
+\end{tikzpicture}

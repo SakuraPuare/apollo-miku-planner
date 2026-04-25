@@ -1,0 +1,25 @@
+% 问题二 独立决策矛盾（子图 b）
+\begin{tikzpicture}[scale=0.95, transform shape]
+  % 统一边界框：与子图 a/c 对齐
+  \useasboundingbox (0,-1.9) rectangle (6.0,1.9);
+
+  \fill[bglight] (0,-1.6) rectangle (6.0,1.6);
+  \draw[deepblue, thick] (0,-1.6) -- (6.0,-1.6);
+  \draw[deepblue, thick] (0, 1.6) -- (6.0, 1.6);
+  \draw[deepblue, dashed, thin] (0,0) -- (6.0,0);
+
+  \fill[obsstatic] (1.2,0.55) rectangle (2.4,1.35);
+  \node[white, font=\footnotesize\bfseries] at (1.8,0.95) {$O_a$};
+
+  \fill[obsstatic] (2.9,-1.35) rectangle (4.1,-0.55);
+  \node[white, font=\footnotesize\bfseries] at (3.5,-0.95) {$O_b$};
+
+  \draw[deepblue, very thick] (0.3,0.3) -- (5.8,0.3);
+  \node[deepblue, font=\scriptsize, right] at (5.3,0.5) {$l^+$};
+
+  \draw[deepblue, very thick] (0.3,-0.3) -- (5.8,-0.3);
+  \node[deepblue, font=\scriptsize, right] at (5.3,-0.5) {$l^-$};
+
+  \fill[dangerred!30, opacity=0.6] (0.3,-0.3) rectangle (5.8,0.3);
+  \node[dangerred!80!black, font=\scriptsize\bfseries] at (3.0,0) {$W(s)<W_{\text{ego}}$};
+\end{tikzpicture}

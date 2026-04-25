@@ -1,0 +1,54 @@
+% 凸 QP 几何解释 —— 3D 碗型直觉图（使用 figures.tex 统一调色板）
+\begin{tikzpicture}
+\begin{axis}[
+    view={-35}{45},
+    width=9cm, height=8cm,
+    grid=major,
+    xlabel={$x_1$}, ylabel={$x_2$}, zlabel={$f(x)$},
+    xmin=-1, xmax=6, ymin=-1, ymax=6, zmin=0, zmax=25,
+    axis lines=center,
+    axis on top,
+    ticks=none,
+    colormap={bluepink}{color=(skyblue) color=(deeppink!40)},
+]
+
+% 1. 目标函数曲面（抛物面 bowl）
+\addplot3[
+    surf,
+    domain=-0.5:5.5, domain y=-0.5:5.5,
+    samples=32,
+    opacity=0.55,
+    faceted color=black!20,
+    z buffer=sort
+] {1.2*(x-2)^2 + 1.2*(y-2)^2};
+
+% 2. 底面可行域
+\addplot3[
+    fill=lightgreen, opacity=0.65, draw=deepblue, thick,
+] coordinates {
+    (3.5, 4.5, 0)
+    (5.5, 5.0, 0)
+    (5.0, 2.5, 0)
+    (3.5, 2.0, 0)
+    (3.5, 4.5, 0)
+};
+\node[deepblue, font=\small\bfseries] at (axis cs:4.5, 3.8, 0) {$\mathcal{F}$};
+
+% 3. 无约束最优点（碗底）
+\addplot3[mark=*, mark size=2.5pt, color=deeppink] coordinates {(2, 2, 0)};
+\node[deeppink, left=2pt, font=\scriptsize] at (axis cs:2, 2, 0) {$x^\star_{\text{uncon}}$};
+
+% 4. 约束最优解
+\addplot3[mark=*, mark size=2.5pt, color=deepblue] coordinates {(3.5, 2.0, 2.7)};
+\addplot3[mark=o, mark size=5pt, color=deepblue, thick] coordinates {(3.5, 2.0, 2.7)};
+\node[deepblue, right=3pt, font=\scriptsize\bfseries] at (axis cs:3.5, 2.0, 2.7) {$x^\star$};
+
+% 底面投影点
+\addplot3[mark=*, mark size=1.5pt, color=deepblue!70] coordinates {(3.5, 2.0, 0)};
+
+% 5. 辅助线
+\addplot3[dashed, thick, gray] coordinates {(3.5, 2.0, 0) (3.5, 2.0, 2.7)};
+\addplot3[->, dashed, thick, deeppink] coordinates {(2, 2, 0) (3.3, 2.0, 0)};
+
+\end{axis}
+\end{tikzpicture}

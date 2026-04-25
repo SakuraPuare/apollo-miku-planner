@@ -1,0 +1,76 @@
+% Apollo平台总体架构图
+\begin{tikzpicture}[
+    >=Stealth,
+    node distance=1.5cm and 2cm,
+    sensor/.style={cylinder, shape border rotate=90, aspect=0.25, draw=deepblue, fill=inputyellow, thick, minimum height=1.2cm, minimum width=1.8cm, align=center, font=\small},
+    module/.style={rectangle, rounded corners, draw=deepblue, fill=lightblue, thick, minimum width=3cm, minimum height=1.2cm, align=center, font=\small},
+    highlight/.style={rectangle, rounded corners, draw=deeppink, fill=improvedpink, thick, minimum width=3cm, minimum height=1.2cm, align=center, font=\small},
+    hardware/.style={rectangle, rounded corners, draw=deepblue, fill=lightgreen, thick, minimum width=2cm, minimum height=1cm, align=center, font=\small},
+    cyberbox/.style={draw=deepblue, dashed, thick, rounded corners=10pt, inner sep=20pt}
+]
+
+% ================= Layer 1: 信息采集 (y=0) =================
+\node (lidar)  [sensor] at (0, 0)     {激光雷达\\LiDAR};
+\node (camera) [sensor] at (2.4, 0)   {摄像头\\Camera};
+\node (radar)  [sensor] at (4.8, 0)   {毫米波雷达\\Radar};
+\node (gps)    [sensor] at (8.4, 0)   {GPS / IMU};
+\node (hdmap)  [sensor] at (10.8, 0)  {高精地图\\HD Map};
+
+% ================= Layer 2: 环境理解 (y=-2.8) =================
+\node (perception)   [module] at (2.4, -2.8)  {感知\\Perception};
+\node (localization) [module] at (9.6, -2.8)  {定位\\Localization};
+
+% ================= Layer 3: 意图与路线 (y=-5.2) =================
+\node (prediction) [module] at (2.4, -5.2)  {预测\\Prediction};
+\node (routing)    [module] at (9.6, -5.2)  {路由\\Routing};
+
+% ================= Layer 4: 核心大脑 (y=-7.6) =================
+\node (planning) [highlight] at (6.0, -7.6) {规划\\Planning};
+
+% ================= Layer 5: 动作下达 (y=-9.8) =================
+\node (control) [module] at (6.0, -9.8) {控制\\Control};
+
+% ================= Layer 6: 最终执行 (y=-12.0) =================
+\node (steering) [hardware] at (3.2, -12.0)  {转向\\Steering};
+\node (throttle) [hardware] at (6.0, -12.0)  {油门\\Throttle};
+\node (brake)    [hardware] at (8.8, -12.0)  {制动\\Brake};
+
+% ================= Cyber RT =================
+\begin{scope}[on background layer]
+    \node (cyber) [cyberbox, fit=(perception) (localization) (prediction) (routing) (planning) (control)] {};
+    \node [above left, text=deepblue, font=\bfseries] at (cyber.south east) {Cyber RT 通信框架};
+\end{scope}
+
+% ================= 数据流向 =================
+% 1. 传感器 -> 环境理解
+\draw [->, thick] (lidar.south) |- ([yshift=0.5cm]perception.north) -- (perception.north);
+\draw [->, thick] (camera.south) -- (perception.north);
+\draw [->, thick] (radar.south) |- ([yshift=0.5cm]perception.north) -- (perception.north);
+\draw [->, thick] (gps.south) |- ([yshift=0.5cm]localization.north) -- (localization.north);
+\draw [->, thick] (hdmap.south) |- ([yshift=0.5cm]localization.north) -- (localization.north);
+
+% HD Map -> Routing
+\draw [->, thick, deepblue] (hdmap.east) -- ++(0.5,0) |- (routing.east) node[near end, above, font=\scriptsize, text=black] {全局路网};
+
+% 2. 环境理解 -> 意图与路线
+\draw [->, thick] (perception.south) -- (prediction.north);
+\draw [->, thick] (perception.south east) -- (routing.north west) node[midway, above right, font=\scriptsize] {规避路况};
+\draw [->, thick] (localization.south west) -- (prediction.north east) node[midway, above left, font=\scriptsize] {本车位置};
+\draw [->, thick] (localization.south) -- (routing.north);
+
+% 3. 意图与路线 -> 规划
+\draw [->, thick] (prediction.south) -- (planning.north west);
+\draw [->, thick] (routing.south) -- (planning.north east);
+
+% 4. 规划 -> 控制
+\draw [->, thick, deeppink] (planning.south) -- (control.north) node[midway, left, font=\scriptsize, text=black] {轨迹指令};
+
+% 5. 定位 -> 控制
+\draw [->, thick, dashed, deepblue!70] (localization.west) -- ++(-0.2,0) |- (control.east) node[near end, above, font=\scriptsize, text=black] {极低延迟位姿};
+
+% 6. 控制 -> 车辆执行
+\draw [->, thick] (control.south) -- (throttle.north);
+\draw [->, thick] (control.south west) -- (steering.north);
+\draw [->, thick] (control.south east) -- (brake.north);
+
+\end{tikzpicture}

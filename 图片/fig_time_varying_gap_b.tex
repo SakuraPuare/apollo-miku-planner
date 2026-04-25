@@ -1,0 +1,50 @@
+% 时变方法 τ=1.25s → 行人已移开（子图 b）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % 道路
+  \fill[bglight] (-0.5,-2.3) rectangle (8.5,2.3);
+  \draw[gray, thick] (-0.5, 1.875) -- (8.5, 1.875);
+  \draw[gray, thick] (-0.5,-1.875) -- (8.5,-1.875);
+  \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+  \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+  % 行人 t=0 位置（灰色虚影）
+  \fill[gray!20] (3.5,-0.25) rectangle (4.5,0.25);
+  \node[gray, font=\scriptsize] at (4.0,0) {$t{=}0$};
+
+  % 行人 τ=1.25s 位置（已上移到 l=1.5）y=[1.25, 1.75]
+  \fill[lightorange, draw=lightorange!80!black, thick] (3.5,1.25) rectangle (4.5,1.75);
+  \node[font=\scriptsize\bfseries] at (4.0,1.5) {行人};
+
+  % 移动轨迹虚线
+  \draw[gray, dashed, thin] (4.0,0.25) -- (4.0,1.25);
+
+  % 膨胀 δ=1.2（基于 τ 时刻位置）
+  % 行人: (3.5,1.25)~(4.5,1.75), +1.2 → (2.3,0.05)~(5.7,1.875 clamped)
+  \draw[dangerred!60, dashed, thick] (2.3,0.05) rectangle (5.7,1.875);
+
+  % 上界 l+(s)：压到膨胀下缘 -0.05；两侧道路段略内缩 0.08
+  \draw[deeppink, very thick]
+    (-0.5, 1.80) -- (2.1, 1.80) -- (2.1, -0.05) -- (5.9, -0.05) -- (5.9, 1.80) -- (8.5, 1.80);
+  \node[deeppink, font=\scriptsize] at (7.5, 1.5) {$l^+(s)$};
+
+  % 下界 l-(s)：贴近道路下界但内缩 0.08
+  \draw[deepblue, very thick, dashed]
+    (-0.5,-1.80) -- (8.5,-1.80);
+  \node[deepblue, font=\scriptsize, left] at (-0.6,-1.80) {$l^-(s)$};
+
+  % 通行带（下方）
+  \fill[lightgreen, opacity=0.25] (-0.5,-1.875) rectangle (8.5,-0.05);
+
+  % 间隙标注
+  \draw[lightgreen!60!black, thick, {Stealth}-{Stealth}] (6.5,-1.875) -- (6.5,-0.05);
+  \node[lightgreen!60!black, font=\scriptsize, anchor=west] at (6.6,-0.9) {$g_0{=}1.93$m};
+  \node[lightgreen!60!black, font=\scriptsize, anchor=west] at (6.6,-1.35) {$> W_{ego}$};
+
+  % 自车轨迹（无 fill）
+  \draw[deepblue, very thick, -{Stealth}]
+    plot[smooth, tension=0.55] coordinates
+      {(0.5,0) (1.5,-0.3) (2.5,-0.8) (4.0,-1.0) (5.5,-0.8) (6.5,-0.3) (7.5,0)};
+  \node[deepblue, font=\scriptsize] at (4.0,-1.4) {规划轨迹};
+
+  \node[lightgreen!60!black, font=\small\bfseries] at (4.0,-2.1) {$t{=}\tau{=}1.25$s，通行};
+\end{tikzpicture}

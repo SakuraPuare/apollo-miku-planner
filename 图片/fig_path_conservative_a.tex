@@ -1,0 +1,42 @@
+% 子图(a)：独立决策，矛盾避让 → BLOCKED
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % 道路背景
+  \fill[bglight] (-0.5,-2.5) rectangle (8.5,2.5);
+  \draw[gray, thick] (-0.5, 2.5) -- (8.5, 2.5);
+  \draw[gray, thick] (-0.5,-2.5) -- (8.5,-2.5);
+  \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+  \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+  % O_a（上方）
+  \fill[dangerred!70, draw=dangerred, thick] (3.2, 0.4) rectangle (4.8, 0.8);
+  \node[font=\scriptsize, white] at (4.0, 0.6) {$O_a$};
+
+  % O_b（下方）
+  \fill[dangerred!70, draw=dangerred, thick] (3.2,-0.8) rectangle (4.8,-0.4);
+  \node[font=\scriptsize, white] at (4.0,-0.6) {$O_b$};
+
+  % 膨胀虚线 δ=0.6
+  \draw[dangerred!60, dashed, thick] (2.6,-0.2) rectangle (5.4, 1.4);
+  \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5, 1.1) {$O_a{+}\delta$};
+  \draw[dangerred!60, dashed, thick] (2.6,-1.4) rectangle (5.4, 0.2);
+  \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5,-1.1) {$O_b{+}\delta$};
+
+  % 上界 l+(s)：右绕 O_a
+  \draw[deeppink, very thick]
+    (-0.5, 2.5) -- (2.4, 2.5) -- (2.4, -0.3) -- (5.6, -0.3) -- (5.6, 2.5) -- (8.5, 2.5);
+  \node[deeppink, font=\scriptsize] at (7.5, 2.1) {$l^+(s)$};
+
+  % 下界 l-(s)：左绕 O_b
+  \draw[deepblue, very thick]
+    (-0.5,-2.5) -- (2.4,-2.5) -- (2.4, 0.3) -- (5.6, 0.3) -- (5.6,-2.5) -- (8.5,-2.5);
+  \node[deepblue, font=\scriptsize] at (7.5,-2.1) {$l^-(s)$};
+
+  % 矛盾标注
+  \draw[dangerred, thick, {Stealth}-{Stealth}] (6.5,-0.3) -- (6.5, 0.3);
+  \node[dangerred, font=\scriptsize, anchor=west] at (6.6, 0) {$l^+ < l^-$};
+
+  % BLOCKED 判定
+  \node[draw=dangerred, fill=dangerred!15, font=\scriptsize,
+        rounded corners=3pt, align=center] at (4.0,-2.1)
+    {$l^+ < l^-$ $\Rightarrow$ \textbf{BLOCKED}};
+\end{tikzpicture}

@@ -1,0 +1,52 @@
+% 时间有效性约束在ST图中的几何表示
+\begin{tikzpicture}[scale=0.9, transform shape]
+    % 坐标轴
+    \draw[->, thick] (0,0) -- (9.5,0) node[right, font=\small\bfseries] {$t$/s};
+    \draw[->, thick] (0,0) -- (0,7.5) node[above, font=\small\bfseries] {$s$/m};
+
+    % 网格
+    \draw[gray!15, very thin] (0,0) grid[step=1] (9,7);
+
+    % 刻度
+    \foreach \t in {1,...,8} {
+        \draw (\t, -0.1) -- (\t, 0.1);
+        \node[below, font=\footnotesize] at (\t, -0.1) {\t};
+    }
+    \foreach \s in {1,...,7} {
+        \draw (-0.1, \s) -- (0.1, \s);
+        \node[left, font=\footnotesize] at (-0.1, \s) {\pgfmathparse{int(\s*5)}\pgfmathresult};
+    }
+
+    % 原有ST上界（来自其他障碍物）
+    \draw[deepblue!60, thick, dashed] (0,6.2) -- (9,6.2);
+    \node[deepblue!60, font=\small, right] at (9.1, 6.2) {原有$s_j^{ub}$};
+
+    % 新增禁止区域（红色填充）
+    \fill[dangerred!15] (0,4.0) rectangle (4.8,7);
+    \node[font=\small, dangerred!70!black] at (2.4, 5.5) {禁止区域};
+
+    % 新约束线
+    \draw[dangerred, very thick] (0,4.0) -- (4.8,4.0);
+    \draw[dangerred, thick, dashed] (4.8,4.0) -- (4.8,0);
+
+    % 约束点
+    \filldraw[dangerred] (4.8,4.0) circle (3.5pt);
+    \node[dangerred, font=\small\bfseries, above right] at (4.9, 4.0) {$(\tau_k, s_k)$};
+
+    % 有效上界（绿色粗线）
+    \draw[lightgreen!70!black, very thick] (0,4.0) -- (4.8,4.0) -- (4.8,6.2) -- (9,6.2);
+    \node[font=\small, lightgreen!70!black, above] at (7, 6.3) {有效$s_j^{ub}$};
+
+    % 速度曲线（全程停留在禁止区域之外：τ_k 之前贴边抵达 s_k，之后再爬升）
+    \draw[black, thick, smooth, tension=0.7]
+        plot[smooth] coordinates {(0,0) (1,1.5) (2,2.7) (3,3.45) (3.8,3.82) (4.5,3.95) (4.8,4.0) (5.2,4.15) (6,4.9) (7,5.7) (8,6.1)};
+    \node[font=\small] at (6.8, 5.1) {速度曲线 $s(t)$};
+
+    % 约束点坐标标注
+    \node[dangerred, font=\small] at (4.8, -0.5) {$\tau_k$};
+    \node[dangerred, font=\small] at (-0.6, 4.0) {$s_k$};
+
+    % 减速贴边标注（在合法区域内，箭头指向曲线贴边处）
+    \draw[-Stealth, thick, deeppink] (6.2, 3.2) -- (4.85, 3.95);
+    \node[deeppink, font=\scriptsize\bfseries, right] at (6.2, 3.2) {减速贴边至 $(\tau_k,s_k)$};
+\end{tikzpicture}

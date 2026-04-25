@@ -1,0 +1,68 @@
+% 改进算法各组件耗时分布
+\begin{tikzpicture}[scale=1.0, transform shape]
+
+% === 左：堆叠条形图（组件耗时绝对值）===
+\begin{scope}[shift={(0,0)}]
+  \draw[->, thick] (0,0) -- (10.5,0) node[right,font=\scriptsize] {耗时 (ms)};
+  \draw[->, thick] (0,-0.3) -- (0,4.2) node[above,font=\scriptsize] {障碍物数 $n$};
+
+  % Y 轴刻度
+  \foreach \n/\y in {5/0.5, 10/1.5, 20/2.5, 40/3.5} {
+    \draw[thick] (-0.1,\y) -- (0,\y);
+    \node[font=\scriptsize, left] at (-0.1,\y) {$n=\n$};
+  }
+
+  % n=5, 总计 ≈ 3.2ms
+  \fill[deeppink] (0,0.3) rectangle (0.8,0.7);
+  \fill[improvedpink] (0.8,0.3) rectangle (1.4,0.7);
+  \fill[deepblue] (1.4,0.3) rectangle (2.0,0.7);
+  \fill[lightblue] (2.0,0.3) rectangle (3.0,0.7);
+  \fill[skyblue] (3.0,0.3) rectangle (3.6,0.7);
+  \node[font=\scriptsize, right] at (3.7,0.5) {3.2 ms};
+
+  % n=10, 总计 ≈ 5.0ms
+  \fill[deeppink] (0,1.3) rectangle (1.1,1.7);
+  \fill[improvedpink] (1.1,1.3) rectangle (2.0,1.7);
+  \fill[deepblue] (2.0,1.3) rectangle (2.8,1.7);
+  \fill[lightblue] (2.8,1.3) rectangle (4.1,1.7);
+  \fill[skyblue] (4.1,1.3) rectangle (5.0,1.7);
+  \node[font=\scriptsize, right] at (5.1,1.5) {5.0 ms};
+
+  % n=20, 总计 ≈ 8.5ms
+  \fill[deeppink] (0,2.3) rectangle (1.6,2.7);
+  \fill[improvedpink] (1.6,2.3) rectangle (3.0,2.7);
+  \fill[deepblue] (3.0,2.3) rectangle (4.2,2.7);
+  \fill[lightblue] (4.2,2.3) rectangle (6.8,2.7);
+  \fill[skyblue] (6.8,2.3) rectangle (8.5,2.7);
+  \node[font=\scriptsize, right] at (8.6,2.5) {8.5 ms};
+
+  % n=40, 总计 ≈ 15.2ms
+  \fill[deeppink] (0,3.3) rectangle (2.4,3.7);
+  \fill[improvedpink] (2.4,3.3) rectangle (4.6,3.7);
+  \fill[deepblue] (4.6,3.3) rectangle (6.4,3.7);
+  \fill[lightblue] (6.4,3.3) rectangle (11.0,3.7);
+  \fill[skyblue] (11.0,3.3) rectangle (13.8,3.7);
+  \node[font=\scriptsize, right] at (13.9,3.5) {15.2 ms};
+
+  % 实时性参考线 20ms
+  \draw[dangerred, very thick, dashed] (13.8,-0.1) -- (13.8,4.0);
+  \node[dangerred, font=\scriptsize, rotate=90, anchor=south] at (14.0,2) {实时阈值 20 ms};
+
+
+\end{scope}
+
+% === 图例 ===
+\begin{scope}[shift={(0,-1.0)}]
+  \fill[deeppink] (0,0) rectangle (0.4,0.3);
+  \node[font=\footnotesize, anchor=west] at (0.5,0.15) {扫描线分组};
+  \fill[improvedpink] (3.0,0) rectangle (3.4,0.3);
+  \node[font=\footnotesize, anchor=west] at (3.5,0.15) {时变投影};
+  \fill[deepblue] (5.8,0) rectangle (6.2,0.3);
+  \node[font=\footnotesize, anchor=west] at (6.3,0.15) {路径边界合并};
+  \fill[lightblue] (9.2,0) rectangle (9.6,0.3);
+  \node[font=\footnotesize, anchor=west] at (9.7,0.15) {DP 速度搜索};
+  \fill[skyblue] (12.5,0) rectangle (12.9,0.3);
+  \node[font=\footnotesize, anchor=west] at (13.0,0.15) {QP 速度优化};
+\end{scope}
+
+\end{tikzpicture}

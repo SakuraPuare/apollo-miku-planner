@@ -1,0 +1,33 @@
+% 2 个障碍物 通行带可行（子图 a）
+\begin{tikzpicture}[scale=0.7, transform shape]
+  \draw[-Stealth, thick] (0,-2.5) -- (8.5,-2.5) node[right, font=\footnotesize] {$s$};
+  \draw[-Stealth, thick] (0,-2.5) -- (0,2.5) node[above, font=\footnotesize] {$l$};
+
+  \draw[gray, thick] (0,1.875) -- (8,1.875);
+  \draw[gray, thick] (0,-1.875) -- (8,-1.875);
+  \draw[gray, dashed] (0,0) -- (8,0);
+
+  \begin{scope}[on background layer]
+    \fill[bglight] (0,-1.875) rectangle (8,1.875);
+  \end{scope}
+
+  % O1（上方靠边）y=[0.6, 1.3], s=[2, 4]
+  \fill[dangerred!70, draw=dangerred, thick] (2,0.6) rectangle (4,1.3);
+  \node[white, font=\footnotesize\bfseries] at (3,0.95) {$O_1$};
+
+  % O2（下方靠边）y=[-1.2, -0.5], s=[5, 7]
+  \fill[dangerred!70, draw=dangerred, thick] (5,-1.2) rectangle (7,-0.5);
+  \node[white, font=\footnotesize\bfseries] at (6,-0.85) {$O_2$};
+
+  % O1 右绕 → 上界压到 O1 膨胀下缘 (0.6-0.4=0.2)
+  \draw[deeppink, very thick]
+    (0,1.875) -- (1.8,1.875) -- (1.8,0.2) -- (4.2,0.2) -- (4.2,1.875) -- (8,1.875);
+  \node[deeppink, font=\tiny] at (1, 2.1) {$l^+(s)$};
+
+  % O2 左绕 → 下界抬到 O2 膨胀上缘 (-0.5+0.4=-0.1)
+  \draw[deepblue, very thick]
+    (0,-1.875) -- (4.8,-1.875) -- (4.8,-0.1) -- (7.2,-0.1) -- (7.2,-1.875) -- (8,-1.875);
+  \node[deepblue, font=\tiny] at (7.5, -2.1) {$l^-(s)$};
+
+  \node[lightgreen!60!black, font=\footnotesize\bfseries] at (4,-1.35) {通行带充足};
+\end{tikzpicture}

@@ -1,0 +1,96 @@
+% 路径-速度解耦三阶段架构（左→右流水线）
+\begin{tikzpicture}[
+    scale=0.82, transform shape,
+    >=Stealth,
+    inp/.style={rectangle, rounded corners=1pt, draw=deepblue,
+                fill=inputyellow, minimum width=1.6cm, minimum height=0.55cm,
+                font=\footnotesize, align=center, inner sep=2pt},
+    sl box/.style={rectangle, rounded corners=2pt, draw=deepblue,
+                   fill=white, minimum width=2.8cm, minimum height=0.55cm,
+                   font=\footnotesize, align=center, inner sep=2pt},
+    st box/.style={rectangle, rounded corners=2pt, draw=deepblue,
+                   fill=white, minimum width=2.8cm, minimum height=0.55cm,
+                   font=\footnotesize, align=center, inner sep=2pt},
+    sl bg/.style={rectangle, rounded corners=6pt, fill=lightblue!40,
+                  draw=deepblue!60, inner sep=8pt},
+    st bg/.style={rectangle, rounded corners=6pt, fill=skyblue!35,
+                  draw=deepblue!60, inner sep=8pt},
+    stglabel/.style={font=\footnotesize\bfseries, text=deepblue},
+    out box/.style={rectangle, rounded corners=3pt, draw=deeppink,
+                    fill=outputpink, minimum width=2.4cm, minimum height=0.7cm,
+                    font=\small\bfseries, align=center},
+]
+
+% ==================== 左列：输入（与其他阶段间隔等价） ====================
+\node[inp] (i1) at (0.9, 1.5)  {参考线};
+\node[inp] (i2) at (0.9, 0.5)  {感知障碍物};
+\node[inp] (i3) at (0.9, -0.5) {预测轨迹};
+\node[inp] (i4) at (0.9, -1.5) {车辆状态};
+
+% ==================== 阶段一：SL路径规划 (x=5) ====================
+\node[sl box] (s1a) at (5, 0.85)  {PathBoundsDecider\\[-1pt]构建SL边界};
+\node[sl box] (s1b) at (5, -0.85) {PiecewiseJerkPath-\\[-1pt]Optimizer\enspace QP求解};
+
+\draw[flow] (s1a) -- (s1b);
+
+\coordinate (s1pad-t) at (5, 1.5);
+\coordinate (s1pad-b) at (5, -1.5);
+
+\begin{scope}[on background layer]
+    \node[sl bg, fit=(s1pad-t)(s1pad-b)(s1a)(s1b)] (S1) {};
+\end{scope}
+
+\node[stglabel, anchor=south] at (S1.north) {阶段一：路径规划};
+\node[font=\scriptsize, text=deepblue!70, anchor=north] at (S1.south) {SL空间};
+
+
+% ==================== 阶段二：DP速度搜索 (x=10) ====================
+\node[st box] (s2a) at (10, 0.85)  {ST图网格构建};
+\node[st box] (s2b) at (10, -0.85) {DP启发式搜索};
+
+\draw[flow] (s2a) -- (s2b);
+
+\coordinate (s2pad-t) at (10, 1.5);
+\coordinate (s2pad-b) at (10, -1.5);
+
+\begin{scope}[on background layer]
+    \node[st bg, fit=(s2pad-t)(s2pad-b)(s2a)(s2b)] (S2) {};
+\end{scope}
+
+\node[stglabel, anchor=south] at (S2.north) {阶段二：速度搜索};
+\node[font=\scriptsize, text=deepblue!70, anchor=north] at (S2.south) {ST空间};
+
+% ==================== 阶段三：QP速度优化 (x=15) ====================
+\node[st box] (s3a) at (15, 0.85) {PiecewiseJerkSpeed-\\[-1pt]Optimizer};
+\node[st box] (s3b) at (15, -0.85){QP精细优化};
+
+\draw[flow] (s3a) -- (s3b);
+
+\coordinate (s3pad-t) at (15, 1.5);
+\coordinate (s3pad-b) at (15, -1.5);
+
+\begin{scope}[on background layer]
+    \node[st bg, fit=(s3pad-t)(s3pad-b)(s3a)(s3b)] (S3) {};
+\end{scope}
+
+\node[stglabel, anchor=south] at (S3.north) {阶段三：速度优化};
+\node[font=\scriptsize, text=deepblue!70, anchor=north] at (S3.south) {ST空间};
+
+% ==================== 输出 (x=19.5) ====================
+\node[out box] (output) at (19.5, 0) {ADCTrajectory};
+
+% ==================== 输入 → 阶段一 ====================
+\draw[flow] (i1.east) -- (S1.west);
+\draw[flow] (i2.east) -- (S1.west);
+\draw[flow] (i3.east) -- (S1.west);
+\draw[flow] (i4.east) -- (S1.west);
+
+% ==================== 阶段间箭头 ====================
+\draw[flow] (S1.east) -- node[above, font=\scriptsize, text=deepblue] {$l(s)$ 路径}
+                          node[below, font=\scriptsize, text=deeppink] {SL$\,\to\,$ST} (S2.west);
+
+\draw[flow] (S2.east) -- node[above, font=\scriptsize, text=deepblue] {速度走廊} (S3.west);
+
+\draw[flow] (S3.east) -- (output.west);
+
+\end{tikzpicture}

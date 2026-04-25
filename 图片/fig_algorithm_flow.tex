@@ -1,0 +1,53 @@
+% 时变最优通行带算法总流程
+\begin{tikzpicture}[
+    scale=1.0, transform shape,
+    stepnode/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue, minimum width=5.0cm, minimum height=1.0cm, font=\small, align=center},
+    stepimp/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink, minimum width=5.0cm, minimum height=1.0cm, font=\small, align=center},
+    inp/.style={rectangle, draw=deepblue, fill=inputyellow, minimum width=4.0cm, minimum height=0.8cm, font=\footnotesize, align=center},
+    outnode/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=outputpink, minimum width=4.0cm, minimum height=0.8cm, font=\small\bfseries, align=center},
+    arr/.style={-Stealth, thick, deepblue},
+]
+
+% 输入
+\node[inp] (i1) at (-5.5, 5.5) {参考线 $+$ 障碍物集合};
+\node[inp] (i2) at (-5.5, 3.8) {预测轨迹 $+$ 车辆状态};
+
+% 步骤（间距 1.7）
+\node[stepimp] (s1) at (0, 5.5)  {\textbf{Step 1} 多因子威胁度评估 $\Theta_i$};
+\node[stepimp] (s2) at (0, 3.8)  {\textbf{Step 2} 动态安全距离 $\delta_i=f(\Theta_i)$};
+\node[stepimp] (s3) at (0, 2.1)  {\textbf{Step 3} 扫描线重叠分组 $\mathcal{G}_1,\ldots,\mathcal{G}_m$};
+\node[stepimp] (s4) at (0, 0.4)  {\textbf{Step 4} 组内最大间隙搜索 $g^\star_j=\max_k g_{j,k}$};
+\node[stepnode] (s5) at (0,-1.3)  {\textbf{Step 5} 合并全局 path\_boundary};
+\node[stepnode] (s6) at (0,-3.0)  {\textbf{Step 6} 到达时间函数 $\tau(s)$ 投影};
+\node[stepnode] (s7) at (0,-4.7)  {\textbf{Step 7} ST 时空可通行走廊生成};
+
+% 输出（左侧，居中对称）
+\node[outnode] (o1) at (-5.5,-1.3) {path\_boundary};
+\node[outnode] (o2) at (-5.5,-4.7) {st\_corridor};
+
+% 输入箭头
+\draw[arr] (i1.east) -- (s1.west);
+\draw[arr] (i2.east) -- (s2.west);
+
+% 步骤间箭头
+\draw[arr] (s1) -- (s2);
+\draw[arr] (s2) -- (s3);
+\draw[arr] (s3) -- (s4);
+\draw[arr] (s4) -- (s5);
+\draw[arr] (s5) -- (s6);
+\draw[arr] (s6) -- (s7);
+
+% 输出箭头
+\draw[arr] (s5.west) -- (o1.east);
+\draw[arr] (s7.west) -- (o2.east);
+
+% 复杂度标注（右侧，间距充足）
+\node[font=\footnotesize, deeppink, anchor=west] at (4.0, 5.5)  {$O(n)$};
+\node[font=\footnotesize, deeppink, anchor=west] at (4.0, 3.8)  {$O(n)$};
+\node[font=\footnotesize, deeppink, anchor=west] at (4.0, 2.1)  {$O(n\log n)$};
+\node[font=\footnotesize, deeppink, anchor=west] at (4.0, 0.4)  {$O(n)$};
+\node[font=\footnotesize, deepblue, anchor=west] at (4.0,-1.3)  {$O(m)$};
+\node[font=\footnotesize, deepblue, anchor=west] at (4.0,-3.0)  {$O(N_s)$};
+\node[font=\footnotesize, deepblue, anchor=west] at (4.0,-4.7)  {$O(n N_s)$};
+
+\end{tikzpicture}

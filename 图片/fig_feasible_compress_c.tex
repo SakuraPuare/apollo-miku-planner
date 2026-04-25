@@ -1,0 +1,57 @@
+% 密集障碍物 BLOCKED（子图 c）
+\begin{tikzpicture}[scale=0.7, transform shape]
+  \draw[-Stealth, thick] (0,-2.5) -- (8.5,-2.5) node[right, font=\footnotesize] {$s$};
+  \draw[-Stealth, thick] (0,-2.5) -- (0,2.5) node[above, font=\footnotesize] {$l$};
+
+  \draw[gray, thick] (0,1.875) -- (8,1.875);
+  \draw[gray, thick] (0,-1.875) -- (8,-1.875);
+  \draw[gray, dashed] (0,0) -- (8,0);
+
+  \begin{scope}[on background layer]
+    \fill[bglight] (0,-1.875) rectangle (8,1.875);
+  \end{scope}
+
+  % 密集障碍物（交替上下，靠近道路边缘）
+  \fill[dangerred!70, draw=dangerred, thick] (0.5,0.4) rectangle (1.5,1.2);
+  \node[white, font=\tiny\bfseries] at (1,0.8) {$O_1$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (1.5,-1.1) rectangle (2.5,-0.3);
+  \node[white, font=\tiny\bfseries] at (2,-0.7) {$O_2$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (2.5,0.3) rectangle (3.5,1.1);
+  \node[white, font=\tiny\bfseries] at (3,0.7) {$O_3$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (3.5,-1.0) rectangle (4.5,-0.2);
+  \node[white, font=\tiny\bfseries] at (4,-0.6) {$O_4$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (4.5,0.5) rectangle (5.5,1.3);
+  \node[white, font=\tiny\bfseries] at (5,0.9) {$O_5$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (5.5,-1.2) rectangle (6.5,-0.3);
+  \node[white, font=\tiny\bfseries] at (6,-0.75) {$O_6$};
+
+  \fill[dangerred!70, draw=dangerred, thick] (6.5,0.3) rectangle (7.5,1.1);
+  \node[white, font=\tiny\bfseries] at (7,0.7) {$O_7$};
+
+  % 上界 l+(s)：逐步压低 (δ=0.4)
+  \draw[deeppink, very thick]
+    (0,1.875) -- (0.3,1.875) -- (0.3,0.0) -- (1.7,0.0)
+    -- (1.7,1.875) -- (2.3,1.875) -- (2.3,-0.1) -- (3.7,-0.1)
+    -- (3.7,1.875) -- (4.3,1.875) -- (4.3,0.1) -- (5.7,0.1);
+
+  % 下界 l-(s)：逐步抬高
+  \draw[deepblue, very thick]
+    (0,-1.875) -- (1.3,-1.875) -- (1.3,0.1) -- (2.7,0.1)
+    -- (2.7,-1.875) -- (3.3,-1.875) -- (3.3,0.2) -- (4.7,0.2);
+
+  % BLOCKED 点
+  \fill[dangerred] (4.5,0.15) circle (3pt);
+
+  % 截断区域
+  \fill[dangerred, opacity=0.1] (4.5,-1.875) rectangle (8,1.875);
+  \node[dangerred, font=\footnotesize\bfseries] at (6.5,1.3) {$l^+ < l^- \rightarrow$ BLOCKED};
+  \node[dangerred, font=\tiny] at (6.5,-1.5) {TrimPathBounds 截断};
+
+  \node[deeppink, font=\tiny] at (0.5, 2.1) {$l^+(s)$};
+  \node[deepblue, font=\tiny] at (0.5, -2.1) {$l^-(s)$};
+\end{tikzpicture}

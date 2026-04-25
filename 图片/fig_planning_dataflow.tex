@@ -1,0 +1,103 @@
+% Planning 模块单周期数据流
+\begin{tikzpicture}[
+    scale=0.85, transform shape,
+    >=Stealth,
+    % 输入小盒
+    inp/.style={rectangle, rounded corners=1pt, draw=deepblue,
+                fill=inputyellow, minimum width=1.65cm, minimum height=0.6cm,
+                font=\footnotesize, align=center, inner sep=2pt},
+    % 层内子步骤
+    step box/.style={rectangle, rounded corners=2pt, draw=deepblue,
+                     fill=lightblue, minimum width=1.8cm, minimum height=0.6cm,
+                     font=\footnotesize, align=center, inner sep=2pt},
+    % 改进层子步骤
+    step imp/.style={rectangle, rounded corners=2pt, draw=deeppink,
+                     fill=improvedpink, minimum width=1.8cm, minimum height=0.6cm,
+                     font=\footnotesize, align=center, inner sep=2pt},
+    % 层背景
+    layer bg/.style={rectangle, rounded corners=6pt, fill=bglight,
+                     draw=deepblue!50, inner sep=8pt},
+    % 改进层背景
+    layer imp/.style={rectangle, rounded corners=6pt, fill=improvedpink!15,
+                      draw=deeppink!60, inner sep=8pt},
+    % 输出节点
+    out box/.style={rectangle, rounded corners=3pt, draw=deeppink,
+                    fill=outputpink, minimum width=4cm, minimum height=0.7cm,
+                    font=\small\bfseries, align=center},
+]
+
+% ===================== 输入层 (y = 0) =====================
+\node[inp] (i1) at (-4,   0) {Prediction\\[-1pt]Obstacles};
+\node[inp] (i2) at (-2,   0) {Chassis};
+\node[inp] (i3) at ( 0,   0) {Localization};
+\node[inp] (i4) at ( 2,   0) {TrafficLight};
+\node[inp] (i5) at ( 4,   0) {Planning\\[-1pt]Command};
+\node[font=\small, text=deepblue, anchor=east] at (-5.2, 0) {Cyber RT 输入};
+
+% 汇聚点
+\coordinate (merge) at (0, -1.0);
+\foreach \i in {i1,i2,i3,i4,i5}{
+    \draw[flow] (\i.south) -- (merge);
+}
+
+% ===================== Layer 1: Proc() (y = -2.2) =====================
+\node[step box] (p1) at (-2.8, -2.2) {CheckRerouting};
+\node[step box] (p2) at ( 0,   -2.2) {构建 LocalView};
+\node[step box] (p3) at ( 2.8, -2.2) {CheckInput};
+
+\draw[flow] (p1) -- (p2);
+\draw[flow] (p2) -- (p3);
+
+% 隐藏锚点，使三层 fit 宽度一致
+\coordinate (L1pad-l) at (-4.4, -2.2);
+\coordinate (L1pad-r) at ( 4.4, -2.2);
+
+\begin{scope}[on background layer]
+    \node[layer bg, fit=(L1pad-l)(L1pad-r)(p1)(p2)(p3),
+          label={[font=\small, text=deepblue, anchor=east]left:Proc()}] (L1) {};
+\end{scope}
+
+\draw[flow, line width=1.2pt] (merge) -- (L1.north);
+
+% ===================== Layer 2: RunOnce() (y = -4.2) =====================
+\node[step box] (r1) at (-3.4, -4.2) {VehicleState\\[-1pt]更新};
+\node[step box] (r2) at (-1.1, -4.2) {参考线平滑};
+\node[step box] (r3) at ( 1.2, -4.2) {轨迹拼接};
+\node[step box] (r4) at ( 3.4, -4.2) {Frame\\[-1pt]初始化};
+
+\draw[flow] (r1) -- (r2);
+\draw[flow] (r2) -- (r3);
+\draw[flow] (r3) -- (r4);
+
+\begin{scope}[on background layer]
+    \node[layer bg, fit=(r1)(r2)(r3)(r4),
+          label={[font=\small, text=deepblue, anchor=east]left:RunOnce()}] (L2) {};
+\end{scope}
+
+\draw[flow, line width=1.2pt] (L1.south) -- (L2.north);
+
+% ===================== Layer 3: Plan() (y = -6.2) =====================
+\node[step imp] (s1) at (-3.4, -6.2) {Scenario\\[-1pt]Manager};
+\node[step imp] (s2) at (-1.1, -6.2) {Scenario\\[-1pt]::Process};
+\node[step imp] (s3) at ( 1.2, -6.2) {Stage\\[-1pt]::Process};
+\node[step imp] (s4) at ( 3.4, -6.2) {Task\\[-1pt]::Execute};
+
+\draw[flowimp] (s1) -- (s2);
+\draw[flowimp] (s2) -- (s3);
+\draw[flowimp] (s3) -- (s4);
+
+\begin{scope}[on background layer]
+    \node[layer imp, fit=(s1)(s2)(s3)(s4),
+          label={[font=\small, text=deeppink, anchor=east]left:Plan()}] (L3) {};
+\end{scope}
+
+\node[font=\footnotesize, text=deeppink!80!black, anchor=west] at (L3.east) {~~核心执行层};
+
+\draw[flowimp, line width=1.2pt] (L2.south) -- (L3.north);
+
+% ===================== 输出 (y = -8.0) =====================
+\node[out box] (output) at (0, -8.0) {ADCTrajectory};
+
+\draw[flowimp, line width=1.2pt] (L3.south) -- (output.north);
+
+\end{tikzpicture}

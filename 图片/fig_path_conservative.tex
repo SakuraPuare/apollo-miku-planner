@@ -1,0 +1,116 @@
+% 对称路锥场景：独立决策BLOCKED vs 全局统一决策PASS
+\begin{tikzpicture}[scale=0.85, transform shape]
+
+  %% ============ 子图 (a) 独立决策 → BLOCKED ============
+  \begin{scope}[shift={(0,0)}]
+    % 道路背景
+    \fill[bglight] (-0.5,-2.5) rectangle (8.5,2.5);
+    \draw[gray, thick] (-0.5, 2.5) -- (8.5, 2.5);
+    \draw[gray, thick] (-0.5,-2.5) -- (8.5,-2.5);
+    \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+    \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+    % O_a（上方，拉开间距）y=[0.4, 0.8]
+    \fill[dangerred!70, draw=dangerred, thick] (3.2, 0.4) rectangle (4.8, 0.8);
+    \node[font=\scriptsize, white] at (4.0, 0.6) {$O_a$};
+
+    % O_b（下方）y=[-0.8, -0.4]
+    \fill[dangerred!70, draw=dangerred, thick] (3.2,-0.8) rectangle (4.8,-0.4);
+    \node[font=\scriptsize, white] at (4.0,-0.6) {$O_b$};
+
+    % O_a 膨胀虚线 (四周各扩 δ=0.6)
+    % O_a: (3.2,0.4)~(4.8,0.8) → +0.6 → (2.6,-0.2)~(5.4,1.4)
+    \draw[dangerred!60, dashed, thick] (2.6,-0.2) rectangle (5.4, 1.4);
+    \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5, 1.1) {$O_a{+}\delta$};
+
+    % O_b 膨胀虚线
+    % O_b: (3.2,-0.8)~(4.8,-0.4) → +0.6 → (2.6,-1.4)~(5.4,0.2)
+    \draw[dangerred!60, dashed, thick] (2.6,-1.4) rectangle (5.4, 0.2);
+    \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5,-1.1) {$O_b{+}\delta$};
+
+    % 独立决策：O_a 右绕 → 上界压到 O_a膨胀下缘 = -0.6
+    %           O_b 左绕 → 下界抬到 O_b膨胀上缘 = 0.6
+    % 结果 l+ = -0.6 < l- = 0.6 → BLOCKED
+
+    % 上界 l+(s)：右绕 O_a → 压到 O_a 膨胀下缘 -0.2（offset -0.1）
+    \draw[deeppink, very thick]
+      (-0.5, 2.5) -- (2.4, 2.5) -- (2.4, -0.3) -- (5.6, -0.3) -- (5.6, 2.5) -- (8.5, 2.5);
+    \node[deeppink, font=\scriptsize] at (7.5, 2.1) {$l^+(s)$};
+
+    % 下界 l-(s)：左绕 O_b → 抬到 O_b 膨胀上缘 0.2（offset +0.1）
+    \draw[deepblue, very thick]
+      (-0.5,-2.5) -- (2.4,-2.5) -- (2.4, 0.3) -- (5.6, 0.3) -- (5.6,-2.5) -- (8.5,-2.5);
+    \node[deepblue, font=\scriptsize] at (7.5,-2.1) {$l^-(s)$};
+
+
+    % 标注 l+ < l-
+    \draw[dangerred, thick, {Stealth}-{Stealth}] (6.5,-0.3) -- (6.5, 0.3);
+    \node[dangerred, font=\scriptsize, anchor=west] at (6.6, 0) {$l^+ < l^-$};
+
+    % BLOCKED 判定
+    \node[draw=dangerred, fill=dangerred!15, font=\scriptsize,
+          rounded corners=3pt, align=center] at (4.0,-2.1)
+      {$l^+ < l^-$ $\Rightarrow$ \textbf{BLOCKED}};
+
+    \node[font=\footnotesize, anchor=north, align=center] at (4.0,-2.7)
+      {(a) 独立决策，矛盾避让 $\rightarrow$ BLOCKED};
+  \end{scope}
+
+  %% ============ 子图 (b) 全局统一 RIGHT_NUDGE → PASS ============
+  \begin{scope}[shift={(10.5,0)}]
+    % 道路背景
+    \fill[bglight] (-0.5,-2.5) rectangle (8.5,2.5);
+    \draw[gray, thick] (-0.5, 2.5) -- (8.5, 2.5);
+    \draw[gray, thick] (-0.5,-2.5) -- (8.5,-2.5);
+    \draw[dashed, gray!60] (-0.5, 0) -- (8.5, 0);
+    \node[gray, font=\scriptsize, anchor=east] at (-0.6, 0) {$l{=}0$};
+
+    % O_a（上方）
+    \fill[dangerred!70, draw=dangerred, thick] (3.2, 0.4) rectangle (4.8, 0.8);
+    \node[font=\scriptsize, white] at (4.0, 0.6) {$O_a$};
+
+    % O_b（下方）
+    \fill[dangerred!70, draw=dangerred, thick] (3.2,-0.8) rectangle (4.8,-0.4);
+    \node[font=\scriptsize, white] at (4.0,-0.6) {$O_b$};
+
+    % 统一右绕：膨胀区（四周等距 δ=0.6）
+    % O_a+δ: (2.6,-0.2)~(5.4,1.4)
+    \draw[dangerred!60, dashed, thick] (2.6,-0.2) rectangle (5.4, 1.4);
+    \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5, 0.6) {$O_a{+}\delta$};
+    % O_b+δ: (2.6,-1.4)~(5.4,0.2)
+    \draw[dangerred!60, dashed, thick] (2.6,-1.4) rectangle (5.4, 0.2);
+    \node[dangerred!60, font=\scriptsize, anchor=west] at (5.5,-0.6) {$O_b{+}\delta$};
+
+    % 上界 l+(s)：统一右绕，压到 O_b 膨胀下缘 -1.4（offset -0.1）
+    \draw[deeppink, very thick]
+      (-0.5, 2.5) -- (2.4, 2.5) -- (2.4, -1.5) -- (5.6, -1.5) -- (5.6, 2.5) -- (8.5, 2.5);
+    \node[deeppink, font=\scriptsize] at (7.5, 2.1) {$l^+(s)$};
+
+    % 下界 l-(s)：保持道路下界
+    \draw[deepblue, very thick, dashed]
+      (-0.5,-2.5) -- (8.5,-2.5);
+    \node[deepblue, font=\scriptsize, left] at (-0.6,-2.5) {$l^-(s)$};
+
+    % 通行带
+    \fill[lightgreen, opacity=0.25] (-0.5,-2.5) rectangle (8.5,-1.5);
+
+    % 通行带宽度标注
+    \draw[deeppink, thick, {Stealth}-{Stealth}] (0.5,-2.5) -- (0.5,-1.5);
+    \node[deeppink, font=\scriptsize, anchor=east] at (0.4,-2.0) {$W{=}1.0$m};
+
+    % 自车轨迹（无 fill）
+    \draw[deepblue, very thick, -{Stealth}]
+      plot[smooth, tension=0.55] coordinates
+        {(0.5, 0) (1.5,-0.5) (2.5,-1.8) (4.0,-2.0) (5.5,-1.8) (6.5,-0.5) (7.5, 0)};
+    \node[deepblue, font=\scriptsize] at (4.0,-2.45) {规划轨迹};
+
+    % PASS 判定
+    \node[draw=lightgreen!80!black, fill=lightgreen!20, font=\scriptsize,
+          rounded corners=3pt, align=center] at (4.0, 2.0)
+      {统一右绕 $\Rightarrow$ \textbf{PASS}};
+
+    \node[font=\footnotesize, anchor=north, align=center] at (4.0,-2.7)
+      {(b) 全局协调，统一右绕 $\rightarrow$ 通行};
+  \end{scope}
+
+\end{tikzpicture}

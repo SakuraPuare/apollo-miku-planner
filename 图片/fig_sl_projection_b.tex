@@ -1,0 +1,40 @@
+% SL空间障碍物投影示意图 — 子图 b：SL空间
+\begin{tikzpicture}[scale=0.9, transform shape]
+
+  % 坐标轴（先画，不被遮挡）
+  \draw[-{Stealth}, thick] (-0.3,0) -- (8.5,0) node[right, font=\small\bfseries] {$s$};
+  \draw[-{Stealth}, thick] (0,-2.0) -- (0,2.5) node[above, font=\small\bfseries] {$l$};
+
+  % 道路背景（在坐标轴之后，用 scope + opacity 避免遮挡）
+  \begin{scope}[on background layer]
+    \fill[bglight] (0.05,-1.5) rectangle (8.0,2.0);
+  \end{scope}
+
+  % 道路边界
+  \draw[gray, thick] (0.05,2.0) -- (8.0,2.0) node[right, font=\footnotesize] {$l_{road}^+$};
+  \draw[gray, thick] (0.05,-1.5) -- (8.0,-1.5) node[right, font=\footnotesize] {$l_{road}^-$};
+
+  % 参考线
+  \draw[dashed, gray!60] (0.05,0) -- (8.0,0);
+  \node[gray, font=\scriptsize, right] at (8.0,-0.25) {$l{=}0$};
+
+  % O1 SL矩形（弯道前段，l > 0）
+  \fill[dangerred!30, draw=dangerred, thick, rounded corners=2pt]
+    (1.0,0.2) rectangle (2.5,0.9);
+  \node[font=\small\bfseries] at (1.75,0.55) {$O_1$};
+  \draw[{Stealth}-{Stealth}, thin, deepblue] (1.0,-0.3) -- (2.5,-0.3);
+  \node[deepblue, font=\scriptsize, below] at (1.75,-0.3) {$[s_1^{min},\;s_1^{max}]$};
+
+  % O2 SL矩形（弯道中段，l < 0）
+  \fill[dangerred!30, draw=dangerred, thick, rounded corners=2pt]
+    (3.2,-1.2) rectangle (4.8,-0.4);
+  \node[font=\small\bfseries] at (4.0,-0.8) {$O_2$};
+  \draw[{Stealth}-{Stealth}, thin, deepblue] (5.1,-1.2) -- (5.1,-0.4);
+  \node[deepblue, font=\scriptsize, right] at (5.15,-0.8) {$[l_2^{min},\;l_2^{max}]$};
+
+  % O3 SL矩形（弯道后段，l > 0）
+  \fill[dangerred!30, draw=dangerred, thick, rounded corners=2pt]
+    (5.8,0.1) rectangle (7.2,0.8);
+  \node[font=\small\bfseries] at (6.5,0.45) {$O_3$};
+
+\end{tikzpicture}

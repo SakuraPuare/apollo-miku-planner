@@ -1,0 +1,47 @@
+% 子图(b)：g_{p*}(s) 对 s 的剖面曲线，与 W_ego 比较判定通行 s 区间
+% 场景：A 静态 s∈[2.5,4] 贡献 g_1=1.7 (passable)，C 静态宽阻 s∈[6.5,7] 贡献 g=1.1 (blocked)
+\begin{tikzpicture}
+\begin{axis}[
+    width=8.0cm, height=6.4cm,
+    xlabel={$s$ (m)}, ylabel={间隙 (m)},
+    xmin=0, xmax=9, ymin=0, ymax=4.4,
+    grid=major, grid style={gray!25},
+    axis line style={thick},
+    tick label style={font=\footnotesize},
+    label style={font=\small},
+    legend style={font=\scriptsize, at={(0.02, 0.98)}, anchor=north west, draw=none, fill=white, fill opacity=0.9, row sep=-1pt},
+]
+
+% 禁行区阴影（在 g<W_ego 的 s 段）
+\fill[dangerred!15] (axis cs:6.5, 0) rectangle (axis cs:7, 4.4);
+
+% g_{p*}(s) 剖面（分段：自由段 4，A 段 1.7，自由段 4，C 段 1.1，自由段 4）
+\addplot[deepblue, very thick] coordinates {
+    (0, 4)     (2.5, 4)
+    (2.5, 1.7) (4, 1.7)
+    (4, 4)     (6.5, 4)
+    (6.5, 1.1) (7, 1.1)
+    (7, 4)     (9, 4)
+};
+\addlegendentry{$g_{p^*}(s)$}
+
+% W_ego 参考线
+\addplot[dangerred, very thick, densely dashed] coordinates {(0, 1.5) (9, 1.5)};
+\addlegendentry{$W_{ego}{=}1.5$}
+
+% 障碍 A、C 的 s 范围标注（在 x 轴下方）
+\draw[dangerred, thick] (axis cs:2.5, 0.15) -- (axis cs:4, 0.15);
+\node[dangerred, font=\scriptsize] at (axis cs:3.25, 0.35) {A};
+\draw[dangerred, thick] (axis cs:6.5, 0.15) -- (axis cs:7, 0.15);
+\node[dangerred, font=\scriptsize] at (axis cs:6.75, 0.35) {C};
+
+% 判定标注
+\node[lightgreen!40!black, font=\scriptsize] at (axis cs:3.25, 2.15) {$\geq W_{ego}$ $\checkmark$};
+\node[dangerred, font=\scriptsize] at (axis cs:6.75, 1.7) {$<W_{ego}$ $\times$};
+
+% 禁行切片标注
+\node[dangerred, font=\scriptsize] at (axis cs:6.75, 3.8) {禁行};
+\node[dangerred, font=\scriptsize] at (axis cs:6.75, 3.4) {切片};
+
+\end{axis}
+\end{tikzpicture}

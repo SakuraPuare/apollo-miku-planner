@@ -1,0 +1,16 @@
+% 动态障碍物排除 t=0.625s（子图 b）
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
+  \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
+  \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
+  \draw[deepblue, dashed, thin] (0,0.3) -- (6.8,0.3);
+
+  \fill[egopt] (3.4,0) rectangle (4.25,0.6);
+  \node[white, font=\scriptsize\bfseries] at (3.825,0.3) {ADC};
+  \draw[-Stealth, thick, deepblue] (4.3,0.3) -- (5.4,0.3);
+
+  \fill[obsdyn] (5.7,0.4) rectangle (6.1,0.85);
+  \draw[-Stealth, thick, dangerred] (5.9,0.9) -- (5.9,1.5);
+
+  \draw[dangerred, very thick, dashed] (5.55,-0.2) rectangle (6.25,1.0);
+\end{tikzpicture}

@@ -1,0 +1,58 @@
+% 三级降级机制状态转移
+\begin{tikzpicture}[scale=0.95, transform shape,
+    level/.style={rectangle, rounded corners=4pt, draw=#1, line width=1.2pt,
+        fill=#1!12, minimum width=15.4cm, minimum height=2.2cm},
+    badge/.style={circle, draw=#1, fill=#1, text=white, font=\small\bfseries,
+        minimum size=0.7cm, inner sep=0pt},
+    trigbox/.style={rectangle, rounded corners=3pt, draw=dangerred, fill=dangerred!15,
+        minimum width=5.0cm, minimum height=0.9cm, font=\small, align=center},
+    actbox/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue,
+        minimum width=5.0cm, minimum height=0.9cm, font=\small, align=center},
+    arr/.style={-Stealth, thick, deepblue},
+    arrdanger/.style={-Stealth, thick, dangerred},
+    arrback/.style={-Stealth, thick, deeppink, densely dashed},
+    conn/.style={-Stealth, very thick, gray!80},
+]
+
+% 主流程入口
+\node[rectangle, rounded corners=4pt, draw=deeppink, line width=1.2pt,
+    fill=improvedpink, minimum width=6cm, minimum height=1cm,
+    font=\normalsize\bfseries] (main) at (0,0) {改进算法主流程};
+
+% L3（最轻）
+\node[level=deepblue] (l3bg) at (0,-2.4) {};
+\node[badge=deepblue] at (-7.0,-1.7) {L3};
+\node[font=\small\bfseries, deepblue, anchor=west] at (-6.4,-1.7) {轻度降级};
+\node[font=\scriptsize, gray, anchor=east] at (7.3,-1.7) {实测频率 $<$1\%};
+\node[trigbox] (t3) at (-3.0,-2.7) {分组内 $k>k_{\max}$（感知误检或极端拥堵）};
+\node[actbox] (a3) at (4.0,-2.7) {组内回退Baseline逐障碍贪心};
+\draw[conn] (t3) -- (a3);
+
+% L2（中等）
+\node[level=lightorange] (l2bg) at (0,-5.2) {};
+\node[badge=lightorange] at (-7.0,-4.5) {L2};
+\node[font=\small\bfseries, lightorange, anchor=west] at (-6.4,-4.5) {中度降级};
+\node[font=\scriptsize, gray, anchor=east] at (7.3,-4.5) {实测频率 $<$1\%};
+\node[trigbox] (t2) at (-3.0,-5.5) {预测轨迹缺失或超出时间范围};
+\node[actbox] (a2) at (4.0,-5.5) {障碍物退化为静态，使用$t{=}0$快照};
+\draw[conn] (t2) -- (a2);
+
+% L1（最严重）
+\node[level=dangerred] (l1bg) at (0,-8.0) {};
+\node[badge=dangerred] at (-7.0,-7.3) {L1};
+\node[font=\small\bfseries, dangerred, anchor=west] at (-6.4,-7.3) {重度降级};
+\node[font=\scriptsize, gray, anchor=east] at (7.3,-7.3) {实测频率 3--5\%};
+\node[trigbox] (t1) at (-3.0,-8.3) {$W^* \leq 0$，所有间隙不足车宽};
+\node[actbox] (a1) at (4.0,-8.3) {\texttt{TrimPathBounds} + FallbackPath停车};
+\draw[conn] (t1) -- (a1);
+
+% 主流程 → 三级
+\draw[arrdanger] (main.south) -- (l3bg.north);
+\draw[arrdanger] (l3bg.south) -- (l2bg.north);
+\draw[arrdanger] (l2bg.south) -- (l1bg.north);
+
+% 恢复箭头
+\draw[arrback] (a3.east) -- ++(0.8,0) |- node[pos=0.25, right, font=\scriptsize, deeppink] {恢复} (main.east);
+\draw[arrback] (a2.east) -- ++(1.6,0) |- (main.east);
+
+\end{tikzpicture}

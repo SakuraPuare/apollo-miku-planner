@@ -1,0 +1,44 @@
+% PathBoundsDecider 构建流程图
+\begin{tikzpicture}[
+    scale=1.0, transform shape,
+    box/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue, minimum width=4.2cm, minimum height=0.9cm, font=\small, align=center},
+    boximp/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink, minimum width=4.2cm, minimum height=0.9cm, font=\small, align=center},
+    dec/.style={diamond, aspect=2, draw=deepblue, fill=skyblue, minimum width=4.2cm, minimum height=0.9cm, font=\small, align=center, inner sep=1pt},
+    term/.style={rectangle, rounded corners=8pt, draw=deeppink, fill=outputpink, minimum width=3.2cm, minimum height=0.8cm, font=\small\bfseries, align=center},
+    arr/.style={-Stealth, thick, deepblue},
+    arrno/.style={-Stealth, thick, dangerred},
+]
+
+\node[term, fill=inputyellow, draw=deepblue] (start) at (0,7.0) {输入 障碍物集合};
+
+\node[box] (init) at (0,5.2) {初始化路径边界为车道边};
+
+\node[dec] (loop) at (0,3.2) {遍历障碍物 $O_i$};
+
+\node[box] (decide) at (-5,1.2) {判断避让方向\\ $d_i\in\{L,R\}$};
+
+\node[boximp] (update) at (0,1.2) {更新 $l^+$ 或 $l^-$};
+
+\node[dec] (check) at (0,-1.2) {通行带宽 $W(s) < W_{\text{ego}}$?};
+
+\node[term, fill=dangerred!40, draw=dangerred] (blocked) at (5.5,-1.2) {BLOCKED};
+\node[term] (ok) at (0,-3.4) {输出 path\_boundary};
+
+% 流
+\draw[arr] (start) -- (init);
+\draw[arr] (init) -- (loop);
+\draw[arr] (loop) -- (decide);
+\draw[arr] (decide) -- (update);
+\draw[arr] (update) -- (check);
+\draw[arrno] (check) -- node[above, font=\footnotesize, dangerred] {是} (blocked);
+\draw[arr] (check) -- node[left, font=\footnotesize, deepblue] {否} (ok);
+
+% 反馈回 loop（遍历下一个）
+\draw[arr] (update.east) -- ++(1.8,0) |- (loop.east);
+\node[font=\scriptsize, deepblue] at (2.6,2.2) {下一个 $O_{i+1}$};
+
+% 侧注
+\node[font=\footnotesize, align=left, anchor=north west, deeppink!80!black] at (3.8,4.5)
+  {核心问题：决策逐障碍物独立做出，\\后续障碍物无法修正前序决策。};
+
+\end{tikzpicture}

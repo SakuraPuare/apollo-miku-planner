@@ -1,0 +1,64 @@
+% SL空间障碍物投影示意图（S弯道场景）— 子图 a：笛卡尔空间
+\begin{tikzpicture}[scale=0.9, transform shape]
+
+  % 道路背景（参考线 ±1.2 的条带，与子图 b 一致）
+  \begin{scope}[on background layer]
+    \fill[bglight]
+      plot[domain=0:7, samples=100] (\x, {1.5*sin(\x*50)+1.2})
+      -- plot[domain=7:0, samples=100] (\x, {1.5*sin(\x*50)-1.2})
+      -- cycle;
+  \end{scope}
+
+  % S型参考线（正弦函数）
+  \draw[deepblue, very thick]
+    plot[domain=0:7, samples=100] (\x, {1.5*sin(\x*50)});
+  \node[deepblue, font=\footnotesize, right] at (7.1,{1.5*sin(350)}) {参考线};
+
+  % 道路边界（参考线 ±1.2 偏移）
+  \draw[gray, thick, dashed]
+    plot[domain=0:7, samples=100] (\x, {1.5*sin(\x*50)+1.2});
+  \draw[gray, thick, dashed]
+    plot[domain=0:7, samples=100] (\x, {1.5*sin(\x*50)-1.2});
+
+  % 障碍物 O1（s≈1.5 处，参考线上方偏）
+  \pgfmathsetmacro{\oa}{1.5*sin(1.5*50)}
+  \pgfmathsetmacro{\oaAngle}{atan(1.5*50*cos(1.5*50)*3.14159/180)}
+  \fill[dangerred!40, draw=dangerred, thick, rounded corners=1pt,
+        rotate around={\oaAngle:(1.5,\oa+0.5)}]
+    (1.1,\oa+0.2) rectangle (1.9,\oa+0.8);
+  \node[font=\small\bfseries] at (1.5,\oa+0.5) {$O_1$};
+
+  % 障碍物 O2（s≈3.5 处，弯顶附近）
+  \pgfmathsetmacro{\ob}{1.5*sin(3.5*50)}
+  \pgfmathsetmacro{\obAngle}{atan(1.5*50*cos(3.5*50)*3.14159/180)}
+  \fill[dangerred!40, draw=dangerred, thick, rounded corners=1pt,
+        rotate around={\obAngle:(3.5,\ob-0.4)}]
+    (3.1,\ob-0.7) rectangle (3.9,\ob-0.1);
+  \node[font=\small\bfseries] at (3.5,\ob-0.4) {$O_2$};
+
+  % 障碍物 O3（s≈5.8 处，弯道后段）
+  \pgfmathsetmacro{\oc}{1.5*sin(5.8*50)}
+  \pgfmathsetmacro{\ocAngle}{atan(1.5*50*cos(5.8*50)*3.14159/180)}
+  \fill[dangerred!40, draw=dangerred, thick, rounded corners=1pt,
+        rotate around={\ocAngle:(5.8,\oc+0.4)}]
+    (5.4,\oc+0.1) rectangle (6.2,\oc+0.7);
+  \node[font=\small\bfseries] at (5.8,\oc+0.4) {$O_3$};
+
+  % 自车（沿参考线切线方向贴合，风格与障碍物一致但色调为蓝）
+  \pgfmathsetmacro{\egoX}{0.5}
+  \pgfmathsetmacro{\egoY}{1.5*sin(\egoX*50)}
+  \pgfmathsetmacro{\egoAngle}{atan(1.309*cos(\egoX*50))}
+  \fill[deepblue!25, draw=deepblue, thick, rounded corners=1pt,
+        rotate around={\egoAngle:(\egoX,\egoY)}]
+    ({\egoX-0.32},{\egoY-0.18}) rectangle ({\egoX+0.32},{\egoY+0.18});
+  \fill[deepblue,
+        rotate around={\egoAngle:(\egoX,\egoY)}]
+    ({\egoX+0.32},{\egoY-0.12}) -- ({\egoX+0.50},{\egoY}) -- ({\egoX+0.32},{\egoY+0.12}) -- cycle;
+  \node[deepblue, font=\scriptsize] at (1.4,-0.3) {自车};
+  \draw[deepblue, thin] (1.15,-0.25) -- ({\egoX+0.15},{\egoY-0.35});
+
+  % 坐标轴
+  \draw[-{Stealth}, thick, gray] (-0.3,-2.5) -- (1.5,-2.5) node[right, font=\footnotesize] {$x$};
+  \draw[-{Stealth}, thick, gray] (-0.3,-2.5) -- (-0.3,-1.2) node[above, font=\footnotesize] {$y$};
+
+\end{tikzpicture}

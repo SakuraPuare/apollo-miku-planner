@@ -1,0 +1,37 @@
+% 路径规划方法分类树
+\begin{tikzpicture}[
+    scale=1.0, transform shape,
+    lvl1/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=deepblue, text=white, minimum width=3.2cm, minimum height=0.9cm, font=\normalsize\bfseries, align=center},
+    lvl2/.style={rectangle, rounded corners=2pt, draw=deepblue, fill=lightblue, minimum width=2.6cm, minimum height=0.8cm, font=\small, align=center},
+    methodbox/.style={rectangle, rounded corners=2pt, draw=deepblue!60, fill=bglight, minimum width=2.6cm, font=\footnotesize, align=center, inner sep=6pt},
+    methodboxhl/.style={rectangle, rounded corners=2pt, draw=deeppink, fill=lightpink!50, minimum width=2.6cm, font=\footnotesize, align=center, inner sep=6pt},
+    hl/.style={rectangle, rounded corners=2pt, draw=deeppink, fill=improvedpink, minimum width=2.6cm, minimum height=0.8cm, font=\small, align=center},
+    arr/.style={-Stealth, thick, deepblue},
+    arrhl/.style={-Stealth, thick, deeppink},
+]
+
+\node[lvl1] (root) at (0,0) {路径规划方法};
+
+\node[lvl2] (g1) at (-6,-1.6) {图搜索方法};
+\node[lvl2] (g2) at (-2,-1.6) {采样方法};
+\node[hl]   (g3) at (2,-1.6) {优化方法};
+\node[lvl2] (g4) at (6,-1.6) {学习方法};
+
+\node[methodbox] (b1) at (-6,-3.8) {A*\\Dijkstra\\D* / Hybrid A*};
+\node[methodbox] (b2) at (-2,-3.8) {RRT\\RRT*\\PRM};
+\node[methodboxhl] (b3) at (2,-3.8) {QP / iLQR\\Apollo PJPO\\MPC};
+\node[methodbox] (b4) at (6,-3.8) {强化学习\\模仿学习\\Transformer};
+
+\draw[arr] (root) -- (g1);
+\draw[arr] (root) -- (g2);
+\draw[arrhl] (root) -- (g3);
+\draw[arr] (root) -- (g4);
+
+\draw[arr] (g1) -- (b1);
+\draw[arr] (g2) -- (b2);
+\draw[arrhl] (g3) -- (b3);
+\draw[arr] (g4) -- (b4);
+
+\node[font=\footnotesize, deeppink] at (2,-5.5) {本文工作所属分支};
+
+\end{tikzpicture}

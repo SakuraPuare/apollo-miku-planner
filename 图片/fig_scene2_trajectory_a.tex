@@ -1,0 +1,37 @@
+% 场景二 S2-C 原始 BLOCKED（子图 a）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  % 道路背景
+  \begin{scope}[on background layer]
+    \fill[bglight] (0,-1.5) rectangle (12,1.5);
+  \end{scope}
+
+  \draw[gray, thick] (0,-1.5) -- (12,-1.5);
+  \draw[gray, thick] (0, 1.5) -- (12, 1.5);
+  \draw[gray, dashed] (0,0) -- (12,0);
+
+  % 障碍物（靠边）
+  \fill[dangerred!70, draw=dangerred, thick] (4.5,0.6) rectangle (7.5,1.2);
+  \node[font=\scriptsize, white] at (6.0,0.9) {$O_a$};
+  \fill[dangerred!70, draw=dangerred, thick] (4.5,-1.2) rectangle (7.5,-0.6);
+  \node[font=\scriptsize, white] at (6.0,-0.9) {$O_b$};
+
+  % 矛盾避让区域标注（用半透明，放在 background layer 不遮挡）
+  \begin{scope}[on background layer]
+    \fill[deeppink!10] (4.5,-0.3) rectangle (7.5,1.2);
+    \fill[deepblue!10] (4.5,-1.2) rectangle (7.5,0.3);
+  \end{scope}
+
+  % 自车
+  \fill[deepblue, opacity=0.4] (0.3,-0.25) rectangle (1.5,0.25);
+  \draw[deepblue, thick, rounded corners=1pt] (0.3,-0.25) rectangle (1.5,0.25);
+  \node[deepblue, font=\tiny\bfseries] at (0.9,0) {自车};
+
+  % 自车轨迹 → BLOCKED
+  \draw[deepblue, very thick] (1.5,0) -- (3.8,0);
+  \fill[dangerred] (3.8,0) circle (4pt);
+  \draw[dangerred, ultra thick] (3.5,-0.3) -- (4.1,0.3);
+  \draw[dangerred, ultra thick] (3.5,0.3) -- (4.1,-0.3);
+
+  \node[dangerred, font=\scriptsize\bfseries] at (6.0,0) {$l^+ < l^-$};
+  \node[dangerred, font=\scriptsize\bfseries, anchor=south] at (3.8,0.35) {BLOCKED};
+\end{tikzpicture}

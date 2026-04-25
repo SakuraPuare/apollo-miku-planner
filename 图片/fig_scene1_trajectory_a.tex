@@ -1,0 +1,22 @@
+% 场景一 S1-C 原始算法轨迹（子图 a）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  \fill[bglight] (0,-1.5) rectangle (12,1.5);
+  \draw[deepblue, very thick] (0,-1.5) -- (12,-1.5);
+  \draw[deepblue, very thick] (0, 1.5) -- (12, 1.5);
+  \draw[deepblue, dashed, thin] (0,0) -- (12,0);
+
+  \fill[obsstatic] (2.2,-0.2) rectangle (2.7,0.35);
+  \fill[obsstatic] (4.0,-0.35) rectangle (4.5,0.2);
+  \fill[obsstatic] (5.8,-0.1) rectangle (6.3,0.45);
+  \fill[obsstatic] (7.6,-0.4) rectangle (8.1,0.15);
+  \fill[obsstatic] (9.4,-0.2) rectangle (9.9,0.35);
+
+  \draw[deepblue, very thick]
+    plot[smooth, tension=0.5] coordinates {(0.3,0.1) (1.5,0.4) (2.9,0.7) (4.1,-0.7) (5.5,0.7) (6.5,0.1)};
+  \fill[dangerred] (6.5,0.1) circle (4pt);
+  \node[dangerred, font=\scriptsize\bfseries, anchor=south] at (6.5,0.25) {STOP};
+  \draw[dangerred, ultra thick] (6.2,-0.2) -- (6.8,0.4);
+  \draw[dangerred, ultra thick] (6.2,0.4) -- (6.8,-0.2);
+
+  \fill[egopt] (0.3,-0.2) rectangle (0.9,0.2);
+\end{tikzpicture}

@@ -1,0 +1,23 @@
+% 高威胁障碍物雷达图（子图 a）
+\begin{tikzpicture}[scale=0.85, transform shape]
+  \foreach \r in {1, 2, 3} {
+    \draw[gray!40, thin] (90:\r) \foreach \a in {162, 234, 306, 378} { -- (\a:\r) } -- cycle;
+  }
+  \foreach \a/\lbl in {90/$f_{TTC}$, 162/$f_{overlap}$, 234/$f_{vel}$, 306/$f_{type}$, 378/$f_{inter}$} {
+    \draw[gray!60, thin] (0,0) -- (\a:3.3);
+    \node[font=\footnotesize] at (\a:3.7) {\lbl};
+  }
+
+  \fill[dangerred!30, draw=dangerred, thick]
+    (90:2.7) -- (162:2.4) -- (234:2.55) -- (306:2.1) -- (378:1.8) -- cycle;
+  \foreach \a/\r in {90/2.7, 162/2.4, 234/2.55, 306/2.1, 378/1.8} {
+    \fill[dangerred] (\a:\r) circle (2.5pt);
+  }
+
+  \node[draw=dangerred, fill=dangerred!15, rounded corners, font=\small\bfseries] at (0, -4) {$\Theta = 0.82$ (CRITICAL)};
+
+  \node[gray, font=\tiny] at (-3.8, 0) {0};
+  \node[gray, font=\tiny] at (-3.8, 1.0) {0.33};
+  \node[gray, font=\tiny] at (-3.8, 2.0) {0.67};
+  \node[gray, font=\tiny] at (-3.8, 3.0) {1.0};
+\end{tikzpicture}
