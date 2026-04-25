@@ -1,0 +1,548 @@
+% !TEX program = xelatex
+\documentclass[aspectratio=169,10pt]{ctexbeamer}
+
+% ---------- 主题 ----------
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{caption}[numbered]
+
+% ---------- 字体 ----------
+\setCJKmainfont{Noto Serif CJK SC}
+\setCJKsansfont{Noto Sans CJK SC}
+
+% ---------- 宏包 ----------
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,decorations.pathreplacing}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{listings}
+
+% ---------- 代码样式 ----------
+\lstset{
+  language=C++,
+  basicstyle=\ttfamily\scriptsize,
+  keywordstyle=\color{apoblue}\bfseries,
+  commentstyle=\color{apogreen!70!black}\itshape,
+  stringstyle=\color{apored},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  numbersep=5pt,
+  breaklines=true,
+  frame=l,
+  framerule=1.5pt,
+  rulecolor=\color{apoblue!40},
+  backgroundcolor=\color{gray!5},
+  showstringspaces=false,
+  tabsize=2,
+  xleftmargin=1.2em,
+  framexleftmargin=1.2em,
+  escapeinside={(*@}{@*)},
+  morekeywords={string,SLBoundary,Obstacle,vector,bool,double,auto},
+}
+
+% ---------- 颜色 ----------
+\definecolor{apoblue}{RGB}{41,98,163}
+\definecolor{apored}{RGB}{192,57,43}
+\definecolor{apogreen}{RGB}{39,174,96}
+
+% ---------- 信息 ----------
+\title{基于Apollo的多障碍物场景下\\路径规划算法实现}
+\author{廖嘉旺}
+\institute{湖北文理学院\;计算机工程学院\;计科2211 \\ 指导教师：孙成娇}
+\date{2026年4月}
+
+\begin{document}
+
+% ============================
+% 封面
+% ============================
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ============================
+% 目录
+% ============================
+\begin{frame}{目录}
+  \tableofcontents
+\end{frame}
+
+% ============================================================
+\section{研究背景}
+% ============================================================
+
+\begin{frame}{研究背景}
+  \begin{columns}[T]
+    \column{0.55\textwidth}
+    \begin{itemize}
+      \item 自动驾驶路径规划是核心技术之一
+      \item Apollo 采用 \textbf{路径--速度解耦} 架构：
+        \begin{enumerate}
+          \item 路径规划（PathBoundsDecider $\to$ QP）
+          \item 速度规划（SpeedBoundsDecider $\to$ QP）
+        \end{enumerate}
+      \item 多障碍物场景下，路径边界构建阶段\\存在决策缺陷，导致 \textcolor{apored}{不必要的停车}
+    \end{itemize}
+
+    \column{0.42\textwidth}
+    \begin{tikzpicture}[
+        box/.style={draw,rounded corners,minimum width=3.2cm,minimum height=0.7cm,font=\small,align=center},
+        arr/.style={-{Stealth[length=5pt]},thick}
+      ]
+      \node[box,fill=blue!10] (ref) {参考线生成};
+      \node[box,fill=orange!15,below=0.4cm of ref] (pbd) {PathBoundsDecider};
+      \node[box,fill=orange!15,below=0.4cm of pbd] (pqp) {PathOptimizer (QP)};
+      \node[box,fill=green!10,below=0.4cm of pqp] (sbd) {SpeedBoundsDecider};
+      \node[box,fill=green!10,below=0.4cm of sbd] (sqp) {SpeedOptimizer (QP)};
+      \draw[arr] (ref) -- (pbd);
+      \draw[arr] (pbd) -- (pqp);
+      \draw[arr] (pqp) -- (sbd);
+      \draw[arr] (sbd) -- (sqp);
+      \node[right=0.1cm of pbd,font=\scriptsize\color{apored}] {\textbf{问题所在}};
+    \end{tikzpicture}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+\section{问题分析}
+% ============================================================
+
+\begin{frame}{问题一：独立贪心决策导致矛盾避让}
+  \begin{columns}[T]
+    \column{0.50\textwidth}
+    \textbf{Apollo Baseline 逻辑}：
+
+    对每个障碍物 $O_i$ \textbf{独立}决定避让方向：
+    \[
+      d_i = \begin{cases} R & \text{if } \bar{l}_i > l_{\text{ref}} \\ L & \text{otherwise} \end{cases}
+    \]
+    然后收缩边界：
+    \begin{align*}
+      d_i = R &\implies l^+ \leftarrow \min(l^+,\; l_i^- - \delta) \\
+      d_i = L &\implies l^- \leftarrow \max(l^-,\; l_i^+ + \delta)
+    \end{align*}
+
+    若 $l^+ < l^-$ $\to$ \textcolor{apored}{\textbf{BLOCKED}} $\to$ 停车
+
+    \column{0.48\textwidth}
+    \begin{tikzpicture}[scale=0.72]
+      % 道路
+      \fill[gray!10] (0,0) rectangle (7,4);
+      \draw[thick] (0,0) -- (7,0) node[right,font=\scriptsize]{$l_{\text{road}}^-$};
+      \draw[thick] (0,4) -- (7,4) node[right,font=\scriptsize]{$l_{\text{road}}^+$};
+      \draw[dashed,gray] (0,2) -- (7,2) node[right,font=\scriptsize]{$l_{\text{ref}}$};
+      % 障碍物
+      \fill[apored!60] (2,2.5) rectangle (3.5,3.5) node[midway,font=\scriptsize,white]{\textbf{$O_a$}};
+      \fill[apoblue!60] (2.5,0.8) rectangle (4,1.8) node[midway,font=\scriptsize,white]{\textbf{$O_b$}};
+      % 箭头——贪心分配
+      \draw[-{Stealth},apored,very thick] (2.75,2.5) -- (2.75,1.9) node[midway,right,font=\scriptsize]{\color{apored}R};
+      \draw[-{Stealth},apoblue,very thick] (3.25,1.8) -- (3.25,2.4) node[midway,right,font=\scriptsize]{\color{apoblue}L};
+      % 夹击区域
+      \draw[decorate,decoration={brace,amplitude=4pt},apored,thick] (4.3,1.8) -- (4.3,2.5) node[midway,right=4pt,font=\scriptsize\color{apored}]{夹击!};
+      % 自车
+      \fill[apogreen!80] (1,1.7) rectangle (1.8,2.3);
+      \node[font=\scriptsize,apogreen] at (1.4,1.4) {自车};
+    \end{tikzpicture}
+
+    \vspace{0.3cm}
+    {\small\color{apored} 两侧同时收缩 $\to$ 通行带消失 $\to$ 停车}
+
+    {\small\color{apogreen} 但若统一往一侧绕，空间充足!}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{问题二：动态障碍物被排除 + 安全裕度一刀切}
+  \begin{itemize}
+    \item \textbf{动态障碍物被排除}：
+      \begin{itemize}
+        \item 源码 \texttt{path\_bounds\_decider\_util.cc:686-694}：
+        \item[] \texttt{IsWithinPathDeciderScopeObstacle} 直接过滤掉非静态障碍物
+        \item Apollo 工程师自己留有 \texttt{TODO} 注释承认此问题
+      \end{itemize}
+
+    \vspace{0.3cm}
+    \item \textbf{安全裕度一刀切}：
+      \begin{itemize}
+        \item 所有障碍物使用相同的安全距离 $\delta = W_{\text{ego}}/2 + d_{\text{buf}}$
+        \item 低速自行车与高速对向来车共享同一裕度——不合理
+        \item 缺乏障碍物威胁度分级机制
+      \end{itemize}
+  \end{itemize}
+\end{frame}
+
+% ============================================================
+\section{改进算法设计}
+% ============================================================
+
+\begin{frame}{改进思路总览}
+  \begin{center}
+    \begin{tikzpicture}[
+        box/.style={draw,rounded corners,minimum width=3cm,minimum height=1cm,
+                     font=\small,align=center,thick},
+        arr/.style={-{Stealth[length=6pt]},thick,apoblue}
+      ]
+      \node[box,fill=blue!8] (grp) {重叠分组\\{\scriptsize 扫描线检测连通分量}};
+      \node[box,fill=orange!10,right=1.2cm of grp] (gap) {最大间隙求解\\{\scriptsize 引理1+定理1}};
+      \node[box,fill=green!8,right=1.2cm of gap] (tv) {时变扩展\\{\scriptsize 预测轨迹+到达时间}};
+      \node[box,fill=red!8,below=0.8cm of grp] (thr) {威胁度评估\\{\scriptsize 五因子加权$\Theta_i$}};
+      \node[box,fill=purple!8,below=0.8cm of gap] (dyn) {动态安全距离\\{\scriptsize $\delta_i = f(\Theta_i)$}};
+      \node[box,fill=cyan!8,below=0.8cm of tv] (out) {路径边界输出\\{\scriptsize $[l^-(s), l^+(s)]$}};
+      \draw[arr] (grp) -- (gap);
+      \draw[arr] (gap) -- (tv);
+      \draw[arr] (thr) -- (dyn);
+      \draw[arr] (dyn) -- (out);
+      \draw[arr] (tv) -- (out);
+    \end{tikzpicture}
+  \end{center}
+
+  \vspace{0.2cm}
+  \begin{itemize}
+    \item \textbf{核心思想}：将逐障碍物的独立贪心决策，提升为\textcolor{apoblue}{组级全局最优}决策
+    \item 引入时间维度，使动态障碍物自然参与路径决策
+    \item 差异化安全裕度，按威胁等级分配
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{问题建模：横向通道选择问题 (LPSP)}
+  给定 $k$ 个活跃障碍物，道路边界 $[l_{\text{road}}^-, l_{\text{road}}^+]$，安全裕度 $\delta_i$。
+
+  \vspace{0.2cm}
+  定义 $u_i = l_i^- - \delta_i$,\; $v_i = l_i^+ + \delta_i$
+
+  \vspace{0.2cm}
+  \textbf{目标}：求决策向量 $\mathbf{d} = (d_1, \dots, d_k) \in \{L, R\}^k$ 使通行带宽度最大：
+  \[
+    \mathbf{d}^* = \arg\max_{\mathbf{d}}\; W(\mathbf{d}) = l^+(\mathbf{d}) - l^-(\mathbf{d})
+  \]
+
+  其中：
+  \[
+    l^+(\mathbf{d}) = \min\!\Big(l_{\text{road}}^+,\;\min_{i:\,d_i=R} u_i\Big), \quad
+    l^-(\mathbf{d}) = \max\!\Big(l_{\text{road}}^-,\;\max_{i:\,d_i=L} v_i\Big)
+  \]
+
+  \vspace{0.3cm}
+  搜索空间 $|\{L,R\}^k| = 2^k$ --- 暴力枚举不可行。
+
+  \vspace{0.2cm}
+  $\Longrightarrow$ 需要高效求解方法。
+\end{frame}
+
+\begin{frame}{核心定理：搜索空间降维}
+  \textbf{引理 1}（最优分割的连续性）：
+
+  将障碍物按 $l_i^-$ 升序排列后，\textbf{存在最优解}使分割点连续：
+  \[
+    \exists\; p \in \{0,\dots,k\}:\quad
+    d_{(i)}^* = L,\;\forall i \le p;\quad d_{(i)}^* = R,\;\forall i > p
+  \]
+
+  {\small\color{gray} 证明：反证法。若存在不连续，可将中间的 $L$ 改为 $R$，上界不变、下界不升，$W$ 不减。}
+
+  \vspace{0.3cm}
+  
+  \textbf{推论}：搜索空间从 $2^k \to k+1$ 个候选。
+
+  \vspace{0.3cm}
+  \textbf{定理 1}（最大间隙最优性）：
+
+  定义 $k+1$ 个间隙：
+  \[
+    g_0 = u_{(1)} - l_{\text{road}}^-,\quad
+    g_p = u_{(p+1)} - v_{(p)},\quad
+    g_k = l_{\text{road}}^+ - v_{(k)}
+  \]
+  则 $W^* = \max_p g_p$。
+
+  \vspace{0.2cm}
+  \textbf{物理意义}：\textcolor{apoblue}{最优通行带 = 障碍物之间（或障碍物与道路边界之间）的最宽横向间隙}。
+\end{frame}
+
+\begin{frame}{图示：最大间隙求解}
+  \begin{center}
+    \begin{tikzpicture}[scale=0.85]
+      % 道路
+      \fill[gray!8] (0,0) rectangle (10,5);
+      \draw[very thick] (0,0) -- (10,0) node[right,font=\small]{$l_{\text{road}}^-$};
+      \draw[very thick] (0,5) -- (10,5) node[right,font=\small]{$l_{\text{road}}^+$};
+
+      % 障碍物（按 l 排序）
+      \fill[apored!50] (2,0.5) rectangle (5,1.3);
+      \node[font=\small] at (3.5,0.9) {$O_{(1)}$};
+      \fill[apored!50] (3,2.0) rectangle (6,2.7);
+      \node[font=\small] at (4.5,2.35) {$O_{(2)}$};
+      \fill[apored!50] (1.5,3.8) rectangle (4.5,4.5);
+      \node[font=\small] at (3,4.15) {$O_{(3)}$};
+
+      % 间隙标注
+      \draw[{Stealth}-{Stealth},apogreen,very thick] (7,0) -- (7,1.3-0.3);
+      \node[right,font=\small,apogreen] at (7.1,0.35) {$g_0$};
+
+      \draw[{Stealth}-{Stealth},apoblue,very thick] (7,1.3+0.3) -- (7,2.0-0.3);
+      \node[right,font=\small,apoblue] at (7.1,1.65) {$g_1$};
+
+      \draw[{Stealth}-{Stealth},apored,very thick] (7,2.7+0.3) -- (7,3.8-0.3);
+      \node[right,font=\small,apored] at (7.1,3.25) {$g_2$ \textbf{最大!}};
+
+      \draw[{Stealth}-{Stealth},apogreen,very thick] (7,4.5+0.3) -- (7,5);
+      \node[right,font=\small,apogreen] at (7.1,4.65) {$g_3$};
+
+      % 选中的通行带
+      \fill[apoblue!15] (0,3.0) rectangle (10,3.5);
+      \node[font=\small,apoblue] at (8.5,3.25) {最优通行带};
+    \end{tikzpicture}
+  \end{center}
+
+  $O_{(2)}$ 以下统一右绕 ($L$)，$O_{(3)}$ 统一左绕 ($R$) $\to$ 选中间隙 $g_2$
+\end{frame}
+
+\begin{frame}{威胁度评估与动态安全距离}
+  \textbf{五因子威胁度模型}：
+  \[
+    \Theta_i = \sum_{j=1}^{5} w_j \cdot \theta_j^{(i)}, \quad \sum w_j = 1
+  \]
+
+  \vspace{-0.2cm}
+  \begin{table}
+    \small
+    \begin{tabular}{lll}
+      \toprule
+      因子 $\theta_j$ & 含义 & 归一化方式 \\
+      \midrule
+      横向距离 & 障碍物到自车的 $|l|$ & $1 - |l|/l_{\max}$ \\
+      纵向距离 & 纵向 $\Delta s$ & $1 - \Delta s / s_{\max}$ \\
+      相对速度 & 接近速度 & $v_{\text{rel}} / v_{\max}$ \\
+      障碍物类型 & 车辆/行人/自行车 & 离散映射 \\
+      运动方向 & 对向/同向/横穿 & 离散映射 \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+
+  \vspace{0.2cm}
+  \textbf{三级分类} $\to$ \textbf{动态安全距离}：
+  \[
+    \delta_i = \delta_{\min} + (\delta_{\max} - \delta_{\min}) \cdot \Theta_i
+  \]
+
+  \begin{itemize}
+    \item CRITICAL ($\Theta > 0.7$)：大裕度 \quad
+    IMPORTANT ($0.3\text{--}0.7$)：中裕度 \quad
+    MINOR ($< 0.3$)：小裕度
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{时变扩展：动态障碍物参与决策}
+  \textbf{核心思想}：利用预测轨迹，在自车到达时刻 $\tau(s)$ 计算障碍物位置。
+
+  \vspace{0.3cm}
+  \begin{itemize}
+    \item \textbf{到达时间估计}：$\tau(s) = (s - s_{\text{ego}}) / v_{\text{ego}}$
+    \item \textbf{时变SL投影}：$u_i(s) = l_i^-(\tau(s)) - \delta_i$,\; $v_i(s) = l_i^+(\tau(s)) + \delta_i$
+    \item \textbf{时变间隙}：$g_p(s) = u_{(p+1)}(\tau(s)) - v_{(p)}(\tau(s))$
+  \end{itemize}
+
+  \vspace{0.3cm}
+  \textbf{典型场景}：横穿行人
+
+  \begin{center}
+    \begin{tabular}{ccc}
+      \toprule
+      & $t=0$（静态） & $t=\tau(s)$（时变） \\
+      \midrule
+      行人位置 & 路中央 $l=0$ & 路边 $l=4$m \\
+      间隙 & $\approx 0$ (\textcolor{apored}{BLOCKED}) & 间隙打开 (\textcolor{apogreen}{可通行}) \\
+      \bottomrule
+    \end{tabular}
+  \end{center}
+
+  \vspace{0.2cm}
+  时变版本自然解决"静态快照导致的误判"问题。
+\end{frame}
+
+% ============================================================
+\section{算法流程}
+% ============================================================
+
+\begin{frame}{完整算法流程}
+  \begin{center}
+    \begin{tikzpicture}[
+        box/.style={draw,rounded corners,minimum width=4.5cm,minimum height=0.65cm,
+                     font=\small,align=center,thick},
+        arr/.style={-{Stealth[length=5pt]},thick}
+      ]
+      \node[box,fill=blue!8]   (s1) {1. 到达时间估计 $\tau(s)$};
+      \node[box,fill=blue!8,below=0.3cm of s1]   (s2) {2. 时变SL投影 + 威胁度计算};
+      \node[box,fill=orange!10,below=0.3cm of s2] (s3) {3. 重叠分组（扫描线，$O(n\log n)$）};
+      \node[box,fill=orange!10,below=0.3cm of s3] (s4) {4. 组内最大间隙求解（$O(k\log k)$）};
+      \node[box,fill=green!8,below=0.3cm of s4]  (s5) {5. 分配避让方向 + 构建路径边界};
+      \node[box,fill=green!8,below=0.3cm of s5]  (s6) {6. 输出 $[l^-(s),l^+(s)]$ + 速度约束};
+      \draw[arr] (s1)--(s2); \draw[arr] (s2)--(s3);
+      \draw[arr] (s3)--(s4); \draw[arr] (s4)--(s5); \draw[arr] (s5)--(s6);
+    \end{tikzpicture}
+  \end{center}
+
+  \vspace{0.2cm}
+  \textbf{总复杂度}：$O(n \log n)$，与 Baseline $O(nK)$ 同量级。
+\end{frame}
+
+% ============================================================
+\section{与 Baseline 对比}
+% ============================================================
+
+\begin{frame}{与 Apollo Baseline 对比}
+  \begin{table}
+    \small
+    \begin{tabular}{lcc}
+      \toprule
+      & \textbf{Apollo Baseline} & \textbf{本文方法} \\
+      \midrule
+      决策粒度     & 逐障碍物独立   & \textcolor{apoblue}{组级全局} \\
+      最优性保证   & 贪心，无保证   & \textcolor{apoblue}{定理保证最优} \\
+      时间信息     & 仅 $t=0$ 快照  & \textcolor{apoblue}{预测轨迹 $O_i(\tau(s))$} \\
+      动态障碍物   & 不参与路径决策 & \textcolor{apoblue}{参与} \\
+      安全裕度     & 统一 $\delta$  & \textcolor{apoblue}{分级 $\delta_i = f(\Theta_i)$} \\
+      BLOCKED 处理 & 截断$\to$停车  & \textcolor{apoblue}{时变间隙可能打开} \\
+      复杂度       & $O(nK)$        & $O(n\log n)$ \\
+      \bottomrule
+    \end{tabular}
+  \end{table}
+\end{frame}
+
+% ============================================================
+\section{创新点总结}
+% ============================================================
+
+\begin{frame}{创新点总结}
+  \begin{enumerate}
+    \item \textbf{障碍物重叠分组与全局最优避让方向分配}
+      \begin{itemize}
+        \item 扫描线检测纵向重叠连通分量，组内求最大间隙
+        \item 引理1 + 定理1 保证最优性，搜索空间 $2^k \to k+1$
+      \end{itemize}
+
+    \vspace{0.3cm}
+    \item \textbf{多因子威胁度评估与动态安全距离}
+      \begin{itemize}
+        \item 五因子加权模型，三级分类，差异化安全裕度
+      \end{itemize}
+
+    \vspace{0.3cm}
+    \item \textbf{时变最优通行带}
+      \begin{itemize}
+        \item 利用预测轨迹，动态障碍物自然参与路径决策
+        \item 解决静态快照导致的"假阻塞"问题
+      \end{itemize}
+
+    \vspace{0.3cm}
+    \item \textbf{递归多车道借道}
+      \begin{itemize}
+        \item 最多3层邻接车道宽度扩展，含反向车道
+      \end{itemize}
+  \end{enumerate}
+\end{frame}
+
+% ============================================================
+\section{关键代码实现}
+% ============================================================
+
+\begin{frame}[fragile]{Baseline 源码：逐障碍物独立决策}
+  \vspace{-0.2cm}
+  {\small\texttt{path\_bounds\_decider\_util.cc} --- Apollo 原始逻辑（简化）}
+  \vspace{0.1cm}
+\begin{lstlisting}
+// (*@\textcolor{apored}{逐个障碍物独立决定避让方向}@*)
+for (const auto* obstacle : obstacles) {
+  // (*@\textcolor{apored}{问题二：动态障碍物直接跳过}@*)
+  if (!obstacle->IsStatic()) continue;
+
+  auto sl_boundary = obstacle->PerceptionSLBoundary();
+  double obs_center_l =
+      (sl_boundary.start_l() + sl_boundary.end_l()) / 2.0;
+
+  // (*@\textcolor{apored}{问题一：贪心决定方向，不考虑其他障碍物}@*)
+  if (obs_center_l > curr_l) {
+    nudge_type = RIGHT_NUDGE;  // 障碍物在左边，右绕
+    path_bound.upper = sl_boundary.start_l() - delta;
+  } else {
+    nudge_type = LEFT_NUDGE;   // 障碍物在右边，左绕
+    path_bound.lower = sl_boundary.end_l() + delta;
+  }
+  // 若 upper < lower -> BLOCKED -> 停车!
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{改进代码：障碍物分组}
+  \vspace{-0.2cm}
+  {\small\texttt{GroupObstacles} --- 扫描线检测纵向重叠连通分量}
+  \vspace{0.1cm}
+\begin{lstlisting}
+// (*@\textcolor{apogreen}{Step 1: 按 s\_min 排序，扫描线合并重叠障碍物}@*)
+std::sort(obs_list.begin(), obs_list.end(),
+    [](const auto& a, const auto& b) {
+      return a.sl.start_s() < b.sl.start_s();
+    });
+
+std::vector<ObstacleGroup> groups;
+double current_max_s = -1e9;
+for (const auto& obs : obs_list) {
+  if (obs.sl.start_s() <= current_max_s) {
+    // (*@\textcolor{apogreen}{s 区间重叠，归入当前组}@*)
+    groups.back().members.push_back(obs);
+  } else {
+    // (*@\textcolor{apogreen}{无重叠，开新组}@*)
+    groups.emplace_back();
+    groups.back().members.push_back(obs);
+  }
+  current_max_s = std::max(current_max_s,
+                           obs.sl.end_s());
+}
+\end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{改进代码：组内最大间隙求解}
+  \vspace{-0.2cm}
+  {\small\texttt{CalculateOptimalNudgeDirection} --- 定理1的直接实现}
+  \vspace{0.1cm}
+\begin{lstlisting}
+// (*@\textcolor{apogreen}{Step 2: 组内按 l\_min 排序，找最大间隙}@*)
+auto& members = group.members;
+std::sort(members.begin(), members.end(),
+    [](const auto& a, const auto& b) {
+      return a.sl.start_l() < b.sl.start_l();
+    });
+// (*@\textcolor{apogreen}{计算 k+1 个间隙}@*)
+double max_gap = members[0].start_l() - delta[0]
+                 - road_lower;               // g_0
+int best_p = 0;
+for (int p = 0; p < k - 1; ++p) {
+  double gap = members[p+1].start_l() - delta[p+1]
+             - members[p].end_l()   - delta[p]; // g_p
+  if (gap > max_gap) { max_gap = gap; best_p = p + 1; }
+}
+double gap_k = road_upper
+             - members[k-1].end_l() - delta[k-1]; // g_k
+if (gap_k > max_gap) { max_gap = gap_k; best_p = k; }
+// (*@\textcolor{apogreen}{best\_p 左侧全部 LEFT\_NUDGE，右侧全部 RIGHT\_NUDGE}@*)
+\end{lstlisting}
+\end{frame}
+
+% ============================
+% 结束
+% ============================
+\begin{frame}
+  \begin{center}
+    \vspace{1.5cm}
+    {\Huge 谢谢!}
+
+    \vspace{1cm}
+    {\large 请各位老师批评指正}
+  \end{center}
+\end{frame}
+
+\end{document}
