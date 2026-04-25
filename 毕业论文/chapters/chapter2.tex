@@ -1,0 +1,330 @@
+\chapter{相关技术与理论基础}
+
+本章介绍论文涉及的核心技术与理论基础，包括Frenet坐标系、凸优化与二次规划、SL图与路径边界构建以及Apollo平台的整体架构，为后续章节的源码分析和算法改进奠定理论基础。
+
+\section{Frenet坐标系}
+
+\subsection{坐标系定义}
+
+在自动驾驶路径规划中，直接在笛卡尔坐标系下进行规划需要同时处理道路几何形状和车辆运动约束，问题较为复杂。Frenet坐标系\cite{werling2010}以道路参考线为基准建立曲线坐标系，将复杂的二维规划问题分解为相互独立的纵向和横向两个一维问题，极大地简化了规划计算。
+
+Frenet坐标系以参考线上距起点的累积弧长$s$作为纵向坐标，以垂直于参考线方向的偏移量$l$（或$d$）作为横向坐标。对于参考线上的任意一点$P_{ref}(s)$，其位置、航向角$\theta_{ref}(s)$和曲率$\kappa_{ref}(s)$均可通过参考线的几何参数计算得到。
+
+图\ref{fig:frenet}展示了Frenet坐标系的基本定义。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_frenet}}
+\caption{Frenet坐标系示意图}
+\label{fig:frenet}
+\end{figure}
+
+设笛卡尔坐标系下的点为$(x, y)$，其在Frenet坐标系下的表示为$(s, l)$。坐标转换关系为
+\begin{equation}
+\begin{cases}
+x = x_{ref}(s) - l \cdot \sin(\theta_{ref}(s)) \\
+y = y_{ref}(s) + l \cdot \cos(\theta_{ref}(s))
+\end{cases}
+\label{eq:frenet_transform}
+\end{equation}
+其中$(x_{ref}(s), y_{ref}(s))$为参考线上弧长$s$处的点坐标，$\theta_{ref}(s)$为该处的航向角。
+
+\subsection{运动状态表示}
+
+在Frenet坐标系下，车辆的运动状态可以用纵向状态和横向状态分别描述。
+
+纵向状态向量
+\begin{equation}
+\mathbf{s} = [s, \dot{s}, \ddot{s}]^T
+\end{equation}
+其中$s$为纵向位置，$\dot{s}$为纵向速度，$\ddot{s}$为纵向加速度。
+
+横向状态向量
+\begin{equation}
+\mathbf{l} = [l, l', l'']^T
+\end{equation}
+其中$l$为横向偏移，$l' = dl/ds$为横向偏移对纵向位置的导数，$l'' = d^2l/ds^2$为二阶导数。
+
+横向偏移的时间导数与空间导数之间的关系为
+\begin{equation}
+\dot{l} = l' \cdot \dot{s}, \quad \ddot{l} = l'' \cdot \dot{s}^2 + l' \cdot \ddot{s}
+\end{equation}
+
+这种解耦表示使得路径规划可以分为两个独立的子问题，在纵向上规划速度曲线$s(t)$，在横向上规划路径曲线$l(s)$。
+
+\subsection{曲率计算}
+
+在Frenet坐标系下，车辆实际行驶轨迹的曲率$\kappa$与参考线曲率$\kappa_{ref}$、横向偏移$l$及其导数之间的关系为
+\begin{equation}
+\kappa = \frac{(l'' + (\kappa_{ref}' l + \kappa_{ref} l') \tan(\Delta\theta)) \cos^2(\Delta\theta)}{(1 - \kappa_{ref} l)} + \kappa_{ref}
+\label{eq:frenet_kappa}
+\end{equation}
+其中$\Delta\theta = \theta - \theta_{ref}$为车辆航向与参考线航向的偏差角。该曲率表达式可由微分几何中曲线的曲率定义出发，利用链式法则推导得到\cite{werling2010}。当横向偏移较小时$l \approx 0$，上式可近似为
+\begin{equation}
+\kappa \approx \kappa_{ref} + l''
+\label{eq:frenet_kappa_approx}
+\end{equation}
+
+Apollo对曲率的关注贯穿整条规划流水线。一方面，曲率直接决定车辆的最小转弯半径$R = 1/|\kappa|$，受阿克曼转向几何限制，$|\kappa|$不得超过由最大前轮转角与轴距确定的上界$\kappa_{\max}$。另一方面，曲率与车速联合决定侧向加速度$a_{lat} = v^2 \kappa$，过大的侧向加速度将超过轮胎附着极限或乘员舒适阈值。因此路径QP必须将$|\kappa| \leq \kappa_{\max}$作为硬约束纳入可行域。
+
+然而式\eqref{eq:frenet_kappa}是关于$l, l', l'', \Delta\theta$的强非线性函数，直接作为约束会破坏二次规划的凸性。Apollo的PiecewiseJerkPathOptimizer正是借助式\eqref{eq:frenet_kappa_approx}的小偏移近似，将曲率约束线性化为对横向二阶导的盒约束
+\begin{equation}
+|l''| \leq l''_{\max} \triangleq \kappa_{\max} - \max_s |\kappa_{ref}(s)|
+\label{eq:lddot_bound}
+\end{equation}
+该近似的合理性建立在两个工程前提之上，其一是参考线经过平滑处理后自身曲率$\kappa_{ref}$已足够小，其二是横向偏移$l$远小于转弯半径，使得分母$(1-\kappa_{ref} l)$可取为一。由此路径优化退化为标准QP，线性约束与二次代价共同保证求解器可在实时周期内收敛。
+
+本节给出的曲率解析式与线性化近似是后续章节的直接工具。第三章分析Apollo路径规划源码时将看到$l''_{\max}$如何从配置参数传递至OSQP求解器的上下界向量；第五章构造时变最优通行带时亦沿用该近似，将通行带的横向收缩映射为对$l$及其导数的联合约束，从而在保持凸性的前提下纳入动态避让需求。
+
+\section{凸优化与二次规划}
+
+\subsection{凸优化基本概念}
+
+凸优化是一类特殊的数学优化问题，要求目标函数为凸函数，可行域为凸集。凸优化问题的一般形式为
+\begin{equation}
+\begin{aligned}
+\min_{\mathbf{x}} \quad & f(\mathbf{x}) \\
+\text{s.t.} \quad & g_i(\mathbf{x}) \leq 0, \quad i = 1, \ldots, m \\
+& A\mathbf{x} = \mathbf{b}
+\end{aligned}
+\label{eq:convex_opt}
+\end{equation}
+其中$f(\mathbf{x})$为凸目标函数，$g_i(\mathbf{x})$为凸不等式约束函数。
+
+凸优化的核心性质是，任何局部最优解都是全局最优解。这一性质保证了求解器能够找到全局最优解，是自动驾驶规划中广泛使用凸优化方法的理论基础。
+
+凸二次规划问题的几何含义如图\ref{fig:qp_geometry}所示。目标函数$\frac{1}{2}x^\top P x + q^\top x$在正定矩阵$P\succ 0$下构成同心椭圆族的等值面，每条椭圆代表目标函数的一个水平集。线性不等式约束$a_i^\top x\leq b_i$各定义一个半平面，所有约束的交集即可行域$\mathcal{F}$，为一个凸多边形。在凸性保证下，目标函数在$\mathcal{F}$内部必定存在唯一全局最优解$x^\star$。若无约束最小点$x^\star_\text{uncon}$本身位于可行域内，则该点即为最优解；否则最优解必位于可行域边界上，并且其水平集椭圆与边界相切（KKT互补松弛条件）。这一几何图景直观解释了为何凸QP既能保证最优性又具有高效的数值求解特性。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_qp_geometry}}
+  \caption{2D 等值线视角：KKT 切线条件}
+  \label{fig:qp_geometry:2d}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_qp_geometry_3d}}
+  \caption{3D 曲面视角：抛物面碗型直觉}
+  \label{fig:qp_geometry:3d}
+\end{subfigure}
+\caption{凸二次规划的几何解释}
+\caption*{\scriptsize 左：正定二次型等值线为同心椭圆，线性约束构成凸多边形可行域$\mathcal{F}$，最优解$x^\star$处椭圆与约束边界相切（KKT 互补松弛）。\\右：目标函数在 $(x_1,x_2,f)$ 空间是开口向上的抛物面，碗底为无约束最优点 $x^\star_{\text{uncon}}$；当该点落在 $\mathcal{F}$ 之外时，最优解 $x^\star$ 落在 $\mathcal{F}$ 内最接近碗底、曲面高度最低的位置。}
+\label{fig:qp_geometry}
+\end{figure}
+
+\subsection{二次规划}
+
+二次规划（Quadratic Programming, QP）是凸优化的一个重要子类，其目标函数为二次形式，约束条件为线性。标准形式为
+\begin{equation}
+\begin{aligned}
+\min_{\mathbf{x}} \quad & \frac{1}{2}\mathbf{x}^T H \mathbf{x} + \mathbf{f}^T \mathbf{x} \\
+\text{s.t.} \quad & A_{eq}\mathbf{x} = \mathbf{b}_{eq} \\
+& A_{ineq}\mathbf{x} \leq \mathbf{b}_{ineq} \\
+& \mathbf{x}_{lb} \leq \mathbf{x} \leq \mathbf{x}_{ub}
+\end{aligned}
+\label{eq:qp_standard}
+\end{equation}
+其中$H$为半正定矩阵（$H \succeq 0$），$\mathbf{f}$为线性项系数，$A_{eq}$和$A_{ineq}$分别为等式和不等式约束矩阵。
+
+Apollo Planning模块使用OSQP（Operator Splitting Quadratic Program）\cite{stellato2020osqp}作为QP求解器。OSQP基于交替方向乘子法（Alternating Direction Method of Multipliers, ADMM），具有以下优点。
+\begin{enumerate}
+\item 支持稀疏矩阵运算，适合大规模问题；
+\item 可处理不可行问题，返回近似解；
+\item 无需活跃集策略，对初始点不敏感；
+\item 计算复杂度为$O(n^2)$至$O(n^3)$，满足实时性要求。
+\end{enumerate}
+
+\subsection{路径规划中的QP建模}
+
+在Apollo的路径规划中，轨迹被表示为关于参数$t$的分段多项式。以五次多项式为例，第$i$段样条的形式为
+\begin{equation}
+f_i(t) = a_{i,0} + a_{i,1}t + a_{i,2}t^2 + a_{i,3}t^3 + a_{i,4}t^4 + a_{i,5}t^5
+\label{eq:quintic_poly}
+\end{equation}
+
+规划问题的目标函数通常包含以下代价项
+\begin{equation}
+J = \underbrace{w_1 \int (l'')^2 ds}_{\text{曲率平滑}} + \underbrace{w_2 \int (l''')^2 ds}_{\text{曲率变化率}} + \underbrace{w_3 \sum_j \| l(s_j) - l_{ref,j} \|^2}_{\text{参考线跟踪}}
+\label{eq:path_cost}
+\end{equation}
+其中$w_1, w_2, w_3$为各项权重，$l''$和$l'''$分别为横向偏移的二阶和三阶导数，$l_{ref,j}$为参考线对应的横向偏移。约束条件包括初始状态约束、样条节点连续性约束（$C^2$或$C^3$连续）、路径边界约束等。
+
+需要指出的是，上述五次多项式表示是Apollo早期版本中使用的路径参数化方式。在当前Apollo版本中，主流的PiecewiseJerkPathOptimizer采用离散化表示方法，直接以纵向采样点的横向偏移$l_i$作为优化变量，利用有限差分近似一阶和二阶导数，从而将路径优化转化为标准二次规划问题。本文后续章节的分析基于该离散化实现方式。
+
+\section{SL图与路径边界}
+
+在Frenet坐标系下，路径规划的核心任务是确定自车在每个纵向位置$s$处的横向偏移$l(s)$。为此，需要在SL（Station-Lateral）空间，即纵向位置$s$与横向偏移$l$构成的二维平面中，构建路径的可通行边界。
+
+\subsection{障碍物的SL投影}
+
+每个障碍物在SL空间中占据一个区域。设第$i$个障碍物的SL投影为矩形
+\begin{equation}
+O_i = [s_i^{min}, s_i^{max}] \times [l_i^{min}, l_i^{max}]
+\end{equation}
+其中$[s_i^{min}, s_i^{max}]$为障碍物沿参考线的纵向投影范围，$[l_i^{min}, l_i^{max}]$为其横向占据范围。图\ref{fig:sl_projection}展示了障碍物从笛卡尔空间到SL空间的投影过程。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_sl_projection}}
+  \caption{笛卡尔空间中的S弯道场景}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_sl_projection_b}}
+  \caption{对应的SL空间投影}
+\end{subfigure}
+\caption{SL空间中障碍物投影示意图}
+\caption*{\scriptsize 弯道上各障碍物沿参考线投影后，在SL空间中均表示为轴对齐矩形$[s_i^{min},s_i^{max}] \times [l_i^{min},l_i^{max}]$。}
+\label{fig:sl_projection}
+\end{figure}
+
+\subsection{路径边界构建}
+
+路径规划需要在SL空间中找到一条横向轨迹$l(s)$，使其不与任何障碍物碰撞。这要求在每个$s$处确定横向可通行区间$[l^-(s), l^+(s)]$，其中$l^+(s)$为上界即左侧限制，$l^-(s)$为下界即右侧限制。
+
+对于每个在位置$s$处活跃的障碍物$O_i$，即满足$s \in [s_i^{min}, s_i^{max}]$的障碍物，规划系统需要做出避让方向决策$d_i \in \{L, R\}$，若选择右绕（$d_i = R$），则障碍物约束路径上界$l^+(s) \leq l_i^{min} - \delta$；若选择左绕（$d_i = L$），则约束下界$l^-(s) \geq l_i^{max} + \delta$。其中$\delta$为安全裕度。
+
+图\ref{fig:nudge_decision}直观展示了两种避让方向决策对路径边界的影响。图(a)为右绕情形，障碍物位于车道中线上方，决策$d_i=R$使得原本位于车道左侧边界的上界被压低至$u_i=l_i^{min}-\delta$，自车须在该上界之下寻找路径。图(b)为左绕情形，障碍物位于车道中线下方，决策$d_i=L$使得原本位于车道右侧边界的下界被抬高至$v_i=l_i^{max}+\delta$。可见，任一次避让决策都是对路径可行空间的单边收紧，是后续章节理解“独立决策导致矛盾避让”问题的直接几何基础。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_nudge_decision_a}}
+  \caption{RIGHT\_NUDGE}
+  \label{fig:nudge_decision:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_nudge_decision_b}}
+  \caption{LEFT\_NUDGE}
+  \label{fig:nudge_decision:b}
+\end{subfigure}
+\caption{避让方向决策对路径边界的影响}
+\label{fig:nudge_decision}
+\end{figure}
+
+当多个障碍物同时活跃时，所有约束取交集。路径可行的条件是$l^+(s) \geq l^-(s) + W_{ego}$，其中$W_{ego}$为自车宽度。若该条件不满足，路径被判定为阻塞（BLOCKED）。
+
+避让方向的选择本质上是一个组合优化问题，$n$个障碍物各有两种选择，共$2^n$种组合。如何高效地找到使通行带最宽的决策组合，是本文第五章的核心研究内容。
+
+\section{ST图与速度规划基础}
+
+SL图负责描述路径的几何可行性，而ST（Station-Time）图则描述路径已定情况下的速度可行性。ST图的横轴为时间$t$，纵轴为沿参考线的累积弧长$s$，自车运动被描绘为一条在$s$随$t$单调递增的曲线，斜率即瞬时速度$\dot{s}$。
+
+\subsection{ST图中的障碍物与速度约束}
+
+障碍物在ST图中的表示取决于其运动状态。静态障碍物在参考线上的投影长度固定，在ST图中表现为一个沿时间轴方向延伸的平行带状矩形区域。动态障碍物的位置随时间改变，在ST图中通常表现为一个倾斜的平行四边形，其斜率由障碍物沿参考线方向的速度决定。
+
+图\ref{fig:st_graph}展示了ST图的基本原理以及两种典型的速度决策方式。当障碍物占据了ST平面中的禁行区域，即图中红色与橙色矩形或平行四边形，自车轨迹必须绕过这些区域。若轨迹位于障碍物的下方，即$s$值较小的一侧，则称为避让（YIELD）决策，即自车减速让行；若轨迹位于障碍物的上方，即$s$值较大的一侧，则称为超越（OVERTAKE）决策，即自车加速通过。两种决策对应完全不同的速度曲线，且各自具有不同的可行条件和安全边际。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_st_graph}}
+\caption{ST图原理与YIELD/OVERTAKE决策}
+\label{fig:st_graph}
+\end{figure}
+
+在此基础上，为保证安全，Apollo对每个障碍物的ST投影额外叠加纵向安全距离$d_s$，使得禁行区沿$s$方向向两侧扩张，得到实际用于约束优化的ST边界。多障碍物情形下所有ST边界取并集，其在每个时刻$t$对应的可行区间的上下界分别构成速度的上下约束曲线$s_{\max}(t)$和$s_{\min}(t)$。两条曲线所围成的区域即为ST走廊，速度优化器在该走廊内寻找平滑、舒适、最快的$s(t)$曲线，构成路径-速度解耦两阶段优化的第二阶段。
+
+\section{Apollo平台架构概述}
+
+\subsection{系统总体架构}
+
+百度Apollo自动驾驶平台\cite{apollo2024}采用模块化设计，主要包含感知、预测、路由、规划和控制五大核心模块。各模块之间通过Cyber RT实时通信框架进行消息传递，采用发布-订阅模式实现松耦合的模块间协作。图\ref{fig:apollo_arch}展示了Apollo平台的总体架构。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.7\textwidth}{!}{\input{../图片/fig_apollo_arch}}
+\caption{Apollo自动驾驶平台总体架构}
+\label{fig:apollo_arch}
+\end{figure}
+
+\subsection{Cyber RT通信框架}
+
+Cyber RT是Apollo的实时通信框架，替代了早期版本中的ROS（Robot Operating System）。相比ROS，Cyber RT具有以下优势。
+\begin{enumerate}
+\item 更低的消息传递延迟；
+\item 确定性的调度机制；
+\item 更好的多线程支持；
+\item 内置的录制和回放功能。
+\end{enumerate}
+
+Planning模块通过Cyber RT订阅以下消息
+\begin{itemize}[noitemsep]
+\item \texttt{PredictionObstacles}，预测模块输出的障碍物预测轨迹
+\item \texttt{Chassis}，底盘状态（档位、速度、转向）
+\item \texttt{LocalizationEstimate}，定位信息（位置、速度、加速度）
+\item \texttt{TrafficLightDetection}，交通灯检测结果
+\item \texttt{PlanningCommand}，规划命令（包含路由信息）
+\end{itemize}
+
+输出消息为\texttt{ADCTrajectory}，包含完整的轨迹点序列及其对应的时间戳、速度、加速度、曲率等信息。
+
+Apollo的路径生成分为宏观与微观两个层次，Planning模块依赖Cyber RT订阅Routing模块输出的全局路由，并在此基础上完成局部轨迹生成。Routing负责宏观路径规划，即“走哪条路”，其基于高精地图的拓扑图以A*算法搜索从起点到终点的全局最优路线，输出道路段序列，仅在目的地变化或需要重路由时触发，属于低频更新。Planning负责微观轨迹规划，即“怎么走”，其在Routing提供的参考线基础上结合实时感知与预测信息，以约100ms的周期持续生成局部最优轨迹，是本文研究的重点。
+
+\subsection{Planning模块的Scenario-Stage-Task架构}
+
+Apollo Planning模块采用三级管理架构来实现场景化规划。
+
+\textbf{场景（Scenario）层}\quad{}ScenarioManager根据当前环境状态，如是否有交通灯、停车标志、接近目的地等，选择合适的场景。Apollo支持的场景包括LANE\_FOLLOW、TRAFFIC\_LIGHT\_PROTECTED、STOP\_SIGN\_UNPROTECTED、PULL\_OVER等共19种场景类型，分别对应车道跟随、有保护交通灯、无保护停车标志、靠边停车等驾驶情境。
+
+\textbf{阶段（Stage）层}\quad{}每个Scenario包含一个或多个Stage，表示完成该场景需要经历的不同阶段。例如，停车标志场景可能包含“接近停车线”、“停车等待”、“通过路口”等阶段。
+
+\textbf{任务（Task）层}\quad{}每个Stage包含一个有序的Task列表，Task是最小的规划执行单元。常见的Task包括PathBoundsDecider（路径边界决策）、PathDecider（路径决策）、SpeedBoundsDecider（速度边界决策）、PiecewiseJerkSpeedOptimizer（速度优化）等。Task按顺序在参考线上依次执行。
+
+这种三级架构使得规划逻辑模块化、可配置，不同场景可以灵活组合不同的Task流水线。
+
+\section{组合优化与区间图基础}
+
+本文第五章将多障碍物避让方向选择建模为组合优化问题，并利用区间图的结构性质将指数级搜索空间降至多项式级别。本节介绍相关的数学基础。
+
+\subsection{组合优化概述}
+
+组合优化是在有限或可数无限的离散可行解集合中搜索最优解的数学分支。其一般形式为
+\begin{equation}
+\mathbf{x}^{*} = \arg\max_{\mathbf{x} \in \mathcal{X}} f(\mathbf{x})
+\label{eq:combo_opt}
+\end{equation}
+其中$\mathcal{X}$为有限可行集，$f$为目标函数。当$\mathcal{X}$由$n$个二值决策变量构成时，可行集的大小为$2^n$，暴力枚举在$n$较大时不可行。
+
+组合优化问题按计算复杂度分为P类和NP（Non-deterministic Polynomial）-hard类。P类问题存在多项式时间算法，NP-hard问题在最坏情况下不存在已知的多项式时间精确算法。然而，许多NP-hard问题在特定的问题结构下可以利用结构性质显著降低求解复杂度。例如，当决策变量之间存在特定的排序或独立性关系时，搜索空间可从指数级降为多项式级。本文第五章证明的引理1正是利用了障碍物在横向排序后最优分割具有连续性这一结构性质，将$2^k$种决策组合降为$k+1$个候选分割点的线性枚举。
+
+\subsection{区间图与连通分量}
+
+在图论中，区间图（Interval Graph）是一类与实数轴上的区间集合对应的无向图。给定$n$个闭区间$I_1 = [a_1, b_1], I_2 = [a_2, b_2], \ldots, I_n = [a_n, b_n]$，以每个区间为一个顶点，两个顶点之间存在边当且仅当对应区间有交集
+\begin{equation}
+(I_i, I_j) \in E \iff [a_i, b_i] \cap [a_j, b_j] \neq \emptyset
+\label{eq:interval_graph}
+\end{equation}
+
+区间图的连通分量可通过扫描线算法在$O(n \log n)$时间内求解。将所有区间按左端点$a_i$升序排列，维护当前连通分量中所有区间右端点的最大值$b_{max}$。依次扫描排序后的区间，若下一个区间的左端点$a_j \leq b_{max}$，则将其并入当前连通分量并更新$b_{max} \leftarrow \max(b_{max}, b_j)$，否则开始新的连通分量。排序需$O(n \log n)$，扫描仅需$O(n)$。
+
+在本文第五章中，每个障碍物的纵向占据区间$[s_i^{-}, s_i^{+}]$构成一个区间集合，其区间图的连通分量恰好对应在纵向上彼此关联的障碍物组。不同连通分量的避让决策互不影响，可以独立求解。这一分组机制是本文算法将全局问题分解为多个独立子问题的理论基础。
+
+\subsection{碰撞时间}
+
+碰撞时间（Time-to-Collision, TTC）是交通安全领域衡量碰撞紧迫性的经典指标\cite{paden2016}，定义为在当前运动状态下两个物体发生碰撞所需的时间
+\begin{equation}
+TTC = \frac{\Delta s}{v_{rel}}
+\label{eq:ttc_def}
+\end{equation}
+其中$\Delta s$为两物体之间的纵向距离，$v_{rel}$为相对接近速度。当$v_{rel} \leq 0$时两物体不在相互接近，$TTC = +\infty$。TTC值越小，碰撞风险越高。
+
+工程上通常按风险等级划分TTC阈值，$TTC < 0.5\,\mathrm{s}$对应紧急制动区间，$0.5\,\mathrm{s} \leq TTC < 1.5\,\mathrm{s}$对应警戒区间，$1.5\,\mathrm{s} \leq TTC < 4\,\mathrm{s}$对应舒适跟车区间。与单纯的距离指标相比，TTC同时编码了距离和速度信息，能更准确地反映碰撞的紧迫程度。
+
+式\eqref{eq:ttc_def}的一维形式假设两物体沿参考线方向共线运动，实际场景中相对运动常具有横向分量。在Frenet坐标系下可将碰撞时间按维度分解，纵向TTC以$\Delta s$与纵向相对速度$\dot{s}_{ego} - \dot{s}_{obs}$构造，横向TTC以$\Delta l$与横向相对速度$\dot{l}_{ego} - \dot{l}_{obs}$构造，二者的较小值反映最先发生碰撞的方向
+\begin{equation}
+TTC_{2D} = \min\left\{\frac{\Delta s}{\dot{s}_{ego} - \dot{s}_{obs}},\ \frac{\Delta l}{\dot{l}_{ego} - \dot{l}_{obs}}\right\}
+\label{eq:ttc_2d}
+\end{equation}
+该分解形式与SL投影天然契合，使得TTC可直接嵌入路径与速度的联合决策，并为第五章多因子威胁度评估提供基础度量。
+
+\section{本章小结}
+
+本章系统介绍了论文涉及的核心技术与理论基础。Frenet坐标系将二维规划问题分解为纵横向两个一维问题，是Apollo路径规划的坐标基础。凸优化和二次规划为路径优化提供了数学工具，第五章的路径边界优化和速度QP融合均建立在该理论之上。SL图中的路径边界构建和障碍物避让方向决策是本文改进的核心对象，第四章将从安全裕度、决策粒度和时空协调三个维度分析其在多障碍物场景下的缺陷，第五章在此基础上建立时变最优通行带的数学框架并提出高效求解算法。ST图与速度规划基础为理解路径-速度解耦架构中的协调缺失提供了必要背景，第五章提出的时空可通行走廊正是将时变通行带投影至ST空间、与速度约束融合的关键机制。组合优化、区间图连通分量和碰撞时间等概念为第五章的问题建模、障碍物分组算法和威胁度评估提供了直接的理论支撑。Apollo平台的Scenario-Stage-Task架构为改进算法的集成提供了框架基础。

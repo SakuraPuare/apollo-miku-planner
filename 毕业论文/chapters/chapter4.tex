@@ -1,0 +1,461 @@
+\chapter{多障碍物场景下的问题分析}
+
+本章基于第三章的源码分析，系统识别Apollo现有算法在多障碍物密集场景下的三个核心问题，即安全裕度一刀切压缩通行空间、逐障碍物独立决策导致矛盾避让方向、动态障碍物被路径决策完全排除导致路径-速度协调缺失。三个问题分别从安全距离维度、决策粒度维度和时空协调维度指向相应的改进方向，具体算法设计见第五章。
+
+\section{问题概述}
+
+在多障碍物密集场景中，自车前方同时存在多个障碍物，例如路口多车交汇、高速多车道变道、施工区域多路障等，Apollo现有的Planning模块会面临一系列问题。图\ref{fig:problem_overview}给出了三个问题的几何示意与级联后果。子图(a)展示安全裕度一刀切导致的通行带压缩，窄小的路锥被过大的统一缓冲包裹，挤占了本应富余的横向空间。子图(b)展示独立决策矛盾导致的路径BLOCKED，左右两侧障碍物被贪心分配了相反方向的避让决策，使得$l^+(s)$与$l^-(s)$在中间区域相遇甚至翻转，可行带宽不足以容纳自车宽度。子图(c)展示动态障碍物被排除在路径阶段之外，行人的预测轨迹在Path阶段完全不可见，导致规划出的路径与速度阶段检测到的实际碰撞窗口相互矛盾。三个问题在多障碍物密集场景中沿空间、安全、时间三条维度级联作用，最终表现为不必要的FallbackPath停车和通行效率下降，这也是后续章节改进方案同时从分组决策、差异化安全裕度和时变投影三个角度切入的根本原因。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_three_problems_a}}
+  \caption{安全裕度一刀切}
+  \label{fig:problem_overview:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_three_problems_b}}
+  \caption{独立决策矛盾}
+  \label{fig:problem_overview:b}
+\end{subfigure}
+
+\vspace{0.6em}
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_three_problems_c}}
+  \caption{动态障碍物排除}
+  \label{fig:problem_overview:c}
+\end{subfigure}
+\caption{多障碍物场景三个核心问题的几何示意}
+\label{fig:problem_overview}
+\end{figure}
+
+\section{安全裕度一刀切压缩通行空间}
+\label{sec:problem_margin}
+
+\subsection{问题描述}
+
+PathBoundsDecider在构建路径边界时，需要在障碍物边缘外预留安全距离，以确保自车与障碍物之间保持足够的横向间距。该安全距离由\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数统一计算
+
+\begin{lstlisting}[language=C++,caption={安全距离统一计算与nudge缓冲的静态/非静态分支},label={lst:buffer_calc}]
+// path_bounds_decider_util.cc
+// 相关 gflags 默认值（planning_gflags.cc）
+//   obstacle_lat_buffer              = 0.4 m
+//   static_obstacle_nudge_l_buffer   = 0.3 m
+//   nonstatic_obstacle_nudge_l_buffer = 0.4 m
+//   static_obstacle_speed_threshold  = 0.5 m/s
+
+// 所有障碍物统一调用此函数计算安全距离
+double PathBoundsDeciderUtil::
+    GetBufferBetweenADCCenterAndEdge() {
+  double adc_half_width =
+      VehicleConfigHelper::GetConfig()
+          .vehicle_param().width() / 2.0;
+  return (adc_half_width + FLAGS_obstacle_lat_buffer);
+}
+
+// --- 静态/非静态的判定条件 ---
+if (!obstacle.IsStatic() ||
+    obstacle.speed() > FLAGS_static_obstacle_speed_threshold) {
+  return false;  // 非静态障碍物不参与路径决策
+}
+
+// --- 边界松弛中的静态/非静态缓冲分支 ---
+// 非静态障碍物使用 nonstatic buffer
+double new_buffer = std::max(FLAGS_ego_front_slack_buffer,
+                             FLAGS_nonstatic_obstacle_nudge_l_buffer);
+// ...
+// 静态障碍物使用 static buffer
+if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
+  old_buffer = std::max(FLAGS_obstacle_lat_buffer,
+                        FLAGS_static_obstacle_nudge_l_buffer);
+}
+\end{lstlisting}
+
+从代码可以看出，Apollo对安全距离的处理存在两个层面的粗粒度问题
+\begin{enumerate}
+\item \texttt{GetBufferBetweenADCCenterAndEdge}函数对所有障碍物返回相同的值，即半车宽加0.4\,m，完全不区分障碍物的类型、速度、横向偏移等特征。无论是远离车道的路锥、车道边缘的花坛，还是正对车道的违停车，均使用相同的安全距离。
+
+\item Apollo虽然在\texttt{nudge\_l\_buffer}参数中区分了静态0.3\,m和非静态0.4\,m两个等级，但仅以0.5\,m/s的速度阈值做二分，低于该阈值视为静态，高于则视为非静态。该二分判定在 PathBoundsDecider 与 ObstacleNudgeDecider 的缓冲计算中通过 \texttt{!IsStatic() || speed() > FLAGS\_static\_obstacle\_speed\_threshold} 条件式生效。这种二分法无法区分运动方向随时突变的行人与轨迹可预测的同向行驶车辆，也无法区分碰撞时间短的正面接近障碍物与碰撞风险低的横向远离障碍物。
+\end{enumerate}
+
+\subsection{影响分析}
+
+以下通过一个具体场景说明统一安全距离如何导致不必要的通行失败。定义净间距为道路边界到障碍物边缘之间扣除缓冲距离后的剩余宽度，自车可从某一侧通过当且仅当该侧净间距不小于自车宽度。
+
+\textbf{场景设定}\quad 标准车道宽3.75\,m，$l_{road}^- = -1.875$\,m，$l_{road}^+ = 1.875$\,m。车道中偏右位置有一个路锥，横向占据$[-0.375,\; -0.075]$\,m，宽度0.3\,m。自车宽度$W_{ego} = 1.8$\,m。
+
+\textbf{Apollo统一缓冲}\quad 取$d_{buf} = 0.3$\,m。从左侧通过时，净间距为
+\[
+1.875 - (-0.075) - 0.3 = 1.65\,\text{m} < W_{ego} = 1.8\,\text{m}
+\]
+从右侧通过时，净间距为
+\[
+(-0.375) - (-1.875) - 0.3 = 1.20\,\text{m} < 1.8\,\text{m}
+\]
+两侧均不足以容纳自车，路径被判定为BLOCKED，自车停车等待。
+
+\textbf{差异化缓冲}\quad 该路锥处于静止状态且远离车道中心，威胁较低，取$d_{buf} = 0.15$\,m。从左侧通过时，净间距为
+\[
+1.875 - (-0.075) - 0.15 = 1.80\,\text{m} = W_{ego}
+\]
+恰好等于自车宽度，自车可从左侧安全通过。仅因缓冲参数从0.3\,m降至0.15\,m，净间距就从1.65\,m提升至1.80\,m，通行结果从BLOCKED翻转为可行。图\ref{fig:safety_margin_compression}直观对比了两种缓冲参数下的通行带差异。按障碍物威胁程度差异化分配安全距离的具体方法将在第五章展开。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_safety_margin_compression}}
+\caption{统一缓冲与差异化缓冲下的通行带对比}
+\label{fig:safety_margin_compression}
+\end{figure}
+
+\section{SL层路径边界独立决策缺陷}
+\label{sec:problem_sl}
+
+\subsection{问题描述}
+
+PathBoundsDecider是Apollo路径规划阶段的关键模块，负责在每个离散纵向位置$s$处构建横向路径边界$[l^-(s),\; l^+(s)]$。其核心缺陷在于对每个障碍物独立地决定避让方向（LEFT\_NUDGE或RIGHT\_NUDGE），而不考虑同一$s$截面上其他活跃障碍物的存在。当道路两侧同时存在障碍物时，这种逐障碍物的贪心决策可能产生相互矛盾的避让方向，即左侧障碍物使上边界下压、右侧障碍物使下边界上抬，导致$l^+(s) < l^-(s)$，路径边界被判定为BLOCKED，最终触发FallbackPath停车。
+
+\subsection{源码定位与决策逻辑}
+
+该问题的根源在于\texttt{UpdatePathBoundary\-BySLPolygon}函数。其核心逻辑包括三个环节，即逐障碍物独立决定避让方向、根据避让方向收缩路径边界、检测边界交叉并截断路径。代码\ref{lst:update_path_boundary}展示了该函数的关键流程。
+
+\begin{lstlisting}[language=C++,caption={UpdatePathBoundaryBySLPolygon核心逻辑},label={lst:update_path_boundary}]
+// path_bounds_decider_util.cc: UpdatePathBoundaryBySLPolygon
+for (size_t i = 1; i < path_boundary->size(); ++i) {
+  auto& left_bound = path_boundary->at(i).l_upper;   // 上边界
+  auto& right_bound = path_boundary->at(i).l_lower;  // 下边界
+  for (size_t j = 0; j < sl_polygon->size(); j++) {
+    // --- 步骤1: 逐障碍物独立决定避让方向 ---
+    if (sl_polygon->at(j).NudgeInfo() == SLPolygon::UNDEFINED) {
+      double obs_l = (l_lower + l_upper) / 2;  // 障碍物中心横向位置
+      if (is_passable_right && is_passable_left) {
+        // 两侧均可通行时，根据障碍物中心与参考线的相对位置决定
+        if (last_max_nudge_l < obs_l) {
+          sl_polygon->at(j).SetNudgeInfo(SLPolygon::RIGHT_NUDGE);
+        } else {
+          sl_polygon->at(j).SetNudgeInfo(SLPolygon::LEFT_NUDGE);
+        }
+      } else if (is_passable_right) {
+        sl_polygon->at(j).SetNudgeInfo(SLPolygon::RIGHT_NUDGE);
+      } else {
+        sl_polygon->at(j).SetNudgeInfo(SLPolygon::LEFT_NUDGE);
+      }
+    }
+    // --- 步骤2: 根据避让方向更新边界 ---
+    if (sl_polygon->at(j).NudgeInfo() == SLPolygon::RIGHT_NUDGE) {
+      if (!sl_polygon->at(j).is_passable()[RIGHT_INDEX]) {
+        sl_polygon->at(j).SetNudgeInfo(SLPolygon::BLOCKED);
+        break;  // 右侧不可通行，标记BLOCKED
+      }
+      // 上边界收缩至障碍物左边缘减安全距离
+      if (obs_right_nudge_bound.l_upper.l < left_bound.l) {
+        left_bound.l = obs_right_nudge_bound.l_upper.l;
+        left_bound.type = BoundType::OBSTACLE;
+      }
+    } else if (sl_polygon->at(j).NudgeInfo() == SLPolygon::LEFT_NUDGE) {
+      if (!sl_polygon->at(j).is_passable()[LEFT_INDEX]) {
+        sl_polygon->at(j).SetNudgeInfo(SLPolygon::BLOCKED);
+        break;  // 左侧不可通行，标记BLOCKED
+      }
+      // 下边界上抬至障碍物右边缘加安全距离
+      if (obs_left_nudge_bound.l_lower.l > right_bound.l) {
+        right_bound.l = obs_left_nudge_bound.l_lower.l;
+        right_bound.type = BoundType::OBSTACLE;
+      }
+    }
+  }
+  // --- 步骤3: BLOCKED判定与路径截断 ---
+  if (!blocked_id->empty()) {
+    TrimPathBounds(i, path_boundary);  // 截断后续路径边界
+    return false;                      // 触发FallbackPath停车
+  }
+}
+\end{lstlisting}
+
+代码中步骤1，即第7至22行，展示了避让方向的独立决策，对每个在位置$s$处活跃的障碍物，通过\texttt{SetNudgeInfo}函数根据障碍物中心相对于参考线的横向位置独立决定\texttt{RIGHT\_NUDGE}，即从右侧绕行使上边界下压，或\texttt{LEFT\_NUDGE}，即从左侧绕行使下边界上抬。步骤2，即第23至44行，根据避让方向对路径边界进行收缩，其中安全距离\texttt{delta}由自车半宽，即\texttt{GetBufferBetweenADCCenterAndEdge}的返回值，与额外缓冲参数\texttt{obstacle\_lat\_buffer}相加得到。步骤3，即第46至49行，在上下边界交叉，即存在BLOCKED标记的障碍物时，调用\texttt{TrimPathBounds}清除后续路径边界并返回\texttt{false}，最终触发\texttt{FallbackPath}生成减速停车轨迹。
+
+\subsection{失败模式分析}
+
+以下通过一个对称场景说明独立决策如何导致不必要的停车。
+
+\textbf{场景设定}\quad 双车道道路总宽7.5\,m，$l_{road}^- = -3.75$\,m，$l_{road}^+ = 3.75$\,m。在某纵向位置$s^*$处同时存在两个路锥，关于参考线近似对称
+
+\begin{itemize}[noitemsep]
+\item $O_a$偏右，横向占据$[0.1,\; 0.4]$\,m，中心$0.25$\,m
+\item $O_b$偏左，横向占据$[-0.4,\; -0.1]$\,m，中心$-0.25$\,m
+\end{itemize}
+
+两个路锥均未越过车道中线，安全距离$\delta = 1.2$\,m。
+
+\textbf{Apollo独立决策}\quad $O_a$中心$0.25 > 0$，分配RIGHT\_NUDGE，上边界收缩至
+\[
+l^+(s^*) = 0.1 - 1.2 = -1.1\,\text{m}
+\]
+$O_b$中心$-0.25 < 0$，分配LEFT\_NUDGE，下边界抬升至
+\[
+l^-(s^*) = -0.1 + 1.2 = 1.1\,\text{m}
+\]
+$l^+ = -1.1 < l^- = 1.1$，判定BLOCKED。贪心策略将自车挤入两个路锥之间仅0.2\,m的间隙，路径不可行，触发停车。
+
+\textbf{全局统一决策}\quad 将两个路锥作为一组，统一分配RIGHT\_NUDGE，自车从两者右侧绕行
+\[
+l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.75\,\text{m}
+\]
+通行带宽度$W = -1.6 - (-3.75) = 2.15$\,m，自车可借用相邻车道从右侧安全通过。由对称性，统一LEFT\_NUDGE同样可行，$W = 3.75 - 1.6 = 2.15$\,m。
+
+贪心策略将两个偏向不同侧的障碍物分别向内挤压，全局协调只需统一绕行方向，即可利用道路另一侧的充裕空间。当$k$个障碍物在同一纵向位置活跃时，避让方向共有$2^k$种组合，贪心策略只检查了其中一种，可能恰好选中不可行的组合而遗漏可行解。该问题的形式化建模与高效求解方法将在第五章详细展开。
+
+图\ref{fig:path_conservative}直观展示了该场景中独立决策与全局协调的对比。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_path_conservative_a}}
+  \caption{独立决策，矛盾避让 $\to$ BLOCKED}
+  \label{fig:path_conservative:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_path_conservative_b}}
+  \caption{全局协调，统一右绕 $\to$ 通行}
+  \label{fig:path_conservative:b}
+\end{subfigure}
+\caption{独立决策导致矛盾避让方向与全局协调的对比}
+\label{fig:path_conservative}
+\end{figure}
+
+除了两个障碍物的极端情形外，随着障碍物数量增加，独立决策导致的可行域压缩会以近似指数方式恶化。图\ref{fig:feasible_compress}给出了同一车道内从2个、5个到极端密度障碍物场景下的可行域演化。在2个障碍物场景下，尚存较宽的可行通带可供自车选择，尽管贪心决策已开始压缩通带宽度；5个障碍物场景下，多次独立收缩使得可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发BLOCKED；极端密度场景下，可行域进一步碎片化，几乎任何贪心决策组合都会导致某处边界失效。这一演化揭示了问题二在高密度场景下的致命性，也量化说明了改进“决策粒度”对可行性恢复的杠杆效应远高于单纯调整安全裕度。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_a}}
+  \caption{2 个障碍物}
+  \label{fig:feasible_compress:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_b}}
+  \caption{4 个障碍物}
+  \label{fig:feasible_compress:b}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_c}}
+  \caption{密集障碍物}
+  \label{fig:feasible_compress:c}
+\end{subfigure}
+\caption{多障碍物场景下可行域的退化演化}
+\label{fig:feasible_compress}
+\end{figure}
+
+\subsection{BLOCKED后的截断与恢复机制局限}
+
+当PathBoundsDecider判定BLOCKED后，调用\texttt{TrimPathBounds}截断路径
+
+\begin{lstlisting}[language=C++,caption={TrimPathBounds路径截断},label={lst:trim_path}]
+// path_bounds_decider_util.cc: TrimPathBounds
+void PathBoundsDeciderUtil::TrimPathBounds(
+    const int path_blocked_idx, PathBoundary* const path_boundaries) {
+  if (path_blocked_idx != -1) {
+    if (path_blocked_idx == 0) {
+      AINFO << "Completely blocked. Cannot move at all.";
+    }
+    double front_edge_to_center =
+        VehicleConfigHelper::GetConfig().vehicle_param().front_edge_to_center();
+    double trimmed_s =
+        path_boundaries->at(path_blocked_idx).s - front_edge_to_center;
+    while (path_boundaries->size() > 1 &&
+           path_boundaries->back().s > trimmed_s) {
+      path_boundaries->pop_back();  // 逐个弹出BLOCKED位置之后的边界点
+    }
+  }
+}
+\end{lstlisting}
+
+该函数将路径边界截断至BLOCKED位置的前方，即减去车头到中心的距离，后续的\texttt{FallbackPath}模块基于截断后的短路径生成减速停车轨迹。整个过程是不可逆的，一旦某个避让方向组合导致BLOCKED，系统不会回溯尝试其他方向组合，而是直接进入停车流程。
+
+Apollo提供的\texttt{LaneBorrowPath}机制可以在一定条件下缓解BLOCKED问题，但该机制的触发条件非常严格。代码\ref{lst:lane_borrow_conditions}展示了借道决策需要通过的5个前置检查及条件4的具体实现
+
+\begin{lstlisting}[language=C++,caption={LaneBorrowPath的前置条件与长期阻塞判定},label={lst:lane_borrow_conditions}]
+// lane_borrow_path.cc: IsNecessaryToBorrowLane
+// 条件1: 仅单参考线场景（路口等多参考线场景不借道）
+if (!HasSingleReferenceLine(*frame_)) { return false; }
+// 条件2: 自车速度低于阈值（默认5.0 m/s）
+if (!IsWithinSidePassingSpeedADC(*frame_)) { return false; }
+// 条件3: 阻塞障碍物远离路口
+if (!IsBlockingObstacleFarFromIntersection(*ref_info)) { return false; }
+// 条件4: 障碍物持续阻塞达到cycle阈值（默认3个周期）
+if (!IsLongTermBlockingObstacle()) { return false; }
+// 条件5: 阻塞障碍物在目的地范围内
+if (!IsBlockingObstacleWithinDestination(*ref_info)) { return false; }
+
+// 条件4的具体实现: IsLongTermBlockingObstacle
+bool LaneBorrowPath::IsLongTermBlockingObstacle() {
+  if (injector_->planning_context()->planning_status().path_decider()
+          .front_static_obstacle_cycle_counter() >=
+      config_.long_term_blocking_obstacle_cycle_threshold()) {  // 默认值: 3
+    return true;
+  }
+  return false;
+}
+\end{lstlisting}
+
+这意味着：即使存在可行的借道方案，系统也必须先经历至少3个规划周期，约300\,ms，的停车等待才会尝试借道；且借道仅在单参考线、低速、远离路口等条件同时满足时才被允许。在路口附近、高速行驶、或多参考线场景下，LaneBorrow机制不会触发，BLOCKED判定将直接导致停车。
+
+\section{ST层路径-速度协调缺失}
+\label{sec:problem_st}
+
+\subsection{问题描述与源码定位}
+
+\textbf{问题}\quad{}Apollo的路径决策模块在确定障碍物的避让方向时，完全排除了动态障碍物。所有非静态障碍物，包括行驶中的车辆、行走的行人、骑行的自行车等，不参与PathBoundsDecider的边界构建，而是被完全交给速度规划阶段的ST图处理。这意味着路径规划阶段看到的“世界”中只有静态障碍物，动态障碍物如同不存在。
+
+\textbf{源码定位}\quad{}该问题的源码证据体现在\texttt{IsWithinPathDecider\-ScopeObstacle}函数中
+
+\begin{lstlisting}[language=C++,caption={动态障碍物被路径决策排除},label={lst:scope_obstacle}]
+// path_bounds_decider_util.cc: IsWithinPathDeciderScopeObstacle
+bool PathBoundsDeciderUtil::IsWithinPathDeciderScopeObstacle(
+    const Obstacle& obstacle) {
+  // 虚拟障碍物不参与路径决策
+  if (obstacle.IsVirtual()) {
+    return false;
+  }
+  // 已有IGNORE决策的障碍物跳过
+  if (obstacle.HasLongitudinalDecision() && obstacle.HasLateralDecision()
+      && obstacle.IsIgnore()) {
+    return false;
+  }
+  // 非静态障碍物或速度超过阈值的障碍物直接排除
+  if (!obstacle.IsStatic() ||
+      obstacle.speed() > FLAGS_static_obstacle_speed_threshold) {
+    return false;  // 动态障碍物不参与路径决策
+  }
+  // TODO(jiacheng):
+  // Some obstacles are not moving, but only because they are waiting
+  // for red light (traffic rule) or because they are blocked by
+  // others (social). These obstacles will almost certainly move in
+  // the near future and we should not side-pass such obstacles.
+  return true;
+}
+\end{lstlisting}
+
+值得注意的是，Apollo开发团队在该函数中留下了\texttt{TODO}注释，表明他们意识到当前的处理方式存在不足，但尚未实施改进。这个\texttt{TODO}注释本身就是该问题存在的直接证据。
+
+\subsection{影响分析}
+
+动态障碍物被排除在路径决策之外，产生以下影响。
+
+\textbf{影响一}，路径与速度规划之间缺乏协调
+
+在Apollo的路径-速度解耦架构中，如第三章3.3节所述，路径规划先于速度规划执行，速度规划在路径规划的结果上构建ST图。当动态障碍物不参与路径决策时，路径阶段可能生成一条直行路径，而速度阶段在该路径上发现动态障碍物横穿，不得不急刹或停车等待。如果路径阶段考虑了动态障碍物的预测轨迹，完全可以提前规划一条避让路径，在保持速度的同时安全通过。
+
+\textbf{影响二}，横穿行人在路径规划中完全不存在
+
+考虑一个典型场景：一名行人正在从右向左横穿道路。在路径规划阶段，由于该行人是动态障碍物（\texttt{IsStatic() == false}），PathBoundsDecider完全忽略其存在，路径规划生成的是一条沿车道中心线的直行路径。随后速度规划在ST图中检测到该行人的ST边界，只能通过减速或停车来避让。
+
+具体地，设自车以$v_{ego} = 8$\,m/s行驶，前方$s = 10$\,m处一名行人以$v_{lat} = 1.2$\,m/s从右向左横穿，当前位于车道中央$l = 0$处。自车到达该位置需$t = 10/8 = 1.25$\,s，届时行人已横移$1.2 \times 1.25 = 1.5$\,m，移至$l = 1.5$\,m处，接近车道左边缘。如果路径规划阶段纳入行人的预测轨迹，可以基于行人在$t = 1.25$\,s时的预测位置（$l = 1.5$\,m）计算路径边界，此时行人已不在车道中央，自车可从行人右侧安全通过，无需停车。但由于行人被\texttt{IsWithinPathDeciderScopeObstacle}过滤，路径阶段对此一无所知，速度阶段只能被迫停车等待。该场景的完整时变分析将在第五章中给出。
+
+图\ref{fig:dynamic_exclusion}给出了该场景下行人时变位置与自车到达时刻的三帧对比。子图(a)为$t=0$时刻，自车刚开始规划，行人距自车10\,m，尚未进入车道，PathBoundsDecider看到的“世界”中该行人不存在。子图(b)为$t=0.625$\,s时刻，自车已行进5\,m，行人横移0.75\,m进入车道右半侧，恰好落在自车直行路径上形成碰撞窗口。子图(c)为$t=1.25$\,s时刻，行人已穿过车道抵达对侧，自车到达原障碍位置时路径已然通畅。若Path阶段能够利用行人的预测轨迹即“在自车到达该位置时行人已横移1.5\,m至车道边缘”这一事实，完全可以在规划初始即选择从行人右侧绕行或保持直行，无需进入Speed阶段的急刹降级。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_a}}
+  \caption{$t=0$ 行人未进入路径}
+  \label{fig:dynamic_exclusion:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_b}}
+  \caption{$t=0.625$ s 行人半入路径}
+  \label{fig:dynamic_exclusion:b}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_c}}
+  \caption{$t=1.25$ s 路径通畅}
+  \label{fig:dynamic_exclusion:c}
+\end{subfigure}
+\caption{动态障碍物排除后的时变演化示意}
+\label{fig:dynamic_exclusion}
+\end{figure}
+
+\textbf{影响三}，加剧问题一的影响
+
+动态障碍物的排除使得PathBoundsDecider只能基于障碍物在$t = 0$时刻的静态快照做决策，无法利用时间维度的信息。例如，一辆缓慢移动的车辆在当前时刻$t = 0$占据车道中央，但$t = 2$s后将移至车道边缘甚至离开车道。如果纳入该动态障碍物的预测轨迹，PathBoundsDecider可以基于自车到达该$s$位置时障碍物的预测位置来决定避让方向，而非基于其当前位置。这种时间维度的利用可以显著减少问题一中BLOCKED判定的发生频率。
+
+\subsection{PathDecider中的同一问题}
+
+不仅PathBoundsDecider排除动态障碍物，路径决策器PathDecider同样如此。
+
+\begin{lstlisting}[language=C++,caption={PathDecider同样排除动态障碍物},label={lst:path_decider_static}]
+// path_decider.cc: MakeStaticObstacleDecision
+for (const auto *obstacle : path_decision->obstacles().Items()) {
+  // 跳过非静态障碍物和虚拟障碍物
+  if (!obstacle->IsStatic() || obstacle->IsVirtual()) {
+    continue;
+  }
+  // 已有IGNORE决策的障碍物跳过
+  if (obstacle->HasLongitudinalDecision() &&
+      obstacle->LongitudinalDecision().has_ignore() &&
+      obstacle->HasLateralDecision() &&
+      obstacle->LateralDecision().has_ignore()) {
+    continue;
+  }
+  // ... 后续仅对静态障碍物执行STOP/NUDGE/IGNORE决策
+}
+\end{lstlisting}
+
+可以看到，\texttt{MakeStaticObstacleDecision}在遍历障碍物列表的第一步即通过\texttt{IsStatic()}过滤掉所有动态障碍物。这意味着Apollo路径规划阶段的两个核心决策模块，即负责构建横向边界的PathBoundsDecider和负责做出STOP/NUDGE/IGNORE决策的PathDecider，都将动态障碍物完全排除在外，形成了系统性的路径-速度协调缺失。
+
+\subsection{路径决策信息未传递至速度规划}
+
+除了动态障碍物被排除外，ST层面还存在一个更深层的问题，路径决策阶段产生的时空信息没有传递给速度规划阶段。
+
+在Apollo的路径-速度解耦架构中，PathBoundsDecider输出的是横向路径边界$[l^-(s), l^+(s)]$，SpeedBoundsDecider基于该路径独立构建ST边界。两个模块之间的信息传递是单向的、有限的，速度规划知道路径在哪里，但不知道路径为什么在那里。
+
+这种信息断层的后果在动态障碍物场景中尤为明显。考虑改进后的路径规划，路径决策可能基于“行人将在$t = 1.25$\,s后移开”这一预判选择了一条通过方案，但SpeedBoundsDecider不知道这一时间约束的存在。如果速度规划恰好让自车在行人移开之前到达该位置，路径决策的前提条件就被违反了。
+
+因此，ST层面的问题不仅是“排除了动态障碍物”，更本质的问题是路径规划和速度规划之间缺乏时空约束的传递通道。改进方案需要建立这样一个通道，路径层面的时变决策能够以约束的形式传递给速度层面，确保两者的一致性。图\ref{fig:path_speed_breakage}示意了现有架构中路径阶段到速度阶段的单向信息流以及缺失的时空一致性反向通道。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_path_speed_breakage}}
+\caption{路径与速度规划之间的单向信息传递与时空约束缺口}
+\caption*{\scriptsize 图中漏斗表示两阶段之间的信息瓶颈。Path阶段产生的避让方向$d_i$、时间前提$t_{\mathrm{clear}}$和威胁度$\theta_i$均未传递至Speed阶段，仅横向边界$[l^-(s),l^+(s)]$通过。}
+\label{fig:path_speed_breakage}
+\end{figure}
+
+\section{问题总结与改进方向}
+\label{sec:problem_relation}
+
+表\ref{tab:problem_summary}对比了三个问题的特征及其对应的改进方向。
+
+\begin{table}[htbp]
+\centering
+\caption{多障碍物场景三个核心问题与改进方向}
+\label{tab:problem_summary}
+\small
+\begin{tabularx}{\textwidth}{lXXX}
+\toprule
+& \textbf{问题一\quad 安全裕度一刀切} & \textbf{问题二\quad 独立决策} & \textbf{问题三\quad 动态障碍物排除} \\
+\midrule
+\textbf{涉及模块} & PathBoundsDecider & PathBoundsDecider & PathBoundsDecider / PathDecider \\
+\textbf{根源} & 统一安全距离不区分威胁 & 逐障碍物贪心决策 & 动态障碍物不参与路径决策 \\
+\textbf{表现} & 通行带被不必要压缩 & 路径BLOCKED $\rightarrow$ 停车 & 错过时变可行方案 \\
+\textbf{严重程度} & 严重，加剧问题二 & 致命 & 严重，加剧问题二 \\
+\textbf{改进维度} & 差异化安全距离 & 全局协调决策 & 时空约束协调 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+表中“严重程度”一列反映了三个问题的相对权重，问题二是导致路径BLOCKED的直接瓶颈，问题一和问题三则分别从安全距离维度和时间维度提高问题二的发生概率。三个改进维度在数学上可纳入一个统一的优化框架，具体的问题建模与算法设计见第五章。
+
+\section{本章小结}
+
+本章分析了Apollo在多障碍物场景下的三个核心规划缺陷。问题一，所有障碍物使用统一的安全距离，不区分威胁程度，不必要地压缩通行空间。问题二，PathBoundsDecider对每个障碍物独立决定避让方向，在道路两侧同时存在障碍物时产生矛盾决策，导致路径BLOCKED。问题三，动态障碍物被完全排除在路径决策之外，Apollo团队在源码中留下的\texttt{TODO}注释证实了这一缺陷，且路径-速度之间缺乏时空约束传递通道。三个问题分别从安全距离、决策粒度和时空协调三个维度指向相应的改进方向，具体的算法设计与实现见第五章。

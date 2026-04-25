@@ -1,0 +1,371 @@
+\chapter{Apollo Planning模块深度分析}
+
+本章基于Apollo 11.0版本的源码，对Planning模块的核心组件进行深度分析，涵盖模块总体架构、ReferenceLine平滑、路径-速度解耦两阶段优化、PathDecider决策逻辑和SpeedBoundsDecider的ST边界构建。
+
+\section{Planning模块总体架构}
+
+\subsection{模块入口与数据流}
+
+Planning模块的主入口函数为\texttt{PlanningComponent::Proc()}，每个规划周期由Cyber RT调度执行。从输入消息到输出轨迹的完整数据流如图\ref{fig:planning_flow}所示。整个处理过程划分为三个层次的函数调用。最外层的\texttt{PlanningComponent::Proc()}负责从Cyber RT消息通道读取五类输入数据并完成路由检查和有效性校验。中间层的\texttt{OnLanePlanning::RunOnce()}完成车辆状态更新、参考线生成与平滑、轨迹拼接和Frame初始化等准备工作。核心执行层的\texttt{OnLanePlanning::Plan()}通过ScenarioManager选择场景，再由Stage驱动Task列表按顺序执行，最终产生\texttt{ADCTrajectory}轨迹输出。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_planning_dataflow}}
+\caption{Planning模块数据流}
+\label{fig:planning_flow}
+\end{figure}
+
+值得注意的是，Task列表内部不进行回溯迭代，各Task按配置顺序单向执行，前序Task的输出作为后续Task的输入。这种流水线式的结构对各Task的正确性提出了较高要求，若前序Task如\texttt{PathBoundsDecider}出现不必要的保守决策，后续Task无法对其进行修正，而只能在其输出的基础上继续处理。这一架构特征是后续章节分析的重要前提。
+
+\subsection{DependencyInjector依赖注入}
+
+Apollo通过\texttt{DependencyInjector}类实现依赖注入，在\texttt{PlanningComponent::Init()}中创建并传递给各组件。注入的核心依赖包括
+
+\begin{table}[htbp]
+\centering
+\caption{DependencyInjector注入的依赖组件}
+\label{tab:dependency_injector}
+\begin{tabular}{ll}
+\toprule
+\textbf{依赖组件} & \textbf{功能说明} \\
+\midrule
+PlanningContext & 规划上下文，存储跨周期状态信息 \\
+FrameHistory & Frame历史记录，用于轨迹拼接和平滑 \\
+History & ADCTrajectory历史记录 \\
+EgoInfo & 自车信息（前方障碍物距离、路由信息） \\
+VehicleStateProvider & 车辆状态（位置、速度、加速度、航向） \\
+LearningBasedData & 学习模型数据（强化学习模式使用） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{场景管理机制}
+
+ScenarioManager在每个规划周期检查当前环境状态，通过调用各Scenario的\texttt{IsTransferable()}方法判断是否需要切换场景。图\ref{fig:scenario_hierarchy}展示了Scenario-Stage-Task的三级层次结构。Apollo支持19种场景类型，表\ref{tab:scenarios}列出了主要场景及其触发条件。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_scenario_hierarchy}}
+\caption{Scenario-Stage-Task三级管理架构}
+\label{fig:scenario_hierarchy}
+\end{figure}
+
+Scenario-Stage-Task架构在整体上形成了输入接入层、场景管理层、任务执行层、输出接出层的纵向管线结构，图\ref{fig:planning_arch}给出了Planning模块的整体模块视图。图中输入层汇聚预测、定位、底盘、路由和交通灯信息，经由三级管理框架分派到具体的Path与Speed Task并行执行，最终由TrajectoryStitcher将路径和速度输出缝合为完整的时空轨迹。在现有Apollo实现中，路径侧Task包含LaneChangePath、LaneFollowPath、LaneBorrowPath和FallbackPath四个产生路径的Task，以及PathDecider、PathBoundsDecider等决策Task；速度侧Task包含SpeedBoundsDecider、PathTimeHeuristicOptimizer和PiecewiseJerkSpeedOptimizer等。本文改进的PathBoundsDecider位于图中粉色高亮区块，其输出直接影响后续Path优化与速度规划的可行性，是多障碍物场景下全链路闭环的关键节点。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_planning_arch}}
+\caption{Planning模块整体架构}
+\label{fig:planning_arch}
+\end{figure}
+
+\begin{table}[htbp]
+\centering
+\caption{Apollo主要场景类型及触发条件}
+\label{tab:scenarios}
+\small
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{场景类型} & \textbf{触发条件} \\
+\midrule
+LANE\_FOLLOW & 默认场景，正常车道跟随 \\
+BARE\_INTERSECTION\_UNPROTECTED & 无保护路口（无交通灯、停车标志） \\
+STOP\_SIGN\_UNPROTECTED & 遇到停车标志，距离在配置阈值内 \\
+TRAFFIC\_LIGHT\_PROTECTED & 遇到交通灯且有路权保护 \\
+TRAFFIC\_LIGHT\_UNPROTECTED\_LEFT\_TURN & 无保护左转遇到交通灯 \\
+PULL\_OVER & 接近目的地且距离在配置范围内 \\
+EMERGENCY\_STOP & 紧急停车 \\
+PARK\_AND\_GO & 停车后重新启动 \\
+VALET\_PARKING & 代客泊车 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{ReferenceLine平滑}
+
+参考线的质量直接影响Frenet坐标系下的障碍物SL投影精度，进而影响PathBoundsDecider的边界构建结果，因此有必要理解参考线的生成过程。
+
+\subsection{参考线生成流程}
+
+ReferenceLine是Planning模块的规划基准线，其生成流程主要步骤如下。
+
+\begin{enumerate}
+\item \textbf{获取路由段}\quad{}通过\texttt{PncMapBase::GetRouteSegments()}从Routing结果中提取基于车辆当前位置的路由段。
+
+\item \textbf{生成原始参考线}\quad{}将路由段转换为\texttt{hdmap::Path}，再转换为\texttt{ReferenceLine}。此时的参考线直接来自高精地图的车道中心线，存在噪声和不连续性。
+
+\item \textbf{生成锚点}\quad{}调用\texttt{GetAnchorPoints()}，按\texttt{max\_constraint\_interval}间隔在参考线上均匀采样锚点，默认取5\,m。每个锚点包含位置、航向角、横向和纵向边界。
+
+\item \textbf{QP样条平滑}\quad{}以锚点为约束，通过QP优化生成平滑的参考线。
+
+\item \textbf{验证与裁剪}\quad{}验证平滑后的参考线偏差不超过阈值，并根据车辆位置裁剪。
+\end{enumerate}
+
+图\ref{fig:ref_smooth}展示了参考线平滑的完整过程。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_ref_smooth}}
+\caption{参考线平滑过程示意图}
+\label{fig:ref_smooth}
+\end{figure}
+
+\subsection{QP样条平滑的数学建模}
+
+参考线平滑采用分段五次多项式（Quintic Spline）表示，平滑问题建模为二维QP问题。
+
+\textbf{目标函数}
+\begin{equation}
+\begin{aligned}
+\min_{\mathbf{p}} \; J ={}& w_2 \sum_{i=1}^{n} \int_{t_i}^{t_{i+1}} \left[(x_i''(t))^2 + (y_i''(t))^2 \right] dt \\
+&+ w_3 \sum_{i=1}^{n} \int_{t_i}^{t_{i+1}} \left[(x_i'''(t))^2 + (y_i'''(t))^2 \right] dt \\
+&+ w_r \|\mathbf{p}\|^2
+\end{aligned}
+\label{eq:refline_obj}
+\end{equation}
+其中$w_2$为二阶导数权重，默认取0.0；$w_3$为三阶导数权重，默认取100；$w_r$为正则化权重，默认取0.1。三阶导数权重远大于二阶导数权重，表明Apollo更注重曲率变化率的平滑性。
+
+约束条件包括三类。
+\begin{enumerate}
+\item \textbf{边界约束}\quad{}对每个锚点$i$，在其局部坐标系下约束横向和纵向偏移
+\begin{equation}
+-\Delta l_i \leq d_{lateral}(t_i) \leq \Delta l_i, \quad -\Delta s_i \leq d_{longitudinal}(t_i) \leq \Delta s_i
+\end{equation}
+其中$\Delta l_i$根据车道宽度计算，默认最大0.5\,m；$\Delta s_i$为纵向边界，默认取1.0\,m。
+
+\item \textbf{起点航向约束}
+\begin{equation}
+\frac{dy}{dt}\bigg|_{t=t_0} \bigg/ \frac{dx}{dt}\bigg|_{t=t_0} = \tan(\theta_0)
+\end{equation}
+
+\item \textbf{连续性约束}\quad{}在每个knot连接处保证$C^2$连续
+\begin{equation}
+f_i(t_{i+1}) = f_{i+1}(t_{i+1}), \quad f_i'(t_{i+1}) = f_{i+1}'(t_{i+1}), \quad f_i''(t_{i+1}) = f_{i+1}''(t_{i+1})
+\end{equation}
+\end{enumerate}
+
+\textbf{Knot划分}\quad{}根据参考线总长度和\texttt{max\_spline\_length}计算样条段数，默认25\,m$n = \lceil L / 25 \rceil$，在参数空间$t \in [0, n]$均匀分布knot节点。
+
+\subsection{参考线数据结构}
+
+平滑后的参考线由一系列\texttt{ReferencePoint}构成，每个点包含的字段如表\ref{tab:refpoint}所示。
+
+\begin{table}[htbp]
+\centering
+\caption{ReferencePoint数据结构}
+\label{tab:refpoint}
+\begin{tabular}{lll}
+\toprule
+\textbf{字段} & \textbf{单位} & \textbf{说明} \\
+\midrule
+$x, y$ & m & 全局笛卡尔坐标 \\
+$heading$ & rad & 航向角 \\
+$kappa$ & 1/m & 曲率 \\
+$dkappa$ & 1/m$^2$ & 曲率变化率 \\
+$s$ & m & 沿参考线的累积弧长 \\
+$lane$ & — & 关联的车道信息 \\
+$l$ & m & 相对车道中心线的横向偏移 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{路径-速度解耦两阶段优化}
+
+Apollo 2.0至5.0版本曾采用名为EM（Expectation-Maximization）Planner\cite{fan2018baidu}的独立规划器，以路径-速度解耦的两阶段优化为核心思想。在Apollo 11.0中，EM Planner已不再作为独立规划器存在，其路径-速度解耦的两阶段架构被融入了默认规划器PublicRoadPlanner的Scenario-Stage-Task流水线中。当前版本的四个规划器为NaviPlanner、LatticePlanner、RTKReplayPlanner和PublicRoadPlanner，其中PublicRoadPlanner为默认规划器，通过Task流水线继承了EM Planner的两阶段优化思想。
+
+路径-速度解耦的核心做法是将三维时空轨迹规划降维为两个串联的二维规划子问题。第一阶段在忽略时间维度的前提下直接在SL空间上规划横向路径$l(s)$，第二阶段在已知$l(s)$的基础上沿参考线弧长规划速度曲线$s(t)$。图\ref{fig:path_speed_decouple}给出了该流水线的整体结构。参考线、感知障碍物、预测轨迹和车辆状态四种输入在阶段一合流于PathBoundsDecider与PiecewiseJerkPathOptimizer，产出离散路径点序列；阶段二将该路径作为已知条件建立ST图，由DP启发式搜索给出粗解作为热启动，再交由QP精细优化输出最终速度曲线；阶段三的输出与路径合成\texttt{ADCTrajectory}。这种降维的代价是路径阶段必须独立做出如左右绕行和跟随超车等决策，无法根据动态障碍物的时间演化来调整，这也是第四章所揭示问题的结构性根源。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_path_speed_decouple}}
+\caption{路径-速度解耦三阶段架构}
+\label{fig:path_speed_decouple}
+\end{figure}
+
+\subsection{路径规划阶段}
+
+路径规划阶段通过一系列Path Task生成局部路径，典型的Task包括\texttt{LaneFollowPath}即车道跟随路径、\texttt{LaneChangePath}即换道路径、\texttt{LaneBorrowPath}即借道路径。路径优化采用与参考线平滑类似的QP方法，目标函数包含平滑性、参考线偏离和边界约束等项。
+
+按Apollo 11.0默认PublicRoadPlanner在LaneFollow场景下的pipeline配置，路径阶段由一条顺序执行的Task链承担，依次为\texttt{PathReuseDecider}、\texttt{PathBoundsDecider}、\texttt{PiecewiseJerkPathOptimizer}、\texttt{PathAssessmentDecider}和\texttt{PathDecider}。
+
+\textbf{PathReuseDecider}\quad{}判断当前周期是否可以直接复用上周期已通过评估的路径，若可复用则跳过后续优化步骤，从而在非关键场景下降低计算开销。
+
+\textbf{PathBoundsDecider}\quad{}沿参考线在每个离散纵向位置$s$上聚合车道几何、静态障碍物投影和借道决策，构建横向可行走廊$[l^-(s), l^+(s)]$作为优化问题的硬约束。
+
+\textbf{PiecewiseJerkPathOptimizer}\quad{}以$l(s)$的分段jerk最小化为核心，在离散化网格上将平滑性、参考线偏离和边界约束组织为稀疏二次规划，调用OSQP求解得到横向位置、横向速度和横向加速度三元组序列。
+
+\textbf{PathAssessmentDecider}\quad{}对候选路径进行有效性筛查，包含终点可达性、与静态障碍物的碰撞检测以及通行带是否被完全阻塞等判定，若全部候选路径均失效则触发\texttt{BLOCKED}标记并回退至FallbackPath。
+
+\textbf{PathDecider}\quad{}在最终选定的路径上遍历所有障碍物，根据其与路径的相对横向距离和语义属性生成\texttt{NUDGE}、\texttt{IGNORE}等横向决策标签，后续速度规划阶段将据此构建ST边界。
+
+上述Task链顺序执行、不做回溯，最终输出\texttt{PathData}，其中封装了离散路径点序列及其Frenet坐标表达，作为速度规划阶段构建ST图和跟踪参考的唯一几何输入。
+
+\subsection{速度规划阶段}
+
+速度规划分为粗优化和精优化两步。
+
+\textbf{粗优化，动态规划（Dynamic Programming, DP）搜索}
+
+在ST图的离散栅格上进行动态规划搜索。栅格的时间维度按固定步长$\Delta t$均匀采样，空间维度分为dense和sparse两部分以平衡精度和效率。DP的代价函数包括
+
+\begin{equation}
+C_{total} = C_{obstacle} + C_{spatial} + C_{speed} + C_{accel} + C_{jerk}
+\label{eq:dp_cost}
+\end{equation}
+
+其中各项代价的计算方式如下。
+
+\textbf{障碍物代价}
+\begin{equation}
+C_{obstacle} = \begin{cases}
++\infty & \text{栅格点落在障碍物边界内} \\
+w_{obs} \cdot c_{default} \cdot (d_{follow} - d_{actual})^2 & \text{栅格点靠近障碍物边界}
+\end{cases}
+\end{equation}
+
+\textbf{速度代价}
+\begin{equation}
+C_{speed} = w_{exceed}(v - v_{limit})^2 + w_{low}|v - v_{cruise}| + w_{ref}|v - v_{ref}|
+\end{equation}
+
+\textbf{加加速度代价}
+\begin{equation}
+j = \frac{s_4 - 3s_3 + 3s_2 - s_1}{(\Delta t)^3}
+\end{equation}
+
+DP通过递推计算每个栅格点的最小累积代价，并记录前驱指针，最终通过回溯获得粗略的最优速度曲线。
+
+\textbf{精优化，PiecewiseJerk QP}
+
+以DP结果为参考轨迹，建立QP问题进行精细化优化
+\begin{equation}
+\min \sum_{k=0}^{K-1} \left[ w_s(s_k - s_{ref,k})^2 + w_v(v_k - v_{ref,k})^2 + w_a a_k^2 + w_j \left(\frac{a_{k+1} - a_k}{\Delta t}\right)^2 \right]
+\label{eq:piecewise_jerk}
+\end{equation}
+
+DP输出的速度曲线作为$v_{ref,k}$传入QP，为非凸的ST边界约束提供了“暖启动”，引导QP在正确的可行区域内求解。
+
+\subsection{两阶段信息传递}
+
+两阶段之间的信息传递是单向的，路径阶段输出\texttt{PathData}，包含离散路径点和Frenet坐标系路径，速度阶段在此路径的基础上构建ST图并进行速度优化。在Apollo的Task流水线中，各Task按配置顺序执行，不进行回溯迭代。LANE\_FOLLOW场景的完整Task流水线配置如下。
+
+\begin{lstlisting}[language={json},caption={LANE\_FOLLOW场景Task流水线配置}]
+// scenarios/lane_follow/conf/pipeline.pb.txt
+stage {
+  name: "LANE_FOLLOW_STAGE"
+  type: "LaneFollowStage"
+  task { name: "LANE_CHANGE_PATH"            type: "LaneChangePath" }
+  task { name: "LANE_FOLLOW_PATH"            type: "LaneFollowPath" }
+  task { name: "LANE_BORROW_PATH"            type: "LaneBorrowPath" }
+  task { name: "FALLBACK_PATH"               type: "FallbackPath" }
+  task { name: "PATH_DECIDER"                type: "PathDecider" }
+  task { name: "RULE_BASED_STOP_DECIDER"     type: "RuleBasedStopDecider" }
+  task { name: "SPEED_BOUNDS_PRIORI_DECIDER" type: "SpeedBoundsDecider" }
+  task { name: "SPEED_HEURISTIC_OPTIMIZER"   type: "PathTimeHeuristicOptimizer" }
+  task { name: "SPEED_DECIDER"               type: "SpeedDecider" }
+  task { name: "SPEED_BOUNDS_FINAL_DECIDER"  type: "SpeedBoundsDecider" }
+  task { name: "PIECEWISE_JERK_SPEED"        type: "PiecewiseJerkSpeedOptimizer" }
+}
+\end{lstlisting}
+
+其中，路径阶段包含四种路径生成Task，即换道、跟车道、借道、降级，以及路径决策和规则停车决策两个决策Task；速度阶段包含先验速度边界构建、DP启发式搜索、速度决策、最终速度边界构建和QP速度优化五个Task。SpeedBoundsDecider被调用两次，分别在DP搜索前后执行先验和最终的边界构建。
+
+此外，Apollo还提供了Lattice Planner\cite{werling2010}作为备选规划器，其采用Frenet坐标系下的采样方法生成候选轨迹。由于本文研究聚焦于LANE\_FOLLOW场景下的路径边界决策改进，Lattice Planner不在本文讨论范围内。
+
+\section{PathDecider决策分析}
+
+PathDecider是路径规划中的关键决策模块，负责对参考线上的每个障碍物做出路径决策。
+
+\subsection{决策类型与优先级}
+
+PathDecider的决策分为横向和纵向两类，各类型及其语义优先级如表\ref{tab:path_decisions}所示。
+
+\begin{table}[htbp]
+\centering
+\caption{PathDecider决策类型}
+\label{tab:path_decisions}
+\begin{tabular}{lll}
+\toprule
+\textbf{方向} & \textbf{决策类型} & \textbf{说明} \\
+\midrule
+\multirow{2}{*}{横向} & NUDGE（LEFT/RIGHT） & 横向避让（左绕/右绕） \\
+& IGNORE & 横向安全，忽略 \\
+\midrule
+\multirow{5}{*}{纵向} & STOP & 停车让行（最高优先） \\
+& YIELD & 减速让行 \\
+& FOLLOW & 跟车 \\
+& OVERTAKE & 超车 \\
+& IGNORE & 纵向安全，忽略（最低优先） \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+注，Apollo源码中决策类型定义为枚举类型，不使用显式数值优先级。实际处理中，STOP决策的优先级最高，一旦判定需要停车便会覆盖其他决策，IGNORE的优先级最低。
+
+\subsection{决策逻辑}
+
+PathDecider的核心决策逻辑基于障碍物的SL边界与当前路径的横向关系进行判断。
+
+\begin{enumerate}
+\item \textbf{IGNORE判断}\quad{}若障碍物不在路径$s$范围内，即$s_{end} < s_{path\_start}$或$s_{start} > s_{path\_end}$，或横向距离足够远，即$|l_{obs} - l_{ego}| > w_{ego}/2 + d_{ignore}$，则IGNORE。其中$d_{ignore} = 3.0$\,m。
+
+\item \textbf{STOP判断}\quad{}若障碍物是blocking obstacle，或横向重叠区域超过阈值，即$l_{obs\_end} \geq l_{ego} - l_{min\_nudge}$且$l_{obs\_start} \leq l_{ego} + l_{min\_nudge}$，则STOP。其中$l_{min\_nudge} = w_{ego}/2 + d_{static\_buffer}/2$，$d_{static\_buffer} = 0.3$\,m。
+
+\item \textbf{NUDGE判断}\quad{}若障碍物在可避让范围内，根据其相对于自车的横向位置决定LEFT\_NUDGE或RIGHT\_NUDGE。
+\end{enumerate}
+
+\textbf{关键特征}\quad{}PathDecider仅处理静态障碍物，动态障碍物的处理交由速度规划阶段的ST图来完成。
+
+\subsection{PathBoundsDecider边界构建}
+
+\texttt{PathBoundsDecider}负责构建路径的横向边界，其合并策略如下。
+
+对每个$s$位置，遍历所有障碍物，根据nudge方向更新路径边界
+\begin{itemize}[noitemsep]
+\item RIGHT\_NUDGE，$l_{upper} = \min(l_{upper}, l_{obs\_right\_bound})$
+\item LEFT\_NUDGE，$l_{lower} = \max(l_{lower}, l_{obs\_left\_bound})$
+\end{itemize}
+
+这种取最小/最大的合并策略是保守的，多个障碍物的约束取交集，确保路径不与任何障碍物冲突，但可能导致可行域被严重压缩。
+
+PathBoundsDecider的完整处理流程如下。
+\begin{enumerate}
+\item 初始化路径边界，将上下界分别设为道路左右边界$[l_{road}^-(s), l_{road}^+(s)]$；
+\item 遍历参考线上的纵向采样点$s_i$；
+\item 对每个$s_i$，调用\texttt{UpdatePathBoundaryBySLPolygon}函数，依次处理该截面上的各个障碍物；
+\item 对每个障碍物，通过\texttt{SetNudgeInfo}函数判定避让方向，若障碍物中心在参考线右侧则左绕，即将右边界收缩，若在左侧则右绕，即将左边界收缩；
+\item 逐障碍物更新边界后，若出现$l^+(s_i) < l^-(s_i)$则标记为BLOCKED。
+\end{enumerate}
+
+图\ref{fig:path_bounds_flow}以流程图形式给出了该过程，可以清晰看到避让方向判定和边界更新两个关键节点在循环体内被逐障碍物触发。图中BLOCKED检查节点位于每次更新之后，一旦触发将直接终止规划并向上层返回降级请求；若通过检查则继续处理下一个障碍物，直到遍历完毕输出完整的path\_boundary。图右侧标注同时提示了本流程的核心设计缺陷，即决策一旦在循环中做出便不可修正，后续的障碍物无论与已做决策是否存在空间冲突，均无法回头重新选择更合适的避让方向。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_path_bounds_flow}}
+\caption{PathBoundsDecider 边界构建流程}
+\label{fig:path_bounds_flow}
+\end{figure}
+
+该流程存在两个关键特征。第一，避让方向决策是逐障碍物独立进行的，每个障碍物仅根据自身位置相对于参考线的横向偏移做出左绕或右绕判定，不考虑其他障碍物已做出的决策对剩余通行空间的影响。第二，障碍物过滤函数\texttt{IsWithinPathDeciderScopeObstacle}将所有动态障碍物排除在路径边界决策之外，仅由后续的速度规划阶段处理动态障碍物。这两个特征将在第四章中详细分析其在多障碍物场景下引发的问题。
+
+\section{SpeedBoundsDecider概述}
+
+SpeedBoundsDecider是速度规划阶段的核心模块，负责在路径已确定的基础上，将障碍物映射到ST图中，构建ST边界作为后续速度QP优化的约束。其处理对象是路径规划阶段输出的PathData，对路径上的每个点检查与障碍物的碰撞关系。
+
+\subsection{ST边界构建流程}
+
+SpeedBoundsDecider的处理流程分为三步。第一步，沿已确定的路径逐点检查与所有障碍物的碰撞关系，将每个障碍物在ST图中的占据区域表示为一个多边形。静态障碍物在ST图中表现为沿时间轴延伸的矩形带状区域，动态障碍物表现为斜向的平行四边形，其斜率由障碍物沿参考线方向的速度决定。第二步，在每个时间步$t_j$处，汇总所有障碍物ST多边形的约束，综合YIELD、FOLLOW和OVERTAKE三类决策，分别给出纵向位置的上界$s_j^{ub}$和下界$s_j^{lb}$。YIELD和FOLLOW决策要求自车位于障碍物之后，约束体现为$s_j^{ub}$的收紧；OVERTAKE决策要求自车位于障碍物之前，约束体现为$s_j^{lb}$的抬升。第三步，在ST边界之上叠加纵向安全距离$d_s$，最终输出供后续速度优化器使用的$[s_j^{lb}, s_j^{ub}]$序列。
+
+\subsection{与PathBoundsDecider的架构差异}
+
+SpeedBoundsDecider与PathBoundsDecider分处路径-速度解耦架构的不同阶段，两者存在三个关键差异。
+
+第一，处理的障碍物范围不同。PathBoundsDecider仅处理静态障碍物，而SpeedBoundsDecider同时处理静态和动态障碍物。动态障碍物在路径阶段被完全排除，只能在速度阶段通过ST图处理。
+
+第二，决策协调机制不同。PathBoundsDecider对每个障碍物独立做出左绕/右绕的贪心决策，没有全局协调。SpeedBoundsDecider之后的\texttt{PathTimeHeuristicOptimizer}即DP启发式搜索，在ST图中对YIELD/OVERTAKE的组合进行全局搜索，将DP输出作为后续QP的暖启动参考，避免了贪心策略的系统性缺陷。
+
+第三，信息传递方向单向。路径阶段的输出即PathData传递给速度阶段作为已知条件，但路径阶段做出决策时的上下文信息，例如"该路径依赖某动态障碍物在特定时刻移开"这一时间有效性前提，并未传递给速度阶段。速度阶段只知道路径在哪里，不知道路径为什么在那里。这一信息断层导致路径决策和速度规划之间缺乏时空约束的协调，是第四章所揭示的ST层问题的架构根源。第五章提出的时变通行带框架输出时间有效性约束，以ST上界的形式与SpeedBoundsDecider的输出在QP层面融合，建立此前缺失的路径-速度约束传递通道。
+
+\section{本章小结}
+
+本章对Apollo Planning模块的核心组件进行了源码级深度分析。Apollo采用了成熟的工程架构，即Scenario-Stage-Task三级管理，以及经典的算法组合，包括QP样条平滑和路径-速度解耦优化，默认的PublicRoadPlanner通过Task流水线继承了早期EM Planner的路径-速度解耦思想，在一般场景下表现良好。PathDecider和PathBoundsDecider是路径规划阶段的核心决策模块，前者做出STOP/NUDGE/IGNORE决策，后者构建横向可通行边界，两者均仅处理静态障碍物，且PathBoundsDecider对每个障碍物独立决定避让方向，使用统一的安全裕度。SpeedBoundsDecider在速度规划阶段构建ST边界，虽然有DP全局搜索进行协调，但与路径阶段之间的信息传递是单向的、有限的。上述架构特征，即逐障碍物独立决策、统一安全裕度、动态障碍物排除和路径-速度信息断层，为下一章从安全距离、决策粒度和时空协调三个维度分析多障碍物场景下的问题奠定了基础。

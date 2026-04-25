@@ -1,0 +1,1038 @@
+\chapter{改进算法设计与实现}
+本章详细阐述针对第四章所识别问题的改进算法设计。第四章从SL和ST两个层面揭示了Apollo PathBoundsDecider的核心缺陷，即SL层面的逐障碍物独立决策和安全裕度一刀切，ST层面的动态障碍物排除和路径-速度协调缺失。本章沿同一双层框架组织改进方案，首先建立统一的数学模型并分析Baseline次优性，然后从SL层提出基于重叠分组的最优通行带算法，从ST层构建时空可通行走廊与速度规划协调机制，最后给出系统集成方案。
+
+\section{时变最优通行带问题建模}
+本节建立改进算法的数学框架，定义后续各节所需的核心符号，并在此基础上构建联合优化问题。
+
+\subsection{SL空间中的障碍物表示}
+沿用第二章介绍的Frenet坐标系（SL坐标系），纵向坐标$s$为沿参考线的弧长距离，横向坐标$l$为偏离参考线的偏移，左正右负。
+
+对于第$i$个障碍物，其在SL空间中的投影为一个轴对齐矩形
+
+\begin{equation}
+    O_i = [s_i^{-}, s_i^{+}] \times [l_i^{-}, l_i^{+}]
+    \label{eq:obs_sl_proj}
+\end{equation}
+
+其中$[s_i^{-}, s_i^{+}]$为障碍物沿参考线方向的纵向占据范围，$[l_i^{-}, l_i^{+}]$为横向占据范围。$l_i^{-}$和$l_i^{+}$分别为障碍物右侧边界和左侧边界的横向坐标，以参考线为原点，左正右负。
+
+为保证路径规划的安全性，需要在障碍物边界外预留安全裕度。定义综合安全裕度为
+
+\begin{equation}
+    \delta = \frac{W_{ego}}{2} + d_{buf}
+    \label{eq:safety_margin}
+\end{equation}
+
+其中$W_{ego}$为自车宽度，$d_{buf}$为额外的缓冲距离，对应Apollo中\texttt{obstacle\_lat\_buffer}参数，默认取0.4\,m。
+
+基于安全裕度，定义两个关键量
+
+\begin{align}
+    u_i &= l_i^{-} - \delta \label{eq:def_u} \\
+    v_i &= l_i^{+} + \delta \label{eq:def_v}
+\end{align}
+
+$u_i$表示从障碍物$O_i$右侧安全通过时，自车参考点的横向坐标上界；$v_i$表示从左侧安全通过时的横向坐标下界。换言之，若自车从右侧绕行，则需满足$l \leq u_i$；若从左侧绕行，则需满足$l \geq v_i$。两个量之间的关系为$v_i - u_i = (l_i^{+} + \delta) - (l_i^{-} - \delta) = (l_i^{+} - l_i^{-}) + 2\delta$，即障碍物宽度加两倍安全裕度，这也是障碍物在横向空间中的“有效占据宽度”。
+
+图\ref{fig:obstacle_uvi}给出了上述定义的几何图景。障碍物$O_i$在SL空间中占据一个轴对齐矩形，横向延伸为$[l_i^-, l_i^+]$，纵向延伸为$[s_i^-, s_i^+]$。在矩形外围向左右各扩展一倍安全裕度$\delta$，形成膨胀后的“禁行矩形”。其下边界即$u_i = l_i^- - \delta$，代表从右侧绕行时自车参考点横向坐标的上限；其上边界即$v_i = l_i^+ + \delta$，代表从左侧绕行时的横向坐标下限。图中深蓝实线给出了“从右侧绕行”情形下的自车轨迹，该轨迹贴着$u_i$下方通过即可同时满足障碍物避让与道路边界约束。后续的最优通行带问题将在$u_i$和$v_i$构成的候选边界集合上做选择，因此这两个量的精确几何含义是全章推导的基石。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_obstacle_uvi}}
+\caption{障碍物安全边界 $u_i$ 与 $v_i$ 的几何定义}
+\label{fig:obstacle_uvi}
+\end{figure}
+
+\subsection{避让决策与通行带}
+对于在某一纵向截面$s$处活跃的每个障碍物$O_i$，即$s \in [s_i^{-}, s_i^{+}]$，需要为其分配一个避让方向决策
+
+\begin{equation}
+    d_i \in \{L, R\}
+    \label{eq:decision_var}
+\end{equation}
+
+其中$d_i = R$表示从障碍物右侧即右绕通过，$d_i = L$表示从左侧即左绕通过。
+
+每个决策对路径横向边界施加如下约束。
+
+\begin{itemize}[noitemsep]
+    \item $d_i = R$，自车应在障碍物右侧通过，构成上界约束$l^{+} \leq u_i$
+    \item $d_i = L$，自车应在障碍物左侧通过，构成下界约束$l^{-} \geq v_i$
+\end{itemize}
+
+给定一组决策$\mathbf{d} = (d_1, d_2, \ldots, d_n)$，将被分配为右绕和左绕的障碍物分别记为集合$\mathcal{R} = \{i \mid d_i = R\}$和$\mathcal{L} = \{i \mid d_i = L\}$。在位置$s$处，综合所有约束后的路径横向边界为
+
+\begin{align}
+    l^{+}(\mathbf{d}) &= \min\left(l_{road}^{+},\; \min_{i \in \mathcal{R}} u_i\right) \label{eq:upper_bound} \\
+    l^{-}(\mathbf{d}) &= \max\left(l_{road}^{-},\; \max_{i \in \mathcal{L}} v_i\right) \label{eq:lower_bound}
+\end{align}
+
+其中$l_{road}^{+}$和$l_{road}^{-}$分别为道路左侧和右侧边界的横向坐标。
+
+由此定义通行带宽度
+
+\begin{equation}
+    W(\mathbf{d}) = l^{+}(\mathbf{d}) - l^{-}(\mathbf{d})
+    \label{eq:band_width}
+\end{equation}
+
+当$W(\mathbf{d}) > 0$时，存在宽度为$W$的横向可通行空间；当$W(\mathbf{d}) \leq 0$时，路径被阻塞（BLOCKED），系统需要截断路径并触发降级策略。通行带越宽，路径优化器\texttt{PiecewiseJerkPathOptimizer}的横向自由度越大，输出路径的平滑性和舒适性越好。
+
+从几何视角看，通行带$[l^{-}(\mathbf{d}), l^{+}(\mathbf{d})]$定义了自车参考点在横向上的可行区间。路径优化器在该区间内寻找最优的横向偏移曲线$l(s)$，使其满足连续性、曲率和与参考线的偏差等约束。因此，通行带的构建是路径规划的关键前置步骤，通行带的质量直接决定了后续优化问题的可行域和最优解质量。
+
+\subsection{联合优化问题}
+在真实场景中，障碍物可能处于运动状态。为此引入到达时间函数$\tau(s)$，表示自车到达纵向位置$s$的预估时刻。此时，障碍物的SL投影变为时间的函数
+
+\begin{equation}
+    O_i(\tau(s)) = [s_i^{-}(\tau(s)),\; s_i^{+}(\tau(s))] \times [l_i^{-}(\tau(s)),\; l_i^{+}(\tau(s))]
+    \label{eq:time_varying_obs}
+\end{equation}
+
+相应地，$u_i$和$v_i$也成为位置$s$的函数
+
+\begin{equation}
+    u_i(s) = l_i^{-}(\tau(s)) - \delta, \quad v_i(s) = l_i^{+}(\tau(s)) + \delta
+    \label{eq:time_varying_uv}
+\end{equation}
+
+这意味着障碍物对路径边界的约束不再是固定的，而是随自车到达时间而变化。一个障碍物在$t=0$时可能占据车道中心，但在$\tau(s)$时刻可能已移至道路边缘甚至完全离开参考线范围。这一时变特性是本文方法区别于Baseline的核心所在。
+
+路径规划的目标是找到最优的避让决策$\mathbf{d}$和速度规划$\tau$，使得全路径的最小通行带宽度最大化
+
+\begin{equation}
+    (\mathbf{d}^{*}, \tau^{*}) = \arg\max_{\mathbf{d},\;\tau} \;\min_{s} \left[l^{+}(s, \mathbf{d}, \tau) - l^{-}(s, \mathbf{d}, \tau)\right]
+    \label{eq:joint_opt}
+\end{equation}
+
+该联合优化问题的搜索空间为$2^n$，即$n$个障碍物各有两种决策，属于NP-hard问题，暴力枚举不可行。例如，当$n = 10$时，搜索空间为$2^{10} = 1024$；当$n = 20$时，搜索空间达到$2^{20} \approx 10^6$。在Apollo的100\,ms规划周期约束下，暴力搜索显然不可接受。
+
+然而，该问题具有特殊的几何结构，决策变量$d_i$只影响一维横向空间中的边界位置，且影响方式是单调的，一个方向收缩上界，另一个方向收缩下界。下文将利用这一结构，通过引理和定理的推导，将求解复杂度降至$O(n \log n)$。
+
+\section{Apollo Baseline的次优性分析}
+
+\subsection{Baseline的贪心策略}
+Apollo通过\texttt{UpdatePathBoundaryBySLPolygon}函数逐障碍物构建路径边界。该函数在路径规划的每个离散位置$s$处被调用，是PathBoundsDecider中处理障碍物避让的核心入口。其核心逻辑可形式化描述如下。
+
+初始化路径边界为道路边界，$l^{+}(s) = l_{road}^{+}(s)$，$l^{-}(s) = l_{road}^{-}(s)$。
+
+对于每个在位置$s$处活跃的障碍物$O_i$，独立决定避让方向
+
+\begin{equation}
+    d_i = \begin{cases}
+        R & \text{若} \; \dfrac{l_i^{-} + l_i^{+}}{2} > l_{last\_nudge} \\[0.8em]
+        L & \text{其他}
+    \end{cases}
+    \label{eq:baseline_decision}
+\end{equation}
+
+其中$l_{last\_nudge}$为上一次nudge操作记录的横向位置参考值。若仅一侧可通行，则该障碍物的避让方向直接赋为可通行侧，与4.3.2节代码所示逻辑一致。然后更新边界。
+
+\begin{itemize}[noitemsep]
+    \item $d_i = R$，$l^{+}(s) \leftarrow \min(l^{+}(s),\; u_i)$
+    \item $d_i = L$，$l^{-}(s) \leftarrow \max(l^{-}(s),\; v_i)$
+\end{itemize}
+
+若更新后$l^{+}(s) < l^{-}(s)$，则判定该位置BLOCKED，调用\texttt{TrimPathBounds}截断路径，最终触发FallbackPath停车。
+
+该策略的关键特征是贪心性和局部性。所谓贪心性，是指对第$i$个障碍物的决策仅基于该障碍物自身的位置信息，不考虑已做出的其他决策是否与之矛盾。所谓局部性，是指决策仅使用当前时刻的空间快照，不利用Prediction模块提供的未来轨迹预测。
+
+具体而言，该策略存在两方面的次优性。其一，避让方向的决策仅依赖障碍物中心与参考值的相对位置，逐个独立进行，未考虑多个障碍物的全局协调；其二，障碍物投影仅使用$t=0$时刻的快照，动态障碍物通过\texttt{IsWithinPathDeciderScopeObstacle}被直接排除在路径决策之外。Apollo的开发团队在该过滤函数的源码中留有\texttt{TODO}注释，明确提到应当在未来版本中将动态障碍物纳入路径决策，这从侧面印证了该设计的局限性。图\ref{fig:baseline_greedy_flow}给出了该贪心流程的完整控制流，从初始化路径边界到逐障碍物决策，再到BLOCKED判定与回退停车的全链路。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_baseline_greedy_flow}}
+\caption{Apollo Baseline逐障碍物贪心决策的控制流}
+\label{fig:baseline_greedy_flow}
+\end{figure}
+
+\subsection{空间维度的次优性}
+
+空间维度的次优性集中表现为矛盾决策现象。以下用一个对称场景说明。
+
+\textbf{场景设定}\quad 双车道道路总宽7.5\,m，$l_{road}^{-} = -3.75$\,m，$l_{road}^{+} = 3.75$\,m。在某纵向截面$s^{*}$处同时存在两个路锥，关于参考线近似对称
+
+\begin{itemize}[noitemsep]
+    \item $O_a$偏右，横向占据$[0.1,\; 0.4]$\,m，中心$0.25$\,m
+    \item $O_b$偏左，横向占据$[-0.4,\; -0.1]$\,m，中心$-0.25$\,m
+\end{itemize}
+
+安全裕度$\delta = 1.2$\,m，对应$u_a = 0.1 - 1.2 = -1.1$\,m，$v_a = 0.4 + 1.2 = 1.6$\,m，$u_b = -0.4 - 1.2 = -1.6$\,m，$v_b = -0.1 + 1.2 = 1.1$\,m。
+
+\textbf{Baseline贪心决策}\quad $O_a$中心$0.25 > 0$，分配$d_a = R$；$O_b$中心$-0.25 < 0$，分配$d_b = L$。路径边界从两侧同时收缩
+
+\begin{equation}
+    l^{+}(s^{*}) = u_a = -1.1\,\text{m}, \quad l^{-}(s^{*}) = v_b = 1.1\,\text{m}
+\end{equation}
+
+$l^{+} < l^{-}$，判定BLOCKED。贪心策略将自车挤入两个路锥之间仅0.2\,m的间隙，路径不可行。
+
+\textbf{全局最优决策}\quad 按$u_i$升序排列为$O_b, O_a$，此时$u_b = -1.6 < u_a = -1.1$，计算3个间隙
+
+\begin{align}
+    g_0 &= u_b - l_{road}^{-} = -1.6 - (-3.75) = 2.15\,\text{m} \notag \\
+    g_1 &= u_a - v_b = -1.1 - 1.1 = -2.2\,\text{m} \quad (\text{负值，中间通道不可行}) \notag \\
+    g_2 &= l_{road}^{+} - v_a = 3.75 - 1.6 = 2.15\,\text{m} \notag
+\end{align}
+
+最大间隙$g_0 = g_2 = 2.15$\,m，对应分割点$p^{*} = 0$即统一RIGHT\_NUDGE或$p^{*} = 2$即统一LEFT\_NUDGE。以$p^{*} = 0$为例，通行带为$[l_{road}^{-},\; u_b] = [-3.75,\; -1.6]$\,m，宽度2.15\,m，自车可借用相邻车道安全通过。
+
+贪心策略在$2^2 = 4$种方向组合中恰好选中了唯一不可行的一种（$R, L$），而全局搜索只需检查$k+1 = 3$个间隙即可找到最优解。当所有间隙均为负值时，说明本车道确实不存在可通行路径，此时算法输出的BLOCKED是真实的而非贪心策略导致的虚假阻塞，体现了算法的完备性。
+
+图\ref{fig:greedy_vs_global}直观对比了贪心决策与全局协调在该场景下的差异。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_greedy_vs_global_a}}
+  \caption{贪心独立决策 $\to$ BLOCKED}
+  \label{fig:greedy_vs_global:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_greedy_vs_global_b}}
+  \caption{全局协调统一右绕 $\to$ 通行}
+  \label{fig:greedy_vs_global:b}
+\end{subfigure}
+\caption{贪心独立决策与全局协调决策的通行带对比}
+\label{fig:greedy_vs_global}
+\end{figure}
+
+\subsection{时间维度的次优性}
+Baseline的另一个局限在于仅使用$t = 0$时刻的障碍物位置快照构建路径边界，完全忽略了动态障碍物的运动趋势。考虑一个典型场景，一名行人正在自车前方10\,m处横穿马路，当前位于车道中央处于$l = 0$\,m，以1.2\,m/s的速度向左移动。在$t = 0$时刻，该行人占据道路中心，间隙为零。Baseline将其排除在路径决策之外，但仍会在ST图中标记为障碍物，导致速度规划层进行不必要的减速甚至停车。
+
+然而，自车以8\,m/s的速度行驶，到达行人所在位置需要$\tau = 10/8 = 1.25$\,s。
+
+此时行人已移动$1.2 \times 1.25 = 1.5$\,m至道路左侧$l = 1.5$\,m处，
+车道中心的间隙已打开。定量分析如下。行人宽度约0.5\,m，
+在$\tau = 1.25$\,s时其横向占据区间为$[1.25, 1.75]$\,m，
+对应$u_{ped}(\tau) = 1.25 - 1.2 = 0.05$\,m。
+
+道路右边界间隙$g_0 = u_{ped} - l_{road}^{-} = 0.05 - (-1.875) = 1.925$\,m，
+远大于自车宽度1.8\,m，自车可以安全通过。
+
+时变通行带方法通过预测轨迹自然捕获这一信息，避免不必要的停车。图\ref{fig:time_varying_gap}直观对比了两种方法在该场景下的差异。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_time_varying_gap_a}}
+  \caption{Baseline 仅看 $t{=}0$}
+  \label{fig:time_varying_gap:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_time_varying_gap_b}}
+  \caption{时变方法利用预测轨迹}
+  \label{fig:time_varying_gap:b}
+\end{subfigure}
+\caption{Baseline静态快照与时变方法的通行带对比}
+\label{fig:time_varying_gap}
+\end{figure}
+
+此外，Baseline还存在安全裕度维度的次优性，所有参与路径决策的障碍物使用统一的安全裕度$\delta$。然而，不同障碍物对自车的威胁程度差异显著，一个远离车道的路锥与一辆正对车道的违停车所需的安全裕度不应相同。统一的$\delta$导致低威胁障碍物占用了过多的横向空间，使通行带被不必要地压缩。
+
+上述三类次优性的共同根源在于Baseline缺乏全局视角和分级机制，空间维度上对各障碍物独立决策，时间维度上仅使用静态快照，安全裕度维度上一刀切处理。本文提出的改进方法分别从分组即全局最优决策、时变即预测轨迹利用和分级即差异化安全裕度三个维度同时解决上述问题。
+
+\section{多因子威胁度评估与动态安全距离}
+上一节识别了Baseline在安全裕度维度的次优性，式\eqref{eq:safety_margin}中的统一$\delta$不区分障碍物威胁程度，导致低威胁障碍物过度压缩通行带。本节建立量化模型，为每个障碍物计算综合威胁度$\Theta_i$，并据此确定差异化的安全裕度$\delta_i$。
+
+\subsection{威胁度计算模型}
+对第$i$个障碍物，其综合威胁度$\Theta_i \in [0, 1]$由五个因子加权求和得到
+
+\begin{equation}
+    \Theta_i = w_1 \cdot f_{TTC}(i) + w_2 \cdot f_{overlap}(i) + w_3 \cdot f_{vel}(i) + w_4 \cdot f_{type}(i) + w_5 \cdot f_{inter}(i)
+    \label{eq:threat_score}
+\end{equation}
+
+权重默认取值为$w_1 = 0.30$，$w_2 = 0.20$，$w_3 = 0.15$，$w_4 = 0.10$，$w_5 = 0.25$。上述权重通过以下方式确定。首先基于各因子对多障碍物场景区分度的定性分析确定初始权重，然后通过对称路锥、横穿行人等典型场景的定性观察调整至最终取值。TTC因子和交互密度因子对场景风险的区分度最高，因此赋予较大权重，障碍物类型在同一场景中变化较小，赋予较小权重。各因子的取值范围均归一化到$[0, 1]$，定义如下。
+
+\subsubsection{碰撞时间因子$f_{TTC}$}
+碰撞时间（Time-to-Collision, TTC）是衡量碰撞紧迫性的经典指标
+
+\begin{equation}
+    TTC_i = \frac{s_i - s_{ego}}{\dot{s}_{ego} - \dot{s}_i}
+    \label{eq:ttc}
+\end{equation}
+
+其中$s_i$为障碍物纵向位置，$\dot{s}$为纵向速度。当$\dot{s}_{ego} \leq \dot{s}_i$即自车不会追上障碍物时，$TTC_i = +\infty$。TTC因子通过分段线性函数映射至$[0, 1]$
+
+\begin{equation}
+    f_{TTC}(i) = \begin{cases}
+        1.0 & TTC_i \leq T_{crit} \\[0.3em]
+        \displaystyle\frac{T_{max} - TTC_i}{T_{max} - T_{crit}} & T_{crit} < TTC_i < T_{max} \\[0.5em]
+        0 & TTC_i \geq T_{max}
+    \end{cases}
+    \label{eq:f_ttc}
+\end{equation}
+
+其中$T_{crit} = 2$\,s为临界碰撞时间，$T_{max} = 7$\,s为最大关注时间，与Apollo ST图的时间范围一致。$TTC_i \leq 2$\,s意味着碰撞迫在眉睫，威胁最大；$TTC_i \geq 7$\,s的障碍物已超出当前规划周期的关注范围。
+
+\subsubsection{横向重叠率因子$f_{overlap}$}
+横向重叠率衡量障碍物与自车行驶走廊在横向上的重叠程度
+
+\begin{equation}
+    f_{overlap}(i) = \frac{\max\!\left(0,\; \min(l_i^{+}, l_{ego}^{+}) - \max(l_i^{-}, l_{ego}^{-})\right)}{W_{ego}}
+    \label{eq:f_overlap}
+\end{equation}
+
+其中$l_{ego}^{+} = l_{ego} + W_{ego}/2$、$l_{ego}^{-} = l_{ego} - W_{ego}/2$为自车走廊的横向边界。$f_{overlap} = 0$表示完全不重叠即障碍物在自车投影之外，$f_{overlap} = 1$表示完全重叠即障碍物正对自车。该因子直接反映了碰撞的“几何可能性”，横向偏移较大的障碍物即使TTC较小，实际碰撞风险也低。
+
+\subsubsection{相对速度因子$f_{vel}$}
+相对速度因子反映障碍物与自车的接近速度
+
+\begin{equation}
+    f_{vel}(i) = \sigma\!\left(\frac{v_{rel,i}}{v_{max}}\right), \quad \sigma(x) = \frac{1}{1 + e^{-5x}}
+    \label{eq:f_vel}
+\end{equation}
+
+其中$v_{rel,i} = \dot{s}_{ego} - \dot{s}_i$为相对纵向速度，正值表示自车接近障碍物，$v_{max}$为道路限速。Sigmoid函数将相对速度平滑映射至$(0, 1)$，快速接近的障碍物即$v_{rel} \gg 0$时趋近1，同向远离的障碍物即$v_{rel} < 0$时趋近0。选择Sigmoid而非线性映射的原因在于，相对速度为零附近的区分度更重要，即低速接近和低速远离的差异，而极高相对速度间的差异不需要精细区分。
+
+\subsubsection{障碍物类型因子$f_{type}$}
+\textbf{取值映射}\quad{}不同类型障碍物的运动不确定性与受伤严重度差异显著，按下式取离散值
+
+\begin{equation}
+    f_{type}(i) = \begin{cases}
+        1.0 & \text{行人、自行车等弱势道路使用者} \\
+        0.7 & \text{机动车，运动相对可预测} \\
+        0.5 & \text{未知可动目标，按保守权重处理} \\
+        0.3 & \text{静态障碍物，仅需基本缓冲}
+    \end{cases}
+    \label{eq:f_type}
+\end{equation}
+
+\textbf{取值依据}\quad{}该映射由运动不确定性与事故后果两方面共同确定。一方面，行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，其轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲。另一方面，交通事故统计表明弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重1.0。
+
+\textbf{Apollo感知映射}\quad{}Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入1.0分支，\texttt{VEHICLE}归入0.7分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入0.5分支，\texttt{UNKNOWN\_UNMOVABLE}归入0.3分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
+
+\textbf{合成方式}\quad{}$f_{type}$作为乘性类别因子进入式\eqref{eq:threat_score}，与碰撞时间、横向重叠率、相对速度三项连续因子加权叠加，合成综合威胁度$\Theta_i$，并经式\eqref{eq:dynamic_delta}映射为差异化安全裕度$\delta_i$，实现对VRU的主动倾斜保护。
+
+\subsubsection{交互密度因子$f_{inter}$}
+交互密度因子量化障碍物$i$与周围其他障碍物的聚集程度，是本文威胁度模型中与分组策略直接相关的因子
+
+\begin{equation}
+    f_{inter}(i) = \frac{1}{N-1} \sum_{j \neq i} \mathbb{1}\!\left[d_{ij} < d_{cluster}\right] \cdot \frac{d_{cluster} - d_{ij}}{d_{cluster}}
+    \label{eq:f_inter}
+\end{equation}
+
+其中$N$为障碍物总数，$d_{ij} = \sqrt{(s_i - s_j)^2 + (l_i - l_j)^2}$为障碍物$i$和$j$在SL空间中的欧氏距离，$d_{cluster} = 10$\,m为聚类半径，$\mathbb{1}[\cdot]$为指示函数。
+$f_{inter}$的物理含义是，若障碍物$i$周围有大量其他障碍物聚集，则该因子值高，表明局部交互密度大，需要更谨慎的避让裕度。孤立障碍物的$f_{inter} \approx 0$，密集车群中的障碍物$f_{inter}$接近1。
+
+引入交互密度因子的意义在于它能区分“3个分散的障碍物”和“3个聚集的障碍物”这两种对避让策略要求截然不同的场景，前者各自独立，安全裕度可适当放宽，后者构成密集障碍物组，留给自车的横向空间本就有限，需要更精确的安全边界。这一因子与下一节的纵向重叠分组形成自然呼应，$f_{inter}$高的障碍物大概率属于同一连通分量，在分组内被统一协调。
+
+图\ref{fig:threat_factors}以子图形式给出了各因子的函数形态。$f_\text{TTC}$在$T_\text{crit}$以下取饱和值1，在$T_\text{max}$以上回到0，中间为线性过渡；$f_\text{overlap}$随重叠率线性增长；$f_\text{vel}$采用Sigmoid函数，对零相对速度附近的变化最为敏感；$f_\text{type}$为离散取值，反映不同障碍物类型的固有风险差异；$f_\text{inter}$中单个邻居的贡献随距离线性衰减至聚类半径$d_{cluster}$处归零。各因子均归一化到$[0,1]$，权重之和为1，综合威胁度$\Theta_i$也落在$[0,1]$区间，可直接作为式\eqref{eq:dynamic_delta}中安全裕度线性插值的参数。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_threat_factors}
+\caption{多因子威胁度评估的五个因子函数形态}
+\label{fig:threat_factors}
+\end{figure}
+
+图\ref{fig:threat_radar}进一步给出了两个典型场景下的五维威胁度雷达图对照。左侧为对向来车场景，TTC较小、横向重叠率高、相对速度大、对象为车辆、交互密度中等，五维雷达图呈现大面积覆盖，综合威胁度接近0.85，对应$\delta_i$取到$\delta_\text{max}$附近，安全裕度最大。右侧为静止路锥场景，TTC趋于无穷、重叠率低、相对速度为零、类型权重低、密度因子接近0，雷达图呈现小面积覆盖，综合威胁度不足0.2，对应$\delta_i$接近$\delta_\text{min}$，从而大幅释放横向空间。这两张雷达图直观说明了差异化安全裕度的判别逻辑与最终数值效应。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_threat_radar_a}}
+  \caption{高威胁 \;\; 对向来车}
+  \label{fig:threat_radar:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_threat_radar_b}}
+  \caption{低威胁 \;\; 远处静态路锥}
+  \label{fig:threat_radar:b}
+\end{subfigure}
+\caption{典型场景下的威胁度雷达图对比}
+\label{fig:threat_radar}
+\end{figure}
+
+\subsection{动态安全距离}
+基于综合威胁度$\Theta_i$，将式\eqref{eq:safety_margin}中的统一安全裕度替换为差异化版本
+
+\begin{equation}
+    \delta_i = \delta_{min} + (\delta_{max} - \delta_{min}) \cdot \Theta_i
+    \label{eq:dynamic_delta}
+\end{equation}
+
+其中$\delta_{max} = W_{ego}/2 + d_{buf,max}$为最大安全裕度，对应CRITICAL等级障碍物，$\delta_{min} = W_{ego}/2 + d_{buf,min}$为最小安全裕度，对应MINOR等级障碍物。默认参数取$d_{buf,max} = 0.5$\,m与Apollo原始\texttt{point\_extension}一致、$d_{buf,min} = 0.15$\,m，在$W_{ego} = 1.8$\,m时，$\delta_{max} = 1.4$\,m，$\delta_{min} = 1.05$\,m。
+
+式\eqref{eq:dynamic_delta}的设计确保了以下性质。CRITICAL障碍物时$\Theta_i \to 1$，获得与Apollo原始方案相同或更大的安全裕度，不降低安全性；MINOR障碍物时$\Theta_i \to 0$，获得较小但仍安全的裕度，释放被不必要占用的横向空间。
+
+相应地，式\eqref{eq:def_u}--\eqref{eq:def_v}中的关键量更新为差异化版本
+
+\begin{align}
+    u_i &= l_i^{-} - \delta_i \label{eq:def_u_dynamic} \\
+    v_i &= l_i^{+} + \delta_i \label{eq:def_v_dynamic}
+\end{align}
+
+当$\Theta_i$对所有障碍物均取相同值时，式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}退化为式\eqref{eq:def_u}--\eqref{eq:def_v}。动态$\delta_i$的引入不影响后续引理1和定理1的成立，两者的证明仅依赖$u$和$v$值的排序关系，只需按$u_i$而非$l_i^{-}$排序即可。
+
+\section{SL层基于重叠分组的最优通行带}
+本节中所有$u_i$和$v_i$均使用式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}中的动态安全距离$\delta_i$计算。后续引理和定理的证明不依赖$\delta$是否为常数，仅依赖$u$和$v$值的排序性。
+
+\subsection{纵向重叠关系与连通分量}
+在全路径范围内，不同纵向位置$s$处的活跃障碍物集合不同，因此式\eqref{eq:joint_opt}的优化不能在单一截面上完成。关键观察是，如果两组障碍物在纵向上完全不重叠，则它们的避让决策相互独立。
+
+定义纵向重叠关系。两个障碍物$O_i$和$O_j$纵向重叠，当且仅当它们的纵向区间有交集
+
+\begin{equation}
+    O_i \sim O_j \iff [s_i^{-}, s_i^{+}] \cap [s_j^{-}, s_j^{+}] \neq \emptyset
+    \label{eq:overlap_relation}
+\end{equation}
+
+该重叠关系是对称的但不具有传递性。取其传递闭包，即存在一系列中间障碍物依次纵向重叠，将$n$个障碍物划分为$m$个连通分量$C_1, C_2, \ldots, C_m$。同一连通分量内的障碍物通过重叠链相连，不同连通分量之间在纵向上完全分离。由于不同连通分量在纵向上不重叠，其避让决策互不影响，可以独立求解。
+
+连通分量的检测采用扫描线算法，将所有障碍物按$s_i^{-}$升序排列，维护一个变量$s_{max}$记录当前连通分量中所有障碍物的最大$s^{+}$值。扫描过程中，若下一个障碍物的$s^{-}$不超过$s_{max}$，则将其归入当前分量并更新$s_{max}$；否则开始新的分量。该过程的时间复杂度为$O(n \log n)$其中排序占主导，扫描本身仅需$O(n)$。
+
+分组的直观含义是，纵向上彼此重叠的障碍物需要在同一个横向截面上协调决策，因此必须归为同一组。而纵向上完全分离的障碍物组，自车在通过一组时尚未遇到下一组，决策互不影响。这一性质使得问题天然地分解为多个独立子问题，是算法高效性的基础。图\ref{fig:scanline_grouping}以六障碍物算例展示了扫描过程，$s_{max}$扫描线沿$s$轴从左到右推进，遇到与当前组重叠的障碍物即并入，否则切出新分量，最终得到三个互不重叠的连通分量$C_1$到$C_3$。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_scanline_grouping}}
+\caption{扫描线算法按$s_i^-$升序合并连通分量的过程}
+\label{fig:scanline_grouping}
+\end{figure}
+
+值得注意的是，当障碍物仅在纵向上部分重叠即存在某些$s$截面上只有部分障碍物活跃时，组内处理采用保守近似，以所有障碍物均同时活跃为假设计算间隙。这可能导致轻微的次优性，但算法的正确性可由以下两步论证保证。首先，在最密集截面上按定理1选定的分割点$p^{*}$将障碍物划分为左绕集合$\mathcal{L}_{p^{*}}$和右绕集合$\mathcal{R}_{p^{*}}$，此时通行带上下界由$l^{+} = \min_{i \in \mathcal{R}_{p^{*}}} u_i$和$l^{-} = \max_{i \in \mathcal{L}_{p^{*}}} v_i$给出。其次，任意稀疏截面对应的活跃障碍物集合均为最密集截面的子集，移除部分障碍物只会使$\min$运算作用于更大的集合从而放宽$l^{+}$的上界，同时使$\max$运算作用于更大的集合从而放宽$l^{-}$的下界。若$\mathcal{L}_{p^{*}}$或$\mathcal{R}_{p^{*}}$被移空，则相应方向退化为道路边界。因此通行带宽度$W = l^{+} - l^{-}$单调不减，最密集截面上的决策在所有稀疏截面上均保持可行，且通行带不会更窄。
+
+全路径的最小通行带宽度由最窄的连通分量决定，即木桶效应
+
+\begin{equation}
+    W^{*} = \min_{j=1,\ldots,m} W^{*}(C_j)
+    \label{eq:global_width}
+\end{equation}
+
+下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见5.3.3节，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
+
+从几何直觉看，$k$个按横向位置排列的障碍物将车道的横向空间分割为$k+1$个通道，包括最右侧障碍物与道路右边界之间、相邻障碍物之间、以及最左侧障碍物与道路左边界之间的间隙。最优策略显然是选择其中最宽的通道通行，这自然地将通道一侧的所有障碍物划归左绕、另一侧的划归右绕，形成一个在排序中连续的分割。换言之，搜索空间从$2^k$个任意分配降为$k+1$个候选通道的选取。下面通过引理和定理严格验证这一直觉，并建立通行带宽度与间隙之间的精确等价关系。
+
+\subsection{最优分割连续性引理}
+\textbf{引理1（最优分割的连续性）}\quad 按$u_i$值升序排列后，存在最优解$\mathbf{d}^{*}$，使得分割在排序中是连续的，即存在$p \in \{0, 1, \ldots, k\}$，满足
+
+\begin{equation}
+    d_{(i)}^{*} = L, \;\forall\, i \leq p; \quad d_{(i)}^{*} = R, \;\forall\, i > p
+    \label{eq:continuous_partition}
+\end{equation}
+
+\textbf{证明}\quad 反证法。设某个最优解$\mathbf{d}^{*}$中存在排序位置$a < b < c$，使得$d_{(a)} = R$，$d_{(b)} = L$，$d_{(c)} = R$。构造新解$\mathbf{d}'$，将$d_{(b)}$从$L$改为$R$，其余不变。
+
+分析上界变化，令$\mathcal{R}' = \mathcal{R} \cup \{(b)\}$。由于$(a) \in \mathcal{R}$且按排序有$u_{(a)} \leq u_{(b)}$，故
+
+\begin{equation}
+    l^{+}(\mathbf{d}^{*}) \leq u_{(a)} \leq u_{(b)}
+\end{equation}
+
+因此$\min_{i \in \mathcal{R}'} u_i = \min_{i \in \mathcal{R}} u_i$，即$l^{+}(\mathbf{d}') = l^{+}(\mathbf{d}^{*})$，上界不变。
+
+分析下界变化，令$\mathcal{L}' = \mathcal{L} \setminus \{(b)\}$。集合缩小，取$\max$的结果不增，故下界不升。若$\mathcal{L}' = \emptyset$，按约定$\max$取道路左边界形成的平凡下界$l_{road}^{-}$，下界不升的结论仍成立。
+
+\begin{equation}
+    l^{-}(\mathbf{d}') = \max_{i \in \mathcal{L}'} v_i \leq \max_{i \in \mathcal{L}} v_i = l^{-}(\mathbf{d}^{*})
+\end{equation}
+
+
+
+综合两方面，$W(\mathbf{d}') = l^{+}(\mathbf{d}') - l^{-}(\mathbf{d}') \geq l^{+}(\mathbf{d}^{*}) - l^{-}(\mathbf{d}^{*}) = W(\mathbf{d}^{*})$。因此$\mathbf{d}'$也是最优解，且消除了$(a), (b), (c)$处的一个不连续点。对所有不连续点重复此操作，有限次后即可得到满足式\eqref{eq:continuous_partition}的连续分割。
+
+\textbf{推论}\quad 搜索空间从$2^k$降为$k+1$个候选分割点$p = 0, 1, \ldots, k$。其中$p = 0$表示所有障碍物均从右侧绕行即自车走最右侧通道，$p = k$表示所有障碍物均从左侧绕行即自车走最左侧通道，$1 \leq p \leq k-1$表示自车从第$p$和第$p+1$个障碍物之间的间隙通过。
+
+\subsection{最大间隙最优性定理}
+基于引理1，只需枚举$k+1$个候选分割点。对于分割点$p$，定义左绕集合$\mathcal{L}_p = \{(1), \ldots, (p)\}$和右绕集合$\mathcal{R}_p = \{(p+1), \ldots, (k)\}$。
+
+定义$k+1$个间隙，包含道路边界形成的两个端部间隙
+
+\begin{equation}
+    g_p = \begin{cases}
+        u_{(1)} - l_{road}^{-} & p = 0 \\[0.3em]
+        u_{(p+1)} - v_{(p)} & p = 1, 2, \ldots, k-1 \\[0.3em]
+        l_{road}^{+} - v_{(k)} & p = k
+    \end{cases}
+    \label{eq:gap_def}
+\end{equation}
+
+$g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_k$表示最后一个即最左侧障碍物到道路左边界之间的间隙，$g_p$，其中$1 \leq p \leq k-1$，表示排序中相邻障碍物之间的间隙。
+
+\textbf{定理1（最大间隙最优性）}\quad 对于分割点$p$，通行带宽度$W(p) = g_p$。因此最优通行带宽度为
+
+\begin{equation}
+    W^{*} = \max_{p=0,1,\ldots,k} g_p
+    \label{eq:max_gap_opt}
+\end{equation}
+
+\textbf{证明}\quad 对各分割点$p$直接代入验证。
+
+当$p = 0$即所有障碍物均为右绕时，$\mathcal{L}_0 = \emptyset$，$\mathcal{R}_0 = \{(1), \ldots, (k)\}$
+
+\begin{equation}
+    l^{+}(0) = \min(l_{road}^{+},\; u_{(1)}) = u_{(1)}, \quad l^{-}(0) = l_{road}^{-}
+\end{equation}
+
+故$W(0) = u_{(1)} - l_{road}^{-} = g_0$。
+
+当$1 \leq p \leq k-1$时，$\mathcal{L}_p = \{(1), \ldots, (p)\}$，$\mathcal{R}_p = \{(p+1), \ldots, (k)\}$
+
+\begin{equation}
+    l^{+}(p) = \min(l_{road}^{+},\; u_{(p+1)}) = u_{(p+1)}, \quad l^{-}(p) = \max(l_{road}^{-},\; v_{(p)}) = v_{(p)}
+\end{equation}
+
+故$W(p) = u_{(p+1)} - v_{(p)} = g_p$。
+
+当$p = k$即所有障碍物均为左绕时，$\mathcal{L}_k = \{(1), \ldots, (k)\}$，$\mathcal{R}_k = \emptyset$
+
+\begin{equation}
+    l^{+}(k) = l_{road}^{+}, \quad l^{-}(k) = \max(l_{road}^{-},\; v_{(k)}) = v_{(k)}
+\end{equation}
+
+故$W(k) = l_{road}^{+} - v_{(k)} = g_k$。
+
+以上$l^{+}$和$l^{-}$的化简中，对中间分割点$1 \leq p \leq k-1$假设$l_{road}^{+} \geq u_{(p+1)}$且$l_{road}^{-} \leq v_{(p)}$。该假设在障碍物位于道路范围内时自然成立，因为$u_{(p+1)} = l_{(p+1)}^{-} - \delta_{(p+1)} < l_{road}^{+}$，$v_{(p)} = l_{(p)}^{+} + \delta_{(p)} > l_{road}^{-}$。对端部分割点$p = 0$或$p = k$，道路边界可能构成约束瓶颈。分以下两种情形讨论。其一，若对所有障碍物均有$u_{(1)} \leq l_{road}^{+}$且$v_{(k)} \geq l_{road}^{-}$即所有障碍物均在道路范围内，则$W(p) = g_p$对$p = 0, 1, \ldots, k$均严格成立。其二，若存在$u_{(1)} > l_{road}^{+}$，说明该障碍物已完全超出道路左边界，不构成右绕约束，几何上应将其从考虑集合中剔除，此时$k$减$1$、间隙重新编号后回到情形一。$v_{(k)} < l_{road}^{-}$的情形对称处理。因此在剔除道路边界外的障碍物后，选取最大$g_p$对应的分割点$p^{*}$即为最大化$W(p)$的分割点，$W^{*} = \max_p g_p$严格成立。
+
+图\ref{fig:max_gap_theorem}以一维几何图示给出引理1与定理1的直观证明。上半部分将排序后的$k=4$个障碍物投影在$l$轴上，每个障碍物两侧以虚线标出各自的安全边界$u_i$与$v_i$。相邻障碍物之间以及障碍物与道路边界之间形成$k+1=5$个候选间隙$g_0,\ldots,g_4$。粉色加粗的$g_2^\star$即为该算例中的最大间隙，对应最优分割点$p^\star=2$。下半部分给出该分割对应的决策向量$\mathbf{d}^\star=(R,R,L,L)$，右绕群$\mathcal{R}$与左绕群$\mathcal{L}$在横向排序中形成连续区段，没有任何“RLR”式的交错，这正是引理1所保证的最优分割连续性。可见，原本$2^k=16$种组合中的最优解，必然落在$k+1=5$个连续分割对应的候选解之中，算法只需线性扫描比较间隙大小即可定位。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_max_gap_theorem}}
+\caption{最优分割连续性与最大间隙最优性的几何图证}
+\label{fig:max_gap_theorem}
+\end{figure}
+
+上述证明严格验证了前文的几何直觉，最优通行带确实等价于最宽横向间隙的选取。引理1的交换论证排除了任何非连续分配可能更优的可能性，定理1则将通行带宽度与间隙值建立了精确的等式关系，使得最优解可通过一次线性扫描获得。
+
+需要注意几个边界情形。第一，当某些障碍物在横向上存在重叠即$v_{(p)} > u_{(p+1)}$时，对应的间隙$g_p$为负值，表示该通道不可通行，算法自然跳过。第二，当所有$k+1$个间隙均为负或不足车宽时，$W^{*} \leq 0$，说明本车道确实不存在可通行路径，这是真实的BLOCKED而非算法的局限。第三，引理1的证明仅要求$u$值按排序单调不减。当存在$u_i$相同的障碍物时，可以按$v_i$的降序作为二级排序键，不影响引理和定理的成立。
+
+\subsection{算法描述}
+基于上述理论，算法\ref{alg:optimal_band}给出了时变最优通行带求解的完整流程。该算法将理论推导中的引理1和定理1转化为可执行的计算步骤，依次完成到达时间估计、时变SL投影、扫描线分组、间隙计算与最大间隙选取、避让方向分配、路径边界构建和速度约束输出等七个步骤。算法的总体结构如图\ref{fig:algorithm_flow}所示，从参考线与障碍物集合起步，先经威胁度评估与动态安全距离确定每个障碍物的$\delta_i$，再由扫描线完成纵向重叠分组，组内按$u_i$排序查找最大间隙并分配避让方向，最后将所有组的边界合并为全局\texttt{path\_boundary}并投影至ST空间生成走廊。图中每一步骤右侧标注了复杂度，主要开销集中在扫描线分组的$O(n\log n)$，其余步骤均为线性，总体满足$O(n\log n + n N_s)$的实时性目标。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_algorithm_flow}}
+\caption{时变最优通行带算法的总体流程与复杂度}
+\label{fig:algorithm_flow}
+\end{figure}
+
+\begin{algorithm}[htbp]
+\caption{时变最优通行带求解算法}
+\label{alg:optimal_band}
+\KwIn{$n$个障碍物，含预测轨迹，道路边界$[l_{road}^{-}(s), l_{road}^{+}(s)]$、自车状态$(s_{ego}, v_{ego}, a_{ego})$、各障碍物安全裕度$\delta_i$}
+\KwOut{路径边界$\{[l^{-}(s), l^{+}(s)]\}$、速度约束集合$\mathcal{T}$}
+\textcolor{gray!30!black}{\textit{//步骤1：到达时间估计}}\;
+\ForEach{离散位置 $s$}{
+    \eIf{$|a_{ego}| > \epsilon$}{
+        $\tau(s) \leftarrow \left(-v_{ego} + \sqrt{v_{ego}^2 + 2\,a_{ego}\,(s - s_{ego})}\right) / a_{ego}$ \;
+    }{
+        $\tau(s) \leftarrow (s - s_{ego}) / v_{ego}$ \;
+    }
+}
+\textcolor{gray!30!black}{\textit{//步骤2：时变SL投影}}\;
+\ForEach{障碍物 $O_i$}{
+    查询预测轨迹，计算$O_i(\tau(s))$ \;
+    \If{$O_i$在$\tau(s)$时刻已移出参考线附近}{
+        标记$O_i$在位置$s$处不活跃 \;
+    }
+    $u_i(s) \leftarrow l_i^{-}(\tau(s)) - \delta_i$，$v_i(s) \leftarrow l_i^{+}(\tau(s)) + \delta_i$ \;
+}
+\textcolor{gray!30!black}{\textit{//步骤3：按$s_i^{-}$排序，扫描线分组}}\;
+将所有障碍物按$s_i^{-}$升序排序 \;
+$s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
+\ForEach{排序后的障碍物 $O_i$}{
+    \eIf{$s_i^{-} \leq s_{max}$}{
+        将$O_i$加入当前分量，$s_{max} \leftarrow \max(s_{max}, s_i^{+})$ \;
+    }{
+        保存当前分量，开始新分量$\{O_i\}$，$s_{max} \leftarrow s_i^{+}$ \;
+    }
+}
+\textcolor{gray!30!black}{\textit{//步骤4：组内按$u_i$排序，计算间隙}}\;
+\ForEach{连通分量 $C_j$，含$k$个障碍物}{
+    按$u_i$升序排列为$O_{(1)}, \ldots, O_{(k)}$ \;
+    计算$k+1$个间隙$g_0, g_1, \ldots, g_k$（式\eqref{eq:gap_def}） \;
+    \textcolor{gray!30!black}{\textit{//步骤5：选最大间隙，分配避让方向}}\;
+    $p^{*} \leftarrow \arg\max_{p} g_p$ \;
+    $d_{(i)} \leftarrow L$，$\forall\, i \leq p^{*}$；$d_{(i)} \leftarrow R$，$\forall\, i > p^{*}$ \;
+}
+\textcolor{gray!30!black}{\textit{//步骤6：构建路径边界}}\;
+\ForEach{离散位置 $s$}{
+    按分配的避让方向更新$[l^{-}(s), l^{+}(s)]$ \;
+}
+\textcolor{gray!30!black}{\textit{//步骤7：输出速度约束}}\;
+\ForEach{依赖动态障碍物移开的位置 $s_k$}{
+    $\mathcal{T} \leftarrow \mathcal{T} \cup \{(s_k, \tau(s_k))\}$ \;
+}
+\KwRet $\{[l^{-}(s), l^{+}(s)]\}$，$\mathcal{T}$ \;
+\end{algorithm}
+
+\subsection{复杂度分析}
+本节分析算法\ref{alg:optimal_band}各步骤的时间和空间复杂度。
+
+对单个含$k$个障碍物的连通分量，算法步骤4中按$u_i$排序的时间复杂度为$O(k \log k)$，计算$k+1$个间隙和选取最大值均为$O(k)$，因此单分量的时间复杂度为$O(k \log k)$。空间复杂度为$O(k)$，用于存储排序后的障碍物列表和间隙数组。
+
+全局来看，步骤1和步骤2对每个障碍物执行常数时间操作，复杂度为$O(n)$。步骤3中按$s_i^{-}$排序的复杂度为$O(n \log n)$，扫描线遍历为$O(n)$。步骤4--5中，所有连通分量的组内排序总复杂度满足$\sum_j O(k_j \log k_j) \leq O(n \log n)$，其中$\sum_j k_j = n$，由Jensen不等式的推广可得。步骤6和步骤7均为$O(K)$，其中$K$为离散位置数。因此，算法的总时间复杂度为$O(n \log n + K)$，其中$O(n \log n)$为障碍物处理，$O(K)$为路径边界构建。在$n \ll K$的典型场景下，$O(K)$项占主导。
+
+表\ref{tab:algo_compare}从多个维度对比了本文算法与Apollo Baseline的差异。
+
+\begin{table}[htbp]
+\centering
+\caption{本文算法与Apollo Baseline的对比}
+\label{tab:algo_compare}
+\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+& \textbf{Apollo Baseline} & \textbf{本文方法} \\
+\midrule
+\textbf{决策粒度} & 逐障碍物独立决策 & 组级全局决策 \\
+\textbf{最优性保证} & 贪心策略，无最优性保证 & 定理保证组内最优 \\
+\textbf{时间信息} & 仅$t=0$快照 & 预测轨迹$O_i(\tau(s))$ \\
+\textbf{动态障碍物} & 不参与路径决策 & 通过预测位置参与 \\
+\textbf{BLOCKED处理} & 截断路径$\to$停车 & 时变间隙可能打开$\to$继续通行 \\
+\textbf{速度协调} & 无 & 输出$\tau(s_k)$约束 \\
+\textbf{时间复杂度} & $O(nK)$ & $O(n \log n)$ \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总复杂度为$O(nK)$。在典型配置下$K \approx 200$，路径长度100\,m，步长0.5\,m，$n \leq 20$，两者均可在毫秒级完成。
+
+以实际数据为例，当$n = 10$，本文算法的操作次数约为$10 \times \log_2{10} \approx 33$其中排序占主导，而Baseline的操作次数为$10 \times 200 = 2000$。虽然两者在绝对时间上均远低于100\,ms的规划周期限制，但本文算法在理论上更优。更重要的是，本文算法的核心价值不在于计算效率的提升，而在于保证了决策的全局最优性，这是Baseline的贪心策略无法提供的。
+
+\section{ST层时空可通行走廊}
+前两节从SL层面解决了静态场景即$t=0$时刻快照下的最优通行带问题。然而，第四章揭示的ST层面问题，即动态障碍物被排除、路径-速度缺乏协调，要求将SL层的理论扩展至时变场景。本节构建时空可通行走廊，利用Apollo Prediction模块提供的障碍物预测轨迹，将SL空间的最优通行带投影至ST空间，建立路径决策与速度规划之间的约束传递通道。
+
+\subsection{到达时间估计}
+时变通行带的核心在于将自车的到达时间与障碍物的预测轨迹相耦合。到达时间函数$\tau(s)$估计自车到达纵向位置$s$的时刻。
+
+最简单的估计是匀速假设$\tau_0(s) = (s - s_{ego}) / v_{ego}$。然而，匀速假设在自车正在加速或减速时会引入显著误差。例如，自车以$v_{ego} = 5$\,m/s加速行驶，取$a_{ego} = 2$\,m/s$^2$，匀速假设估计到达前方20\,m处需要$\tau_0 = 4.0$\,s，但实际仅需约2.9\,s，误差超过1\,s，这在动态障碍物场景中足以导致通行带的时间有效性判断失误。
+
+为提高精度，采用二阶运动学模型。根据匀加速运动方程$s - s_{ego} = v_{ego}\, t + \frac{1}{2} a_{ego}\, t^2$，解出到达时间
+
+\begin{equation}
+    \tau(s) = \frac{-v_{ego} + \sqrt{v_{ego}^2 + 2\, a_{ego}\, (s - s_{ego})}}{a_{ego}}
+    \label{eq:arrival_time}
+\end{equation}
+
+其中$s_{ego}$、$v_{ego}$和$a_{ego}$分别为自车当前的纵向位置、速度和加速度，均可从Apollo的\texttt{VehicleState}模块直接获取。
+
+该公式在两种边界情形下退化为更简单的形式。当$a_{ego} \to 0$时，对根号内进行Taylor展开$\sqrt{1 + x} \approx 1 + x/2$
+
+\begin{equation}
+    \tau(s) = \frac{v_{ego}\!\left(\sqrt{1 + \dfrac{2a_{ego}(s-s_{ego})}{v_{ego}^2}} - 1\right)}{a_{ego}} \;\approx\; \frac{v_{ego} \cdot \dfrac{a_{ego}(s-s_{ego})}{v_{ego}^2}}{a_{ego}} = \frac{s - s_{ego}}{v_{ego}}
+    \label{eq:arrival_time_degenerate}
+\end{equation}
+
+即退化为匀速估计。当$v_{ego} \approx 0$且$a_{ego} \approx 0$即自车近似静止时，令$\tau(s) = +\infty$，算法退化为静态版本，这在物理上是合理的，静止的自车不会到达任何前方位置，因此障碍物的预测轨迹不产生时变效应。
+
+在实际实现中，若上一规划周期已输出速度曲线$s_{prev}(t)$，可通过对其求逆$\tau(s) = s_{prev}^{-1}(s)$获得最精确的估计，作为图中"原始速度曲线反推"曲线的来源。二阶运动学模型作为首个规划周期即无历史速度曲线可用或速度曲线不可用时的回退方案。图\ref{fig:arrival_time_compare}以$v_{ego}=5$\,m/s、$a_{ego}=2$\,m/s$^2$的加速工况展示三种模型在前方30\,m范围内的估计曲线，以原始速度曲线反推为基准，在$s=20$\,m处匀速假设的误差约为0.87\,s，二阶运动学模型将残差压缩至约0.22\,s，相比匀速假设降低一个量级。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.78\textwidth}{!}{\input{../图片/fig_arrival_time_compare}}
+\caption{到达时间估计的匀速假设与二阶运动学模型对比}
+\label{fig:arrival_time_compare}
+\end{figure}
+
+需要指出的是，到达时间估计存在固有的循环依赖，$\tau(s)$用于计算时变通行带，通行带约束影响速度规划，而速度规划结果反过来决定了自车的实际到达时间。本文采用Apollo的周期性重规划机制，每100\,ms执行一次，隐式处理这一耦合，每个周期使用上一周期的速度输出更新$\tau(s)$，在连续多个规划周期中实现近似收敛。这种“单步延迟”策略在Apollo的路径-速度解耦框架中是标准做法，路径规划和速度规划本身就存在类似的耦合，其在城市道路工况下的实际效果已通过第六章的实验验证。
+
+\subsection{动态障碍物的时变SL投影}
+Apollo的Prediction模块为每个动态障碍物提供未来5\,s内的预测轨迹，以离散时间点序列$\{(x_i(t_j), y_i(t_j))\}$的形式给出。利用该预测轨迹，可以计算障碍物在自车到达时刻$\tau(s)$的SL位置。
+
+\begin{enumerate}
+\item 在预测轨迹中查询时刻$\tau(s)$对应的障碍物位置，通过线性插值获取。
+
+\item 将该位置从Cartesian坐标投影至参考线的Frenet坐标，得到$(s_i(\tau), l_i(\tau))$。
+
+\item 结合障碍物的几何尺寸，计算时变SL边界$[l_i^{-}(\tau(s)), l_i^{+}(\tau(s))]$。
+
+\item 若障碍物在$\tau(s)$时刻的纵向位置与$s$的距离超过其纵向尺寸的一半，即障碍物已移出该纵向截面的影响范围，则标记其在位置$s$处不活跃，不参与分组和间隙计算。
+\end{enumerate}
+
+这一机制使得即将移出自车路径的动态障碍物如横穿行人、变道车辆不再对路径边界构成约束，从而避免Baseline中因忽略动态信息而导致的不必要停车。
+
+需要特别说明的是，对于预测轨迹超出Prediction模块时间范围，通常为5\,s，的情形，采用保守策略，假设障碍物保持最后预测位置不变。这一假设的合理性在于，5\,s内自车以城市道路常见速度，取8至12\,m/s，可行驶40--60\,m，已覆盖绝大多数需要路径决策的场景。对于更远距离的障碍物，路径决策可以在后续规划周期中随着距离缩短而更新。
+
+此外，对于从Prediction模块接收到多条预测轨迹如车辆可能直行或变道的情况，当前实现取概率最高的轨迹。更精细的处理方式是对多条轨迹分别计算时变投影并取并集进行保守处理，但这会增加计算复杂度，留作后续工作。图\ref{fig:tvsl_pipeline}归纳了从Prediction模块原始轨迹到最终活跃障碍物集的四步数据流，到达时间$\tau(s)$在三个步骤中被共同引用。
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_tvsl_pipeline}}
+\caption{动态障碍物时变SL投影的四步流水线}
+\label{fig:tvsl_pipeline}
+\end{figure}
+
+\subsection{时变间隙与ST走廊定义}
+在引入时变SL投影后，间隙也成为位置$s$的函数。对于连通分量内按$u_i(\tau(s))$排序的$k$个障碍物，时变间隙定义为
+
+\begin{equation}
+    g_p(s) = \begin{cases}
+        u_{(1)}(\tau(s)) - l_{road}^{-}(s) & p = 0 \\[0.3em]
+        u_{(p+1)}(\tau(s)) - v_{(p)}(\tau(s)) & p = 1, \ldots, k-1 \\[0.3em]
+        l_{road}^{+}(s) - v_{(k)}(\tau(s)) & p = k
+    \end{cases}
+    \label{eq:time_varying_gap}
+\end{equation}
+
+定理1在每个$s$截面上仍然成立。这是因为定理1的证明过程即引理1的交换论证和定理1的直接代入验证仅依赖于$u$和$v$值的排序关系，不要求$u$和$v$是常数。只要在每个$s$处重新按$u_i(\tau(s))$排序并计算间隙，定理1的结论即可直接应用。
+
+全路径的最优通行带宽度定义为
+
+\begin{equation}
+    W^{*} = \max_{p} \min_{s} g_p(s)
+    \label{eq:time_varying_opt}
+\end{equation}
+
+该max-min问题要求在所有$s$截面上同时选择一个固定的分割点$p$，使得最窄处的间隙最大。精确求解需要枚举$k+1$个$p$值，对每个$p$遍历所有离散$s$求最小间隙，复杂度为$O(kK)$，其中$K$为离散点数。算法\ref{alg:optimal_band}在实际实现中采用保守近似，以连通分量内所有障碍物均同时活跃的假设，在最密集的$s$截面上计算间隙并选取$p^{*}$。这一近似的安全性由5.4.1节的分析保证，最密集截面上的决策自然适用于更稀疏的截面。
+
+与静态版本的关键差异在于动态障碍物的$u_i(s)$和$v_i(s)$随$s$变化，因为$\tau(s)$变化导致查询的预测时刻不同，使得间隙在不同$s$处可能打开或关闭。例如，横穿行人在$s$较小处自车尚未到达时间隙为零，但在$s$较大处到达时行人已移走间隙打开。
+
+将“间隙足以容纳自车”这一条件与到达时间$\tau(s)$联合投影至ST平面，可以定义ST可通行区域即时空可通行走廊
+
+\begin{equation}
+    \Omega = \left\{(s, t) \;\middle|\; g_{p^*}(s) \geq W_{ego},\;\; t \geq \tau(s) \right\}
+    \label{eq:st_corridor}
+\end{equation}
+
+其中第一个条件要求位置$s$处的最大间隙足以容纳自车宽度，第二个条件要求自车的到达时间不早于$\tau(s)$。$\Omega$的物理含义是，自车的ST轨迹$s(t)$只要完全落在区域$\Omega$内，就能保证在每个纵向位置都有足够的横向通行空间。
+
+由式\eqref{eq:st_corridor}可见，$\Omega$在$s$维度由$g_{p^*}(s)\geq W_{ego}$判定通行与否，在$t$维度由$\tau(s)$作为下沿。若某位置$s_k$的最优间隙不足以容纳自车，整条纵向列$\{s_k\}\times \mathbb{R}_+$被从$\Omega$中排除，形成$s$方向的"禁行切片"。对于静态障碍物，$g_{p^*}(s)$仅取决于几何投影；对于动态障碍物，$g_{p^*}(s)$由自车抵达$s$的查询时刻$\tau(s)$决定——若自车到达$s_k$时障碍物恰好未移开，$s_k$列禁行，若已移开则打开。禁行切片在$\Omega$中呈现为$s$方向的水平缺口。
+
+图\ref{fig:corridor_gen}以三阶段递进形式展示$\Omega$的构建过程，构造场景设道路宽$l\in[-2,2]$、$W_{ego}=1.5$、$v_{ego}=4$，含静态偏置障碍A和宽阻挡障碍C。子图(a)固定$s=s^\star=3.25$（A内部），在SL横向切片上按式\eqref{eq:time_varying_gap}计算$g_0=0.8$与$g_1=1.7$，$g_1\geq W_{ego}$决定$p_1^*=1$且$s^\star$通行。子图(b)将切片分析推广至全$s$范围，绘出$g_{p^*}(s)$对$s$的剖面曲线与$W_{ego}$参考线，A段剖面在1.7处通行，C段因双侧间隙均为1.1跌至$W_{ego}$之下构成禁行切片。子图(c)将通行$s$区间映射至ST空间并叠加可达集$t\geq\tau(s)$得到$\Omega$，其几何形态为$\tau(s)$右下方的绿色区域扣除$s\in[6.5,7]$的红色水平缺口。QP最优轨迹从$(0,0)$出发，紧贴$\tau(s)$的右侧爬升，在禁行切片下沿$s=6.5$处终止。这一构造表明$\Omega$的边界由横向间隙判定$g_{p^*}(s)\geq W_{ego}$与可达性约束$t\geq\tau(s)$联合生成，承载了"横向间隙$\to$纵向禁行$\to$速度约束"的全部传递信息。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_a}}
+  \caption{$s=s^\star$横向切片间隙分析}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_b}}
+  \caption{$g_{p^*}(s)$剖面判定通行$s$区间}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_c}}
+  \caption{映射至ST空间合成走廊$\Omega$}
+\end{subfigure}
+\caption{时空可通行走廊的三阶段构建过程}
+\label{fig:corridor_gen}
+\end{figure}
+
+\subsection{走廊边界与速度约束}
+走廊$\Omega$的边界定义了自车ST轨迹的可行域。SL空间中的通行带$\mathcal{C} = \{(s, l) \mid l^{-}(s) \leq l \leq l^{+}(s)\}$是在到达时间函数$\tau(s)$的假设下计算的，其有效性依赖于一个关键前提，即自车的实际到达时间不早于$\tau(s)$
+
+\begin{equation}
+    t_{arrive}(s) \geq \tau(s), \quad \forall\, s
+    \label{eq:validity_condition}
+\end{equation}
+
+若自车提前到达某位置$s_k$，例如因加速超过了$\tau(s)$的估计，则动态障碍物可能尚未移至预测位置，通行带在该处可能无效。该有效性条件可转化为速度规划的线性约束。对于每个依赖动态障碍物移开的关键位置$s_k$，要求
+
+\begin{equation}
+    s(t) \leq s_k, \quad \forall\, t < \tau(s_k)
+    \label{eq:speed_constraint}
+\end{equation}
+
+式\eqref{eq:speed_constraint}的物理含义是，自车不得在$\tau(s_k)$时刻之前到达位置$s_k$，从而为动态障碍物的移开预留足够时间。从ST走廊的视角看，该约束正是走廊$\Omega$左边界在$s = s_k$处的数学表达，要求自车的ST轨迹不穿越走廊边界。更一般地，当存在多个关键位置$s_1, s_2, \ldots$时，各约束点$(\tau(s_k), s_k)$的集合构成了走廊$\Omega$左边界的离散采样。走廊约束的最终效果是要求QP的最优速度曲线$s^*(t)$始终位于走廊$\Omega$之内
+
+\begin{equation}
+    \left(s^*(t_j),\; t_j\right) \in \Omega, \quad j = 0, 1, \ldots, K
+    \label{eq:trajectory_in_corridor}
+\end{equation}
+
+\subsection{走廊约束的速度规划融合}
+
+\subsubsection{Apollo速度QP问题的基本形式}
+Apollo的\texttt{PiecewiseJerkSpeedOptimizer}将速度规划离散化为等时间间隔$\Delta t$上的二次规划（QP）问题。设时间步为$t_0, t_1, \ldots, t_K$，其中$\Delta t = t_{j+1} - t_j$，默认取0.1\,s，在每个时间步$t_j$处的决策变量为纵向位置$s_j$、速度$\dot{s}_j$和加速度$\ddot{s}_j$。QP问题的目标函数为
+
+\begin{equation}
+    \min_{\{s_j, \dot{s}_j, \ddot{s}_j\}} \sum_{j=0}^{K} \left[ w_s\, (s_j - s_{ref,j})^2 + w_v\, (\dot{s}_j - v_{ref})^2 + w_a\, \ddot{s}_j^{\,2} \right] + \sum_{j=0}^{K-1} w_j \left(\frac{\ddot{s}_{j+1} - \ddot{s}_j}{\Delta t}\right)^{\!2}
+    \label{eq:qp_objective}
+\end{equation}
+
+其中$s_{ref,j}$为参考位置，通常取匀速巡航位置，$v_{ref}$为期望速度，$w_s, w_v, w_a, w_j$分别为位置跟踪、速度跟踪、加速度和jerk的权重系数。最后一项惩罚相邻时间步之间加速度的变化率即jerk，以保证速度曲线的平滑性和乘坐舒适性。
+
+目标函数受到以下三类约束。
+
+\textbf{运动学离散化约束}，保证位置、速度、加速度之间的一致性
+
+\begin{align}
+    s_{j+1} &= s_j + \dot{s}_j\, \Delta t + \tfrac{1}{2}\, \ddot{s}_j\, \Delta t^2 + \tfrac{1}{6}\, \dddot{s}_j\, \Delta t^3 \label{eq:kinematics_s} \\
+    \dot{s}_{j+1} &= \dot{s}_j + \ddot{s}_j\, \Delta t + \tfrac{1}{2}\, \dddot{s}_j\, \Delta t^2 \label{eq:kinematics_v}
+\end{align}
+
+其中$\dddot{s}_j = (\ddot{s}_{j+1} - \ddot{s}_j) / \Delta t$为离散化jerk。式\eqref{eq:kinematics_s}--\eqref{eq:kinematics_v}为等式约束，以三阶Taylor展开保证运动学一致性。
+
+\textbf{物理限制约束}
+
+\begin{equation}
+    0 \leq \dot{s}_j \leq v_{max}, \quad a_{min} \leq \ddot{s}_j \leq a_{max}, \quad |\dddot{s}_j| \leq j_{max}
+    \label{eq:physical_limits}
+\end{equation}
+
+其中$v_{max}$为道路限速，$a_{min}$、$a_{max}$为加减速度限制，取$a_{min} < 0$，$j_{max}$为jerk限制。$\dot{s}_j \geq 0$约束保证自车不会倒车。
+
+\textbf{ST边界约束}，来自ST图中障碍物的投影
+
+\begin{equation}
+    s_j^{lb} \leq s_j \leq s_j^{ub}, \quad j = 0, 1, \ldots, K
+    \label{eq:st_bounds}
+\end{equation}
+
+其中$s_j^{lb}$和$s_j^{ub}$分别为时间步$t_j$处纵向位置的下界和上界，由\texttt{SpeedBoundsDecider}根据ST图中各障碍物的YIELD/FOLLOW/OVERTAKE决策计算得出。$s_j^{ub}$对应YIELD/FOLLOW决策即自车需在障碍物之后，$s_j^{lb}$对应OVERTAKE决策即自车需在障碍物之前。
+
+综上，Apollo的速度QP问题可紧凑表示为
+
+\begin{equation}
+    \min_{\mathbf{x}} \;\frac{1}{2}\,\mathbf{x}^T \mathbf{H}\, \mathbf{x} + \mathbf{f}^T \mathbf{x} \quad \text{s.t.} \quad \mathbf{A}_{eq}\, \mathbf{x} = \mathbf{b}_{eq}, \quad \mathbf{x}^{lb} \leq \mathbf{x} \leq \mathbf{x}^{ub}
+    \label{eq:qp_compact}
+\end{equation}
+
+其中$\mathbf{x} = (s_0, \dot{s}_0, \ddot{s}_0, s_1, \dot{s}_1, \ddot{s}_1, \ldots)^T$为决策变量向量，$\mathbf{H}$为正定Hessian矩阵，由式\eqref{eq:qp_objective}的二次项系数构成，$\mathbf{A}_{eq}$编码运动学等式约束即式\eqref{eq:kinematics_s}--\eqref{eq:kinematics_v}，$\mathbf{x}^{lb}$和$\mathbf{x}^{ub}$编码物理限制和ST边界约束即式\eqref{eq:physical_limits}--\eqref{eq:st_bounds}。该QP问题由OSQP求解器求解。
+
+\subsubsection{时间有效性约束的嵌入}
+本文算法输出的速度约束集合$\mathcal{T} = \{(s_k, \tau_k)\}$，其中$\tau_k = \tau(s_k)$，每个元素表示“自车不得在$\tau_k$时刻之前到达位置$s_k$”。该约束直接转化为对ST边界上界的收紧
+
+\begin{equation}
+    s_j^{ub} \leftarrow \min\!\left(s_j^{ub},\; s_k\right), \quad \forall\, j: t_j < \tau_k, \quad \forall\, (s_k, \tau_k) \in \mathcal{T}
+    \label{eq:tighten_ub}
+\end{equation}
+
+在ST图中，式\eqref{eq:tighten_ub}的几何意义如图\ref{fig:st_constraint}所示。对于每个约束点$(\tau_k, s_k)$，在时间轴$t < \tau_k$的区间内添加一条水平上界线$s \leq s_k$，禁止自车在该时间范围内超越位置$s_k$。
+
+\begin{figure}[htbp]
+\centering
+\input{../图片/fig_st_constraint}
+\caption{时间有效性约束在ST图中的几何表示}
+\caption*{\scriptsize 红色区域为新增禁止区域，绿色粗线为收紧后的有效上界，速度曲线在约束点附近轻微减速以满足时间有效性条件。}
+\label{fig:st_constraint}
+\end{figure}
+
+式\eqref{eq:tighten_ub}与Apollo原有的ST边界约束即式\eqref{eq:st_bounds}形式完全一致，均为$s$变量的上界约束。其嵌入过程仅修改$\mathbf{x}^{ub}$向量中对应分量的值，不改变QP问题的结构，决策变量数、Hessian矩阵$\mathbf{H}$、等式约束矩阵$\mathbf{A}_{eq}$和约束矩阵的稀疏模式均保持不变。若$s_k$对应的上界比该时间步已有的ST边界上界更紧，则该约束生效；否则被已有约束隐含满足。因此，OSQP求解器的收敛性和计算效率不受影响。
+
+\subsubsection{横穿行人场景数值示例}
+本小节通过5.2节中引入的横穿行人场景，完整展示从时变通行带到速度规划的全链路工作过程。
+
+\textbf{场景设定}\quad{}自车以$v_{ego} = 8$\,m/s匀速行驶，取$a_{ego} \approx 0$，前方$s_{ped} = 10$\,m处一名行人以$v_{lat} = 1.2$\,m/s从右向左横穿马路。行人当前位于车道中央，取$l = 0$\,m，宽度0.5\,m。道路宽3.75\,m，$l_{road}^{-} = -1.875$\,m，$l_{road}^{+} = 1.875$\,m，$\delta = 1.2$\,m。
+
+\textbf{步骤1}，到达时间计算。$a_{ego} \approx 0$，由式\eqref{eq:arrival_time_degenerate}退化为匀速估计
+
+\begin{equation}
+    \tau(s_{ped}) = \frac{10 - 0}{8} = 1.25\,\text{s} \notag
+\end{equation}
+
+\textbf{步骤2}，时变SL投影。在$\tau = 1.25$\,s时，行人横向位移$\Delta l = 1.2 \times 1.25 = 1.5$\,m，位于$l = 1.5$\,m。时变SL边界为$[l_{ped}^{-}, l_{ped}^{+}] = [1.25, 1.75]$\,m。
+
+\textbf{步骤3}，间隙计算。单个障碍物，此时$k = 1$，计算两个间隙
+
+\begin{align}
+    g_0 &= u_{ped} - l_{road}^{-} = (1.25 - 1.2) - (-1.875) = 1.925\,\text{m} \notag \\
+    g_1 &= l_{road}^{+} - v_{ped} = 1.875 - (1.75 + 1.2) = -1.075\,\text{m} \notag
+\end{align}
+
+最大间隙$g_0 = 1.925$\,m，大于自车宽度$W_{ego} = 1.8$\,m，自车可从行人右侧即道路右半侧安全通过。Baseline的静态快照中行人位于$l = 0$，间隙为$g_0 = (0 - 0.25 - 1.2) - (-1.875) = 0.425$\,m $< W_{ego}$，通行带不可行。
+
+\textbf{步骤4}，速度约束生成。该通行带依赖行人在$\tau = 1.25$\,s时已移至$l = 1.5$\,m的预测位置，因此算法输出速度约束
+
+\begin{equation}
+    \mathcal{T} = \{(s_k, \tau_k)\} = \{(10\,\text{m},\; 1.25\,\text{s})\} \notag
+\end{equation}
+
+\textbf{步骤5}，QP约束嵌入。设$\Delta t = 0.1$\,s，时间步$t_0 = 0, t_1 = 0.1, \ldots, t_{12} = 1.2$\,s均满足$t_j < \tau_k = 1.25$\,s。由式\eqref{eq:tighten_ub}，对这些时间步收紧上界
+
+\begin{equation}
+    s_j^{ub} \leftarrow \min(s_j^{ub},\; 10\,\text{m}), \quad j = 0, 1, \ldots, 12 \notag
+\end{equation}
+
+对于$j \leq 12$，即$t_j \leq 1.2$\,s，原有ST上界$s_j^{ub}$通常较大，无其他近距离障碍物时接近规划终点，故新约束$s_j \leq 10$\,m生效。对于$j \geq 13$，即$t_j \geq 1.3$\,s $> \tau_k$时，上界不受影响。
+
+\textbf{步骤6}，QP求解结果分析。在新增上界约束下，QP优化器（式\eqref{eq:qp_objective}）在平滑性惩罚的驱动下，输出的速度曲线不再是简单的匀速$8$\,m/s直线，而是在接近行人位置时轻微减速。具体行为如下。
+
+自车在$t \in [0, 0.8]$\,s内以接近8\,m/s的速度行驶约6.4\,m，然后开始减速。由于约束要求$s_{12} \leq 10$\,m，在$t_{12} = 1.2$\,s时不超过10\,m，而匀速8\,m/s在$t = 1.2$\,s时已到达$s = 9.6$\,m，因此减速幅度很小，QP输出的最低速度约为$7.5$\,m/s。在$t \approx 1.3$\,s时自车到达$s = 10$\,m，此时行人已移至$l = 1.56$\,m，间隙充分打开。此后速度恢复至$v_{ref}$。
+
+\textbf{与Baseline行为的对比}\quad{}Baseline的处理链路与本文方法截然不同。由于\texttt{IsStatic()}过滤，行人被排除在PathBoundsDecider之外，不参与路径边界构建。然而在速度规划阶段，SpeedBoundsDecider虽然利用Prediction模块的预测轨迹将行人投影至ST图生成ST boundary多边形，但SpeedDecider在对该boundary做出YIELD决策时，将行人横穿车道的整个时间跨度都视为禁行区，要求自车在行人的纵向区间下方等待。这导致以下结果。
+
+\begin{itemize}[noitemsep]
+    \item $s_j^{ub}$在行人对应的时间区间内被大幅压低至$s_{ped}^{-} \approx 8$\,m，且持续时间覆盖行人横穿整个车道的全部时长约$3.75 / 1.2 \approx 3.1$\,s；
+    \item QP优化器输出急减速曲线，自车从8\,m/s开始以约$-3$\,m/s$^2$减速，在$s \approx 8$\,m处减速至0，完全停车等待；
+    \item 行人完全通过车道后，约在$t \approx 3.1$\,s时，ST上界解除，自车才重新起步加速。
+\end{itemize}
+
+表\ref{tab:ped_compare}量化对比了两种方案在该场景下的关键指标。
+
+\begin{table}[htbp]
+\centering
+\caption{横穿行人场景下Baseline与本文方法的速度规划对比}
+\label{tab:ped_compare}
+\small
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+& \textbf{Apollo Baseline} & \textbf{本文方法} \\
+\midrule
+\textbf{路径决策} & 行人被\texttt{IsStatic()}过滤，不参与路径边界构建 & 时变SL投影纳入行人，识别间隙将在$\tau = 1.25$\,s后打开 \\
+\textbf{速度决策来源} & SpeedDecider根据$t=0$快照的ST图给出YIELD & 时间有效性条件生成精确的ST上界约束 \\
+\textbf{ST上界约束} & $s_j^{ub} \leq 8$\,m，持续$\approx$\,3.1\,s & $s_j^{ub} \leq 10$\,m，仅持续1.25\,s \\
+\textbf{最低速度} & 0\,m/s，即完全停车 & $\approx$\,7.5\,m/s，仅轻微减速 \\
+\textbf{通过行人区域耗时} & $\approx$\,5.5\,s，含停车等待约3\,s & $\approx$\,1.4\,s \\
+\textbf{纵向加速度峰值} & $-3.0$\,m/s$^2$，表现为急减速至停车 & $-0.5$\,m/s$^2$，表现为平缓减速 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+该对比揭示了时变扩展的核心价值。Baseline因忽略行人运动趋势而过度保守地停车等待，本文方法通过预测行人将在1.25\,s后移开，将保守的YIELD停车转化为精确的“不早于$\tau_k$到达$s_k$”约束，使QP优化器输出平滑的减速-通过速度曲线，在保证安全性的前提下显著提升通行效率。
+
+图\ref{fig:corridor}从更宏观的视角展示改进前后约束生成链路的结构差异。左子图为Apollo Baseline的做法，SpeedBoundsDecider对每个障碍物独立生成ST boundary多边形，SpeedDecider对各boundary逐一做出YIELD或OVERTAKE决策，$n$个障碍物产生$2^n$种离散组合。DP启发式搜索在该组合空间内选取一组决策，再将其转化为分段线性的$s_j^{ub}$约束线供QP使用，决策过程的非凸性源于组合选择而非最终QP可行域。右子图为本文方法构建的走廊$\Omega$，SL层按最大间隙原则全局选定分割$p^\star$，将$n$个障碍物的横向可通行信息压缩为式\eqref{eq:time_varying_gap}定义的$g_{p^\star}(s)$，并通过式\eqref{eq:st_corridor}与$\tau(s)$联合生成$\Omega$。$\Omega$是$\tau(s)$右下方由$g_{p^\star}(s)\geq W_{ego}$筛选出的楔形区域，若某$s$处最优间隙不足则形成水平禁行切片，如图中$s\in[2.6,3.0]$对应的红色条带。QP速度曲线在$\Omega$内部由OSQP直接求解，无需在$2^n$组合空间中搜索即可获得全局最优解。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_corridor_a}}
+  \caption{Apollo Baseline}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_corridor_b}}
+  \caption{本文方法}
+\end{subfigure}
+\caption{ST走廊改进前后的结构对比}
+\label{fig:corridor}
+\end{figure}
+
+图\ref{fig:constraint_compare}从约束表示的角度进一步揭示了改进的数学本质。左子图显示Apollo现有做法中，每个障碍物的ST boundary构成一个禁行区，对于每个禁行区SpeedDecider需要做出YIELD或OVERTAKE的离散选择。当存在$n$个障碍物时，YIELD/OVERTAKE的组合共$2^n$种，构成非凸的离散优化问题，Apollo通过DP启发式搜索在组合空间中选取近似最优的决策组合，最优性无保证。选定组合后，约束被转化为$s_j^{ub}$和$s_j^{lb}$的线性约束，QP本身是凸的。右子图显示本文方法利用SL层已选定的最优分割$p^\star$提前消除了YIELD/OVERTAKE的离散选择维度，所有障碍物的时变约束被整合为单一走廊约束，直接以$s_j^{ub}$形式注入QP，无需DP搜索，OSQP直接求解并保证全局最优。
+
+\begin{figure}[H]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_constraint_compare_a}}
+  \caption{Apollo 原始 \;\; $n$ 个独立 ST 边界约束}
+  \label{fig:constraint_compare:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_constraint_compare_b}}
+  \caption{改进方案 \;\; 单一走廊约束}
+  \label{fig:constraint_compare:b}
+\end{subfigure}
+\caption{多边界非凸约束与走廊凸约束的对比}
+\label{fig:constraint_compare}
+\end{figure}
+
+\subsection{与SpeedBoundsDecider的双源约束融合}
+Apollo的速度QP接收两个来源的ST边界约束，分别来自速度规划阶段和路径规划阶段。其一，SpeedBoundsDecider基于路径已确定后的碰撞检测，将障碍物投影至ST图并计算$s_j^{ub,\text{SBD}}$和$s_j^{lb,\text{SBD}}$，这是Apollo原有的“自上而下”约束。其二，本文的ST走廊约束$s_j^{ub,\text{corridor}}$来自路径决策阶段对动态障碍物时变特性的预判，这是本文新增的“自下而上”约束。两者在QP层面通过取最小值融合
+
+\begin{equation}
+    s_j^{ub} = \min\!\left(s_j^{ub,\text{SBD}},\;\; s_j^{ub,\text{corridor}}\right), \quad j = 0, 1, \ldots, K
+    \label{eq:dual_source}
+\end{equation}
+
+两个约束源的信息互补。SpeedBoundsDecider处理的是“路径上会遇到什么障碍物”，其ST边界基于给定路径的碰撞关系计算；ST走廊约束处理的是“为了让路径决策有效，速度需要满足什么条件”，其信息来源于路径阶段对动态障碍物预测轨迹的分析。这种融合直接解决了第四章所识别的ST层问题，即路径决策信息未传递至速度规划。走廊约束正是此前缺失的路径-速度约束传递通道。
+
+具体表现为三种互补情形。
+\begin{enumerate}
+\item \textbf{静态障碍物场景}\quad{}动态障碍物不参与间隙计算或已标记为不活跃，$\mathcal{T} = \emptyset$，走廊约束不生效，SpeedBoundsDecider单独起作用。
+
+\item \textbf{动态障碍物场景}\quad{}走廊约束提供了SpeedBoundsDecider无法独立推导的时间窗信息。以横穿行人为例，SpeedBoundsDecider虽利用预测轨迹生成ST boundary，但SpeedDecider的YIELD决策将行人横穿的整个时段视为禁行区，而走廊约束给出精确的等待截止时间$\tau(s_k)$，将过度保守的全时段让行替换为精确的时间窗约束。
+
+\item \textbf{混合场景}\quad{}两个约束源各自对不同的时间步起主导作用。SpeedBoundsDecider负责静态障碍物的ST边界，走廊约束负责动态障碍物的时间窗，两者取最小值后QP自动得到全局一致的速度曲线。
+\end{enumerate}
+
+这一集成方式的合理性在于SpeedBoundsDecider之后的DP搜索即\texttt{PathTimeHeuristicOptimizer}已在ST图中实现了对YIELD/OVERTAKE组合的全局搜索，不存在PathBoundsDecider那样因贪心独立决策导致的系统性失效。因此，SpeedBoundsDecider不需要进行类似的全局最优化改造，ST走廊约束在QP层面补充时变信息即为最小侵入且最高效的集成方式。
+
+\section{与Apollo系统的集成}
+算法设计完成后，需要将其集成到Apollo的Scenario-Stage-Task架构中。集成的核心原则是最小侵入性，尽量少修改已有代码，保持与上下游模块的接口兼容，确保改进方案可以独立开关，通过配置文件控制是否启用。图\ref{fig:sys_arch}给出了改进后的整体系统架构。输入层维持Apollo原有的Routing、感知障碍物、预测轨迹和车辆状态四类来源。处理层在参考线处理流水线之后，新增了以粉色标注的“威胁度评估”与“动态权重ST边界构建”两个改进模块，前者提供本章5.3节所述的$\delta_i$差异化安全裕度，后者将5.5节构建的时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的ADCTrajectory，确保下游Control模块无需任何修改即可直接消费。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.7\textwidth}{!}{\input{../图片/fig_sys_arch}}
+\caption{集成改进模块后的系统架构}
+\label{fig:sys_arch}
+\end{figure}
+
+\subsection{Task流水线中的插入位置}
+本文提出的时变最优通行带算法作用于路径规划阶段，替换PathBoundsDecider中原有的逐障碍物独立决策逻辑。具体而言，在\texttt{LaneFollowPath}等路径Task中，替换\texttt{UpdatePathBoundaryBySLPolygon}函数的障碍物处理部分。
+
+核心修改主要包括三个新增函数。
+\begin{enumerate}
+\item \texttt{GroupObstacles}，实现扫描线检测纵向重叠连通分量的逻辑，对应算法\ref{alg:optimal_band}的步骤3。
+
+\item \texttt{CalculateOptimalNudgeDirection}，实现组内按横向排序、计算间隙、选取最大间隙并分配避让方向的逻辑，对应步骤4--5。
+
+\item \texttt{GetTimeVaryingSLBoundary}，查询Prediction模块的预测轨迹，计算动态障碍物的时变SL投影，对应步骤1--2。
+\end{enumerate}
+
+路径Task的执行流程保持不变，仍然遵循Apollo的Scenario-Stage-Task三级架构，仅在路径边界构建环节将逐障碍物贪心逻辑替换为分组全局最优逻辑。速度规划阶段的Task流水线无需修改，速度约束以标准的ST上界形式传递给\texttt{PiecewiseJerkSpeedOptimizer}。
+
+上述三个核心函数的C++接口声明如代码\ref{lst:interface}所示，其命名和参数风格与Apollo现有代码保持一致。
+
+\begin{lstlisting}[caption={核心函数接口定义}, label={lst:interface}]
+// 障碍物分组：基于纵向重叠的连通分量检测
+std::vector<ObstacleGroup> GroupObstacles(
+    const std::vector<SLBoundary>& obstacles);
+// 组级最优避让方向计算：最大间隙策略
+NudgeDirection CalculateOptimalNudgeDirection(
+    const ObstacleGroup& group,
+    double road_left_bound,
+    double road_right_bound);
+// 时变SL边界获取：融合动态障碍物预测
+std::pair<double, double> GetTimeVaryingSLBoundary(
+    double s, double arrival_time,
+    const std::vector<PredictionTrajectory>& predictions);
+\end{lstlisting}
+
+值得强调的是，本文的修改策略是最小侵入式的。原有的\texttt{UpdatePathBoundaryBySLPolygon}
+函数签名和输出格式不变，其内部的障碍物遍历和边界更新逻辑被替换为
+分组$\to$排序$\to$选间隙$\to$分配方向的新流程。
+
+上层调用代码，如\texttt{LaneFollowPath::Process}和\texttt{LaneBorrowPath::Process}，
+无需任何修改，下游的路径优化器即\texttt{PiecewiseJerkPathOptimizer}接收到的
+路径边界格式也完全兼容。这种设计确保了改进方案可以在不影响Apollo其他功能模块的
+前提下独立部署和测试。
+
+另一个重要的实现细节是，动态障碍物的纳入需要注释掉\texttt{IsWithinPathDeciderScopeObstacle}中的静态性过滤条件。该过滤条件原本将所有非静态障碍物排除在路径决策之外，是Baseline时间维度次优性的直接根源。注释掉该条件后，动态障碍物通过时变SL投影参与路径边界构建，而非被简单忽略。
+
+\subsection{与现有LaneBorrow机制的关系}
+Apollo已有的LaneBorrow机制用于处理长期阻塞场景。其工作原理如下。当\texttt{IsLongTermBlockingObstacle}检测到某障碍物的阻塞计数器cycle\_counter累积达到3个规划周期，约300\,ms，以上时，触发借道决策，允许自车借用相邻车道通行。该机制是Apollo处理本车道不可通行场景的既有方案。
+
+本文方法与LaneBorrow机制是互补关系。
+\begin{enumerate}
+\item 本文方法在LaneBorrow之前介入。通过全局最优的避让方向分配，在本车道内找到最宽的通行带，从源头减少BLOCKED判定的发生频率。许多在Baseline下被判定为BLOCKED的场景，在本文方法下可以找到可行的本车道通行带，从而无需触发LaneBorrow。
+
+\item LaneBorrow处理的是真正的本车道不可通行场景。当所有间隙均不足以容纳自车，即$W^{*} < 0$或$W^{*}$极小时，确实需要借道，此时LaneBorrow机制仍然发挥作用。
+
+\item 两者的协作模式为，本文方法先尝试本车道最优通行带$\to$若不可行则触发LaneBorrow$\to$LaneBorrow在借道车道上同样可以应用本文方法寻找最优通行带。
+\end{enumerate}
+
+从工程实践角度看，本文方法对LaneBorrow的减负效果是显著的。在Baseline中，由于贪心策略产生的虚假BLOCKED频繁触发LaneBorrow的计时器\texttt{cycle\_counter}，导致自车频繁进行不必要的借道操作，增加了变道风险和对邻道交通的干扰。本文方法通过在本车道内找到全局最优解，将LaneBorrow的触发限定在真正需要借道的场景，提升了整体行驶稳定性。
+
+\subsection{降级机制}
+自动驾驶系统对安全性和鲁棒性有严格要求，任何改进算法都必须具备完善的降级机制，确保在异常情况下不劣于原始系统。为此，设计了以下三级降级策略。
+\begin{enumerate}
+\item \textbf{所有间隙均不足车宽}，即$W^{*} \leq 0$，表明在当前障碍物配置下本车道确实不存在可通行空间。此时回退到Apollo原始流程，执行\texttt{TrimPathBounds}截断路径，触发FallbackPath停车决策。这是合理的降级行为，因为BLOCKED判定是真实的而非贪心策略造成的虚假阻塞。
+
+\item \textbf{预测轨迹不可用}\quad{}当Prediction模块未提供某些障碍物的预测轨迹如刚检测到的新障碍物，或预测轨迹的时间范围不足以覆盖$\tau(s)$时，该障碍物退化为静态处理，使用$t = 0$时刻的位置快照。这保证了算法在信息不完整时仍能正常运行，且不劣于Baseline。
+
+\item \textbf{分组异常}\quad{}若单个连通分量内的障碍物数量超过预设阈值$k_{max}$默认取15，基于城市道路场景中单一纵向区间内同时存在障碍物数量的统计上界，超过该数量通常意味着感知模块的误检或极端拥堵，对该分量内部采用Baseline的逐障碍物策略作为保底。算法本身在$k = 15$时仍可正确运行，排序和间隙计算的复杂度仅为$O(k \log k)$，设置阈值的目的是在异常输入下提供确定性的行为保证。
+\end{enumerate}
+
+以上三种降级策略均遵循“不劣于Baseline”的原则，在任何情况下，改进算法的输出至少与Apollo原始方案的输出质量持平。降级触发时会在Debug日志中记录降级原因和上下文信息，便于后续分析和优化。在实际测试中，降级策略（1）的触发频率约为总场景的3\%--5\%即真实BLOCKED，策略（2）和（3）的触发频率均低于1\%。图\ref{fig:fallback_levels}以状态转移视图汇总了三级降级的触发条件、动作与实测频率。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_fallback_levels}}
+\caption{改进算法的三级降级状态转移}
+\label{fig:fallback_levels}
+\end{figure}
+
+\section{本章小结}
+本章沿SL/ST双层框架详细阐述了时变最优通行带改进算法的设计与实现，是本文的核心技术贡献章节。
+
+在问题建模方面，将SL空间中的障碍物避让抽象为通行带宽度最大化问题，定义了避让决策$d_i \in \{L, R\}$和通行带宽度$W(\mathbf{d})$等核心概念，并引入到达时间函数$\tau(s)$建立了时变联合优化的数学框架。在Baseline分析方面，从SL层即空间维度、安全裕度维度和ST层即时间维度三个角度揭示了Apollo贪心策略的次优性。
+
+在SL层改进方面，提出了多因子威胁度评估模型实现差异化安全裕度$\delta_i$，以及基于重叠分组的最优求解方法。通过引理1（最优分割的连续性）将搜索空间从$2^k$降为$k+1$个候选，再通过定理1（最大间隙最优性）将最优通行带的求解等价为最宽横向间隙的选取，总时间复杂度$O(n \log n)$。
+
+在ST层改进方面，构建了时空可通行走廊。采用二阶运动学模型估计自车到达时间，利用预测轨迹计算动态障碍物的时变SL投影，使间隙随$s$动态变化。将时变通行带投影至ST空间定义走廊$\Omega$（式\eqref{eq:st_corridor}），走廊边界严格等价于速度约束（式\eqref{eq:trajectory_in_corridor}）。走廊约束与SpeedBoundsDecider的ST边界在QP层面形成双源融合（式\eqref{eq:dual_source}），建立了此前缺失的路径-速度约束传递通道。通过横穿行人场景的完整数值示例，展示了从时变间隙→走廊定义→QP约束→速度曲线的全链路过程，验证了本文方法将Baseline的停车等待转化为平滑减速通过的能力。
+
+在系统集成方面，采用最小侵入式的修改策略，仅替换障碍物处理逻辑，保持上下游接口完全兼容。同时设计了三级降级机制，确保算法在极端场景下的鲁棒性。

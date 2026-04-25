@@ -1,0 +1,392 @@
+% !TEX program = xelatex
+\documentclass[a4paper,12pt,openany,oneside]{ctexbook}
+
+% ==================== 宏包 ====================
+\usepackage[top=2.54cm,bottom=2.54cm,left=3.17cm,right=3.17cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.5}
+\usepackage{amsmath,amssymb,amsfonts}
+\let\emptyset\varnothing
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{longtable}
+\usepackage{enumitem}
+\setlist[enumerate,1]{label=（\arabic*）,wide=2em,labelsep=0pt,listparindent=2em,parsep=0pt,topsep=0pt,partopsep=0pt}
+\usepackage{algorithm2e}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage[labelsep=space]{caption}
+\captionsetup{font={normalsize,bf}, labelsep=space}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{url}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepackage[backend=biber,style=gb7714-2015,gbpub=false,
+            uniquename=init,uniquelist=true,
+            maxcitenames=2,mincitenames=1,
+            sorting=none]{biblatex}
+\usepackage{titletoc}
+
+% ==================== 字体设置 ====================
+\setmainfont{TeX Gyre Termes}
+
+% ==================== 页眉页脚 ====================
+\usepackage{fancyhdr}
+\fancypagestyle{plain}{%
+  \fancyhf{}%
+  \fancyfoot[C]{\zihao{5}\rmfamily\thepage}%
+  \renewcommand{\headrulewidth}{0pt}%
+  \renewcommand{\footrulewidth}{0pt}%
+}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot[C]{\zihao{5}\rmfamily\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\usepackage{hyperref}
+
+% ==================== TikZ 统一配色 ====================
+\definecolor{deepblue}{RGB}{81, 132, 178}
+\definecolor{lightblue}{RGB}{170, 212, 248}
+\definecolor{skyblue}{RGB}{154, 220, 255}
+\definecolor{inputyellow}{RGB}{255, 248, 154}
+\definecolor{outputpink}{RGB}{255, 178, 166}
+\definecolor{improvedpink}{RGB}{255, 138, 174}
+\definecolor{lightpink}{RGB}{241, 167, 181}
+\definecolor{deeppink}{RGB}{213, 82, 118}
+\definecolor{bglight}{RGB}{242, 245, 250}
+\definecolor{lightgreen}{RGB}{180, 230, 180}
+\definecolor{lightorange}{RGB}{255, 210, 140}
+\definecolor{dangerred}{RGB}{230, 100, 100}
+
+% tikz 样式中用到的颜色别名（允许作为 xcolor 颜色参与混合运算）
+\colorlet{obsstatic}{dangerred!70}
+\colorlet{bandok}{lightgreen}
+\colorlet{obsbuf}{dangerred!70}
+\colorlet{egopt}{deepblue}
+
+% 统一 tikz 样式（与 图片/figures.tex 保持同步）
+\tikzset{
+  mod/.style            = {rectangle, rounded corners=2pt, draw=deepblue, fill=lightblue, minimum height=0.9cm, align=center, font=\small},
+  modimp/.style         = {rectangle, rounded corners=2pt, draw=deeppink, fill=improvedpink, minimum height=0.9cm, align=center, font=\small},
+  modin/.style          = {rectangle, draw=deepblue, fill=inputyellow, minimum height=0.9cm, align=center, font=\small},
+  modout/.style         = {rectangle, draw=deeppink, fill=outputpink, minimum height=0.9cm, align=center, font=\small},
+  axx/.style            = {->, thick, black!80},
+  flow/.style           = {-Stealth, thick, deepblue},
+  flowimp/.style        = {-Stealth, thick, deeppink},
+  obsstatic/.style      = {fill=dangerred!70, draw=dangerred, thick},
+  obsdyn/.style         = {fill=lightorange, draw=dangerred, thick},
+  obsbuf/.style         = {draw=dangerred!70, dashed, thick},
+  bandok/.style         = {fill=lightgreen, opacity=0.55},
+  bandbad/.style        = {fill=dangerred!30, opacity=0.55},
+  egopt/.style          = {fill=deepblue, draw=deepblue},
+  reflinestyle/.style   = {deepblue, very thick},
+}
+
+% ==================== 换行与 texttt 自动换行 ====================
+\emergencystretch=3em
+\tolerance=2000
+\hbadness=10000
+\usepackage{seqsplit}
+\let\origtexttt\texttt
+\renewcommand{\texttt}[1]{\origtexttt{\seqsplit{#1}}}
+
+% ==================== 调试目录开关（图/表/代码目录，正式提交前设为 false） ====================
+\newif\ifshowauxtoc
+% \showauxtoctrue  % true: 显示图/表/代码目录；false: 关闭
+
+% ==================== 配置 ====================
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=black,
+}
+
+\addbibresource{references.bib}
+
+\ctexset{
+    chapter = {
+        format = \raggedright\zihao{4}\heiti\bfseries,
+        name = {},
+        number = \arabic{chapter},
+        beforeskip = 24pt,
+        afterskip = 18pt,
+    },
+    section/format = \raggedright\zihao{-4}\heiti\bfseries,
+    subsection/format = \raggedright\zihao{-4}\songti\bfseries,
+    contentsname = {目\hspace{2em}录},
+}
+
+% ==================== 目录样式 ====================
+\setcounter{tocdepth}{1}
+
+\titlecontents{chapter}
+  [0em]
+  {\zihao{-4}\heiti\bfseries}
+  {\thecontentslabel\hspace{1em}}
+  {}
+  {\titlerule*[0.5pc]{.}\contentspage}
+
+\titlecontents{section}
+  [2em]
+  {\zihao{-4}\songti}
+  {\thecontentslabel\hspace{1em}}
+  {}
+  {\titlerule*[0.5pc]{.}\contentspage}
+
+% ==================== 参考文献字体 ====================
+\renewcommand{\bibfont}{\zihao{-4}}
+
+\renewcommand{\lstlistingname}{代码}
+\lstset{
+    basicstyle=\linespread{0.85}\selectfont\zihao{-5}\ttfamily,
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red!60!black},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    frame=single,
+    breaklines=true,
+    columns=flexible,
+    showstringspaces=false,
+    language=C++,
+    tabsize=4,
+    aboveskip=6pt,
+    belowskip=6pt,
+}
+% listings 不自带 json 语法，本项目 Apollo pipeline.pb.txt 配置文件按 JSON 风格高亮
+\lstdefinelanguage{json}{
+    keywords={true,false,null,stage,task,name,type},
+    keywordstyle=\color{blue},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{green!60!black},
+    morestring=[b]",
+    stringstyle=\color{red!60!black},
+    showstringspaces=false,
+}
+
+\BeforeBeginEnvironment{lstlisting}{\par\noindent\begin{minipage}{\linewidth}}
+\AfterEndEnvironment{lstlisting}{\end{minipage}\par\medskip}
+
+\SetAlgorithmName{算法}{算法}{算法列表}
+\SetKwInput{KwIn}{输入}
+\SetKwInput{KwOut}{输出}
+\SetKw{KwRet}{返回}
+
+\renewcommand{\algorithmautorefname}{算法}
+
+% ==================== 正文 ====================
+\begin{document}
+
+% ==================== 封面 ====================
+\begin{titlepage}
+
+% 顶部：届次与存档编号
+\noindent{\zihao{-3}\songti
+\underline{\hspace{0.5em}2026\hspace{0.5em}}届\hspace{0.3em}\underline{\hspace{0.3em}本\hspace{0.3em}}科生毕业论文%
+\hfill
+存档编号\underline{\hspace{5em}}}
+
+\begin{center}
+
+\vspace{2cm}
+
+% 校名
+{\fontsize{46.5pt}{56pt}\selectfont\heiti 湖北文理学院}
+
+\vspace{1cm}
+
+% 毕业论文
+{\fontsize{38.5pt}{46pt}\selectfont\heiti 毕\hspace{0.5em}业\hspace{0.5em}论\hspace{0.5em}文}
+
+\vspace{2.5cm}
+
+% 信息栏
+{\zihao{-3}\songti
+\renewcommand{\arraystretch}{1.4}
+\begin{tabular}{@{}r@{\hspace{0.5em}}l@{}}
+论文题目 & \underline{\makebox[8cm][c]{基于Apollo的多障碍物场景下}} \\[-3pt]
+         & \underline{\makebox[8cm][c]{路径规划算法实现}} \\[4pt]
+\makebox[4em][s]{学院} & \underline{\makebox[8cm][c]{计算机工程学院}} \\
+\makebox[4em][s]{专业} & \underline{\makebox[8cm][c]{计算机科学与技术}} \\
+\makebox[4em][s]{班级} & \underline{\makebox[8cm][c]{计科2211}} \\
+\makebox[4em][s]{学号} & \underline{\makebox[8cm][c]{2022117117}} \\
+学生姓名 & \underline{\makebox[8cm][c]{廖嘉旺}} \\
+指导教师 & \underline{\makebox[8cm][c]{孙成娇}} \\
+\end{tabular}}
+
+\vfill
+
+% 日期
+{\zihao{-3}\songti 2026年5月}
+
+\vspace{0.5cm}
+
+\end{center}
+\end{titlepage}
+
+% ==================== 材料清单与声明 ====================
+\clearpage
+\thispagestyle{empty}
+\vspace*{2cm}
+\begin{center}
+{\zihao{3}\heiti\bfseries 材\quad 料\quad 清\quad 单}
+\end{center}
+\vspace{1.5cm}
+{\zihao{4}\songti
+
+\noindent 一、毕业论文
+
+\noindent 二、毕业设计任务书
+
+\noindent 三、毕业设计开题申请表
+
+\noindent 四、毕业设计开题报告正文
+
+\noindent 五、外文文献原文及译文
+
+}
+
+\vspace{3cm}
+\begin{center}
+{\zihao{3}\heiti\bfseries 声\quad\quad 明}
+\end{center}
+\vspace{1cm}
+{\zihao{4}\songti
+
+\setlength{\parindent}{2em}
+本人廖嘉旺，学号2022117117，系湖北文理学院计算机工程学院计算机科学与技术专业计科2211班学生，指导教师孙成娇。所做论文内容主体均为原创，无任何抄袭、剽窃他人劳动成果的行为。如有发现此类行为，本人愿意为此承担一切道义及法律责任。
+
+特此声明。
+
+\vspace{2cm}
+\hfill 学生签名：\underline{\hspace{5cm}}
+
+\vspace{1.5cm}
+\hfill 2025年5月28日
+}
+
+% ==================== 摘要 ====================
+\pagenumbering{Roman}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{摘要}
+\thispagestyle{fancy}
+
+\begin{center}
+{\zihao{3}\heiti\bfseries 基于Apollo的多障碍物场景下\\路径规划算法实现}
+\end{center}
+
+\vspace{1em}
+
+{\zihao{-4}\songti
+
+\noindent\hspace{2em}{\heiti\bfseries 摘要：}自动驾驶技术的快速发展对路径规划算法提出了更高要求，尤其是在多障碍物密集场景下，现有规划算法面临路径阻塞、决策保守和通行效率低下等挑战。本文以百度Apollo开源自动驾驶平台为研究基础，深入分析了其Planning模块的架构设计与核心算法实现，从安全距离、决策粒度和时空协调三个维度系统识别了PathBoundsDecider在多障碍物场景下的规划缺陷，即安全裕度一刀切压缩通行空间、逐障碍物独立决策导致矛盾避让方向、动态障碍物被完全排除在路径决策之外导致路径-速度协调缺失。
+
+针对上述三个问题，本文建立了时变最优通行带的数学模型，将多障碍物避让方向选择建模为组合优化问题，并提出了系统性的改进方案。在SL层，提出多因子威胁度评估模型实现差异化安全距离分配，提出基于扫描线的时变障碍物分组算法通过纵向重叠检测将相互关联的障碍物聚为连通分量并在组级执行全局最优决策，证明了最优避让方向分割在横向排序后具有连续性并进而证明了最大间隙策略的最优性，将组合搜索复杂度从$O(2^k)$降至$O(k \log k)$。在ST层，引入到达时间函数和预测轨迹将动态障碍物纳入路径边界决策，构建时空可通行走廊并将其边界约束与SpeedBoundsDecider的ST边界在速度QP层面融合，实现路径-速度协调规划。
+
+仿真实验结果表明，与Apollo原始算法相比，改进算法在多障碍物场景下将平均规划成功率从79.8\%提升至95.6\%，平均通行速度提升31.7\%，平均停车次数减少81.5\%，算法总复杂度$O(n \log n)$，满足实时性要求。
+
+\vspace{1em}
+\noindent\hspace{2em}{\heiti\bfseries 关键词：}自动驾驶；路径规划；Apollo；多障碍物避让；组合优化
+
+}
+
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Abstract}
+\thispagestyle{fancy}
+
+\begin{center}
+{\zihao{3}\bfseries Implementation of Path Planning Algorithm\\in Multi-obstacle Scenarios Based on Apollo}
+\end{center}
+
+\vspace{0.5em}
+
+{\zihao{-4}\setstretch{1.25}
+
+\noindent\hspace{2em}{\bfseries Abstract: }The rapid development of autonomous driving technology has raised higher requirements for path planning algorithms, especially in dense multi-obstacle scenarios where existing algorithms suffer from path blockage, conservative decisions, and low traffic efficiency. Based on Baidu's Apollo open-source autonomous driving platform, this thesis conducts a source-code-level analysis of its Planning module and systematically identifies three planning deficiencies in PathBoundsDecider from the dimensions of safety margin, decision granularity, and spatiotemporal coordination: a uniform safety buffer that unnecessarily compresses the passage band, independent per-obstacle nudge decisions that produce contradictory avoidance directions, and complete exclusion of dynamic obstacles from path decisions leading to path-speed coordination failure.
+
+To address these three problems, this thesis establishes a time-varying optimal passage band mathematical model, formulating the multi-obstacle nudge direction selection as a combinatorial optimization problem, and proposes a systematic improvement scheme. At the SL layer, a multi-factor threat assessment model is proposed for differentiated safety margin allocation; a sweep-line-based time-varying obstacle grouping algorithm clusters longitudinally overlapping obstacles into connected components and makes globally optimal decisions at the group level; the contiguity of the optimal partition in lateral order (Lemma) and the optimality of the maximum-gap strategy (Theorem) are proved, reducing the search space from $O(2^k)$ to $O(k \log k)$. At the ST layer, arrival time functions and predicted trajectories are incorporated to include dynamic obstacles in path boundary decisions; a spatiotemporal passable corridor is constructed and its boundary constraints are fused with SpeedBoundsDecider's ST boundaries at the speed QP level, achieving path-speed coordinated planning.
+
+Simulation results demonstrate that compared with Apollo's original algorithm, the proposed algorithm improves average planning success rate from 79.8\% to 95.6\%, increases average traffic speed by 31.7\%, and reduces average stop count by 81.5\%, with $O(n \log n)$ computational complexity satisfying real-time requirements.
+
+\vspace{0.5em}
+\noindent\hspace{2em}{\bfseries Keywords: }Autonomous Driving; Path Planning; Apollo; Multi-obstacle; Optimal Passage Band; Obstacle Grouping; Combinatorial Optimization
+
+}
+
+% ==================== 目录 ====================
+\clearpage
+\thispagestyle{fancy}
+{\centering\zihao{3}\heiti\bfseries 目\hspace{2em}录\par}
+\vspace{6pt}
+{\setstretch{1.2}
+\makeatletter
+\@starttoc{toc}
+\makeatother
+\par}
+
+% ==================== 图/表/代码目录（调试用，可一键关闭） ====================
+\ifshowauxtoc
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 图\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lof}\makeatother\par}
+
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 表\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lot}\makeatother\par}
+
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 代\hspace{2em}码\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lol}\makeatother\par}
+\fi
+
+% ==================== 正文 ====================
+\mainmatter
+
+\input{chapters/chapter1}
+\input{chapters/chapter2}
+\input{chapters/chapter3}
+\input{chapters/chapter4}
+\input{chapters/chapter5}
+\input{chapters/chapter6}
+\input{chapters/chapter7}
+
+% ==================== 参考文献 ====================
+{
+\setstretch{1.38}
+\printbibliography[heading=bibintoc,title={参考文献}]
+}
+
+% ==================== 致谢 ====================
+{
+\ctexset{chapter/format = \centering\zihao{3}\heiti\bfseries}
+\chapter*{致\hspace{2em}谢}
+\addcontentsline{toc}{chapter}{致谢}
+
+\zihao{-4}\songti
+本论文的完成得到了许多人的帮助和支持。首先，衷心感谢我的指导教师在论文选题、研究方向和写作过程中给予的悉心指导和宝贵建议。感谢计算机工程学院各位老师在本科四年学习期间的教导。
+
+感谢百度Apollo团队开源了高质量的自动驾驶平台代码，为本研究提供了坚实的技术基础。感谢Apollo开发者社区的技术分享和讨论，帮助我更深入地理解了规划模块的设计思想。
+
+感谢我的同学们在学习和生活中给予的帮助和鼓励。最后，感谢我的家人一直以来的理解和支持。
+}
+
+\end{document}
