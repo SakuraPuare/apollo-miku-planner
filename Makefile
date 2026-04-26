@@ -16,7 +16,12 @@ FIGNAMES := $(notdir $(FIGSRC:.tex=))
 PREAMBLE := $(FIGDIR)/_figpreamble.tex
 SVGS     := $(addprefix $(SVGDIR)/,$(addsuffix .svg,$(FIGNAMES)))
 
-.PHONY: all svg svg-clean thesis slides kaiti clean help
+# 仿真链路 stamp 文件与目标（必须在 thesis target 之前定义，否则 $(VAR) 展开为空）
+DATA_STAMP    := $(FIGDIR)/data/.stamp
+FIGS_STAMP    := $(FIGDIR)/.figs_stamp
+METRICS_TEX   := $(THESISDIR)/_experiment_metrics.tex
+
+.PHONY: all svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -29,7 +34,7 @@ all: svg thesis slides
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
 # ══════════════════════════════════════════════════
 
-svg: $(SVGS)
+svg: $(FIGS_STAMP) $(SVGS)
 	@echo "✓ SVG 共 $(words $(SVGS)) 个 → $(SVGDIR)/"
 
 # 1) 生成单图 wrapper（统一 preamble + \input{<name>}）
@@ -71,10 +76,39 @@ svg-clean:
 # ══════════════════════════════════════════════════
 #  论文 / 答辩 / 开题
 # ══════════════════════════════════════════════════
-thesis:
+thesis: $(METRICS_TEX) svg
 	cd $(THESISDIR) && latexmk thesis.tex >/dev/null 2>&1
 	@test -f $(THESISDIR)/thesis.pdf || { echo "错误: thesis.pdf 未生成"; exit 1; }
 	@echo "✓ 论文: $(THESISDIR)/thesis.pdf"
+
+# ══════════════════════════════════════════════════
+#  仿真链路（增量构建：源码改了才重生，chapter 不被修改）
+#  依赖链：apollo_pipeline.py ─→ data stamp ─→ figs stamp ─→ svg
+#                                          └→ metrics.tex ─→ thesis
+# ══════════════════════════════════════════════════
+# 1) 数据：apollo_pipeline.py 改了才重跑
+$(DATA_STAMP): 可视化/apollo_pipeline.py
+	@cd 可视化 && uv run apollo_pipeline.py >/dev/null
+	@mkdir -p $(FIGDIR)/data && touch $@
+	@echo "✓ 仿真数据: $(FIGDIR)/data/"
+
+# 2) 实验图源：data 或 _gen_exp_figs.py 改了才重生
+$(FIGS_STAMP): $(DATA_STAMP) $(FIGDIR)/_gen_exp_figs.py
+	@cd $(FIGDIR) && uv run _gen_exp_figs.py >/dev/null
+	@touch $@
+	@echo "✓ 实验图源: $(FIGDIR)/fig_exp_*.tex"
+
+# 3) 指标宏：data 或 _gen_metrics_tex.py 改了才重写
+$(METRICS_TEX): $(DATA_STAMP) 可视化/_gen_metrics_tex.py
+	@cd 可视化 && uv run _gen_metrics_tex.py >/dev/null
+	@echo "✓ 指标宏: $(METRICS_TEX)"
+
+# 便捷别名
+sim-data:    $(DATA_STAMP)
+sim-figs:    $(FIGS_STAMP)
+sim-metrics: $(METRICS_TEX)
+sim:         sim-figs sim-metrics
+	@echo "✓ 仿真产物已增量更新"
 
 slides: $(SLIDEDIR)/main.pdf
 $(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex
