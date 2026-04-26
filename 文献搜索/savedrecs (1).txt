@@ -1,0 +1,1725 @@
+FN Clarivate Analytics Web of Science
+VR 1.0
+PT J
+AU Zhang, T
+   Song, WJ
+   Fu, MY
+   Yang, Y
+   Tian, XH
+   Wang, ML
+AF Zhang, Ting
+   Song, Wenjie
+   Fu, Mengyin
+   Yang, Yi
+   Tian, Xiaohui
+   Wang, Meiling
+TI A Unified Framework Integrating Decision Making and Trajectory Planning Based on Spatio-Temporal Voxels for Highway Autonomous Driving
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB Intelligent decision making and efficient trajectory planning are closely related in autonomous driving technology, especially in highway environment full of dynamic interactive traffic participants. This work integrates them into a unified hierarchical framework with long-term behavior planning (LTBP) and short-term dynamic planning (STDP) running in two parallel threads with different horizon, consequently forming a closed-loop maneuver and trajectory planning system that can react to the dynamic environment effectively and efficiently. In LTBP, a novel voxel structure and the `voxel expansion' algorithm are proposed for the generation of driving corridors in 3D configuration, which involves the prediction states of surrounding vehicles. By using Dijkstra search, the maneuver with minimal cost is determined in form of voxel sequences, then a quadratic programming (QP) problem is constructed for solving the optimal trajectory. And in STDP, another small-scaled QP problem is performed to track or adjust the reference trajectory from LTBP in response to the dynamic obstacles. Meanwhile, a Responsibility-Sensitive Safety (RSS) Checker keeps running at high frequency for real-time feedback to ensure security. Experiments on real data collected in different highway scenarios demonstrate the effectiveness and efficiency of our work.
+RI fu, meng/GZG-3120-2022; song, wenjie/NXC-7038-2025; Zhang, Ting/KMX-6489-2024
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD AUG 2022
+PY 2022
+VL 23
+IS 8
+BP 10365
+EP 10379
+DI 10.1109/TITS.2021.3093548
+EA JUL 2021
+EY 2021
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000732239100001
+DA 2026-04-25
+ER
+
+PT C
+AU Niu, GC
+   Jia, KQ
+AF Niu, Guochen
+   Jia, Keqiong
+BE Yan, L
+   Duan, H
+   Deng, Y
+TI Lane Change Trajectory Planning of Intelligent Vehicles Based on Polynomial and Rolling Horizon
+SO ADVANCES IN GUIDANCE, NAVIGATION AND CONTROL
+SE Lecture Notes in Electrical Engineering
+CT 2022 International Conference on Guidance, Navigation and Control
+CY AUG 05-07, 2022
+CL Harbin, PEOPLES R CHINA
+SP Harbin Engineering University
+AB For the research on lane change safety in dynamic road environments, the traditional trajectory planning method lacks adequate consideration about the state change of vehicles in front. In view of this, this paper proposes a lateral-longitudinal decoupled rolling planning strategy that takes the lane line and vehicle model into account. Firstly, the Frenet coordinate system is introduced to obtain the pose information of obstacle vehicles on the road. Considering the relative velocity among vehicles, this paper designs a variable elliptic envelope model to obtain a feasible trajectory cluster by contrasting the planned trajectory of the vehicle with the predicted trajectory of surrounding vehicles. Secondly, based on constraints such as trajectory comfort, safety, and lateral offset, the trajectory is optimized and periodic rolling planning is carried out to solve the lane change problem caused by uncertain changes of surrounding vehicles. Experiments in different scenarios show that the proposed lane change planning algorithm can make real-time plans in dynamic vehicle environments. It is more advantageous and reasonable in terms of comfort than quintic polynomial programming and manual lane change.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1876-1100
+EI 1876-1119
+PD 2023
+PY 2023
+VL 845
+BP 2919
+EP 2930
+DI 10.1007/978-981-19-6613-2_283
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:001463221800283
+DA 2026-04-25
+BN 978-981-19-6612-5, 978-981-19-6613-2
+ER
+
+PT J
+AU Liu, XH
+   Zhang, DG
+   Yan, HR
+   Cui, YY
+   Chen, L
+AF Liu, Xiao-Huan
+   Zhang, De-Gan
+   Yan, Hao-Ran
+   Cui, Yu-Ya
+   Chen, Lu
+TI A New Algorithm of the Best Path Selection Based on Machine Learning
+SO IEEE ACCESS
+AB This paper proposes and designs a best path selection algorithm, which can solve the problem of path planning for intelligent driving vehicles in the case of restricted driving, traffic congestions and accidents. We tried to solve the problem under these emergency situations in path planing process for there's no driver in intelligent driving vehicle. We designed a new method of the best path selection with length priority based on the prior knowledge applied reinforcement learning strategy, and improved the search direction setting of A(*) shortest path algorithm in the program. This best path planing algorithm can effectively help different types of intelligent driving vehicles to select the best path in the traffic network with limited height, width and weight, accidents and traffic jams. Through simulation experiments and practical test, it is proved that the proposed algorithm has good stability, high efficiency and practicability.
+OI Liu, Xiaohuan/0000-0003-3556-9785
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2169-3536
+PD 2019
+PY 2019
+VL 7
+BP 126913
+EP 126928
+DI 10.1109/ACCESS.2019.2939423
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000487231700022
+DA 2026-04-25
+ER
+
+PT C
+AU Nilsson, J
+   Brännström, M
+   Coelingh, E
+   Fredriksson, J
+AF Nilsson, Julia
+   Brannstrom, Mattias
+   Coelingh, Erik
+   Fredriksson, Jonas
+GP IEEE
+TI Longitudinal and lateral control for automated lane change maneuvers
+SO 2015 AMERICAN CONTROL CONFERENCE (ACC)
+SE Proceedings of the American Control Conference
+CT American Control Conference
+CY JUL 01-03, 2015
+CL Chicago, IL
+SP Amer Automat Control Council; IFAC; Adaptics Inc; Altair; dSPACE; Eaton Corp; Elsevier; Int Journal Automat & Comp; Journal Franklin Inst; Plexim Inc; Soc Ind & Appl Math; Springer; CRC Press Taylor & Francis Grp Cogent OA; United Technologies Res Ctr; Wiley; Boeing; Ford Motor Co; GE Global Res; Honeywell; MathWorks; Mitsubishi Elect Res Lab; Quanser
+AB This paper considers the trajectory planning problem of a vehicle system for automated lane change maneuvers. By considering a lane change maneuver as primarily a longitudinal planning problem, the proposed trajectory planning algorithm determines whether there exists a longitudinal trajectory which allows the ego vehicle to safely position itself in a gap between surrounding vehicles in the target lane. If such a longitudinal trajectory exists, the algorithm plans the corresponding lateral trajectory. The lane change trajectory planning problem is thereby reduced to solving low-complexity model predictive control problems resulting in loosely coupled longitudinal and lateral motion trajectories. Simulation results demonstrate the ability of the proposed algorithm to generate smooth collision-free trajectories for lane change maneuvers.
+RI Brännström, Mattias/AAX-2987-2020; Fredriksson, Jonas/B-3104-2016
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0743-1619
+EI 2378-5861
+PD 2015
+PY 2015
+BP 1399
+EP 1404
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000370259201079
+DA 2026-04-25
+BN 978-1-4799-8684-2
+ER
+
+PT J
+AU Tian, HQ
+   Li, BQ
+   Huang, HY
+   Han, L
+AF Tian, Hongqing
+   Li, Boqi
+   Huang, Heye
+   Han, Ling
+TI Driving risk-aversive motion planning in off-road environment
+SO EXPERT SYSTEMS WITH APPLICATIONS
+AB Incremental sampling-based motion-planning algorithms, such as the rapidly-exploring random tree (RRT), are popular in motion planning because of their ability to proffer rapid solutions. Driving safety is the ability of a vehicle to prevent overturning and collision. However, the RRT algorithms neither involve any safety mechanism, nor consider any terrain measurement information of the environment, there is no assurance on the driving safety of the solutions. Therefore, obtaining an efficient trajectory while considering driving safety is a dilemma for intelligent vehicles in unstructured off-road environments. This study presents a potential-field based RRT* motion-planning algorithm for vehicle risk aversion. The algorithm constructs a configuration space using the potential field, which identifies risk range around obstacles and off-road terrains. A random-exploring tree grows through sampling inside the potential-field space with the consideration of nonholonomic constraints of the vehicles. A cost function that trades off driving safety and efficiency is used as a priority-sequence mechanism to get an optimized planning solution. A heuristic sampling method is employed to obtain a fast solution to the initial trajectory, and the trajectory can be optimized by decreasing the cost in the following sampling process thereafter. We tested the algorithm on scenarios to verify its effectiveness. Simulation results, under different scenarios, demonstrate that the proposed algorithm improves vehicles' motion planning performance.
+RI Huang, Heye/JJD-2424-2023
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0957-4174
+EI 1873-6793
+PD APR 15 2023
+PY 2023
+VL 216
+AR 119426
+DI 10.1016/j.eswa.2022.119426
+EA JAN 2023
+EY 2023
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000915855400001
+DA 2026-04-25
+ER
+
+PT J
+AU Kala, R
+   Warwick, K
+AF Kala, Rahul
+   Warwick, Kevin
+TI Multi-Level Planning for Semi-autonomous Vehicles in Traffic Scenarios Based on Separation Maximization
+SO JOURNAL OF INTELLIGENT & ROBOTIC SYSTEMS
+AB The planning of semi-autonomous vehicles in traffic scenarios is a relatively new problem that contributes towards the goal of making road travel by vehicles free of human drivers. An algorithm needs to ensure optimal real time planning of multiple vehicles (moving in either direction along a road), in the presence of a complex obstacle network. Unlike other approaches, here we assume that speed lanes are not present and that different lanes do not need to be maintained for inbound and outbound traffic. Our basic hypothesis is to carry forward the planning task to ensure that a sufficient distance is maintained by each vehicle from all other vehicles, obstacles and road boundaries. We present here a 4-layer planning algorithm that consists of road selection (for selecting the individual roads of traversal to reach the goal), pathway selection (a strategy to avoid and/or overtake obstacles, road diversions and other blockages), pathway distribution (to select the position of a vehicle at every instance of time in a pathway), and trajectory generation (for generating a curve, smooth enough, to allow for the maximum possible speed). Cooperation between vehicles is handled separately at the different levels, the aim being to maximize the separation between vehicles. Simulated results exhibit behaviours of smooth, efficient and safe driving of vehicles in multiple scenarios; along with typical vehicle behaviours including following and overtaking.
+RI kala, rahul/A-2879-2011
+OI kala, rahul/0000-0003-0421-5028; Warwick, Kevin/0000-0003-3722-9960
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0921-0296
+EI 1573-0409
+PD DEC 2013
+PY 2013
+VL 72
+IS 3-4
+BP 559
+EP 590
+DI 10.1007/s10846-013-9817-7
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000326192300017
+DA 2026-04-25
+ER
+
+PT J
+AU Schäfer, L
+   Manzinger, S
+   Althoff, M
+AF Schaefer, Lukas
+   Manzinger, Stefanie
+   Althoff, Matthias
+TI Computation of Solution Spaces for Optimization-Based Trajectory Planning
+SO IEEE TRANSACTIONS ON INTELLIGENT VEHICLES
+AB The nonlinear vehicle dynamics and the non-convexity of collision avoidance constraints pose major challenges for optimization-based trajectory planning of automated vehicles. Current solutions are either tailored to specific traffic scenarios, simplify the vehicle dynamics, are computationally demanding, or may get stuck in local minima. This work presents a novel approach to address the aforementioned shortcomings by identifying collision-free driving corridors that represent spatio-temporal constraints for motion planning using set-based reachability analysis. We derive a suitable formulation of collision avoidance constraints from driving corridors that can be integrated into arbitrary nonlinear programs as well as (successive) convexification procedures. When combining our approach with existing motion planning methods based on continuous optimization, trajectories can be planned in arbitrary traffic situations in a computationally efficient way. We demonstrate the efficacy of our approach using scenarios from the CommonRoad benchmark suite.
+RI Althoff, Matthias/C-2311-2014
+OI Schäfer, Lukas/0000-0002-4335-9342
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2379-8858
+EI 2379-8904
+PD JAN 2023
+PY 2023
+VL 8
+IS 1
+BP 216
+EP 231
+DI 10.1109/TIV.2021.3077702
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000965893800001
+DA 2026-04-25
+ER
+
+PT J
+AU Zhu, S
+   Aksun-Guvenc, B
+AF Zhu, Sheng
+   Aksun-Guvenc, Bilin
+TI Trajectory Planning of Autonomous Vehicles Based on Parameterized Control Optimization in Dynamic on-Road Environments
+SO JOURNAL OF INTELLIGENT & ROBOTIC SYSTEMS
+AB This paper presents a trajectory planning framework to deal with the highly dynamic environments for on-road driving. The trajectory optimization problem with parameterized curvature control was formulated to reach the goal state with the vehicle model and its dynamic constraints considered. This in contrast to existing curve fitting techniques guarantees the dynamic feasibility of the planned trajectory. With generation of multiple trajectory candidates along the Frenet frame, the vehicle is reactive to other road users or obstacles encountered. Additionally, to deal with more complex driving scenarios, its seamless interaction with an upper behavior planning layer was considered by having longitudinal motion planning responsive to the desired goal state. The trajectory evaluation and selection methodologies, along with the low-level tracking control, were also developed under this framework. The potential of the proposed trajectory planning framework was demonstrated under different dynamic driving scenarios such as lane-changing or merging with surrounding vehicles with its computation efficiency proven in real-time simulations.
+RI AKSUN GUVENC, Bilin/PFQ-7777-2025
+OI AKSUN GUVENC, Bilin/0000-0002-6619-2178; Zhu, Sheng/0000-0001-8806-5519
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0921-0296
+EI 1573-0409
+PD DEC 2020
+PY 2020
+VL 100
+IS 3-4
+BP 1055
+EP 1067
+DI 10.1007/s10846-020-01215-y
+EA JUN 2020
+EY 2020
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000543134300001
+DA 2026-04-25
+ER
+
+PT J
+AU Lim, W
+   Lee, S
+   Sunwoo, M
+   Jo, K
+AF Lim, Wonteak
+   Lee, Seongjin
+   Sunwoo, Myoungho
+   Jo, Kichun
+TI Hierarchical Trajectory Planning of an Autonomous Car Based on the Integration of a Sampling and an Optimization Method
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+CT Symposium of Mechatronic and Embedded Technologies in Intelligent Transporation Systems at the 12th IEEE/ASME International Conference on Mechatronic and Embedded Systems and Applications (MESA)
+CY AUG 29-31, 2016
+CL Auckland, NEW ZEALAND
+SP IEEE; IEEE Intelligent Transportat Syst Soc; ASME, Div Design Engn; Univ Auckland
+AB This paper presents a hierarchical trajectory planning based on the integration of a sampling and an optimization method for urban autonomous driving. To manage a complex driving environment, the upper behavioral trajectory planner searches the macro-scale trajectory to determine the behavior of an autonomous car by using environment models, such as traffic control device and objects. This planner infers reasonable behavior and provides it to the motion trajectory planner. For planning the behavioral trajectory, the sampling-based approach is used due to its advantage of a free-form cost function for discrete models of the driving environments and simplification of the searching area. The lower motion trajectory planner determines the micro-scale trajectory based on the results of the upper trajectory planning with the environment model. The lower planner strongly considers vehicle dynamics within the planned behavior of the behavioral trajectory. Therefore, the planning space of the lower planner can be limited, allowing for improvement of the efficiency of the numerical optimization of the lower planner to find the best trajectory. For the motion trajectory planning, the numerical optimization is applied due to its advantages of a mathematical model for the continuous elements of the driving environments and low computation to converge minima in the convex function. The proposed algorithms of the sampling-based behavioral and optimization-based motion trajectory were evaluated through experiments in various scenarios of an urban area.
+RI Lim, Wonteak/X-3178-2018; Myoungho, Sunwoo/A-5220-2016
+OI Lim, Wonteak/0000-0002-7195-3349; Jo, Kichun/0000-0003-0543-2198; Myoungho, Sunwoo/0000-0002-3505-6675
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD FEB 2018
+PY 2018
+VL 19
+IS 2
+BP 613
+EP 626
+DI 10.1109/TITS.2017.2756099
+WE Science Citation Index Expanded (SCI-EXPANDED); Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000424060200026
+DA 2026-04-25
+ER
+
+PT J
+AU Manav, AC
+   Lazoglu, I
+AF Manav, Ahmet Canberk
+   Lazoglu, Ismail
+TI A Novel Cascade Path Planning Algorithm for Autonomous Truck-Trailer Parking
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB One of the most challenging tasks for truck drivers is maneuvering the truck-trailer system in different parking scenarios. This article presents a novel path planning approach for truck-trailer parking, where a realistic and deterministic parking behavior model, Iterative Analytical Method (IAM), is proposed and combined with Closed-Loop Rapidly Exploring Random Tree (CL-RRT) approach in a cascade path planning. Cascade path planning approach combining CL-RRT with the iterative analytical method (IAM) mimicking real-world parking practice enables the generation of both kinematically feasible and deterministic parking maneuvers with obstacle avoidance. For evaluation, different parking scenarios are generated and selected through a developed case generation tool. The performance of the proposed path planning approach is evaluated through MATLAB simulations. The results achieved a noticeable success with a high rate of generated feasible maneuvers for parking.
+RI lazoglu, ismail/ACH-4338-2022
+OI lazoglu, ismail/0000-0002-8316-9623
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD JUL 2022
+PY 2022
+VL 23
+IS 7
+BP 6821
+EP 6835
+DI 10.1109/TITS.2021.3062701
+EA MAR 2021
+EY 2021
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000732084800001
+DA 2026-04-25
+ER
+
+PT J
+AU Ying, J
+   Feng, YH
+AF Ying, Jun
+   Feng, Yiheng
+TI Full Vehicle Trajectory Planning Model for Urban Traffic Control Based on Imitation Learning
+SO TRANSPORTATION RESEARCH RECORD
+AB Connected and automated vehicles (CAVs) extend urban traffic control from temporal to spatiotemporal by enabling the control of CAV trajectories. Most of the existing studies on CAV trajectory planning only consider longitudinal behaviors (i.e., in-lane driving), or assume that the lane changing can be done instantaneously. The resultant CAV trajectories are not realistic and cannot be executed at the vehicle level. The aim of this paper is to propose a full trajectory planning model that considers both in-lane driving and lane changing maneuvers. The trajectory generation problem is modeled as an optimization problem and the cost function considers multiple driving features including safety, efficiency, and comfort. Ten features are selected in the cost function to capture both in-lane driving and lane changing behaviors. One major challenge in generating a trajectory that reflects certain driving policies is to balance the weights of different features in the cost function. To address this challenge, it is proposed to optimize the weights of the cost function by imitation learning. Maximum entropy inverse reinforcement learning is applied to obtain the optimal weight for each feature and then CAV trajectories are generated with the learned weights. Experiments using the Next Generation Simulation (NGSIM) dataset show that the generated trajectory is very close to the original trajectory with regard to the Euclidean distance displacement, with a mean average error of less than 1 m. Meanwhile, the generated trajectories can maintain safety gaps with surrounding vehicles and have comparable fuel consumption.
+RI Feng, Yiheng/ABK-7834-2022
+OI Feng, Yiheng/0000-0001-5656-3222
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0361-1981
+EI 2169-4052
+PD JUL 2022
+PY 2022
+VL 2676
+IS 7
+BP 186
+EP 198
+AR 03611981221077263
+DI 10.1177/03611981221077263
+EA FEB 2022
+EY 2022
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000759722300001
+DA 2026-04-25
+ER
+
+PT J
+AU Zhang, ZW
+   Zheng, L
+   Li, YN
+   Zeng, PY
+   Liang, YX
+AF Zhang Ziwei
+   Zheng Ling
+   Li Yinong
+   Zeng Pengyun
+   Liang Yixiao
+TI Structured road-oriented motion planning and tracking framework for active collision avoidance of autonomous vehicles
+SO SCIENCE CHINA-TECHNOLOGICAL SCIENCES
+AB This paper proposes a novel motion planning and tracking framework based on improved artificial potential fields (APFs) and a lane change strategy to enhance the performance of the active collision avoidance systems of autonomous vehicles on structured roads. First, an improved APF-based hazard evaluation module, which is inspired by discrete optimization, is established to describe driving hazards in the Frenet-Serret coordinate. Next, a strategy for changing lane is developed in accordance with the characteristics of the gradient descent method (GDM). On the basis of the potential energy distribution of the target obstacle and road boundaries, GDM is utilized to generate the path for changing lane. In consideration of the safety threats of traffic participants, the effects of other obstacles on safety are taken as additional safety constraints when the lane-changing speed profile for ego vehicles is designed. Then, after being mapped into the Cartesian coordinate, the feasible trajectory is sent to the tracking layer, where a proportional-integral control and model predictive control (PI-MPC) based coordinated controller is applied. Lastly, several cases composed of different road geometrics and obstacles are tested to validate the effectiveness of the proposed algorithm. Results illustrate that the proposed algorithm can achieve active collision avoidance in complex traffic scenarios.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1674-7321
+EI 1869-1900
+PD NOV 2021
+PY 2021
+VL 64
+IS 11
+BP 2427
+EP 2440
+DI 10.1007/s11431-021-1880-1
+EA SEP 2021
+EY 2021
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000702803600002
+DA 2026-04-25
+ER
+
+PT J
+AU Li, S
+   Shu, KQ
+   Chen, CY
+   Cao, DP
+AF Li, Shen
+   Shu, Keqi
+   Chen, Chaoyi
+   Cao, Dongpu
+TI Planning and Decision-making for Connected Autonomous Vehicles at Road Intersections: A Review
+SO CHINESE JOURNAL OF MECHANICAL ENGINEERING
+AB Planning and decision-making technology at intersections is a comprehensive research problem in intelligent transportation systems due to the uncertainties caused by a variety of traffic participants. As wireless communication advances, vehicle infrastructure integrated algorithms designed for intersection planning and decision-making have received increasing attention. In this paper, the recent studies on the planning and decision-making technologies at intersections are primarily overviewed. The general planning and decision-making approaches are presented, which include graph-based approach, prediction base approach, optimization-based approach and machine learning based approach. Since connected autonomous vehicles (CAVs) is the future direction for the automated driving area, we summarized the evolving planning and decision-making methods based on vehicle infrastructure cooperative technologies. Both four-way signalized and unsignalized intersection(s) are investigated under purely automated driving traffic and mixed traffic. The study benefit from current strategies, protocols, and simulation tools to help researchers identify the presented approaches' challenges and determine the research gaps, and several remaining possible research problems that need to be solved in the future.
+RI Chen, Chaoyi/HKO-1445-2023; Cao, Dongpu/LTJ-7724-2024
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1000-9345
+EI 2192-8258
+PD DEC 2021
+PY 2021
+VL 34
+IS 1
+AR 133
+DI 10.1186/s10033-021-00639-3
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000729235600001
+DA 2026-04-25
+ER
+
+PT J
+AU Akhtar, S
+   Habibi, S
+AF Akhtar, Salman
+   Habibi, Saeid
+TI The Interacting Multiple Model Smooth Variable Structure Filter for Trajectory Prediction
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB An autonomous vehicle would benefit from being able to predict trajectories of other vehicles in its vicinity for improved safety. In order for the self-driving car to plan safe trajectories, paths of nearby vehicles are required to be predicted for risk assessment, decision making, and motion planning. In this study, a trajectory prediction algorithm based on the Interacting Multiple Model (IMM) estimation strategy is proposed to predict paths involving lane-changing, lane-keeping, and turning motion. More specifically, the Interacting Multiple Model estimation technique is used with models defined in curvi-linear coordinates to predict a vehicle's trajectory based on prior behavioral maneuvers. The road geometry is used to help facilitate behavior identification and prediction. Moreover, the combination of a more recently developed estimation technique known as the Generalized Variable Boundary Layer-Smooth Variable Structure Filter and the Interacting Multiple Model Estimator is applied to track, identify behaviors, and predict trajectories of a vehicle. The performance of this technique is compared with a Kalman Filter based formulation using synthetic and experimental data. This model-based strategy is also compared with machine learning-based strategies for trajectory prediction.
+OI Akhtar, Salman/0000-0003-3258-3290
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD SEP 2023
+PY 2023
+VL 24
+IS 9
+BP 9217
+EP 9239
+DI 10.1109/TITS.2023.3271295
+EA MAY 2023
+EY 2023
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000988406900001
+DA 2026-04-25
+ER
+
+PT J
+AU Zong, CF
+   Han, XJ
+   Zhang, D
+   Liu, Y
+   Zhao, WQ
+   Sun, M
+AF Zong, Changfu
+   Han, Xiaojian
+   Zhang, Dong
+   Liu, Yang
+   Zhao, Weiqiang
+   Sun, Ming
+TI Research on local path planning based on improved RRT algorithm
+SO PROCEEDINGS OF THE INSTITUTION OF MECHANICAL ENGINEERS PART D-JOURNAL OF AUTOMOBILE ENGINEERING
+AB In order to solve the local path planning of self-driving car in the structured road environment, an improved path planning algorithm named Regional-Sampling RRT (RS-RRT) algorithm was proposed for obstacle avoidance conditions. Gaussian distribution sampling and local biasing sampling were integrated to improve the search efficiency in the sampling phase. In the expansion phase, considering the actual size of the vehicle and obstacles, combined with the goal of safety and comfort, the separating axis theorem (SAT) method and vehicle dynamics were used to detect the collision among vehicle and surrounding obstacles in real time. In the post-processing stage, the driver's driving consensus and path smoothing algorithm were combined to correct the planning path. In order to track the generated path, the MPC tracking algorithm was designed based on the Four-Wheel-Independent Electric Vehicle (FWIEV) model. The co-simulation software platform of CarSim and MATLAB/Simulink was employed to verify the effectiveness and feasibility of the path planning and tracking algorithm. The results show that compared with basic RRT and Goal-biasing RRT, the proposed RS-RRT algorithm has advantages in terms of number of nodes, path length and running time. The generated path can meet the FWIEV dynamics and path tracking requirements.
+RI han, xiaojian/GZH-0053-2022
+OI 刘, 阳/0000-0003-0993-9957
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0954-4070
+EI 2041-2991
+PD JUL 2021
+PY 2021
+VL 235
+IS 8
+BP 2086
+EP 2100
+DI 10.1177/0954407021993623
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000655216000003
+DA 2026-04-25
+ER
+
+PT C
+AU Liu, CR
+   Jiang, K
+   Xiao, ZY
+   Cao, Z
+   Yang, DG
+AF Liu, Chaoran
+   Jiang, Kun
+   Xiao, Zhongyang
+   Cao, Zhong
+   Yang, Diange
+GP IEEE
+TI Lane-Level Route Planning Based on a Multi-Layer Map Model
+SO 2017 IEEE 20TH INTERNATIONAL CONFERENCE ON INTELLIGENT TRANSPORTATION SYSTEMS (ITSC)
+SE IEEE International Conference on Intelligent Transportation Systems-ITSC
+CT 20th IEEE International Conference on Intelligent Transportation Systems (ITSC)
+CY OCT 16-19, 2017
+CL Yokohama, JAPAN
+SP IEEE
+AB The demand for high precision navigation services for human drivers and even intelligent vehicles cannot be satisfied by traditional road-level maps, and on the other hand, current enhanced digital maps with abundant details for vehicle localization and navigation simultaneously bring about practical difficulties for lane-level route planning. In this paper, aiming at achieving lane-level route planning, a three-layer map model combining the traditional road-level data with high precision lane-level data is created, in which an intermediate layer serves as a bridge between road and lane level. Then, based on the lane-level map model, a hierarchical route planning framework is established, including road-level route planning, node contraction according to the intermediate layer, and lane-level route planning with the cost model in lane level which takes the lane change and turn into account. A simulation result is implemented to reveal the validation of this hierarchical routing algorithm based on this novel lane-level map model.
+OI Jiang, Kun/0000-0003-4995-7244
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2153-0009
+PD 2017
+PY 2017
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000432373000093
+DA 2026-04-25
+BN 978-1-5386-1526-3
+ER
+
+PT J
+AU Chu, K
+   Lee, M
+   Sunwoo, M
+AF Chu, Keonyup
+   Lee, Minchae
+   Sunwoo, Myoungho
+TI Local Path Planning for Off-oad Autonomous Driving With Avoidance of Static Obstacles
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB In this paper, a real-time path-planning algorithm that provides an optimal path for off-road autonomous driving with static obstacles avoidance is presented. The proposed planning algorithm computes a path based on a set of predefined waypoints. The predefined waypoints provide the base frame of a curvilinear coordinate system to generate path candidates for autonomous vehicle path planning. Each candidate is converted to a Cartesian coordinate system and evaluated using obstacle data. To select the optimal path, the priority of each path is determined by considering the path safety cost, path smoothness, and path consistency. The proposed path-planning algorithms were applied to the autonomous vehicle A1, which won the 2010 Autonomous Vehicle Competition organized by the Hyundai-Kia Automotive Group in Korea.
+RI Sunwoo, Myoungho/A-5220-2016
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD DEC 2012
+PY 2012
+VL 13
+IS 4
+SI SI
+BP 1599
+EP 1616
+DI 10.1109/TITS.2012.2198214
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000314291400013
+DA 2026-04-25
+ER
+
+PT J
+AU Jiang, HB
+   Shi, KJ
+   Cai, JY
+   Chen, L
+AF Jiang, Haobin
+   Shi, Kaijin
+   Cai, Junyu
+   Chen, Long
+TI Trajectory planning and optimisation method for intelligent vehicle lane changing emergently
+SO IET INTELLIGENT TRANSPORT SYSTEMS
+AB The real time and adaptability of emergency lane-changing trajectory planning method is critical to the safe operation of the intelligent vehicle. This study presents the design and implementation of the trajectory planning and optimisation method of intelligent vehicle lane changing emergently based on hp-adaptive pseudospectral method. The method divides the emergency lane-changing process into the initial stage and tracking stage for trajectory planning based on road steering experiment and sigmoid functions. An hp-adaptive pseudospectral method is introduced to connect and optimise the lane-changing trajectory. PreScan and Matlab are used to simulate the planning of emergency lane-changing trajectory under six conditions, and the simulation results verify the effectiveness and real time of the planning and optimisation method. In comparison with trajectory planning methods based on polynomial functions, this method is characterised by shorter response time and safety distance and has better adaptability under different conditions.
+RI long, chen/N-8723-2013
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1751-956X
+EI 1751-9578
+PD DEC 2018
+PY 2018
+VL 12
+IS 10
+BP 1336
+EP 1344
+DI 10.1049/iet-its.2018.5224
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000451137200017
+DA 2026-04-25
+ER
+
+PT J
+AU Zhang, H
+   Liu, C
+   Zhao, WZ
+AF Zhang, Han
+   Liu, Chang
+   Zhao, Wanzhong
+TI Segmented trajectory planning strategy for active collision avoidance system
+SO GREEN ENERGY AND INTELLIGENT TRANSPORTATION
+AB This paper presents a segmented trajectory planning strategy for active collision avoidance system. Considering the longitudinal and lateral movement of the obstacle vehicle, as well as the ego vehicle and obstacle outer contour limitations, the collision avoidance trajectory is divided into three segments: lane changing, overtaking and back to original lane. The starting point and end point of lane-change are decided based on longitudinal and lateral safety distance model according to the relative speed and distance as well as the outer contour of the two vehicles. Based on system objective function and lane-change trajectory cluster, vehicle states, dynamic constraints and vehicle body kinematics constraints, the optimal trajectory can be selected, which can monitor the relative location of the obstacle vehicle constantly and then ensure the vehicle can accomplish the collision avoidance safely and smoothly. Simulation and experiment results demonstrate the effectiveness and feasibility of proposed trajectory planning strategy for the active collision avoidance.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2097-2512
+EI 2773-1537
+PD JUN 2022
+PY 2022
+VL 1
+IS 1
+AR 100002
+DI 10.1016/j.geits.2022.100002
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001223779500001
+DA 2026-04-25
+ER
+
+PT J
+AU Zhang, R
+   Guo, H
+   Andriukaitis, D
+   Li, YB
+   Królczyk, G
+   Li, ZX
+AF Zhang, Rui
+   Guo, He
+   Andriukaitis, Darius
+   Li, Yongbo
+   Krolczyk, Grzegorz
+   Li, Zhixiong
+TI Intelligent path planning by an improved RRT algorithm with dual grid map
+SO ALEXANDRIA ENGINEERING JOURNAL
+AB This research addresses the limitations of existing autonomous vehicle path planning algorithms, notably their slow processing speeds and suboptimal route efficiency. We introduce an innovative path planning algorithm that synergizes the A* algorithm with the Rapidly -exploring Random Tree (RRT) approach. This hybrid model significantly enhances route timeliness and reliability, particularly in obstacle avoidance scenarios for driverless vehicles. Our methodology employs a 'two -level map' approach, where a lower -resolution grid map is derived from a high -resolution map. Utilizing the A* algorithm on this framework, we ascertain a preliminary 'coarse path' for the navigation target. The RRT algorithm, modified to reduce the traditional redundancy associated with random uniform sampling, is then applied for probabilistic sampling within this defined area. ovel aspect of our approach is the simultaneous generation of two trees, originating from both the start and end points, guided by a target -biased strategy and dual -direction theory. This method probabilistically expands towards the node of the opposite tree, thereby enhancing both the generation speed and trajectory viability. Further refinements are made through a pruning process, optimizing the path, and employing Bezier curves for smoothing, ensuring compliance with the dynamic constraints of Ackerman chassis vehicles. Comparative analysis in complex environments demonstrates the superiority of our proposed algorithm. It outperforms traditional methods with a 400 % increase in planning speed relative to the RRT-Connect algorithm, and a 30 % reduction in average path length. Additionally, the mean curvature of routes generated by our algorithm is 19 % lower than traditional routes, underscoring significant advancements in both the timeliness and viability of the planned routes.
+RI Andriukaitis, Darius/A-8895-2015; Krolczyk, Grzegorz/D-6709-2013; 郭, 贺/KCK-7954-2024; Li, Zhixiong/G-8418-2018
+OI Andriukaitis, Darius/0000-0002-9862-8917; Li, Zhixiong/0000-0002-7265-0008
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1110-0168
+EI 2090-2670
+PD FEB 2024
+PY 2024
+VL 88
+BP 91
+EP 104
+DI 10.1016/j.aej.2023.12.044
+EA JAN 2024
+EY 2024
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001166775900001
+DA 2026-04-25
+ER
+
+PT C
+AU Hardy, J
+   Campbell, M
+AF Hardy, Jason
+   Campbell, Mark
+GP IEEE
+TI Contingency Planning over Probabilistic Hybrid Obstacle Predictions for Autonomous Road Vehicles
+SO IEEE/RSJ 2010 INTERNATIONAL CONFERENCE ON INTELLIGENT ROBOTS AND SYSTEMS (IROS 2010)
+SE IEEE International Conference on Intelligent Robots and Systems
+CT IEEE/RSJ International Conference on Intelligent Robots and Systems
+CY OCT 18-22, 2010
+CL Taipei, TAIWAN
+AB This paper presents a novel optimization based path planner that can simultaneously plan multiple contingency paths to account for the uncertain actions of dynamic obstacles. This planner addresses the particular problem of collision avoidance for autonomous road vehicles which are required to safely interact with other vehicles with unknown intentions. The presented path planner utilizes an efficient spline based trajectory representation and fast but accurate collision probability approximations to enable the simultaneous optimization of multiple contingency paths.
+RI Campbell, Mark/F-8312-2013
+OI Campbell, Mark/0000-0003-0775-4297
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2153-0858
+PD 2010
+PY 2010
+BP 2237
+EP 2242
+DI 10.1109/IROS.2010.5652763
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000287672004102
+DA 2026-04-25
+BN 978-1-4244-6675-7
+ER
+
+PT J
+AU Cao, HT
+   Zhao, S
+   Song, XL
+   Bao, S
+   Li, MJ
+   Huang, Z
+   Hu, C
+AF Cao, Haotian
+   Zhao, Song
+   Song, Xiaolin
+   Bao, Shan
+   Li, Mingjun
+   Huang, Zhi
+   Hu, Chuan
+TI An optimal hierarchical framework of the trajectory following by convex optimisation for highly automated driving vehicles
+SO VEHICLE SYSTEM DYNAMICS
+AB This paper presents a hierarchical trajectory following framework for SAE-level 2/3 automatic driving by convex optimisation, which aims for daily common driving manoeuvres with low traffics on the highway, such as free driving, adaptively following and overtaking. More specifically, it includes several combined functionalities of lane keeping, adaptive following, active obstacle avoidance and speed adaptation. The trajectory-planning module would generate the optimal path and speed profiles for the structure road (e.g. highway) with different geometric shapes, by using the natural cubic spline and convex optimisation approach. While modules of trajectory following or adaptive following are realised by a linearised time-varying model predictive control method. It is expected that the proposed framework could improve the driving safety, as well as the driving efficiency and driving comforts simultaneously. Thus, typical scenarios are designed to verify the effectiveness of the proposed trajectory following framework. Simulation results demonstrate that it could successfully deal with daily manoeuvres on a straight or curved highway without human driver's interventions.
+RI Cao, Haotian/J-5051-2019; Hu, Chuan/AAS-1668-2021
+OI Cao, Haotian/0000-0001-5905-4116; Li, Mingjun/0000-0001-6445-3912; Bao, Shan/0000-0002-0768-5538
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0042-3114
+EI 1744-5159
+PD SEP 2 2019
+PY 2019
+VL 57
+IS 9
+BP 1287
+EP 1317
+DI 10.1080/00423114.2018.1497185
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000473512500003
+DA 2026-04-25
+ER
+
+PT J
+AU Liu, X
+   Liang, J
+   Fu, JW
+AF Liu, Xiao
+   Liang, Jun
+   Fu, Junwei
+TI A dynamic trajectory planning method for lane-changing maneuver of connected and automated vehicles
+SO PROCEEDINGS OF THE INSTITUTION OF MECHANICAL ENGINEERS PART D-JOURNAL OF AUTOMOBILE ENGINEERING
+AB This paper describes a dynamic trajectory planning method for lane-changing maneuver of connected and automated vehicles (CAVs). The proposed dynamic lane-changing trajectory planning (DLTP) model adopts vehicle-to-vehicle (V2V) communication to generate an automated lane-changing maneuver with avoiding potential collisions and rollovers during the lane-changing process. The novelty of this method is that the DLTP model combines a detailed velocity planning strategy and considers more complete driving environment information. Besides, a lane-changing safety monitoring algorithm and a lane-changing starting-point determination algorithm are presented to guarantee the lane-changing safety, efficiency and stability of automated vehicles. Moreover, a trajectory-tracking controller based on model predictive control (MPC) is introduced to make the automated vehicle travel along the reference trajectory. The field traffic data from NGSIM are selected as the target dataset to simulate a real-world lane-changing driving environment. The simulations are performed in CarSim-Simulink platform and the experimental results show that the proposed method is effective for lane-changing maneuver.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0954-4070
+EI 2041-2991
+PD JUN 2021
+PY 2021
+VL 235
+IS 7
+BP 1808
+EP 1824
+DI 10.1177/0954407020982712
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000643290400003
+DA 2026-04-25
+ER
+
+PT J
+AU Abdollahinia, M
+   Ghaffari, A
+   Azadi, S
+AF Abdollahinia, Masoud
+   Ghaffari, Ali
+   Azadi, Shahram
+TI Decision-Making and Path Planning for Head-On Collision Avoidance on Curved Roads
+SO JOURNAL OF ADVANCED TRANSPORTATION
+AB Deviating to the left on two-way roads can result in fatal head-on collisions. This article presents an intelligent decision-making and path-planning algorithm aimed at avoiding collision with a vehicle that has deviated from the opposing lane. The path-planning process utilizes the model predictive control (MPC) approach, employing a linear kinematic prediction model with a horizon of 2 seconds. Considering that the deviated vehicle may abruptly return to its original lane at any moment, its motion is associated with significant uncertainty. To address this challenge, the path-planning algorithm directs the ego vehicle (EV) under specific constraints to ensure that both the left and right sides of the road are symmetrically reachable in future time steps. This enables the decision-making algorithm to select the safer direction for evasive maneuver at the appropriate moment. The motion prediction of the threat vehicle (TV) is conducted until the potential collision time, taking into account its motion history, and is utilized in the decision-making process. Once the maneuver direction is determined, the collision-free path planning continues using the MPC method. To evaluate the algorithm, six simulations are conducted, modeling various distant and close encounter states of the vehicles on roads with left- and right-hand curves. The simulation results indicate the flexibility and appropriate performance of the algorithm in planning safe and maneuverable paths.
+RI Azadi, Shahram/AAR-3473-2020
+OI AbdollahiNia, Masoud/0009-0006-4963-1470
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0197-6729
+EI 2042-3195
+PD OCT 29 2024
+PY 2024
+VL 2024
+AR 8171722
+DI 10.1155/2024/8171722
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001350821700002
+DA 2026-04-25
+ER
+
+PT C
+AU Wang, MQ
+   Wang, ZP
+   Zhang, L
+   Dorrell, DG
+AF Wang, Mingqiang
+   Wang, Zhenpo
+   Zhang, Lei
+   Dorrell, D. G.
+GP IEEE
+TI Speed Planning for Autonomous Driving in Dynamic Urban Driving Scenarios
+SO 2020 IEEE ENERGY CONVERSION CONGRESS AND EXPOSITION (ECCE)
+SE IEEE Energy Conversion Congress and Exposition
+CT 12th Annual IEEE Energy Conversion Congress and Exposition (IEEE ECCE)
+CY SEP 23-OCT 15, 2020
+CL Detroit, MI
+SP IEEE; IEEE Ind Applicat Soc; IEEE Power Elect Soc; MathWorks; ROHM Semiconductor
+AB Trajectory planning is essential for autonomous vehicles when operating in dynamic traffic environments. A layered approach usually separates out into path planning and speed planning. In the work reported in this paper, speed profile planning over a given path, which is defined by a trajectory planner, is proposed. The relevant information is provided by vehicle-to-vehicle (V2V) communication. First, a speed planning optimization algorithm which considers safety, time efficiency, smoothness and comfort constraints is presented. This strategy can provide a safe, comfortable and feasible speed profile for autonomous driving via a S-T graph under a complex traffic environment. Secondly, a conventional non-convex optimization problem is translated into a quadratic programming problem. This has the advantage of a low computation requirement because it uses a CFS (convex feasible set) algorithm. The effectiveness of the proposed scheme is verified through simulation studies in various urban driving scenarios. This holistic approach provides a more effective approach to speed and trajectory planning.
+RI Dorrell, David/AAL-4038-2020; Wang, Zhenpo/JPA-0865-2023; Zhang, Lei/AAI-5726-2021
+OI Zhang, Lei/0000-0002-1763-0397
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2329-3721
+PD 2020
+PY 2020
+BP 1462
+EP 1468
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000645593601128
+DA 2026-04-25
+BN 978-1-7281-5826-6
+ER
+
+PT J
+AU Zheng, Y
+   Ran, B
+   Qu, X
+   Zhang, J
+   Lin, Y
+AF Zheng, Yuan
+   Ran, Bin
+   Qu, Xu
+   Zhang, Jian
+   Lin, Yi
+TI Cooperative Lane Changing Strategies to Improve Traffic Operation and Safety Nearby Freeway Off-Ramps in a Connected and Automated Vehicles Environment
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB The study proposes a cooperative lane changing strategy to improve traffic operation and safety at a diverging area nearby a highway off-ramp in an environment with connected and automated vehicles (CAVs). The cooperative strategy was implemented by the coordination of behaviors between the diverging vehicle and its cooperative vehicle on the target lane. The Minimizing Overall Braking Induced by Lane Changes Model (MOBIL) and Intelligent Driver Model (IDM) were modified to develop a simulation platform for a CAV environment. The optimal cooperative lane changing zones were firstly calculated by a heuristic algorithm, and then were applied in the simulation platform to implement the cooperative strategy. Various metrics were considered to evaluate the proposed strategy, including: total travel time, surrogate safety measures and traffic waves in the system. The experimental results showed that the length of the optimal cooperative zones obtained in our strategy were smaller than the fixed zone required in modified MOBIL strategy. Moreover, the results indicated that the cooperative strategy with the optimal zones, could improve traffic operation, traffic safety and traffic oscillation as compared to the modified MOBIL strategy with the fixed zone. The cooperative strategy can be potentially implemented nearby highway off-ramps by vehicle-based control, with the applications of the aforementioned cooperative zones.
+RI Zheng, Yuan/JCP-0960-2023; Zhang, Jian/KFA-5149-2024
+OI Zhang, Jian/0000-0002-9086-7622
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD NOV 2020
+PY 2020
+VL 21
+IS 11
+BP 4605
+EP 4614
+DI 10.1109/TITS.2019.2942050
+WE Science Citation Index Expanded (SCI-EXPANDED); Social Science Citation Index (SSCI)
+UT WOS:000587709700011
+DA 2026-04-25
+ER
+
+PT C
+AU Liu, W
+   Kim, SW
+   Pendleton, S
+   Ang, MH
+AF Liu, Wei
+   Kim, Seong-Woo
+   Pendleton, Scott
+   Ang, Marcelo H. jr
+GP IEEE
+TI Situation-aware Decision Making for Autonomous Driving on Urban Road using Online POMDP
+SO 2015 IEEE INTELLIGENT VEHICLES SYMPOSIUM (IV)
+SE IEEE Intelligent Vehicles Symposium
+CT IEEE Intelligent Vehicles Symposium
+CY JUN 28-JUL 01, 2015
+CL Seoul, SOUTH KOREA
+AB As autonomous vehicles begin venturing on the urban road, rational decision making is essential for driving safety and efficiency. This paper presents a situation-aware decision making algorithm for autonomous driving on urban road. Specifically, an urban road situation model is proposed first for proper environment representation, thereafter the situation-aware decision making problem is modeled as a Partially Observable Markov Decision Process (POMDP) and solved in an online manner. The proposed algorithm has been extensively evaluated, which is general enough for autonomous driving in various urban road scenarios, including leader following, collision avoidance and traffic negotiation at both T-junction and roundabout.
+RI Ang, Marcelo/B-4469-2010
+OI Pendleton, Scott ew/0000-0001-9656-8044; Ang, Marcelo/0000-0001-8277-6408
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1931-0587
+PD 2015
+PY 2015
+BP 1126
+EP 1133
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000380565800183
+DA 2026-04-25
+BN 978-1-4673-7266-4
+ER
+
+PT J
+AU Fan, JW
+   Wu, XD
+   Li, J
+   Xu, M
+AF Fan, Jiawei
+   Wu, Xiaodong
+   Li, Jie
+   Xu, Min
+TI Deep Reinforcement Learning Based Integrated Eco-Driving Strategy for Connected and Automated Electric Vehicles in Complex Urban Scenarios
+SO IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY
+AB With vehicle-to-everything (V2X) information, connected and automated vehicle (CAV) eco-driving strategy allows the vehicle to plan its speed and choose the optimal lane based on actual conditions, resulting in improved driving performance. This study presents a novel eco-driving strategy framework based on deep reinforcement learning (DRL) techniques for CAVs driving in urban scenarios. This framework integrates longitudinal speed planning with lateral lane change decision-making and aims to co-optimize the energy efficiency, driving safety, and travel efficiency. By leveraging traffic information and multi-objective reward functions, the twin delayed deep deterministic (TD3) algorithm is employed to train the actor-critic (AC) network which generates both longitudinal and lateral control commands based on its estimation for lane preference score. The proposed strategy is tested in a complex urban scenario based on Simulation Urban Mobility (SUMO) which reflects real urban traffic conditions. Experimental results indicate that the longitudinal speed planning module of the proposed strategy can shorten the travel txime by up to 7.94% or reduce the electricity consumption by 18.15%, depending on the degree of importance placed on economy by the TD3 agent. By integrating the lateral lane decision module, the proposed strategy can further shorten the travel time by 5.7% and save 1.75% energy consumption.
+OI Li, Jie/0000-0003-1326-6257; wu, xiaodong/0000-0002-0096-3830
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0018-9545
+EI 1939-9359
+PD APR 2024
+PY 2024
+VL 73
+IS 4
+BP 4621
+EP 4635
+DI 10.1109/TVT.2024.3358299
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001205788900045
+DA 2026-04-25
+ER
+
+PT J
+AU Yang, B
+   Song, XW
+   Gao, ZH
+AF Yang, Bin
+   Song, Xuewei
+   Gao, Zhenhai
+TI A Lane Level Bi-Directional Hybrid Path Planning Method Based on High Definition Map
+SO WORLD ELECTRIC VEHICLE JOURNAL
+AB A global reference path generated by a path search algorithm based on a road-level driving map cannot be directly used to complete the efficient autonomous path-following motion of autonomous vehicles due to the large computational load and insufficient path accuracy. To solve this problem, this paper proposes a lane-level bidirectional hybrid path planning method based on a high-definition map (HD map), which effectively completes the high-precision reference path planning task. First, the global driving environment information is extracted from the HD map, and the lane-level driving map is constructed. Real value mapping from the road network map to the driving cost is realized based on the road network information, road markings, and driving behavior data. Then, a hybrid path search method is carried out for the search space in a bidirectional search mode, where the stopping conditions of the search method are determined by the relaxation region in the two search processes. As the search process continues, the dimension of the relaxation region is updated to dynamically adjust the search scope to maintain the desired search efficiency and search effect. After the completion of the bidirectional search, the search results are evaluated and optimized to obtain the reference path with the optimal traffic cost. Finally, in an HD map based on a real scene, the path search performance of the proposed algorithm is compared with that of the simple bidirectional Dijkstra algorithm and the bidirectional BFS search algorithm. The results show that the proposed path search algorithm not only has a good optimization effect, but also has a high path search efficiency.
+OI Yang, Bin/0000-0001-5534-2305
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2032-6653
+PD DEC 2021
+PY 2021
+VL 12
+IS 4
+AR 227
+DI 10.3390/wevj12040227
+WE Emerging Sources Citation Index (ESCI)
+UT WOS:000937534900068
+DA 2026-04-25
+ER
+
+PT J
+AU Liu, X
+   Liang, J
+   Zhang, H
+AF Liu, Xiao
+   Liang, Jun
+   Zhang, Hua
+TI Dynamic motion planner with trajectory optimisation for automated highway lane-changing driving
+SO IET INTELLIGENT TRANSPORT SYSTEMS
+AB This study proposes a dynamic motion planner with trajectory optimisation for automated highway lane-changing driving. Owing to the connected and automated vehicles (CAVs) technology that the real-time traffic information can be obtained, alternative trajectories can be generated to satisfy the vehicle kinematic constraints and avoid many types of potential collisions. An optimal control theory is adopted to select an optimal lane-changing path from the finite path set, and the appropriate acceleration and speed for the execution path are also determined. In order to avoid unnecessary motion replanning process, this study puts forward a collision-avoidance monitoring algorithm to reduce the time consumption costs of the motion planner. Moreover, an online planning framework based on 'decision-execution' is explored. Applying this timeline framework can not only help to evaluate the dynamic planner's online performance, but also reduce the deviation between the online calculation and the actual execution caused by the time consumption. The simulations are performed in PreScan-Simulink platform and the experimental results show that the presented dynamic planner can complete the lane-changing manoeuvre safely and effectively in a high-speed environment.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1751-956X
+EI 1751-9578
+PD DEC 27 2020
+PY 2020
+VL 14
+IS 14
+BP 2133
+EP 2140
+DI 10.1049/iet-its.2020.0465
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000627553700020
+DA 2026-04-25
+ER
+
+PT C
+AU Zhang, SM
+   Wang, Y
+   Huang, QL
+   Wang, SS
+AF Zhang, Sumin
+   Wang, Yu
+   Huang, Qingling
+   Wang, Shanshan
+GP IEEE
+TI A Trajectory Planning Algorithm for Highly Automated Driving in Complex Environment
+SO 2013 FOURTH INTERNATIONAL CONFERENCE ON DIGITAL MANUFACTURING AND AUTOMATION (ICDMA)
+SE International Conference on Digital Manufacturing and Automation
+CT 4th International Conference on Digital Manufacturing and Automation (ICDMA)
+CY JUN 29-30, 2013
+CL Qingdao, PEOPLES R CHINA
+SP Cent S Univ; Tsinghua Univ
+AB This paper tries to present an trajectory planning algorithm applied in an intelligent driver model to control an unmanned ground vehicle in complex environment. The proposed trajectory planning algorithm takes into account of the surrounding environment, including lanes and road geometries, surrounding obstacles, including static obstacles and moving obstacles, and traffic infrastructure; and a decision making process determines an optimum trajectory to follow safely and comfortably based on the analysis of the travelable region and traffic rules. The concept presented in this paper is demonstrated through simulation and the results are discussed.
+RI qingling, huang/PCR-8189-2025
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2162-0571
+PD 2013
+PY 2013
+BP 88
+EP 93
+DI 10.1109/ICDMA.2013.22
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000333803900022
+DA 2026-04-25
+BN 978-0-7695-5016-9
+ER
+
+PT C
+AU Li, CC
+   Wang, J
+   Wang, XN
+   Zhang, YH
+AF Li, Chaocheng
+   Wang, Jun
+   Wang, Xiaonian
+   Zhang, Yihuan
+GP IEEE
+TI A Model based Path Planning Algorithm for Self-driving Cars in Dynamic Environment
+SO 2015 CHINESE AUTOMATION CONGRESS (CAC)
+SE Chinese Automation Congress
+CT Chinese Automation Congress (CAC)
+CY NOV 27-29, 2015
+CL Wuhan, PEOPLES R CHINA
+SP IEEE; Naval Univ Engn; Hubei Assoc Automat; wuhan Univ Technol; Chinese Assoc Automat
+AB Self-driving cars require robust and fast path planning algorithms to operate in dynamic environment. In the last years, model based path planning has emerged as an effective solution to real-time path planning taking into account the kinematics of the vehicle. However, this approach only validates in simple environment such as static or single moving obstacle. In this paper, we propose a model based path planning algorithm for dynamic environment. The approach generates candidate trajectories online, then evaluates and selects the most appropriate one according to real-time environment information. The selected trajectory can be directly tracked until emergency occurs and replanning starts. Thus, the planning algorithm is anytime and dynamic, and also effective in complex multi-obstacle environment. Simulation results of different scenarios show the validity of the proposed algorithm.
+RI Zhang, Yihuan/JEO-4481-2023
+OI Zhang, Yihuan/0000-0001-6341-4057; Wang, Jun/0000-0002-7684-0191
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2688-092X
+EI 2688-0938
+PD 2015
+PY 2015
+BP 1123
+EP 1128
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000380546900208
+DA 2026-04-25
+BN 978-1-4673-7189-6
+ER
+
+PT J
+AU Xu, B
+   Yuan, SJ
+   Lin, XR
+   Hu, MJ
+   Bian, YG
+   Qin, ZB
+AF Xu, Biao
+   Yuan, Shijie
+   Lin, Xuerong
+   Hu, Manjiang
+   Bian, Yougang
+   Qin, Zhaobo
+TI Space Discretization-Based Optimal Trajectory Planning for Automated Vehicles in Narrow Corridor Scenes
+SO ELECTRONICS
+AB The narrow corridor is a common working scene for automated vehicles, where it is pretty challenging to plan a safe, feasible, and smooth trajectory due to the narrow passable area constraints. This paper presents a space discretization-based optimal trajectory planning method for automated vehicles in a narrow corridor scene with the consideration of travel time minimization and boundary collision avoidance. In this method, we first design a mathematically-described driving corridor model. Then, we build a space discretization-based trajectory optimization model in which the objective function is travel efficiency, and the vehicle-kinematics constraints, collision avoidance constraints, and several other constraints are proposed to ensure the feasibility and comfortability of the planned trajectory. Finally, the proposed method is verified with both simulations and field tests. The experimental results demonstrate the trajectory planned by the proposed method is smoother and more computationally efficient compared with the baseline methods while significantly reducing the tracking error indicating the proposed method has huge application potential in trajectory planning in the narrow corridor scenario for automated vehicles.
+RI Bian, Yougang/AAE-8180-2019; Qin, Zhaobo/ODJ-7424-2025; Hu, Manjiang/HPG-9675-2023
+OI Bian, Yougang/0000-0002-0346-7883; Hu, Manjiang/0000-0003-2251-4478
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+EI 2079-9292
+PD DEC 2022
+PY 2022
+VL 11
+IS 24
+AR 4239
+DI 10.3390/electronics11244239
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000901051900001
+DA 2026-04-25
+ER
+
+PT J
+AU Fu, X
+   Ruan, QF
+   Tang, MJ
+   Wan, JQ
+   Xiao, ZT
+   Yin, YP
+   Zhang, XL
+   Yang, TQ
+AF Fu, Xiang
+   Ruan, Qianfeng
+   Tang, Maojia
+   Wan, Jiaqi
+   Xiao, Zitai
+   Yin, Yipeng
+   Zhang, Xilong
+   Yang, Tianqi
+TI Research on path planning of intelligent vehicle integrated with adjacent vehicle prediction
+SO CLUSTER COMPUTING-THE JOURNAL OF NETWORKS SOFTWARE TOOLS AND APPLICATIONS
+AB The trajectory prediction layer of autonomous vehicles predicts the further trajectory of adjacent vehicles and plans paths to avoid potential risks based on ego-vehicle and environmental perception data. However, traditional path planning algorithms based on simplified traffic models and static predictions fail to capture the nonlinear and time-varying characteristics of actual traffic flows, making it difficult to adapt to dynamic traffic rules and complex traffic environments, leading to inaccurate planning results. To address these issues, a multi-model switching law integrated with Viterbi decoding is proposed to obtain the driving intentions of adjacent vehicles and predict their trajectories. An RRT* four-step optimization algorithm is designed to plan the path of ego-vehicle in complex environments. The Prescan-Carsim-Simulink results demonstrate that the ego-vehicle can avoid obstacles based on the results of multi-cycle path planning in static obstacle avoidance scenarios. The vehicle executes a lane change 2 m in advance in leading vehicle cut-in scenarios. The vehicle experiences a 34.4% reduction in the peak of yaw rate during overtaking, with heading changes becoming smoother and the extreme values being reduced by 19.3%. The curvature extreme point is 90.04, with an extreme value of - 1.07 m in multi-vehicle interaction scenarios. The vehicle completes lane-changing actions earlier and reduces the yaw displacement. The strategies proposed in this paper can respond promptly and optimize lane-changing actions, enhancing the safety and predictability of path planning.
+RI Zhang, Xilong/AAA-2666-2022
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1386-7857
+EI 1573-7543
+PD SEP 22 2025
+PY 2025
+VL 28
+IS 13
+AR 861
+DI 10.1007/s10586-025-05605-5
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001577806000014
+DA 2026-04-25
+ER
+
+PT J
+AU Wang, YL
+   Shao, Q
+   Zhou, J
+   Zheng, HY
+   Chen, H
+AF Wang, Yulei
+   Shao, Qian
+   Zhou, Jian
+   Zheng, Hongyu
+   Chen, Hong
+TI Longitudinal and lateral control of autonomous vehicles in multi-vehicle driving environments
+SO IET INTELLIGENT TRANSPORT SYSTEMS
+AB Lane changes in multi-vehicle driving environments are one of the most challenging manoeuvres for autonomous vehicles. The key innovation of this study is to develop an integrated longitudinal and lateral trajectory planning and tracking control algorithm under vehicle-to-vehicle communication. This algorithm includes two levels: trajectory planning and path-following control. In the upper level, considering riding comfort, a collision-free lane-changing trajectory cluster is generated under different lane change durations. Then, the most appropriate trajectory from this cluster is provided by selecting the optimal lane change duration considering vehicle dynamics safety, collision avoidance of surrounding vehicles and driver preference. At the bottom level, a multiple-input multiple-output triple-step non-linear approach is proposed in the longitudinal and lateral path-following controller design. The stability of the closed-loop system is rigorously proven based on the Lyapunov function. Finally, the effectiveness of the proposed algorithm is verified with a high-fidelity and full-car model on the veDYNA platform.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1751-956X
+EI 1751-9578
+PD AUG 2020
+PY 2020
+VL 14
+IS 8
+BP 924
+EP 935
+DI 10.1049/iet-its.2019.0846
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000559792600015
+DA 2026-04-25
+ER
+
+PT C
+AU Zhu, H
+   Fu, MY
+   Yang, Y
+   Wang, XY
+   Wang, ML
+AF Zhu, Hao
+   Fu, Mengyin
+   Yang, Yi
+   Wang, Xinyu
+   Wang, Meiling
+GP IEEE
+TI A Path Planning Algorithm Based on Fusing Lane and Obstacle Map
+SO 2014 IEEE 17TH INTERNATIONAL CONFERENCE ON INTELLIGENT TRANSPORTATION SYSTEMS (ITSC)
+CT IEEE 17th International Conference on Intelligent Transportation Systems (ITSC)
+CY OCT 08-11, 2014
+CL Qingdao, PEOPLES R CHINA
+SP IEEE
+AB This paper proposes a path planning algorithm for autonomous driving in urban environments. The processing of video and Velodyne pointcloud provides information about the positions of lane markers and obstacles in the local map, which are then converted to a lane costmap and obstacle costmap. The referenced GIS follow line is used for generating a series of offset curves, and the best follow line is selected according to a combination of lane, obstacle and background cost. Additional handling of planning path and maximum speed is provided. Our planning algorithm can handle various road types such as U-turn, intersections, and different driving behaviors including passing over or following front vehicles, etc. The proposed navigation framework is implemented on an autonomous vehicle, which exhibits good performance on Future Challenge 2013, Changshu, China.
+RI WANG, Xinyu/C-8430-2014; fu, meng/GZG-3120-2022; Zhu, Hao/MGB-0814-2025
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+PD 2014
+PY 2014
+BP 1442
+EP 1448
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000357868701083
+DA 2026-04-25
+BN 978-1-4799-6078-1
+ER
+
+PT J
+AU Lin, ZH
+   Lan, JL
+   Nguyen, AT
+   Flynn, D
+AF Lin, Zhihao
+   Lan, Jianglin
+   Nguyen, Anh-Tu
+   Flynn, David
+TI Contingency-Aware Spatiotemporal Optimization for Safe Autonomous Vehicle Trajectory Planning
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB Autonomous lane changing requires balancing safety, comfort, and efficiency while managing complex spatiotemporal vehicle interactions. Current methods often separate risk assessment from trajectory planning, leading to either conservative or unsafe maneuvers. This paper presents a contingency-aware spatiotemporal optimization framework that integrates dynamic risk assessment and trajectory optimization to ensure the autonomous host vehicle (HV) achieve safer, more efficient lane changes. First, the HV uses a dynamic risk field method to assess the collision risk with surrounding vehicles (SVs) in real-time, integrating dynamic obstacle interactions through modified Gaussian distributions. Second, a spatiotemporal safety corridor construction scheme leverages regression-based boundaries to transform spatiotemporal requirements into manageable optimization constraints. Third, the HV adopts a contingency-aware model predictive control framework that incorporates SVs uncertainty for human-like lane changes. The formulated optimization problem is solved using sequential quadratic programming with stability and recursive feasibility. Simulations confirm that our approach ensures safety and comfort of the HV across lane changing scenarios, achieving smoother trajectories, improved stability, and enhanced safety margins, with up to 95% reductions in longitudinal and lateral accelerations and a 27% decrease in lane-changing time.
+RI Lin, Zhihao/ABD-1029-2020; Nguyen, Anh-Tu/J-9193-2017
+OI Lan, Jianglin/0000-0001-9057-5649; Lin, Zhihao/0009-0005-8152-3886
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD NOV 2025
+PY 2025
+VL 26
+IS 11
+BP 18487
+EP 18499
+DI 10.1109/TITS.2025.3597234
+EA SEP 2025
+EY 2025
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001571488700001
+DA 2026-04-25
+ER
+
+PT J
+AU Gao, ZB
+   Yao, L
+   Li, J
+   Yin, YD
+   Xiang, J
+   Long, KJ
+AF Gao, Zhibo
+   Yao, Lan
+   Li, Jin
+   Yin, Yanduo
+   Xiang, Jian
+   Long, Kejun
+TI Trajectory Planning and Tracking With Multiobjective Optimization for Connected and Automated Vehicles at Expressway On-Ramps
+SO JOURNAL OF ADVANCED TRANSPORTATION
+AB On-ramp merging is a common expressway maneuver for connected and automated vehicles (CAVs), where trajectory planning and tracking control are central to avoiding collisions. However, existing studies rarely optimize the selection of merge start and end points and give limited attention to constraints from acceleration-lane length. This study proposes a structured trajectory planning and tracking method with multiobjective optimization under the CAV's environment. First, by sampling the starting and ending points of the merging process, the quintic polynomial is used to plan the initial trajectory of the merging vehicles, and trajectory safety is checked with a collision-avoidance algorithm based on rectangular vehicle geometry. Then, a multiobjective optimization model selects the on-ramp trajectory by balancing merging urgency, driving safety, traffic efficiency, and comfort. Finally, an integrated tracking strategy combines lateral and longitudinal control: a feedforward LQR for lateral motion and a PID-based longitudinal controller. To further improve the tracking accuracy, the particle swarm algorithm tunes key parameters of the lateral LQR controller. The numerical result demonstrates that the planner can generate smooth and stable trajectories that could be selected as an optimal reference for the tracking controller. The simulation results show that when the initial speed of the on-ramp vehicle is 68 km/h, the maximum tracking errors of lateral and longitudinal displacements are less than 0.02 and 0.2 m, respectively.
+OI , Kejun/0000-0001-5968-1865
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0197-6729
+EI 2042-3195
+PD 2026
+PY 2026
+VL 2026
+IS 1
+AR 9412778
+DI 10.1155/atr/9412778
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001692727700001
+DA 2026-04-25
+ER
+
+PT J
+AU Ahn, S
+   Oh, T
+   Yoo, J
+AF Ahn, Sumin
+   Oh, Taeyoung
+   Yoo, Jinwoo
+TI Collision Avoidance Path Planning for Automated Vehicles Using Prediction Information and Artificial Potential Field
+SO SENSORS
+AB With the advancement of autonomous driving systems, the need for effective emergency avoidance path planning has become increasingly important. To enhance safety, the predicted paths of surrounding vehicles anticipate risks and incorporate them into avoidance strategies, enabling more efficient and stable driving. Although the artificial potential field (APF) method is commonly employed for path planning due to its simplicity and effectiveness, it can suffer from the local minimum problem when using gradient descent, causing the vehicle to become stuck before reaching the target. To address this issue and improve the efficiency and stability of path planning, this study proposes integrating prediction data into the APF and optimizing the control points of the quintic B & eacute;zier curve using sequential quadratic planning. The validity of the proposed method was confirmed through simulation using IPG CarMaker 12.0.1 and MATLAB/Simulink 2022b.
+OI Oh, Taeyoung/0000-0003-2488-0455; Ahn, Sumin/0009-0001-1401-3633
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+EI 1424-8220
+PD NOV 2024
+PY 2024
+VL 24
+IS 22
+AR 7292
+DI 10.3390/s24227292
+WE Science Citation Index Expanded (SCI-EXPANDED)
+PM 39599069
+UT WOS:001366143400001
+DA 2026-04-25
+ER
+
+PT J
+AU Cai, MC
+   Xu, Q
+   Chen, CY
+   Wang, JW
+   Li, KQ
+   Wang, JQ
+   Wu, XB
+AF Cai, Mengchi
+   Xu, Qing
+   Chen, Chaoyi
+   Wang, Jiawei
+   Li, Keqiang
+   Wang, Jianqiang
+   Wu, Xiangbin
+TI Formation control with lane preference for connected and automated vehicles in multi-lane scenarios
+SO TRANSPORTATION RESEARCH PART C-EMERGING TECHNOLOGIES
+AB Multi-lane roads are typical scenarios in traffic systems. Vehicles usually have preference on lanes according to their routes and destinations. Few of the existing studies looks into the problem of controlling vehicles to drive on their desired lanes. This paper proposes a formation control method that considers vehicles' preference on different lanes. A bi-level formation control framework is utilized to plan collision-free motion for vehicles, where relative target assignment and path planning are performed in the upper level, and trajectory planning and tracking are performed in the lower level. The collision-free multi-vehicle path planning problem considering lane preference is decoupled into two sub problems: calculating assignment list with non-decreasing cost and planning collision-free paths according to given assignment result. The Conflict-based Searching (CBS) method is utilized to plan collision-free paths for vehicles based on given assignment results. Case study is conducted and simulations are carried out in a three-lane road scenario. The results indicate that the proposed formation control method significantly reduces congestion and improves traffic efficiency at high traffic volumes, compared to the rule-based method.
+RI Wang, Jiawei/NHP-7871-2025; Chen, Chaoyi/HKO-1445-2023; Xu, Qing/JWP-4901-2024; Li, Ke/HZM-6170-2023; Wang, Jianqiang/F-2806-2017
+OI Wang, Jiawei/0000-0002-8844-4612
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0968-090X
+EI 1879-2359
+PD MAR 2022
+PY 2022
+VL 136
+AR 103513
+DI 10.1016/j.trc.2021.103513
+EA JAN 2022
+EY 2022
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000779708400004
+DA 2026-04-25
+ER
+
+PT J
+AU Wang, HM
+   Zhang, LL
+   Kong, Q
+   Zhu, WC
+   Zheng, J
+   Zhuang, L
+   Xu, X
+AF Wang, Haiming
+   Zhang, Liangliang
+   Kong, Qi
+   Zhu, Weicheng
+   Zheng, Jie
+   Zhuang, Li
+   Xu, Xin
+TI Motion planning in complex urban environments: An industrial application on autonomous last-mile delivery vehicles
+SO JOURNAL OF FIELD ROBOTICS
+AB In this article, a motion planning framework for autonomous driving is explored to achieve unmanned last-mile delivery vehicle application in complicated urban scenario. This approach can dramatically improve the intelligence, driving safety, driving robustness, and scalability of autonomous vehicles. In this framework, a specific High-Definition (HD) map representation was proposed for last-mile delivery applications, and a Route Planning layer generates a kinematically feasible reference line with smoothness condition based on Routing and HD Map components. Then a Scenario Planning layer considers routing results and both static and dynamic obstacles into account to select a corresponding scenario to execute, such as cruise on-road scenario, cross intersection scenario, parking scenario, and so forth. Finally, a Trajectory Planning layer which is classified with trajectory generation and optimization modules is described. In the trajectory generation part, a rough path-speed profile and corresponding decisions, such as nudge, stop, yield, and so forth, are generated. Then, the rough path-speed profile is postprocessed by optimization algorithms in the trajectory optimization part. On the basis of the real road test results from thousands of times for JD.com's real autonomous delivery vehicle operations and approximate 115,475 km of fully autonomous driving mode in an urban scenario, the proposed motion planning framework demonstrates the efficiency of autonomous driving, improves the driving quality and reduces the manual intervention.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1556-4959
+EI 1556-4967
+PD DEC 2022
+PY 2022
+VL 39
+IS 8
+BP 1258
+EP 1285
+DI 10.1002/rob.22107
+EA JUL 2022
+EY 2022
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000823006700001
+DA 2026-04-25
+ER
+
+PT J
+AU Wang, SC
+   Li, ZB
+   Wang, BT
+   Li, M
+AF Wang, Shunchao
+   Li, Zhibin
+   Wang, Bingtong
+   Li, Meng
+TI Collision Avoidance Motion Planning for Connected and Automated Vehicle Platoon Merging and Splitting With a Hybrid Automaton Architecture
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB Connected and automated vehicle (CAV) platooning exhibits significant potential in enhancing traffic efficiency and sustainability. In unsteady traffic conditions, CAV platoons frequently require splitting and merging maneuvers to avoid obstacles. This study introduces a hybrid automaton architecture for collision avoidance motion planning during CAV platoon merging and splitting. A velocity obstacle algorithm based on potential fields is developed to detect collision risks and calculate collision-free velocity solutions. Two predictive control-based optimization models are developed for collision-avoidance path planning, catering to both single-cruising vehicles and vehicle platoons. A synergetic architecture based on hybrid automaton is developed to coordinate vehicle motions during platoon splitting and merging. Numerical experiments are performed to evaluate the performance of the proposed hybrid automaton architecture under various obstacle scenarios. The results demonstrate that the proposed algorithms effectively identify collision risks within CAV platoons and determine optimal vehicle velocities. The proposed architecture demonstrates excellent performance in adjusting vehicle maneuvers and adapting CAV platoon formations to changing driving environments.
+OI Wang, Shunchao/0000-0002-7826-5880; Wang, Bingtong/0000-0002-5747-857X; Li, Meng/0000-0001-6944-0053
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD FEB 2024
+PY 2024
+VL 25
+IS 2
+BP 1445
+EP 1464
+DI 10.1109/TITS.2023.3315063
+EA OCT 2023
+EY 2023
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001091189400001
+DA 2026-04-25
+ER
+
+PT J
+AU Wang, YJ
+   Liu, ZX
+   Zuo, ZQ
+   Li, Z
+   Wang, L
+   Luo, XY
+AF Wang, Yijing
+   Liu, Zhengxuan
+   Zuo, Zhiqiang
+   Li, Zheng
+   Wang, Li
+   Luo, Xiaoyuan
+TI Trajectory Planning and Safety Assessment of Autonomous Vehicles Based on Motion Prediction and Model Predictive Control
+SO IEEE TRANSACTIONS ON VEHICULAR TECHNOLOGY
+AB Security problem is a fundamental issue for autonomous vehicles. Trajectory planning is a significant component of autonomous vehicle system, which directly influences the automated traffic safety. In this paper, the motion prediction of other traffic participants is considered. We use Monte Carlo simulation to predict the probabilistic occupancy of the object and give a map from probability statistics to actual scenarios. The non-time-based reference trajectory can be obtained by using high-definition map and lane detection. Then model predictive control is utilized to optimize the reference trajectory according to the current state of autonomous vehicle. Different prediction horizons and coordinate transformation are adopted to optimize the planning. By doing so, the constraint conditions can be easily involved and the result is more intuitive. The probabilistic occupancy of other traffic participants are computed offline and then the obtained results are used in real-time application. Therefore, the real-time computational burden is reduced. The crash probability is put forward to verify the feasibility of real-time trajectory in safety assessment module. Two typical scenarios are analyzed: lane change on the straight road and turning at the intersection. The simulation results illustrate the efficiency of our method.
+RI Liu, Zhengxuan/ABF-6883-2020; Zuo, Zhiqiang/ACO-2798-2022
+OI Li, Zheng/0000-0002-3278-8352; Liu, Zhengxuan/0000-0003-3932-7345
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0018-9545
+EI 1939-9359
+PD SEP 2019
+PY 2019
+VL 68
+IS 9
+BP 8546
+EP 8556
+DI 10.1109/TVT.2019.2930684
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000487191500022
+DA 2026-04-25
+ER
+
+PT C
+AU Kim, D
+   Kim, H
+   Han, K
+AF Kim, Dongryul
+   Kim, Hyeonjeong
+   Han, Kyoungseok
+GP IEEE
+TI Interaction-Aware Vehicle Motion Planning with Collision Avoidance Constraints in Highway Traffic
+SO 2024 35TH IEEE INTELLIGENT VEHICLES SYMPOSIUM, IEEE IV 2024
+SE IEEE Intelligent Vehicles Symposium
+CT IEEE Intelligent Vehicles Symposium (IV)
+CY JUN 02-05, 2024
+CL Jeju, SOUTH KOREA
+SP IEEE; IEEE Intelligent Transportat Soc
+AB This paper proposes collision-free optimal trajectory planning for autonomous vehicles in highway traffic, where vehicles need to deal with the interaction among each other. To address this issue, a novel optimal control framework is suggested, which couples the trajectory of surrounding vehicles with collision avoidance constraints. Additionally, we describe a trajectory optimization technique under state constraints, utilizing a planner based on Pontryagin's Minimum Principle, capable of numerically solving collision avoidance scenarios with surrounding vehicles. Simulation results demonstrate the effectiveness of the proposed approach regarding interactionbased motion planning for different scenarios.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1931-0587
+PD 2024
+PY 2024
+BP 682
+EP 687
+DI 10.1109/IV55156.2024.10588660
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:001275100900105
+DA 2026-04-25
+BN 979-8-3503-4882-8, 979-8-3503-4881-1
+ER
+
+PT J
+AU Ying, J
+   Feng, YH
+AF Ying, Jun
+   Feng, Yiheng
+TI Infrastructure-Assisted cooperative driving and intersection management in mixed traffic conditions
+SO TRANSPORTATION RESEARCH PART C-EMERGING TECHNOLOGIES
+AB Infrastructure-assisted cooperative driving, which consists of connected and automated vehicle (CAV) trajectory planning and traffic signal control, can greatly improve the efficiency of signalized intersection operations. In existing studies, the CAV trajectory planning problem is simplified to only modeling longitudinal vehicle behaviors or assuming the lane changing can be executed instantaneously. The generated CAV trajectories are not realistic and can't be implemented at the vehicle level. Instantaneous lane changing process may also lead to safety issues or uncomfortable driving behavior of following vehicles in a mixed traffic environment. To fill this research gap, we propose an optimization framework that integrates a full CAV trajectory planning model with traffic signal control in a cooperative driving environment with both CAVs and human-driven vehicles (HDVs). A two-level optimization model is formulated based on discrete time. The high-level model optimizes traffic signal parameters, CAV arrival time, and lane assignment at the stop bar, to minimize total vehicle delay. Given arrival time and lane assignment, the low-level model generates trajectories with integrated car-following and lane-changing maneuvers to mimic a human driving policy based on imitation learning. Numerical experiments from a real-world intersection show that the proposed model outperforms adaptive and fixed time signal control by as much as 63.06% in terms of reduction of average vehicle delay, due to better utilization of lane capacity and reduced lost time. In addition to mobility benefits, fuel consumption is also significantly reduced under the proposed infrastructure-assisted cooperative driving framework.
+RI Feng, Yiheng/ABK-7834-2022
+OI Feng, Yiheng/0000-0001-5656-3222
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 0968-090X
+EI 1879-2359
+PD JAN 2024
+PY 2024
+VL 158
+AR 104443
+DI 10.1016/j.trc.2023.104443
+EA DEC 2023
+EY 2023
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:001135952600001
+DA 2026-04-25
+ER
+
+PT J
+AU Wang, Q
+   Ayalew, B
+   Weiskircher, T
+AF Wang, Qian
+   Ayalew, Beshah
+   Weiskircher, Thomas
+TI Predictive Maneuver Planning for an Autonomous Vehicle in Public Highway Traffic
+SO IEEE TRANSACTIONS ON INTELLIGENT TRANSPORTATION SYSTEMS
+AB This paper outlines a predictive maneuver-planning method for autonomous vehicle navigating public highway traffic. The method integrates discrete maneuvering decisions, i.e., lane and reference speed selection automata, with a model predictive control-based motion trajectory-planning scheme. A key notion is to apply a predictive reference speed pre-planning for each lane at each time step of a selected prediction horizon. This is done based on the predicted likely motion of the autonomous vehicle and other object vehicles subject to sensor noise and environmental disturbances. Then, an optimization problem is configured that computes safe, sub-optimal plans for the trajectories of both the motion states (and inputs) and maneuver references for the prediction horizon to accomplish maneuvers like lane keeping, lane change, or obstacle avoidance. While a first formulation of the problem results in a mixed-integer nonlinear programming problem, it is shown that a relaxation can be adopted that reduces the computational complexity to a low-order polynomial time nonlinear program that can he solved more efficiently. Through simulation of a series of multi-lane highway scenarios and comparison with one-maneuver planning approach and an adaptive cruise control approach, the proposed predictive maneuver planning is illustrated to better accommodate the traffic environment with feasible execution time. Also, the reference speed pre-planning improves the optimality and the robustness of the maneuver decision in trajectory planning without adding computational complexity to the optimization problem.
+RI Ayalew, Beshah/A-9844-2016
+OI Ayalew, Beshah/0000-0002-3759-3271
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1524-9050
+EI 1558-0016
+PD APR 2019
+PY 2019
+VL 20
+IS 4
+BP 1303
+EP 1315
+DI 10.1109/TITS.2018.2848472
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000463475900010
+DA 2026-04-25
+ER
+
+PT C
+AU Best, A
+   Narang, S
+   Barber, D
+   Manocha, D
+AF Best, Andrew
+   Narang, Sahil
+   Barber, Daniel
+   Manocha, Dinesh
+BE Bicchi, A
+   Okamura, A
+TI AutonoVi: Autonomous Vehicle Planning with Dynamic Maneuvers and Traffic Constraints
+SO 2017 IEEE/RSJ INTERNATIONAL CONFERENCE ON INTELLIGENT ROBOTS AND SYSTEMS (IROS)
+SE IEEE International Conference on Intelligent Robots and Systems
+CT IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS)
+CY SEP 24-28, 2017
+CL Vancouver, CANADA
+SP IEEE; RSJ; IEEE Robot & Automat Soc; IEEE IES; SICE; New Technol Fdn
+AB We present AutonoVi, a novel algorithm for autonomous vehicle navigation that supports dynamic maneuvers and integrates traffic constraints and norms. Our approach is based on optimization-based maneuver planning that supports dynamic lane-changes, swerving, and braking in all traffic scenarios and guides the vehicle to its goal position. We take into account various traffic constraints, including collision avoidance with other vehicles, pedestrians, and cyclists using control velocity obstacles. We use a data-driven approach to model the vehicle dynamics for control and collision avoidance. Furthermore, our trajectory computation algorithm takes into account traffic rules and behaviors, such as stopping at intersections and stoplights, based on an arc-spline representation. We have evaluated our algorithm in a simulated environment and tested its interactive performance in urban and highway driving scenarios with tens of vehicles, pedestrians, and cyclists. These scenarios include jaywalking pedestrians, sudden stops from high speeds, safely passing cyclists, a vehicle suddenly swerving into the roadway, and high-density traffic where the vehicle must change lanes to progress more effectively.
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2153-0858
+PD 2017
+PY 2017
+BP 2629
+EP 2636
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000426978202112
+DA 2026-04-25
+BN 978-1-5386-2682-5
+ER
+
+PT J
+AU Hardy, J
+   Campbell, M
+AF Hardy, Jason
+   Campbell, Mark
+TI Contingency Planning Over Probabilistic Obstacle Predictions for Autonomous Road Vehicles
+SO IEEE TRANSACTIONS ON ROBOTICS
+AB This paper presents a novel optimization-based path planner that is capable of planning multiple contingency paths to directly account for uncertainties in the future trajectories of dynamic obstacles. This planner addresses the particular problem of probabilistic collision avoidance for autonomous road vehicles that are required to safely interact, in close proximity, with other vehicles with unknown intentions. The presented path planner utilizes an efficient spline-based trajectory representation and fast but accurate collision probability bounds to simultaneously optimize multiple continuous contingency paths in real time. These collision probability bounds are efficient enough for real-time evaluation, yet accurate enough to allow for practical close-proximity driving behaviors such as passing an obstacle vehicle in an adjacent lane. An obstacle trajectory clustering algorithm is also presented to enable the path planner to scale to multiple-obstacle scenarios. Simulation results show that the contingency planner allows for a more aggressive driving style than planning a single path without compromising the overall safety of the robot.
+RI Campbell, Mark/F-8312-2013
+OI Campbell, Mark/0000-0003-0775-4297
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 1552-3098
+EI 1941-0468
+PD AUG 2013
+PY 2013
+VL 29
+IS 4
+BP 913
+EP 929
+DI 10.1109/TRO.2013.2254033
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000322836600009
+DA 2026-04-25
+ER
+
+PT C
+AU Moghadam, M
+   Elkaim, GH
+AF Moghadam, Majid
+   Elkaim, Gabriel Hugh
+GP IEEE
+TI An Autonomous Driving Framework for Long-term Decision-making and Short-term Trajectory Planning on Frenet Space
+SO 2021 IEEE 17TH INTERNATIONAL CONFERENCE ON AUTOMATION SCIENCE AND ENGINEERING (CASE)
+SE IEEE International Conference on Automation Science and Engineering
+CT 17th IEEE International Conference on Automation Science and Engineering (CASE)
+CY AUG 23-27, 2021
+CL Lyon, FRANCE
+SP IEEE
+AB In this paper, we present a hierarchical framework for decision-making and planning on highway driving tasks. We utilized intelligent driving models (IDM and MOBIL) to generate long-term decisions based on the traffic situation flowing around the ego. The decisions both maximize ego performance while respecting other vehicles' objectives. Short-term trajectory optimization is performed on the Frenet space to make the calculations invariant to the road's three-dimensional curvatures. A novel obstacle avoidance approach is introduced on the Frenet frame for the moving obstacles. The optimization explores the driving corridors to generate spatiotemporal polynomial trajectories to navigate through the traffic safely and obey the BP commands. The framework also introduces a heuristic supervisor that identifies unexpected situations and recalculates each module in case of a potential emergency. Experiments in CARLA simulation have shown the potential and the scalability of the framework in implementing various driving styles that match human behavior.
+RI Alizadeh, Majid/GSI-4013-2022
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2161-8070
+PD 2021
+PY 2021
+BP 1745
+EP 1750
+DI 10.1109/CASE49439.2021.9551559
+WE Conference Proceedings Citation Index - Science (CPCI-S)
+UT WOS:000878693200229
+DA 2026-04-25
+BN 978-1-6654-1873-7
+ER
+
+PT J
+AU Lienke, C
+   Wissing, C
+   Keller, M
+   Nattermann, T
+   Bertram, T
+AF Lienke, Christian
+   Wissing, Christian
+   Keller, Martin
+   Nattermann, Till
+   Bertram, Torsten
+TI Predictive Driving: Fusing Prediction and Planning for Automated Highway Driving
+SO IEEE TRANSACTIONS ON INTELLIGENT VEHICLES
+AB To guide an automated vehicle safely through complex traffic, knowledge about the future evolution of the driving situation has to be considered. The contribution at hand proposes an approach for automated driving in structured environments. An environment representation for trajectory planning is presented that enables predictive driving by interconnecting trajectory prediction for the surrounding traffic and planning of an according ego trajectory. A maneuver-based approach with an efficient trajectory model is carried out to enable an accurate and fast estimation of future motions of other vehicles. The results are directly considered in the dynamic environment representation utilized for trajectory planning. In the trajectory optimization process, the required safety distance is hence taken into account uniquely for each future time instance. The evaluation of the trajectory prediction approach shows very good performance on a simulated as well as on a dataset recorded by a test vehicle. On account of the predictive character of the developed environment potential field, simulation experiments demonstrate the feasibility and effectiveness of the proposed method.
+RI Bertram, Torsten/AAA-1554-2019
+OI Wissing, Christian/0000-0003-0079-0842
+NR 0
+TC 0
+Z8 0
+ZA 0
+ZB 0
+ZS 0
+SN 2379-8858
+EI 2379-8904
+PD SEP 2019
+PY 2019
+VL 4
+IS 3
+BP 456
+EP 467
+DI 10.1109/TIV.2019.2919477
+WE Science Citation Index Expanded (SCI-EXPANDED)
+UT WOS:000722585900013
+DA 2026-04-25
+ER
+
+EF  
