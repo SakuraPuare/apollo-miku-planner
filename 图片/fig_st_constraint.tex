@@ -1,52 +1,89 @@
-% 时间有效性约束在ST图中的几何表示
-\begin{tikzpicture}[scale=0.9, transform shape]
+% 时间有效性约束在 ST 图中的几何表示
+% 与 7.2.6 横穿行人示例完全闭环：v_ego=8 m/s, s_ped=10 m, τ_k=1.25 s
+% 网格：横轴 1 单位 = 0.25 s，纵轴 1 单位 = 2 m
+%
+% 单一动态障碍物（横穿行人，v_s=0），故 ST boundary 与 SBD 上界都是水平
+% Baseline 视角：SBD 把行人 ST boundary 推到 s ≤ 9.75 m 在 t ∈ [0, 1.45] 全时段
+% GTOC 视角：PathBoundsDecider 用 τ-shifted 投影避让，SBD 上界恢复为 s_max 附近
+%   T 约束保留 ego 不得在 τ_k 之前到达 s_k 的硬性条款，是 path 决策有效性的前提
+%
+% 本图取 GTOC 视角：SBD 原上界 ≈ s_max（水平线 s≈13），T 引入 (0,0)-(τ_k,s_k) 禁止矩形
+\begin{tikzpicture}[scale=0.95, transform shape]
     % 坐标轴
-    \draw[->, thick] (0,0) -- (9.5,0) node[right, font=\small\bfseries] {$t$/s};
-    \draw[->, thick] (0,0) -- (0,7.5) node[above, font=\small\bfseries] {$s$/m};
+    \draw[->, thick] (0,0) -- (8.6,0) node[right, font=\small\bfseries] {$t$/s};
+    \draw[->, thick] (0,0) -- (0,7.6) node[above, font=\small\bfseries] {$s$/m};
 
-    % 网格
-    \draw[gray!15, very thin] (0,0) grid[step=1] (9,7);
+    % 浅网格
+    \draw[gray!12, very thin] (0,0) grid[step=1] (8,7);
 
-    % 刻度
-    \foreach \t in {1,...,8} {
-        \draw (\t, -0.1) -- (\t, 0.1);
-        \node[below, font=\footnotesize] at (\t, -0.1) {\t};
+    % 横轴刻度
+    \foreach \i/\t in {1/0.25, 2/0.5, 3/0.75, 4/1.0, 5/1.25, 6/1.5, 7/1.75, 8/2.0} {
+        \draw (\i, -0.08) -- (\i, 0.08);
+        \node[below, font=\footnotesize] at (\i, -0.08) {\t};
     }
-    \foreach \s in {1,...,7} {
-        \draw (-0.1, \s) -- (0.1, \s);
-        \node[left, font=\footnotesize] at (-0.1, \s) {\pgfmathparse{int(\s*5)}\pgfmathresult};
+    % 纵轴刻度
+    \foreach \i/\s in {1/2, 2/4, 3/6, 4/8, 5/10, 6/12, 7/14} {
+        \draw (-0.08, \i) -- (0.08, \i);
+        \node[left, font=\footnotesize] at (-0.08, \i) {\s};
     }
 
-    % 原有ST上界（来自其他障碍物）
-    \draw[deepblue!60, thick, dashed] (0,6.2) -- (9,6.2);
-    \node[deepblue!60, font=\small, right] at (9.1, 6.2) {原有$s_j^{ub}$};
+    % ====== 红色 T 禁止区（t < τ_k 内 s > s_k） ======
+    \fill[dangerred!15] (0, 5.0) rectangle (5.0, 7);
+    \node[font=\small, dangerred!75!black, align=center] at (2.5, 6.0) {$\mathcal{T}$ 禁止区\\$t{<}\tau_k$ 内 $s{>}s_k$};
 
-    % 新增禁止区域（红色填充）
-    \fill[dangerred!15] (0,4.0) rectangle (4.8,7);
-    \node[font=\small, dangerred!70!black] at (2.4, 5.5) {禁止区域};
+    % ====== SBD 原上界：横穿行人 v_s=0，故 SBD 推出的 s_ub 为水平 ======
+    %  GTOC 流水线下 path 已绕开行人，SBD 上界趋近 s_max；这里取 s≈13（接近道路尾端示意）
+    \draw[deepblue!65, very thick, dashed] (0, 6.5) -- (8, 6.5);
+    \node[deepblue!65!black, font=\footnotesize, anchor=south] at (6.0, 6.55) {SBD $s_j^{ub,\text{SBD}}$};
+    \node[deepblue!65!black, font=\tiny, anchor=south west] at (5.5, 6.05) {（行人 $v_s{=}0$，水平）};
 
-    % 新约束线
-    \draw[dangerred, very thick] (0,4.0) -- (4.8,4.0);
-    \draw[dangerred, thick, dashed] (4.8,4.0) -- (4.8,0);
+    % ====== T 引入的水平约束线 s = s_k = 10 ======
+    \draw[dangerred, very thick] (0, 5.0) -- (5.0, 5.0);
+    \draw[dangerred, thin, dashed] (5.0, 5.0) -- (5.0, 0);
 
-    % 约束点
-    \filldraw[dangerred] (4.8,4.0) circle (3.5pt);
-    \node[dangerred, font=\small\bfseries, above right] at (4.9, 4.0) {$(\tau_k, s_k)$};
+    % 约束点 (τ_k, s_k)
+    \filldraw[dangerred] (5.0, 5.0) circle (3pt);
+    \node[dangerred, font=\small\bfseries, anchor=south west] at (5.10, 5.10) {$(\tau_k,\,s_k){=}(1.25,\,10)$};
 
-    % 有效上界（绿色粗线）
-    \draw[lightgreen!70!black, very thick] (0,4.0) -- (4.8,4.0) -- (4.8,6.2) -- (9,6.2);
-    \node[font=\small, lightgreen!70!black, above] at (7, 6.3) {有效$s_j^{ub}$};
+    % ====== 融合上界 = min(SBD, T) ======
+    %  t ∈ [0, τ_k]：T=10 < SBD=13，T 主导，融合上界 = 5（网格）
+    %  t = τ_k 跳跃：T 解除，min 跳到 SBD = 6.5（网格）
+    %  t > τ_k：SBD 主导，融合 = 6.5
+    \draw[lightgreen!70!black, ultra thick] (0, 5.0) -- (5.0, 5.0);
+    \draw[lightgreen!70!black, thin, dotted] (5.0, 5.0) -- (5.0, 6.5);
+    \draw[lightgreen!70!black, ultra thick] (5.0, 6.5) -- (8, 6.5);
+    \node[font=\footnotesize\bfseries, lightgreen!70!black, anchor=west] at (0.2, 4.55) {融合 $s_j^{ub}{=}\min(\mathrm{SBD},\,\mathcal{T})$};
 
-    % 速度曲线（全程停留在禁止区域之外：τ_k 之前贴边抵达 s_k，之后再爬升）
-    \draw[black, thick, smooth, tension=0.7]
-        plot[smooth] coordinates {(0,0) (1,1.5) (2,2.7) (3,3.45) (3.8,3.82) (4.5,3.95) (4.8,4.0) (5.2,4.15) (6,4.9) (7,5.7) (8,6.1)};
-    \node[font=\small] at (6.8, 5.1) {速度曲线 $s(t)$};
+    % ====== 速度曲线 s(t)：贴沿到 (τ_k, s_k)，之后沿融合上界平滑爬升 ======
+    \draw[deeppink, very thick, smooth, tension=0.55, -{Stealth}]
+        plot[smooth] coordinates {(0,0) (1,1.4) (2,2.8) (3,4.0) (4,4.65) (4.5,4.88) (5,5.0) (5.5,5.6) (6,6.0) (7,6.35) (7.8,6.45)};
+    \node[deeppink, font=\small\bfseries, anchor=west] at (1.2, 0.85) {速度曲线 $s(t)$};
 
-    % 约束点坐标标注
-    \node[dangerred, font=\small] at (4.8, -0.5) {$\tau_k$};
-    \node[dangerred, font=\small] at (-0.6, 4.0) {$s_k$};
+    % ====== 约束点坐标轴标注 ======
+    \node[dangerred, font=\small] at (5.0, -0.45) {$\tau_k$};
+    \node[dangerred, font=\small, anchor=east] at (-0.18, 5.0) {$s_k$};
 
-    % 减速贴边标注（在合法区域内，箭头指向曲线贴边处）
-    \draw[-Stealth, thick, deeppink] (6.2, 3.2) -- (4.85, 3.95);
-    \node[deeppink, font=\scriptsize\bfseries, right] at (6.2, 3.2) {减速贴边至 $(\tau_k,s_k)$};
+    % ====== 减速贴边箭头 ======
+    \draw[-Stealth, thick, deeppink!75!black] (6.6, 3.7) -- (5.08, 4.92);
+    \node[deeppink!75!black, font=\scriptsize\bfseries, anchor=west, align=left] at (6.6, 3.55)
+        {贴沿抵 $(\tau_k,s_k)$\\行人随后让出};
+
+    % ====== 图例（轴下方横向一行，无边框，与 fig_corridor_a/b 统一风格） ======
+    \begin{scope}[shift={(0,-1.1)}]
+        % 第 1 项: T 禁止区
+        \fill[dangerred!15] (0.30, -0.07) rectangle (0.65, 0.07);
+        \node[font=\tiny, anchor=west] at (0.70, 0.00) {$\mathcal{T}$ 禁止区};
+
+        % 第 2 项: SBD 原上界
+        \draw[deepblue!65, very thick, dashed] (2.40, 0.00) -- (2.75, 0.00);
+        \node[font=\tiny, anchor=west] at (2.80, 0.00) {SBD 原上界};
+
+        % 第 3 项: 融合 min(·)
+        \draw[lightgreen!70!black, ultra thick] (4.45, 0.00) -- (4.80, 0.00);
+        \node[font=\tiny, anchor=west] at (4.85, 0.00) {融合 $\min(\cdot)$};
+
+        % 第 4 项: QP 输出 s(t)
+        \draw[deeppink, very thick, -{Stealth}] (6.40, 0.00) -- (6.75, 0.00);
+        \node[font=\tiny, anchor=west] at (6.80, 0.00) {QP 输出 $s(t)$};
+    \end{scope}
 \end{tikzpicture}

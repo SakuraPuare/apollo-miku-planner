@@ -1,44 +1,66 @@
 % 本文方法统一时空可通行走廊（子图 b）
+% 走廊几何忠实反映：τ(s) 楔形左下沿 + 水平禁行切片，离散为 s_j^{ub} 直送 QP
 \begin{tikzpicture}[scale=1.2, transform shape, arr/.style={-Stealth, thick}]
 
-  \draw[arr, thick] (0,0) -- (5.4, 0) node[right, font=\tiny] {$t$/s};
-  \draw[arr, thick] (0,0) -- (0, 4.3) node[above, font=\tiny] {$s$/m};
+  % 坐标轴
+  \draw[arr, thick] (0,0) -- (5.7, 0) node[right, font=\scriptsize] {$t$/s};
+  \draw[arr, thick] (0,0) -- (0, 4.6) node[above, font=\scriptsize] {$s$/m};
   \node[font=\tiny, left=2pt] at (0,0) {$0$};
 
-  % 障碍淡化显示
-  \fill[dangerred!30, opacity=0.6]
+  % 障碍 ST boundary（淡化背景，作为定位参考）
+  \fill[dangerred!25, opacity=0.55]
     (0.3, 2.4) -- (2.0, 3.0) -- (4.2, 3.8) -- (4.2, 3.2) -- (2.0, 2.4) -- (0.3, 1.8) -- cycle;
-  \fill[lightorange!55, opacity=0.6]
+  \fill[lightorange!50, opacity=0.55]
     (1.0, 0.6) -- (3.2, 1.6) -- (3.2, 1.0) -- (1.0, 0.0) -- cycle;
-  \node[font=\tiny, dangerred!80!black]  at (2.2, 2.85) {A};
-  \node[font=\tiny, lightorange!70!black] at (2.1, 0.65) {B};
+  \node[font=\scriptsize\bfseries, dangerred!80!black]  at (2.1, 2.85) {A};
+  \node[font=\scriptsize\bfseries, lightorange!70!black] at (2.1, 0.65) {B};
 
-  % 走廊
-  \fill[lightgreen, opacity=0.5]
-    (0.0, 0.1) -- (1.0, 0.1) -- (1.8, 1.0) -- (2.2, 2.2)
-    -- (3.5, 3.0) -- (5.2, 3.9)
-    -- (5.2, 4.2) -- (3.5, 3.4) -- (2.2, 2.6) -- (1.0, 1.6) -- (0.0, 1.5) -- cycle;
-  \draw[lightgreen!50!black, thick]
-    (0.0, 0.1) -- (1.0, 0.1) -- (1.8, 1.0) -- (2.2, 2.2) -- (3.5, 3.0) -- (5.2, 3.9);
-  \draw[lightgreen!50!black, thick]
-    (0.0, 1.5) -- (1.0, 1.6) -- (2.2, 2.6) -- (3.5, 3.4) -- (5.2, 4.2);
-  \node[font=\tiny\bfseries, lightgreen!50!black] at (3.8, 4.35) {走廊 $\Omega$};
+  % τ(s) 左下边界（楔形左沿）
+  \draw[deepblue, very thick, densely dashed] (0, 0) -- (4.4, 4.0);
 
-  % 走廊宽度
-  \draw[{Stealth}-{Stealth}, lightgreen!60!black, thick] (5.35, 3.9) -- (5.35, 4.2);
-  \node[font=\tiny, lightgreen!60!black, rotate=90] at (5.55, 4.05) {宽度};
+  % 走廊 Ω：t≥τ(s) 右下方区域，扣除水平禁行切片 s∈[2.7, 3.4]
+  \fill[lightgreen!35]
+    (0, 0) -- (1.5, 1.36) -- (2.97, 2.7) -- (5.0, 2.7)
+    -- (5.0, 0) -- cycle;
+  \fill[lightgreen!35]
+    (3.74, 3.4) -- (4.4, 4.0) -- (5.0, 4.0)
+    -- (5.0, 3.4) -- cycle;
 
-  % QP 最优轨迹
+  % 禁行切片 s ∈ [2.7, 3.4]
+  \fill[dangerred!22]
+    (0, 2.7) rectangle (5.0, 3.4);
+  \draw[dangerred, thick, dashed] (0, 2.7) -- (5.0, 2.7);
+  \draw[dangerred, thick, dashed] (0, 3.4) -- (5.0, 3.4);
+
+  % QP 最优轨迹：从 (0,0) 紧贴 τ(s) 右下，抵达禁行切片下沿截止
   \draw[deeppink, very thick, -Stealth]
-    (0.05, 0.8)
-    .. controls (0.8, 1.0) and (1.2, 1.3) ..
-    (1.8, 1.5)
-    .. controls (2.2, 2.35) and (2.8, 2.9) ..
-    (3.5, 3.2)
-    .. controls (4.0, 3.4) and (4.5, 3.6) ..
-    (5.1, 4.0);
-  \node[font=\tiny\bfseries, deeppink] at (0.8, 1.55) {QP 最优轨迹};
+    (0.05, 0.05)
+    .. controls (0.4, 0.45) and (0.7, 0.85) ..
+    (1.1, 1.1)
+    .. controls (1.5, 1.4) and (1.9, 1.7) ..
+    (2.4, 2.1)
+    .. controls (2.7, 2.4) and (2.85, 2.6) ..
+    (2.93, 2.69);
 
-  \node[font=\tiny\bfseries, lightgreen!50!black] at (4.5, 0.4) {\checkmark\;凸 QP 直接求解};
+  % 标注
+  \node[font=\scriptsize\bfseries, lightgreen!50!black] at (3.6, 1.6) {走廊 $\Omega$};
+  \node[font=\tiny, dangerred!80!black, anchor=west] at (5.05, 3.05) {禁行切片};
+  \node[font=\tiny, gray!55!black, align=center] at (0.65, 3.85) {$t{<}\tau(s)$\\不可达};
+  \node[font=\tiny\bfseries, deeppink, anchor=west] at (0.4, 1.85) {贴 $\tau$ 抵 $s{=}2.7$};
+
+  % ===== 图例（轴下方横向一行，无边框，与 (a) 子图统一风格） =====
+  \begin{scope}[shift={(0,-0.85)}]
+    % 第 1 项: 走廊 Ω
+    \fill[lightgreen!35] (0.10, -0.06) rectangle (0.40, 0.07);
+    \node[font=\tiny, anchor=west] at (0.45, 0.00) {走廊 $\Omega$};
+
+    % 第 2 项: τ(s) 楔形
+    \draw[deepblue, very thick, densely dashed] (1.85, 0.00) -- (2.15, 0.00);
+    \node[font=\tiny, anchor=west] at (2.20, 0.00) {$\tau(s)$ 楔形};
+
+    % 第 3 项: QP 最优 s*(t)
+    \draw[deeppink, very thick, -Stealth] (3.55, 0.00) -- (3.85, 0.00);
+    \node[font=\tiny, anchor=west] at (3.90, 0.00) {QP 最优 $s^*(t)$};
+  \end{scope}
 
 \end{tikzpicture}

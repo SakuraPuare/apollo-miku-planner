@@ -28,24 +28,26 @@
 \addlegendentry{$\tau_{\mathrm{true}}(s)$ 原始速度曲线反推}
 
 % 误差标注（在 s=20 处）
-% tau0(20)=4.0, tau_true(20)≈3.13, tau(20)≈2.91
+% tau0(20) = 20/5 = 4.0
+% tau(20)  = (-5 + sqrt(25 + 4*20))/2 = (-5 + sqrt(105))/2 ≈ 2.62
+% tau_true(20) ≈ 3.13（绿色采样点线性插值）
 \draw[dangerred, thick, densely dashed] (axis cs:20,0) -- (axis cs:20,4);
 
-% 匀速误差 = 4.0 - 3.13 ≈ 0.87 s
+% 匀速误差 = 4.00 - 3.13 = 0.87 s
 \draw[<->, thick, dangerred] (axis cs:20,3.13) -- (axis cs:20,4);
 \node[dangerred, font=\footnotesize, anchor=west] at (axis cs:20.3,3.56) {匀速误差 ${\approx}\,0.87$ s};
 
-% 二阶残差 = 3.13 - 2.91 ≈ 0.22 s
-\draw[<->, thick, lightorange!80!black] (axis cs:20,2.91) -- (axis cs:20,3.13);
-\node[lightorange!80!black, font=\footnotesize, anchor=west] at (axis cs:20.3,3.02) {二阶残差 ${\approx}\,0.22$ s};
+% 二阶残差 = 3.13 - 2.62 = 0.51 s
+\draw[<->, thick, lightorange!80!black] (axis cs:20,2.62) -- (axis cs:20,3.13);
+\node[lightorange!80!black, font=\footnotesize, anchor=west] at (axis cs:20.3,2.88) {二阶残差 ${\approx}\,0.51$ s};
 
 % 关键点
 \addplot[deepblue, mark=*, mark size=2pt, only marks] coordinates {(20,4)};
 \addplot[lightgreen!55!black, mark=*, mark size=2pt, only marks] coordinates {(20,3.13)};
-\addplot[deeppink, mark=*, mark size=2pt, only marks] coordinates {(20,2.91)};
+\addplot[deeppink, mark=*, mark size=2pt, only marks] coordinates {(20,2.62)};
 
-\node[deepblue, font=\scriptsize, anchor=south] at (axis cs:20,4.08) {$\tau_0{=}4.0$};
-\node[deeppink, font=\scriptsize, anchor=north] at (axis cs:20,2.83) {$\tau{=}2.91$};
+\node[deepblue, font=\scriptsize, anchor=south] at (axis cs:20,4.08) {$\tau_0{=}4.00$};
+\node[deeppink, font=\scriptsize, anchor=north] at (axis cs:20,2.54) {$\tau{=}2.62$};
 
 % 参数标注
 \node[rectangle, draw=deepblue, fill=bglight, rounded corners=3pt, font=\footnotesize, align=left] at (axis cs:22,1) {$v_{ego}=5$ m/s\\$a_{ego}=2$ m/s$^2$};

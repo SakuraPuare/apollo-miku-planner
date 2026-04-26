@@ -1,60 +1,88 @@
-% 子图(c)：将通行 s 区间映射至 ST 空间，叠加可达集 t≥τ(s)，得到走廊 Ω
-% τ(s)=s/4 → 在 (t,s) 图上为过 (0,0) (2.25, 9) 的直线
-% C 段 s∈[6.5,7] 禁行 → Ω 在此处有水平缺口
+% 子图 (c)：将通行 s 区间投至 ST 平面 ∩ 可达集 {t ≥ τ(s)}，得到走廊 Ω
+% τ(s) = s/4 ⇒ ST 图上为过 (0,0) 与 (2.25, 9) 的直线
+% 通行段：s ∈ [0, 6.5] ∪ [7, 9]；禁行切片：s ∈ [6.5, 7]
+% Ω 下半段：(0,0) (1.625, 6.5) (3, 6.5) (3, 0)
+% Ω 上半段：(1.75, 7) (2.25, 9) (3, 9) (3, 7)
+% QP 轨迹严格起自 (0, 0)，紧贴 τ(s) 右下，止于禁行切片下沿 s ≈ 6.45
 \begin{tikzpicture}
 \begin{axis}[
-    width=8.0cm, height=6.4cm,
+    width=8.4cm, height=6.4cm,
     xlabel={$t$ (s)}, ylabel={$s$ (m)},
     xmin=0, xmax=3, ymin=0, ymax=9,
+    grid=major, grid style={gray!18},
     axis line style={thick},
     tick label style={font=\footnotesize},
-    label style={font=\small},
-    grid=major, grid style={gray!25},
-    legend style={font=\scriptsize, at={(0.98, 0.02)}, anchor=south east, draw=none, fill=white, fill opacity=0.9},
+    label style={font=\small\bfseries},
+    legend style={
+        font=\scriptsize,
+        legend columns=-1,
+        column sep=0.9em,
+        at={(0.5, -0.22)}, anchor=north,
+        draw=none, fill=none,
+    },
+    legend cell align=left,
+    legend image post style={line width=1.0pt},
 ]
 
-% 走廊 Ω：t ≥ s/4 且 s 通行（排除禁行切片 s∈[6.5,7]）
-% Ω 下半段: s ∈ [0, 6.5]: 区域为 (s/4, 3) × s，clip 到 xmax=3
-\fill[lightgreen!30]
-    (axis cs:0, 0) -- (axis cs:1.625, 6.5) -- (axis cs:3, 6.5) -- (axis cs:3, 0) -- cycle;
-
-% Ω 上半段: s ∈ [7, 9]
-\fill[lightgreen!30]
-    (axis cs:1.75, 7) -- (axis cs:2.25, 9) -- (axis cs:3, 9) -- (axis cs:3, 7) -- cycle;
-
-% 禁行切片 s ∈ [6.5, 7]（水平条带）
-\fill[dangerred!25]
-    (axis cs:0, 6.5) rectangle (axis cs:3, 7);
-
-% 不可达区 t < τ(s)
+% ===== 不可达区 t < τ(s)：(0,0) (2.25, 9) (0, 9) 三角 =====
 \fill[gray!18]
     (axis cs:0, 0) -- (axis cs:2.25, 9) -- (axis cs:0, 9) -- cycle;
 
-% τ(s) = s/4 直线
-\addplot[deepblue, very thick, densely dashed] coordinates {(0, 0) (2.25, 9)};
-\addlegendentry{$\tau(s){=}s/4$}
+% ===== Ω 走廊 下半段 s ∈ [0, 6.5] =====
+\fill[lightgreen!35]
+    (axis cs:0, 0) -- (axis cs:1.625, 6.5)
+    -- (axis cs:3, 6.5) -- (axis cs:3, 0) -- cycle;
 
-% 禁行边界（s=6.5 和 s=7 的水平线）
+% ===== Ω 走廊 上半段 s ∈ [7, 9] =====
+\fill[lightgreen!35]
+    (axis cs:1.75, 7) -- (axis cs:2.25, 9)
+    -- (axis cs:3, 9) -- (axis cs:3, 7) -- cycle;
+
+% ===== 禁行切片 s ∈ [6.5, 7] × 全 t =====
+\fill[dangerred!25] (axis cs:0, 6.5) rectangle (axis cs:3, 7);
 \draw[dangerred, thick, dashed] (axis cs:0, 6.5) -- (axis cs:3, 6.5);
-\draw[dangerred, thick, dashed] (axis cs:0, 7) -- (axis cs:3, 7);
+\draw[dangerred, thick, dashed] (axis cs:0, 7  ) -- (axis cs:3, 7  );
 
-% QP 最优轨迹：从 (0,0) 沿 τ 右侧爬升，在 s=6.5 处截止（不能穿越禁行切片）
+% ===== τ(s) = s/4 蓝色虚线 =====
+\addplot[deepblue, very thick, densely dashed] coordinates {(0, 0) (2.25, 9)};
+\addlegendentry{$\tau(s) = s/4$}
+
+% ===== Ω 走廊（图例占位用色块）=====
+\addplot[lightgreen!35, fill=lightgreen!35, mark=none, forget plot] coordinates {(-1, -1)};
+\addlegendimage{area legend, fill=lightgreen!35, draw=lightgreen!50!black}
+\addlegendentry{$\Omega$ 走廊}
+
+% ===== 禁行切片图例占位 =====
+\addlegendimage{area legend, fill=dangerred!25, draw=dangerred}
+\addlegendentry{禁行切片}
+
+% ===== QP 最优轨迹 s(t) =====
 \addplot[deeppink, very thick, -{Stealth}] coordinates {
-    (0, 0) (0.15, 0.5) (0.32, 1.2) (0.55, 2.1) (0.80, 3.1) (1.05, 4.1) (1.30, 5.1) (1.55, 6.1) (1.70, 6.45)
+    (0,    0)
+    (0.15, 0.5)
+    (0.32, 1.2)
+    (0.55, 2.1)
+    (0.80, 3.1)
+    (1.05, 4.1)
+    (1.30, 5.1)
+    (1.55, 6.1)
+    (1.70, 6.45)
 };
 \addlegendentry{QP 轨迹 $s(t)$}
 
-% 标注
-\node[deeppink, font=\footnotesize\bfseries] at (axis cs:2.5, 3.5) {$\Omega$};
-\node[dangerred, font=\scriptsize] at (axis cs:2.5, 6.75) {禁行切片};
-\node[gray!55!black, font=\scriptsize] at (axis cs:0.5, 7.5) {$t{<}\tau(s)$};
-\node[gray!55!black, font=\scriptsize] at (axis cs:0.5, 7.0) {不可达};
+% ===== 文字标注 =====
+\node[lightgreen!35!black, font=\footnotesize\bfseries] at (axis cs:2.45, 3.0) {$\Omega$};
+\node[dangerred!85!black, font=\tiny, anchor=west]
+    at (axis cs:0.05, 8.55) {D 在 $t = \tau$ 时仍堵塞};
+\node[dangerred, font=\scriptsize] at (axis cs:2.50, 6.75) {禁行切片};
+\node[gray!55!black, font=\scriptsize, align=center]
+    at (axis cs:0.55, 7.55) {$t < \tau(s)$\\不可达};
 
-% s 轴侧标 A、C 区间
-\draw[dangerred, thick] (axis cs:-0.08, 2.5) -- (axis cs:-0.08, 4);
-\node[dangerred, font=\tiny, anchor=east] at (axis cs:-0.12, 3.25) {A};
-\draw[dangerred, thick] (axis cs:-0.08, 6.5) -- (axis cs:-0.08, 7);
-\node[dangerred, font=\tiny, anchor=east] at (axis cs:-0.12, 6.75) {C};
+% ===== s 轴侧标 A、D 区间 =====
+\draw[dangerred, thick] (axis cs:-0.04, 2.5) -- (axis cs:-0.04, 4);
+\node[dangerred, font=\tiny, anchor=east] at (axis cs:-0.06, 3.25) {A};
+\draw[dangerred, thick] (axis cs:-0.04, 6.5) -- (axis cs:-0.04, 7);
+\node[dangerred, font=\tiny, anchor=east] at (axis cs:-0.06, 6.75) {D};
 
 \end{axis}
 \end{tikzpicture}

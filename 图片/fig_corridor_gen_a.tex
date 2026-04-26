@@ -1,55 +1,61 @@
-% 子图(a)：s=s^* 处的横向切片，按式 \eqref{eq:time_varying_gap} 分析 l 方向间隙
-% 场景参数：W_ego=1.5；A 在 s^*=3.25 处的 l 投影 [u_A,v_A]=[-1.2,0.3]
+% 子图 (a)：单 s 截面横向间隙判定（教学起点）
+% 选 s = s^* = 3.25 卡在静态障碍 A 中部，沿 l 轴展示 max-gap 选 p^* 过程
+% A 静态：l ∈ [-1.2, 0.3]，u_A=-1.2, v_A=0.3
+% g_0 = u_A - l_road^- = -1.2 - (-2) = 0.8 < W_ego = 1.5 → ✗
+% g_1 = l_road^+ - v_A =  2  - 0.3  = 1.7 ≥ W_ego = 1.5 → ✓，p^* = 1
+% 自车宽度 W_ego = 1.5 嵌入右侧间隙 g_1
 \begin{tikzpicture}[scale=1.0, transform shape]
-  % 统一 bounding box，与 b、c 图宽高比对齐 (宽:高 ≈ 1.25:1)
-  \useasboundingbox (-3.2, -2.3) rectangle (3.2, 2.9);
+  \useasboundingbox (-3.0, -2.1) rectangle (3.0, 2.4);
 
-  % 道路底色放到 background layer，避免覆盖 l 轴刻度与障碍物
-  \begin{scope}[on background layer]
-    \fill[bglight] (-2, -0.6) rectangle (2, 0.6);
-  \end{scope}
+  % ===== 标题 =====
+  \node[font=\footnotesize\bfseries] at (0, 2.10) {$s = s^\star = 3.25$ 横向截面};
 
-  % l 轴
-  \draw[-Stealth, thick] (-2.6, 0) -- (2.8, 0) node[right, font=\footnotesize] {$l$};
+  % ===== 道路两侧边界（竖线）=====
+  \draw[gray!75, thick] (-2, -0.55) -- (-2, 1.55);
+  \draw[gray!75, thick] ( 2, -0.55) -- ( 2, 1.55);
+  \node[gray!60!black, font=\tiny, anchor=south] at (-2, 1.55) {$l_{road}^{-}$};
+  \node[gray!60!black, font=\tiny, anchor=south] at ( 2, 1.55) {$l_{road}^{+}$};
+
+  % ===== 不通行间隙 g_0（左）：浅红淡色带 =====
+  \fill[dangerred!18] (-2, 0.05) rectangle (-1.2, 1.05);
+  \draw[dangerred!60, thick, |-|] (-2, 1.30) -- (-1.2, 1.30);
+  \node[dangerred!75!black, font=\scriptsize] at (-1.6, 1.55) {$g_0 = 0.8$};
+  \node[dangerred, font=\footnotesize\bfseries] at (-1.6, 0.55) {$\times$};
+
+  % ===== 通行间隙 g_1（右）：lightgreen 色带 =====
+  \fill[lightgreen!50] (0.3, 0.05) rectangle (2, 1.05);
+  \draw[lightgreen!55!black, very thick, |-|] (0.3, 1.30) -- (2, 1.30);
+  \node[lightgreen!45!black, font=\scriptsize] at (1.15, 1.55) {$g_1 = 1.7$};
+  \node[lightgreen!45!black, font=\footnotesize\bfseries] at (1.65, 0.55) {$\checkmark$};
+
+  % ===== 障碍 A 的 l 投影矩形 =====
+  \fill[dangerred!75, draw=dangerred, thick] (-1.2, 0.05) rectangle (0.3, 1.05);
+  \node[font=\scriptsize\bfseries, white] at (-0.45, 0.55) {A};
+
+  % ===== 自车（W_ego=1.5）嵌入 g_1，居中于 [0.35, 1.85] =====
+  \fill[deepblue, draw=deepblue, thick, fill opacity=0.55]
+    (0.35, 0.20) rectangle (1.85, 0.90);
+  \node[deepblue!20!black, font=\scriptsize\bfseries] at (1.10, 0.55) {自车};
+  \draw[deepblue, thick, |-|] (0.35, -0.10) -- (1.85, -0.10);
+  \node[deepblue, font=\scriptsize, anchor=north] at (1.10, -0.13) {$W_{ego} = 1.5$};
+
+  % ===== l 轴（在道路下方）=====
+  \draw[-Stealth, thick, black!75] (-2.65, -0.55) -- (2.7, -0.55)
+    node[right, font=\footnotesize] {$l$};
   \foreach \x in {-2, -1, 0, 1, 2} {
-    \draw[thin] (\x, -0.08) -- (\x, 0.08);
-    \node[font=\tiny, below=2pt] at (\x, -0.08) {$\x$};
+    \draw[thin, black!75] (\x, -0.55) -- (\x, -0.45);
+    \node[font=\tiny, below=1pt] at (\x, -0.55) {$\x$};
   }
 
-  % 道路上下边界
-  \draw[gray!70, thick] (-2, 0.6) -- (2, 0.6);
-  \draw[gray!70, thick] (-2, -0.6) -- (2, -0.6);
-  \node[gray, font=\tiny, above] at (-2, 0.62) {$l_{road}^{-}$};
-  \node[gray, font=\tiny, above] at (2, 0.62) {$l_{road}^{+}$};
+  % ===== u_A, v_A 端点标注 =====
+  \draw[dangerred, thin, dotted] (-1.2, 0.05) -- (-1.2, -0.85);
+  \draw[dangerred, thin, dotted] ( 0.3, 0.05) -- ( 0.3, -0.85);
+  \node[dangerred, font=\tiny] at (-1.2, -0.95) {$u_A = -1.2$};
+  \node[dangerred, font=\tiny] at ( 0.3, -0.95) {$v_A =  0.3$};
 
-  % 障碍物 A 的 l 投影 [u_A, v_A] = [-1.2, 0.3]
-  \fill[dangerred!35, draw=dangerred, thick] (-1.2, -0.5) rectangle (0.3, 0.5);
-  \node[font=\scriptsize\bfseries, white] at (-0.45, 0) {A};
-  \draw[dangerred, thick] (-1.2, -0.5) -- (-1.2, -1.0);
-  \draw[dangerred, thick] (0.3, -0.5) -- (0.3, -1.0);
-  \node[dangerred, font=\tiny] at (-1.2, -1.22) {$u_A{=}-1.2$};
-  \node[dangerred, font=\tiny] at (0.3, -1.22) {$v_A{=}0.3$};
-
-  % 间隙 g_0 = u_A - l_road^- = 0.8；g_1 = l_road^+ - v_A = 1.7
-  \draw[lightgreen!70!black, very thick, |-|] (-2, 1.15) -- (-1.2, 1.15);
-  \node[lightgreen!70!black, font=\scriptsize] at (-1.6, 1.42) {$g_0{=}0.8$};
-
-  \draw[lightgreen!70!black, very thick, |-|] (0.3, 1.15) -- (2, 1.15);
-  \node[lightgreen!70!black, font=\scriptsize] at (1.15, 1.42) {$g_1{=}1.7$};
-
-  % W_ego 参考标尺（居中放在上方，长度严格 1.5）
-  \draw[deepblue, very thick, |-|] (-0.75, 1.93) -- (0.75, 1.93);
-  \node[deepblue, font=\scriptsize] at (0, 2.20) {$W_{ego}{=}1.5$};
-
-  % 判定结果
-  \node[dangerred, font=\scriptsize\bfseries] at (-1.6, 0.88) {$\times$};
-  \node[lightgreen!50!black, font=\scriptsize\bfseries] at (1.15, 0.88) {$\checkmark$};
-
-  % 自车（宽度 1.5）正好嵌在 g_1 中
-  \fill[deepblue!45, draw=deepblue, thick] (0.35, -0.4) rectangle (1.85, 0.4);
-  \node[deepblue, font=\tiny] at (1.1, 0) {自车};
-
-  % 标题
-  \node[font=\footnotesize\bfseries] at (0, 2.72) {$s{=}s^\star$ 横向切片};
-  \node[font=\tiny, gray!70!black] at (0, -1.90) {在 $t{=}\tau(s^\star)$ 评估，$p^*{=}1$};
+  % ===== 底部判定一行 =====
+  \node[font=\scriptsize, gray!55!black] at (0, -1.55)
+    {$g^\star = \max(g_0, g_1) = 1.7 \geq W_{ego}$，故 $p^\star = 1$ 通行};
+  \node[font=\tiny, lightgreen!45!black] at (0, -1.92)
+    {该截面对应子图 (b) 中 A 段水平平台 $1.7$};
 \end{tikzpicture}

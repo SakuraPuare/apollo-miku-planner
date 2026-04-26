@@ -1,19 +1,29 @@
-% 动态障碍物排除 t=1.25s（子图 c）
+% 动态障碍物排除 t=1.25 s（子图 c）
+% 自车到达原障碍位置，行人已穿过车道，通行带打开
 \begin{tikzpicture}[scale=0.95, transform shape]
   \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
   \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
   \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
   \draw[deepblue, dashed, thin] (0,0.3) -- (6.8,0.3);
 
-  \fill[egopt, opacity=0.3] (0.5,0) rectangle (1.35,0.6);
-  \node[gray, font=\scriptsize] at (0.925,0.3) {$t=0$};
+  % 自车 t=0 起始位（虚影）
+  \fill[egopt, opacity=0.25] (0.5,0) rectangle (1.35,0.6);
+  \node[gray, font=\tiny] at (0.925,0.3) {$t{=}0$};
 
+  % 自车当前位（已到达原障碍 s=10 m 位置）
   \fill[egopt] (5.7,0) rectangle (6.55,0.6);
   \node[white, font=\scriptsize\bfseries] at (6.125,0.3) {ADC};
+  \draw[-Stealth, thick, deepblue] (5.4, 0.3) -- (5.65, 0.3);
 
+  % 行人已穿过对侧
   \fill[obsdyn] (5.7,1.3) rectangle (6.1,1.75);
-  \node[font=\scriptsize, dangerred!70!black, above] at (5.9,1.8) {已穿过};
+  \node[font=\scriptsize, dangerred!70!black, above] at (5.9, 1.78) {已穿过};
+  \draw[-Stealth, thin, dangerred!50] (5.9, 1.28) -- (5.9, 0.95);
 
+  % 通行带（绿色填充，显式标注）
   \fill[bandok] (1.5,0.05) rectangle (5.6,0.55);
-  \node[font=\scriptsize, lightgreen!50!black] at (3.5,0.3) {路径已打开};
+  \node[font=\scriptsize, lightgreen!50!black] at (3.5,0.3) {通行带打开};
+
+  % 时刻标
+  \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}1.25$ s};
 \end{tikzpicture}

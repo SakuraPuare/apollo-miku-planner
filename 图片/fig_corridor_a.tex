@@ -1,45 +1,51 @@
 % Apollo Baseline ST 边界（子图 a）
+% 故事：n 个独立障碍物各产生 ST boundary，SpeedDecider 对每个做 YIELD/OVERTAKE 离散选择
+% 选定组合后取 min 折线作为 s_j^{ub}，DP 启发搜索 + QP 求解
 \begin{tikzpicture}[scale=1.2, transform shape, arr/.style={-Stealth, thick}]
 
-  \draw[arr, thick] (0,0) -- (5.4, 0) node[right, font=\tiny] {$t$/s};
-  \draw[arr, thick] (0,0) -- (0, 4.3) node[above, font=\tiny] {$s$/m};
+  % 坐标轴
+  \draw[arr, thick] (0,0) -- (5.7, 0) node[right, font=\scriptsize] {$t$/s};
+  \draw[arr, thick] (0,0) -- (0, 4.6) node[above, font=\scriptsize] {$s$/m};
   \node[font=\tiny, left=2pt] at (0,0) {$0$};
 
-  % 障碍 A：慢速前车
-  \fill[dangerred!55, opacity=0.85]
+  % 障碍 A：慢速前车 ST boundary
+  \fill[dangerred!45, draw=dangerred, thick]
     (0.3, 2.4) -- (2.0, 3.0) -- (4.2, 3.8) -- (4.2, 3.2) -- (2.0, 2.4) -- (0.3, 1.8) -- cycle;
-  \node[font=\tiny\bfseries, dangerred] at (2.2, 2.85) {ST boundary A};
+  \node[font=\scriptsize\bfseries, white] at (2.1, 2.85) {A};
 
-  % 障碍 B：横穿行人
-  \fill[lightorange!80, opacity=0.85]
+  % 障碍 B：横穿行人 ST boundary
+  \fill[lightorange!75, draw=lightorange!60!black, thick]
     (1.0, 0.6) -- (3.2, 1.6) -- (3.2, 1.0) -- (1.0, 0.0) -- cycle;
-  \node[font=\tiny\bfseries, lightorange!60!black] at (2.1, 0.65) {ST boundary B};
+  \node[font=\scriptsize\bfseries, white] at (2.1, 0.65) {B};
 
-  % YIELD A
-  \draw[dangerred, very thick, densely dashed]
-    (0, 1.8) -- (0.3, 1.8) -- (2.0, 2.4) -- (4.2, 3.2);
-  \node[font=\tiny, dangerred, anchor=south west] at (3.5, 3.3) {$s_j^{ub}$(A)};
+  % YIELD/OVERTAKE 决策标注（A: YIELD，B: YIELD）
+  \node[font=\tiny, dangerred!80!black, anchor=west] at (4.3, 3.5) {YIELD A};
+  \node[font=\tiny, lightorange!60!black, anchor=west] at (3.3, 0.5) {YIELD B};
 
-  % YIELD B
-  \draw[lightorange!60!black, very thick, densely dashed]
-    (0, 0.0) -- (1.0, 0.0) -- (3.2, 1.0);
-  \node[font=\tiny, lightorange!60!black, anchor=north west] at (2.8, 0.75) {$s_j^{ub}$(B)};
+  % 融合后的 s_j^{ub}（取 min 折线）—— 沿 B 下沿，再沿 A 下沿
+  \draw[lightgreen!60!black, very thick]
+    (0, 0.0) -- (1.0, 0.0) -- (2.0, 0.45) -- (2.0, 1.8) -- (4.2, 3.2) -- (5.0, 3.6);
 
-  % 取 min 碎片化
-  \draw[dangerred, ultra thick]
-    (0, 0.0) -- (1.0, 0.0) -- (2.0, 0.6);
-  \draw[dangerred, ultra thick]
-    (2.0, 1.8) -- (2.0, 2.4) -- (4.2, 3.2);
-  \node[font=\tiny\bfseries, dangerred, align=center, anchor=west] at (4.35, 2.5)
-    {取 $\min$\\[-1pt]碎片化};
+  % DP 启发式搜索路径（候选组合，灰色点线）
+  \draw[gray!70, thick, densely dotted]
+    (0.1, 0.1) -- (1.0, 0.4) -- (2.0, 0.55) -- (2.5, 1.85) -- (3.5, 2.6) -- (4.5, 3.4);
 
-  % DP 路径
-  \draw[gray!60, thick, densely dotted]
-    (0.1, 0.1) -- (1.5, 0.5) -- (2.5, 2.3) -- (4.5, 3.6);
-  \node[font=\tiny, gray!50!black, anchor=south] at (1.8, 1.5) {DP 搜索};
+  % 组合空间标注
+  \node[font=\tiny, deepblue!70!black, align=center] at (2.0, 4.25) {$2^n$ 个 YIELD/OVERTAKE\\组合，DP 启发选取};
 
-  % 间隙
-  \draw[gray, thick, densely dashed] (2.0, 0.6) -- (2.0, 1.8);
-  \node[font=\tiny, gray!60!black, anchor=west] at (2.05, 1.2) {间隙};
+  % ===== 图例（轴下方横向一行，无边框） =====
+  \begin{scope}[shift={(0,-0.85)}]
+    % 第 1 项: ST boundary
+    \fill[dangerred!45, draw=dangerred, thick] (0.10, -0.06) rectangle (0.40, 0.07);
+    \node[font=\tiny, anchor=west] at (0.45, 0.00) {ST boundary};
+
+    % 第 2 项: 融合 s_j^ub
+    \draw[lightgreen!60!black, very thick] (2.10, 0.00) -- (2.40, 0.00);
+    \node[font=\tiny, anchor=west] at (2.45, 0.00) {融合 $s_j^{ub}$};
+
+    % 第 3 项: DP 候选路径
+    \draw[gray!70, thick, densely dotted] (3.95, 0.00) -- (4.25, 0.00);
+    \node[font=\tiny, anchor=west] at (4.30, 0.00) {DP 候选路径};
+  \end{scope}
 
 \end{tikzpicture}

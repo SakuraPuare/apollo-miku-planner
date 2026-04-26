@@ -1,47 +1,77 @@
-% 子图(b)：g_{p*}(s) 对 s 的剖面曲线，与 W_ego 比较判定通行 s 区间
-% 场景：A 静态 s∈[2.5,4] 贡献 g_1=1.7 (passable)，C 静态宽阻 s∈[6.5,7] 贡献 g=1.1 (blocked)
+% 子图 (b)：g_{p^*}(s) 沿全 s 的剖面，与 W_ego 比较
+% A 静态偏置 s ∈ [2.5, 4]，l ∈ [-1.2, 0.3]：g_{p^*} = g_1 = 1.7（水平平台）≥ W_ego ✓
+% D 动态宽体 s ∈ [6.5, 7]，t=0 时 l ∈ [-1.3, 1.3]，v_lat = +0.4 m/s
+%   τ(s) = s/4 → D 中心 +0.4·τ(s) = +0.1·s，D(τ) ⇒ l ∈ [-1.3 + 0.1s, 1.3 + 0.1s]
+%   两侧间隙：左 g_0(s) = (-1.3 + 0.1s) + 2 = 0.7 + 0.1s ∈ [1.35, 1.40]
+%             右 g_1(s) =  2 - (1.3 + 0.1s)   = 0.7 - 0.1s ∈ [0.30, 0.35]
+%   max-gap p^* = 0（左），g_{p^*}(s) = 0.7 + 0.1s 在 s∈[6.5, 7] 从 1.35 微升到 1.40
+%   全段 < W_ego = 1.5 → 禁行切片
 \begin{tikzpicture}
 \begin{axis}[
-    width=8.0cm, height=6.4cm,
-    xlabel={$s$ (m)}, ylabel={间隙 (m)},
+    width=8.4cm, height=6.0cm,
+    xlabel={$s$ (m)}, ylabel={$g_{p^\star}(s)$ (m)},
     xmin=0, xmax=9, ymin=0, ymax=4.4,
-    grid=major, grid style={gray!25},
+    grid=major, grid style={gray!18},
     axis line style={thick},
     tick label style={font=\footnotesize},
-    label style={font=\small},
-    legend style={font=\scriptsize, at={(0.02, 0.98)}, anchor=north west, draw=none, fill=white, fill opacity=0.9, row sep=-1pt},
+    label style={font=\small\bfseries},
+    legend style={
+        font=\scriptsize,
+        legend columns=-1,
+        column sep=1.0em,
+        at={(0.5, -0.25)}, anchor=north,
+        draw=none, fill=none,
+    },
+    legend cell align=left,
+    legend image post style={line width=1.0pt},
 ]
 
-% 禁行区阴影（在 g<W_ego 的 s 段）
+% ===== 禁行切片背景（D 段，s ∈ [6.5, 7]，全列填红）=====
 \fill[dangerred!15] (axis cs:6.5, 0) rectangle (axis cs:7, 4.4);
 
-% g_{p*}(s) 剖面（分段：自由段 4，A 段 1.7，自由段 4，C 段 1.1，自由段 4）
+% ===== s^* = 3.25 引线，呼应 (a) =====
+\draw[gray!55!black, thin, dashed] (axis cs:3.25, 0) -- (axis cs:3.25, 1.7);
+\filldraw[deepblue] (axis cs:3.25, 1.7) circle (1.6pt);
+\node[deepblue!75!black, font=\scriptsize, anchor=south] at (axis cs:3.25, 1.78) {$s^\star$};
+
+% ===== 主曲线 g_{p^*}(s) =====
 \addplot[deepblue, very thick] coordinates {
-    (0, 4)     (2.5, 4)
-    (2.5, 1.7) (4, 1.7)
-    (4, 4)     (6.5, 4)
-    (6.5, 1.1) (7, 1.1)
-    (7, 4)     (9, 4)
+    (0,    4)
+    (2.5,  4)
+    (2.5,  1.7)
+    (4,    1.7)
+    (4,    4)
+    (6.5,  4)
+    (6.5,  1.35)
+    (7,    1.40)
+    (7,    4)
+    (9,    4)
 };
-\addlegendentry{$g_{p^*}(s)$}
+\addlegendentry{$g_{p^\star}(s)$}
 
-% W_ego 参考线
+% ===== W_ego 参考虚线 =====
 \addplot[dangerred, very thick, densely dashed] coordinates {(0, 1.5) (9, 1.5)};
-\addlegendentry{$W_{ego}{=}1.5$}
+\addlegendentry{$W_{ego} = 1.5$}
 
-% 障碍 A、C 的 s 范围标注（在 x 轴下方）
-\draw[dangerred, thick] (axis cs:2.5, 0.15) -- (axis cs:4, 0.15);
-\node[dangerred, font=\scriptsize] at (axis cs:3.25, 0.35) {A};
-\draw[dangerred, thick] (axis cs:6.5, 0.15) -- (axis cs:7, 0.15);
-\node[dangerred, font=\scriptsize] at (axis cs:6.75, 0.35) {C};
+% ===== A 段标记（s ∈ [2.5, 4]） =====
+\draw[dangerred, thick] (axis cs:2.5, 0.18) -- (axis cs:4, 0.18);
+\node[dangerred, font=\scriptsize] at (axis cs:3.25, 0.50) {A 静态};
 
-% 判定标注
-\node[lightgreen!40!black, font=\scriptsize] at (axis cs:3.25, 2.15) {$\geq W_{ego}$ $\checkmark$};
-\node[dangerred, font=\scriptsize] at (axis cs:6.75, 1.7) {$<W_{ego}$ $\times$};
+% ===== D 段标记（s ∈ [6.5, 7]） =====
+\draw[dangerred, thick] (axis cs:6.5, 0.18) -- (axis cs:7, 0.18);
+\node[dangerred, font=\scriptsize] at (axis cs:6.75, 0.50) {D 动态};
 
-% 禁行切片标注
-\node[dangerred, font=\scriptsize] at (axis cs:6.75, 3.8) {禁行};
-\node[dangerred, font=\scriptsize] at (axis cs:6.75, 3.4) {切片};
+% ===== 判定标注 =====
+\node[lightgreen!40!black, font=\scriptsize] at (axis cs:3.25, 2.10) {$\geq W_{ego}$ $\checkmark$};
+\node[dangerred, font=\scriptsize] at (axis cs:7.55, 1.05) {$<W_{ego}$ $\times$};
+
+% ===== 静态/动态对照（小字解释）=====
+\node[deepblue!65!black, font=\tiny, align=center] at (axis cs:3.25, 1.05) {剖面平直};
+\node[deepblue!65!black, font=\tiny, align=center] at (axis cs:6.75, 1.05) {随 $\tau$ 走};
+
+% ===== 禁行切片标注 =====
+\node[dangerred, font=\scriptsize, align=center]
+    at (axis cs:6.75, 3.70) {禁行切片\\($\tau$ 引致)};
 
 \end{axis}
 \end{tikzpicture}

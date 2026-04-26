@@ -1,16 +1,30 @@
-% 动态障碍物排除 t=0.625s（子图 b）
+% 动态障碍物排除 t=0.625 s（子图 b）
+% 自车前进 5 m，行人横移 0.75 m，碰撞窗口形成
 \begin{tikzpicture}[scale=0.95, transform shape]
   \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
   \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
   \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
   \draw[deepblue, dashed, thin] (0,0.3) -- (6.8,0.3);
 
+  % 自车（已前进 5 m，沿水平比例尺约 = 6.8 单位/13.6 m，即 5 m → 2.5 单位）
   \fill[egopt] (3.4,0) rectangle (4.25,0.6);
   \node[white, font=\scriptsize\bfseries] at (3.825,0.3) {ADC};
   \draw[-Stealth, thick, deepblue] (4.3,0.3) -- (5.4,0.3);
+  \node[font=\scriptsize, deepblue] at (4.85,0.55) {$v_{ego}{=}8$};
 
+  % 行人（横移 0.75 m 进入车道右半侧）
   \fill[obsdyn] (5.7,0.4) rectangle (6.1,0.85);
-  \draw[-Stealth, thick, dangerred] (5.9,0.9) -- (5.9,1.5);
+  \draw[-Stealth, thick, dangerred] (5.9,0.9) -- (5.9,1.45);
+  \node[font=\scriptsize, dangerred!70!black] at (5.5,1.15) {$v_{lat}{=}1.2$};
 
+  % 碰撞窗口标识
   \draw[dangerred, very thick, dashed] (5.55,-0.2) rectangle (6.25,1.0);
+  \node[font=\tiny, dangerred!70!black, anchor=south] at (5.9, 1.02) {碰撞窗口};
+
+  % 距离标尺：行人横移
+  \draw[<->, thin, gray] (6.25,0.4) -- (6.25,0.85);
+  \node[font=\tiny, gray, anchor=west] at (6.3, 0.625) {$\Delta l{=}0.75$};
+
+  % 时刻标
+  \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}0.625$ s};
 \end{tikzpicture}
