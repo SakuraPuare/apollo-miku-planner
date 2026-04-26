@@ -7,6 +7,11 @@
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween}
+% 实验图 csv 数据搜索路径（fig 内引用形式 data/<scn>/xxx.csv；
+% wrapper 在 图片/build/ 编译，所以 ../ = 图片/，../data/ 命中；
+% 整本编译时 cwd 由主文档 \pgfplotsset{table/search path=...} 覆盖）
+\pgfplotsset{table/search path={., ..}}
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{subcaption}
@@ -31,6 +36,11 @@
 \definecolor{lightgreen}{RGB}{180, 230, 180}   % 浅绿 - 可行域/改进
 \definecolor{lightorange}{RGB}{255, 210, 140}  % 浅橙 - 动态障碍物
 \definecolor{dangerred}{RGB}{230, 100, 100}    % 危险红 - 障碍物/警告
+
+% 视觉增强：高饱和度对比色（实验图 GTOC vs Baseline）
+\definecolor{vibrantgreen}{RGB}{46, 175, 80}      % GTOC 路径 / QP 曲线
+\definecolor{vibrantorange}{RGB}{240, 130, 30}    % 路径边界
+\definecolor{vibrantred}{RGB}{220, 50, 50}        % 障碍物（更饱和的 dangerred）
 
 % 统一 tikz 样式
 \tikzset{
