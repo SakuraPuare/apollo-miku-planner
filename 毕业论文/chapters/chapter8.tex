@@ -1,0 +1,414 @@
+\chapter{系统集成与综合实验}
+
+本章介绍GTOC集成至Apollo Planning系统的工程方案，并通过数值仿真与工程仿真两类实验验证GTOC相对于Apollo Baseline的性能。数值仿真部分基于全链路Python复刻平台，对4个代表性场景进行定量对比；工程仿真部分在Apollo 11.0的Dreamview在环环境中对动态超车、窄路通行与单车道封闭导流三个代表性场景进行可视化验证。
+
+\section{与Apollo系统的集成}
+算法设计完成后，需要将其集成到Apollo的Scenario-Stage-Task架构中。集成的核心原则是最小侵入性，尽量少修改已有代码，保持与上下游模块的接口兼容，确保改进方案可以独立开关，通过配置文件控制是否启用。图\ref{fig:sys_arch}给出了改进后的整体系统架构。输入层维持Apollo原有的Routing、感知障碍物、预测轨迹和车辆状态四类来源。处理层在参考线处理流水线之后，新增了以粉色标注的威胁度评估与动态权重ST边界构建两个改进模块，前者提供差异化安全裕度$\delta_i$，后者将时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的ADCTrajectory，确保下游Control模块无需任何修改即可直接消费。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.7\textwidth}{!}{\input{../图片/fig_sys_arch}}
+\caption{集成改进模块后的系统架构}
+\label{fig:sys_arch}
+\end{figure}
+
+\subsection{Task流水线中的插入位置}
+本文提出的时变最优通行带算法作用于路径规划阶段，替换PathBoundsDecider中原有的逐障碍物独立决策逻辑。具体而言，在\texttt{LaneFollowPath}等路径Task中，替换\texttt{UpdatePathBoundaryBySLPolygon}函数的障碍物处理部分。
+
+核心修改主要包括三个新增函数。
+\begin{enumerate}
+\item \texttt{GroupObstacles}\quad{}实现扫描线检测纵向重叠连通分量的逻辑，对应算法\ref{alg:optimal_band}的步骤3。
+
+\item \texttt{CalculateOptimalNudgeDirection}\quad{}实现组内按横向排序、计算间隙、选取最大间隙并分配避让方向的逻辑，对应步骤4至5。
+
+\item \texttt{GetTimeVaryingSLBoundary}\quad{}查询Prediction模块的预测轨迹，计算动态障碍物的时变SL投影，对应步骤1至2。
+\end{enumerate}
+
+路径Task的执行流程保持不变，仍然遵循Apollo的Scenario-Stage-Task三级架构，仅在路径边界构建环节将逐障碍物贪心逻辑替换为分组全局最优逻辑。速度规划阶段的Task流水线无需修改，速度约束以标准的ST上界形式传递给\texttt{PiecewiseJerkSpeedOptimizer}。
+
+上述三个核心函数的C++接口声明如代码\ref{lst:interface}所示，其命名和参数风格与Apollo现有代码保持一致。
+
+\begin{lstlisting}[caption={核心函数接口定义}, label={lst:interface}]
+// 障碍物分组：基于纵向重叠的连通分量检测
+std::vector<ObstacleGroup> GroupObstacles(
+    const std::vector<SLBoundary>& obstacles);
+// 组级最优避让方向计算：最大间隙策略
+NudgeDirection CalculateOptimalNudgeDirection(
+    const ObstacleGroup& group,
+    double road_left_bound,
+    double road_right_bound);
+// 时变SL边界获取：融合动态障碍物预测
+std::pair<double, double> GetTimeVaryingSLBoundary(
+    double s, double arrival_time,
+    const std::vector<PredictionTrajectory>& predictions);
+\end{lstlisting}
+
+本文的修改策略是最小侵入式的。原有的\texttt{UpdatePathBoundaryBySLPolygon}函数签名和输出格式不变，其内部的障碍物遍历和边界更新逻辑被替换为分组、排序、选间隙、分配方向的新流程。上层调用代码，如\texttt{LaneFollowPath::Process}和\texttt{LaneBorrowPath::Process}，无需任何修改，下游的路径优化器即\texttt{PiecewiseJerkPathOptimizer}接收到的路径边界格式也完全兼容。这种设计确保了改进方案可以在不影响Apollo其他功能模块的前提下独立部署和测试。
+
+另一个重要的实现细节是，动态障碍物的纳入需要注释掉\texttt{IsWithinPathDeciderScopeObstacle}中的静态性过滤条件。该过滤条件原本将所有非静态障碍物排除在路径决策之外，是Baseline时间维度次优性的直接根源。注释掉该条件后，动态障碍物通过时变SL投影参与路径边界构建，而非被简单忽略。
+
+\subsection{与现有LaneBorrow机制的关系}
+Apollo已有的LaneBorrowPath机制用于处理长期阻塞场景。其工作原理如下。当\texttt{IsLongTermBlockingObstacle}检测到某障碍物的阻塞计数器\texttt{cycle\_counter}累积达到3个规划周期，约300\,ms，以上时，触发借道决策，允许自车借用相邻车道通行。该机制是Apollo处理本车道不可通行场景的既有方案。
+
+本文方法与LaneBorrowPath机制是互补关系。
+\begin{enumerate}
+\item \textbf{本文方法在LaneBorrowPath之前介入}\quad{}通过全局最优的避让方向分配，在本车道内找到最宽的通行带，从源头减少BLOCKED判定的发生频率。许多在Baseline下被判定为BLOCKED的场景，在本文方法下可以找到可行的本车道通行带，从而无需触发LaneBorrowPath。
+
+\item \textbf{LaneBorrowPath处理真正的本车道不可通行场景}\quad{}当所有间隙均不足以容纳自车，即$W^{*} < 0$或$W^{*}$极小时，确实需要借道，此时LaneBorrowPath机制仍然发挥作用。
+
+\item \textbf{两者的协作方式}\quad{}本文方法先尝试本车道最优通行带，若不可行则触发LaneBorrowPath，LaneBorrowPath在借道车道上同样可以应用本文方法寻找最优通行带。
+\end{enumerate}
+
+从工程实践角度看，本文方法对LaneBorrowPath的减负效果是显著的。在Baseline中，由于贪心策略产生的虚假BLOCKED频繁触发LaneBorrowPath的计时器\texttt{cycle\_counter}，导致自车频繁进行不必要的借道操作，增加了变道风险和对邻道交通的干扰。本文方法通过在本车道内找到全局最优解，将LaneBorrowPath的触发限定在真正需要借道的场景，提升了整体行驶稳定性。
+
+\subsection{降级机制}
+自动驾驶系统对安全性和鲁棒性有严格要求，任何改进算法都必须具备完善的降级机制，确保在异常情况下不劣于原始系统。为此，设计了以下三级降级策略。
+\begin{enumerate}
+\item \textbf{所有间隙均不足车宽}\quad{}即$W^{*} \leq 0$，表明在当前障碍物配置下本车道确实不存在可通行空间。此时回退到Apollo原始流程，执行\texttt{TrimPathBounds}截断路径，触发FallbackPath停车决策。这是合理的降级行为，因为BLOCKED判定是真实的而非贪心策略造成的虚假阻塞。
+
+\item \textbf{预测轨迹不可用}\quad{}当Prediction模块未提供某些障碍物的预测轨迹，或预测轨迹的时间范围不足以覆盖$\tau(s)$时，该障碍物退化为静态处理，使用$t = 0$时刻的位置快照。这保证了算法在信息不完整时仍能正常运行，且不劣于Baseline。
+
+\item \textbf{分组异常}\quad{}若单个连通分量内的障碍物数量超过预设阈值$k_{max}$，默认取15，对该分量内部采用Baseline的逐障碍物策略作为保底。算法本身在$k = 15$时仍可正确运行，设置阈值的目的是在异常输入下提供确定性的行为保证。
+\end{enumerate}
+
+以上三种降级策略均遵循"不劣于Baseline"的原则，在任何情况下，改进算法的输出至少与Apollo原始方案的输出质量持平。降级触发时会在Debug日志中记录降级原因和上下文信息，便于后续分析和优化。
+
+\begin{figure}[H]
+\centering
+\resizebox{0.8\textwidth}{!}{\input{../图片/fig_fallback_levels}}
+\caption{改进算法的三级降级状态转移}
+\label{fig:fallback_levels}
+\end{figure}
+
+\section{实验环境与配置}
+
+\subsection{硬件环境}
+
+实验在如表\ref{tab:hardware}所示的硬件平台上进行。
+
+\begin{table}[htbp]
+\centering
+\caption{实验硬件配置}
+\label{tab:hardware}
+\begin{tabular}{ll}
+\toprule
+\textbf{配置项} & \textbf{参数} \\
+\midrule
+处理器 & Intel(R) Core(TM) i9-14900HX \\
+内存 & 64GB DDR5 \\
+存储 & 2048GB NVMe SSD \\
+操作系统 & ArchLinux 6.19.11-arch1-1  \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{软件环境}
+
+实验在如表\ref{tab:software}所示的软件平台上进行。
+
+\begin{table}[htbp]
+\centering
+\caption{实验软件配置}
+\label{tab:software}
+\begin{tabular}{ll}
+\toprule
+\textbf{软件} & \textbf{版本} \\
+\midrule
+Apollo平台 & 11.0 \\
+编译工具 & Bazel 5.0+ \\
+编程语言 & C++17 \\
+QP求解器 & OSQP 0.6.2 \\
+可视化工具 & Dreamview 2.0 \\
+数据分析 & Python 3.14, NumPy, Matplotlib \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{算法配置参数}
+
+改进算法的关键参数配置如表\ref{tab:algo_params}所示。
+
+\begin{table}[htbp]
+\centering
+\caption{改进算法关键参数配置}
+\label{tab:algo_params}
+\small
+\begin{tabular}{llll}
+\toprule
+\textbf{组件} & \textbf{参数} & \textbf{值} & \textbf{说明} \\
+\midrule
+\multirow{2}{*}{安全裕度} & $W_{ego}$ & 2.11 m & 自车宽度，即Apollo默认值 \\
+& $d_{buf}$ & 静态0.3\,m / 动态0.4\,m & 横向安全缓冲，差异化裕度的基准值 \\
+\midrule
+\multirow{2}{*}{分组参数} & $\Delta s_{th}$ & 12.0 m & 非重叠障碍物纵向聚合阈值 \\
+& $\alpha$ & 1.25 & 横向间距系数，取$\alpha \cdot W_{ego}$ \\
+\midrule
+\multirow{2}{*}{借道参数} & $K_{max}$ & 3 & 最大递归借道层数 \\
+& $w_{min}$ & 2.0 m & 最小可借用车道宽度 \\
+\midrule
+\multirow{2}{*}{时变参数} & $T$ & 7.0 s & 规划时间范围 \\
+& $\Delta s$ & 0.5 m & 路径边界离散步长 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{数值仿真}
+
+\subsection{仿真平台说明}
+
+数值仿真程序使用Python按 Apollo Planning 流水线实现。该程序依次复现路径与速度规划的七个核心阶段，即 PathBoundsDecider、PathOptimizer、SpeedBoundsDecider、PathTimeHeuristicOptimizer、SpeedDecider、SpeedBoundsDecider 的重建以及 PiecewiseJerkSpeedOptimizer，二次规划子问题统一采用 OSQP 求解，数值结果与 Apollo C++ 实现保持一致。Baseline 与 GTOC 两种算法在同一程序内并列实现，对每个场景同时输出 SL 路径边界、ST 走廊以及 $v(t)$、$a_x(t)$、$a_y(t)$、$j(t)$ 四条时序曲线的对照结果，量化指标同步写入文件以保证可溯源与可复现。
+
+\subsection{测试场景设计}
+
+共设计4个测试场景，覆盖单一动态障碍物、动静混合、多动态障碍物以及单车道封闭导流借道四类典型多障碍物工况。
+
+\begin{enumerate}
+\item \textbf{场景①单行人横穿}\quad{}验证时变预测对行人横穿的处理，是差异化裕度与时变投影的联合验证。
+
+\item \textbf{场景②行人加停车}\quad{}动静混合场景，行人横穿同时前方有静态停车，验证GTOC在混合组内的间隙分配。
+
+\item \textbf{场景③双行人递进}\quad{}两名行人先后横穿，纵向时序不同，验证多障碍物时序下的通行带动态更新。
+
+\item \textbf{场景④单车道封闭导流}\quad{}原车道被维修封闭，由18个静态障碍构成单一导流连通分量，包括入口漏斗5个交通锥、维持段8段反光屏障与出口漏斗5个交通锥，要求自车借用左侧相邻车道通行；验证GTOC在大尺度静态密集场下识别整体导流意图与LaneBorrow机制协同的能力。
+\end{enumerate}
+
+\subsection{评价指标}
+
+每个场景计算以下七项指标，数据来自仿真程序的输出。横向加速度 $a_y$ 由路径曲率 $\kappa$ 诱导，等价于向心加速度 $a_c$，即 $a_y = a_c = v^2 \kappa$；直道前提下参考线曲率为零，$\kappa$ 退化为路径横向偏移的二阶导 $l''(s)$。
+
+\begin{table}[htbp]
+\centering
+\caption{数值仿真评价指标}
+\label{tab:metrics}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{指标} & \textbf{符号} & \textbf{含义} \\
+\midrule
+通过率 & $P_{pass}$ & 仿真终点$s_{end} \geq s_{max} - 1$\,m，视为通过 \\
+平均巡航速度 & $\bar{v}$ & 全程平均纵向速度 \\
+最大纵向加速度幅值 & $|a_x|_{max}$ & 反映纵向舒适性极端值 \\
+最大横向加速度幅值 & $|a_y|_{max}$ & 反映横向舒适性极端值（$a_y = v^2 \kappa$） \\
+最大jerk幅值 & $|j|_{max}$ & 反映加速度连续性 \\
+到达时间 & $t_{arrive}$ & 首次到达终点$s_{max}$的时刻 \\
+QP求解总耗时 & $t_{qp}$ & 路径QP与速度QP合计耗时 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{典型场景剖析}
+
+\subsubsection{场景①横穿行人深度对比}
+
+\textbf{场景设置}\quad{}自车以初速$v_{ego} = 8$\,m/s行驶，前方10\,m处一名行人以横速$v_{lat} = 1.2$\,m/s从右向左横穿，当前位于车道中央。
+
+\textbf{Baseline行为}\quad{}PathBoundsDecider通过\texttt{IsStatic()}将行人排除在路径决策之外，路径阶段对行人一无所知。速度阶段SpeedBoundsDecider将行人横穿的全程时段投影为ST禁行区，SpeedDecider输出YIELD决策，自车从8\,m/s急减速，最低速度降至\MOneBaselineMinV\,m/s，区间平均速度\MOneBaselineAvgV\,m/s。
+
+\textbf{GTOC行为}\quad{}路径阶段通过$\tau(s_{ped}) = 10/8 = 1.25$\,s的时变投影，查询行人在1.25\,s后的预测位置$l = 1.5$\,m，识别出右侧间隙已足够自车通过，输出"从行人右侧通行"的路径边界。速度阶段仅插入时间有效性约束$s(t) \leq 10$\,m，$\forall\, t < 1.25$\,s，QP在平滑性驱动下输出近匀速曲线，最低速度约\MOneGtocMinV\,m/s，全程平均速度\MOneGtocAvgV\,m/s。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_01_crossing_ped_sl}
+\caption{场景①SL平面路径与边界对比}
+\label{fig:exp01_sl}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_01_crossing_ped_st}
+\caption{场景①ST走廊与速度曲线对比}
+\label{fig:exp01_st}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_01_crossing_ped_va}
+\caption{场景①$v(t)$与$a(t)$对比}
+\label{fig:exp01_va}
+\end{figure}
+
+GTOC将Baseline的急停等待替换为精确的时间窗约束，避免了路径-速度的信息断层。平均速度提升\MOneGtocAvgV\,m/s对\MOneBaselineAvgV\,m/s，最大减速度幅值从\MOneBaselineMaxAbsA\,m/s$^2$降至\MOneGtocMaxAbsA\,m/s$^2$。
+
+\subsubsection{其余场景图组}
+
+为完整呈现4个场景的对比，以下依次给出场景②③④的SL平面、ST走廊与速度曲线对比图组。各图的Baseline与GTOC子图布局、配色与图例约定与场景①一致，便于横向比较。
+
+\paragraph{场景②行人加停车}\
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_sl}
+\caption{场景②SL平面路径与边界对比}
+\label{fig:exp02_sl}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_st}
+\caption{场景②ST走廊与速度曲线对比}
+\label{fig:exp02_st}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_va}
+\caption{场景②$v(t)$与$a(t)$对比}
+\label{fig:exp02_va}
+\end{figure}
+
+\paragraph{场景③双行人递进}\
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_two_peds_sequential_sl}
+\caption{场景③SL平面路径与边界对比}
+\label{fig:exp03_sl}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_two_peds_sequential_st}
+\caption{场景③ST走廊与速度曲线对比}
+\label{fig:exp03_st}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_two_peds_sequential_va}
+\caption{场景③$v(t)$与$a(t)$对比}
+\label{fig:exp03_va}
+\end{figure}
+
+\paragraph{场景④单车道封闭导流}\
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_sl}
+\caption{场景④SL平面路径与边界对比}
+\label{fig:exp04_sl}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_st}
+\caption{场景④ST走廊与速度曲线对比}
+\label{fig:exp04_st}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_va}
+\caption{场景④$v(t)$与$a(t)$对比}
+\label{fig:exp04_va}
+\end{figure}
+
+\subsection{全场景对比矩阵}
+
+表\ref{tab:full_comparison}汇总4个场景下Baseline与GTOC的全部指标。
+
+\begin{table}[htbp]
+\centering
+\caption{4场景Baseline与GTOC全指标对比}
+\label{tab:full_comparison}
+\small
+\begin{tabular}{clcccccc}
+\toprule
+\textbf{场景} & \textbf{模式} & $\bar{v}$\,(m/s) & $|a|_{max}$\,(m/s$^2$) & $|j|_{max}$\,(m/s$^3$) & $s_{end}$\,(m) & $t_{arrive}$\,(s) & $t_{qp}$\,(ms) \\
+\midrule
+\multirow{2}{*}{①} & Baseline & \MOneBaselineAvgV & \MOneBaselineMaxAbsA & \MOneBaselineMaxAbsJerk & \MOneBaselineSEnd & \MOneBaselineTArrive & \MOneBaselineQpTotal \\
+& GTOC & \MOneGtocAvgV & \MOneGtocMaxAbsA & \MOneGtocMaxAbsJerk & \MOneGtocSEnd & \MOneGtocTArrive & \MOneGtocQpTotal \\
+\midrule
+\multirow{2}{*}{②} & Baseline & \MTwoBaselineAvgV & \MTwoBaselineMaxAbsA & \MTwoBaselineMaxAbsJerk & \MTwoBaselineSEnd & \MTwoBaselineTArrive & \MTwoBaselineQpTotal \\
+& GTOC & \MTwoGtocAvgV & \MTwoGtocMaxAbsA & \MTwoGtocMaxAbsJerk & \MTwoGtocSEnd & \MTwoGtocTArrive & \MTwoGtocQpTotal \\
+\midrule
+\multirow{2}{*}{③} & Baseline & \MThreeBaselineAvgV & \MThreeBaselineMaxAbsA & \MThreeBaselineMaxAbsJerk & \MThreeBaselineSEnd & \MThreeBaselineTArrive & \MThreeBaselineQpTotal \\
+& GTOC & \MThreeGtocAvgV & \MThreeGtocMaxAbsA & \MThreeGtocMaxAbsJerk & \MThreeGtocSEnd & \MThreeGtocTArrive & \MThreeGtocQpTotal \\
+\midrule
+\multirow{2}{*}{④} & Baseline & \MFourBaselineAvgV & \MFourBaselineMaxAbsA & \MFourBaselineMaxAbsJerk & \MFourBaselineSEnd & \MFourBaselineTArrive & \MFourBaselineQpTotal \\
+& GTOC & \MFourGtocAvgV & \MFourGtocMaxAbsA & \MFourGtocMaxAbsJerk & \MFourGtocSEnd & \MFourGtocTArrive & \MFourGtocQpTotal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{工程仿真}
+
+\subsection{Apollo在环验证环境}
+
+工程仿真采用Apollo 11.0配套的Dreamview可视化平台，以\texttt{sim\_control}模式注入障碍物场景。\texttt{sim\_control}模式在不启动实车传感器的前提下，向Planning模块注入预设的感知障碍物与预测轨迹，Planning输出的ADCTrajectory直接反馈至Dreamview渲染自车位姿，形成Planning闭环。本节选取动态超车、窄路通行与单车道封闭导流三个代表性场景，每个场景采集三个关键时刻的截图，分别对应自车开始执行避让决策的接近阶段、自车与障碍物处于横向或纵向对位关系的中间阶段，以及自车已完成避让的离开阶段，以此展示GTOC在工程系统中的实际规划行为。
+
+\subsection{场景一动态超车}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_eng_scn01_dreamview}
+\caption{场景一动态超车的Dreamview在环序列}
+\label{fig:eng_scn01}
+\end{figure}
+
+动态超车场景中，前方车道存在低速行驶车辆，要求自车借用左侧相邻车道完成超车并切回原车道。GTOC在路径阶段通过时变投影机制，将前车在自车纵向时间窗内的位置轨迹注入横向边界，提前在借道车道分配横向偏移；LaneBorrowPath机制配合完成借道路径生成。Dreamview在环验证显示自车以13$\to$29$\to$36\,km/h的加速过程依次完成借道决策、并排超越（横向间距约4\,m）与切回原车道（纵向间距约13\,m），全过程平顺无急减速。
+
+\subsection{场景二窄路通行}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_eng_scn02_dreamview}
+\caption{场景二窄路通行的Dreamview在环序列}
+\label{fig:eng_scn02}
+\end{figure}
+
+窄路通行场景由两组横跨双车道的交通锥构成可通行间隙，间隙宽度仅略大于车身宽度，要求自车精确控制横向位置以穿过。GTOC的扫描线分组将两组锥桶识别为单一连通分量，组级最大间隙搜索定位$p^{*}$至间隙中心；差异化安全裕度对小尺寸锥桶下调缓冲，避免被统一安全距离过度压缩通行带。Dreamview在环验证显示自车以50$\to$43\,km/h降速通过，三相分别对应通过前（约25\,m）、纵向对位与通过后（约20\,m），自车在锥桶间隙中保持居中。
+
+\subsection{场景三单车道封闭导流}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_eng_scn03_dreamview}
+\caption{场景三单车道封闭导流的Dreamview在环序列}
+\label{fig:eng_scn03}
+\end{figure}
+
+单车道封闭导流场景由入口漏斗、维持段与出口漏斗三个连续区段构成，交通锥沿原车道由右沿斜跨至左沿引导自车进入借道车道，维持段水马横跨原车道与借道车道分界线分布，物理性地占据原车道左沿与借道车道右沿。GTOC识别整个导流连通分量为单一组，在组级最大间隙搜索中将$p^{*}$分配至所有水马的左侧，路径在入口漏斗起始处即决定借入相邻车道深处，并在借道车道左半部稳定通行。Baseline逐障碍物贪心决策时，入口漏斗段的锥桶以\textit{room\_left}显著大于\textit{room\_right}选择左推，在s\,$\approx$\,27\,m处遭遇维持段水马，水马因横跨车道分界且越过分界线方向有借道车道残余空间的特殊几何，被Baseline判定为\textit{room\_right}更大而触发右推，与前段锥桶累积的左推上界产生$l_{min} > l_{max}$的冲突，路径QP无可行解，Baseline在维持段入口处被blocked-then-trim机制触发降级停车。Dreamview在环验证中GTOC平顺通过整段导流并切回原车道，Baseline在s$\approx$23\,m处停止。
+
+\section{综合对比分析}
+
+\textbf{通行成功率}\quad{}4个场景中，GTOC在全部4个场景以$s_{end} \geq s_{max} - 1$\,m判定为完整通过，Baseline仅在场景③中完整通过。场景①②的Baseline失效原因为路径阶段对动态障碍物施加静态快照约束，速度阶段被迫长时间减速；场景④的Baseline失效则源于入口漏斗锥桶与跨车道分界线水马的逐障碍物决策方向矛盾，导致路径边界$l_{min} > l_{max}$，QP无可行解后触发blocked-then-trim降级停车，最终$s_{end} = $\,\MFourBaselineSEnd\,m，远小于GTOC的\MFourGtocSEnd\,m。
+
+\textbf{平均速度}\quad{}对4个场景的整体平均，GTOC的平均巡航速度\MSummaryGtocAvgV\,m/s，Baseline为\MSummaryBaselineAvgV\,m/s，提升\MSummarySummaryVImprovement\%。速度提升主要来自两方面，一是GTOC路径阶段提前规划横向避让，减少了速度阶段的被迫减速次数；二是时间有效性约束将Baseline的整段停车替换为精确的时间窗等待，缩短了等待时长。
+
+\textbf{轨迹平顺性}\quad{}在通行成功的场景中，GTOC的$|a|_{max}$和$|j|_{max}$均低于Baseline。Baseline在发现障碍物的瞬间需要急刹，导致加速度峰值集中；GTOC的约束在路径阶段已前置，QP平滑惩罚的作用范围更大，输出曲线更平滑。
+
+\textbf{计算耗时}\quad{}4个场景的QP求解总耗时平均，Baseline约\MSummaryBaselineQpTotal\,ms，GTOC约\MSummaryGtocQpTotal\,ms。这一结果与直觉相反，原因在于Baseline的路径阶段不绕行，所有冲突压给速度阶段，DP搜索与速度QP在禁行区附近反复迭代直至触发fallback；GTOC的路径阶段已经避开冲突，速度阶段无需重度回退，求解几乎一次收敛。新增的扫描线分组与时变投影步骤耗时约\MSummarySummaryExtraMs\,ms，远小于因fallback节省的速度QP时间。整体满足Apollo的100\,ms规划周期要求。
+
+\section{计算开销分析}
+
+表\ref{tab:time_breakdown}给出了4个场景的路径QP耗时、速度QP耗时及合计耗时。
+
+\begin{table}[htbp]
+\centering
+\caption{4场景QP求解耗时对比（ms）}
+\label{tab:time_breakdown}
+\small
+\begin{tabular}{clccc}
+\toprule
+\textbf{场景} & \textbf{模式} & \textbf{路径QP} & \textbf{速度QP} & \textbf{合计} \\
+\midrule
+\multirow{2}{*}{①} & Baseline & \MOneBaselineQpPath & \MOneBaselineQpSpeed & \MOneBaselineQpTotal \\
+& GTOC & \MOneGtocQpPath & \MOneGtocQpSpeed & \MOneGtocQpTotal \\
+\midrule
+\multirow{2}{*}{②} & Baseline & \MTwoBaselineQpPath & \MTwoBaselineQpSpeed & \MTwoBaselineQpTotal \\
+& GTOC & \MTwoGtocQpPath & \MTwoGtocQpSpeed & \MTwoGtocQpTotal \\
+\midrule
+\multirow{2}{*}{③} & Baseline & \MThreeBaselineQpPath & \MThreeBaselineQpSpeed & \MThreeBaselineQpTotal \\
+& GTOC & \MThreeGtocQpPath & \MThreeGtocQpSpeed & \MThreeGtocQpTotal \\
+\midrule
+\multirow{2}{*}{④} & Baseline & \MFourBaselineQpPath & \MFourBaselineQpSpeed & \MFourBaselineQpTotal \\
+& GTOC & \MFourGtocQpPath & \MFourGtocQpSpeed & \MFourGtocQpTotal \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+GTOC新增的扫描线分组与时变投影步骤的时间复杂度为$O(n \log n)$，而Baseline的PathBoundsDecider在每个离散位置遍历所有障碍物，时间复杂度为$O(nK)$，其中$K$为路径离散点数，典型配置下$K \approx 200$。在当前4个场景的障碍物数量范围内，GTOC的分组与投影开销均在\MSummarySummaryExtraMs\,ms量级以内，对总耗时影响较小。OSQP求解器本身对约束数量的增量不敏感，走廊约束以标准ST上界形式注入，不改变QP的稀疏结构，因此速度QP耗时在Baseline与GTOC之间差异主要由Baseline的fallback行为决定。
+
+\section{本章小结}
+
+本章给出GTOC集成至Apollo Planning系统的完整工程方案，并通过数值仿真与工程仿真验证了算法性能。在系统集成层面，将GTOC以最小侵入方式嵌入PathBoundsDecider，与LaneBorrowPath机制形成互补，并设计了三级降级策略保证在异常输入下的行为安全。在数值仿真层面，通过全链路Python仿真脚本对4个场景运行Baseline与GTOC双模对照，从通行成功率、平均速度、轨迹平顺性和计算耗时四个维度进行对比。在工程仿真层面，对动态超车、窄路通行与单车道封闭导流三个场景进行Dreamview在环验证，截图序列与数值仿真结论一致。整体上，GTOC通过在路径阶段引入时变投影与组级全局决策，将Baseline因静态快照决策产生的过度停车转化为精确的时间窗约束，在保持计算开销与Baseline相当的同时，提升了多障碍物密集场景下的通行成功率与行驶效率。
