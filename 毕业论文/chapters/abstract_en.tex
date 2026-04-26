@@ -1,0 +1,24 @@
+% ==================== 英文摘要 ====================
+\clearpage
+\phantomsection
+\addcontentsline{toc}{chapter}{Abstract}
+\thispagestyle{fancy}
+
+\begin{center}
+{\zihao{3}\bfseries \thesisTitleEn}
+\end{center}
+
+\vspace{0.5em}
+
+{\zihao{-4}\setstretch{1.25}
+
+\noindent\hspace{2em}{\bfseries Abstract: }The rapid development of autonomous driving technology has raised higher requirements for path planning algorithms, especially in dense multi-obstacle scenarios where existing algorithms suffer from path blockage, conservative decisions, and low traffic efficiency. Based on Baidu's Apollo open-source autonomous driving platform, this thesis conducts a source-code-level analysis of its Planning module and systematically identifies three planning deficiencies in PathBoundsDecider from the dimensions of safety margin, decision granularity, and spatiotemporal coordination: a uniform safety buffer that unnecessarily compresses the passage band, independent per-obstacle nudge decisions that produce contradictory avoidance directions, and complete exclusion of dynamic obstacles from path decisions leading to path-speed coordination failure.
+
+To address these problems, this thesis proposes the Group-aware Time-varying Optimal Corridor (GTOC) algorithm, which formulates the multi-obstacle nudge direction selection as a combinatorial optimization problem and develops three improvements along the dimensions of safety margin, decision granularity, and spatiotemporal coordination. Improvement I replaces Apollo's uniform safety buffer with differentiated margins $\delta_i$ derived from a multi-factor threat assessment model fusing time-to-collision, lateral overlap, relative velocity, obstacle type, and interaction density. Improvement II clusters longitudinally interacting obstacles into connected components via a sweep-line algorithm and performs globally optimal nudge decisions at the group level; the contiguity of the optimal partition in lateral order (Lemma) and the optimality of the maximum-gap strategy (Theorem) are proved, reducing the search space from $O(2^k)$ to $O(k \log k)$. Improvement III incorporates arrival-time functions and predicted trajectories to include dynamic obstacles in path boundary decisions, constructs a spatiotemporal passable corridor, and fuses its boundary constraints with SpeedBoundsDecider's Station-Time (ST) boundaries at the speed Quadratic Programming (QP) level, achieving path-speed coordinated planning.
+
+Simulation results demonstrate that compared with Apollo's native PiecewiseJerkPathOptimizer, GTOC improves average planning success rate from 79.8\% to 95.6\%, increases average traffic speed by 31.7\%, and reduces average stop count by 81.5\%, with $O(n \log n)$ computational complexity satisfying real-time requirements.
+
+\vspace{0.5em}
+\noindent\hspace{2em}{\bfseries Keywords: }Autonomous Driving; Path Planning; Apollo; GTOC Algorithm; Time-Varying Optimal Corridor; Obstacle Grouping; Combinatorial Optimization
+
+}

@@ -1,0 +1,31 @@
+% ==================== 目录 ====================
+\clearpage
+\thispagestyle{fancy}
+{\centering\zihao{3}\heiti\bfseries 目\hspace{2em}录\par}
+\vspace{6pt}
+{\setstretch{1.2}
+\makeatletter
+\@starttoc{toc}
+\makeatother
+\par}
+
+% ==================== 图/表/代码目录（调试用，可一键关闭） ====================
+\ifshowdebug
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 图\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lof}\makeatother\par}
+
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 表\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lot}\makeatother\par}
+
+  \clearpage
+  \thispagestyle{fancy}
+  {\centering\zihao{3}\heiti\bfseries 代\hspace{2em}码\hspace{2em}目\hspace{2em}录\par}
+  \vspace{6pt}
+  {\setstretch{1.2}\makeatletter\@starttoc{lol}\makeatother\par}
+\fi
