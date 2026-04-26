@@ -1,0 +1,43 @@
+% 场景②Dreamview 三帧 ROI 序列（fragment, 走 wrap_*.tex SVG 管线）
+\begingroup
+\graphicspath{{../dreamview/}{dreamview/}{../图片/dreamview/}}
+
+\def\imgW{5120}\def\imgH{2444}%
+\def\roiL{1000}\def\roiT{700}\def\roiR{3800}\def\roiB{1230}%
+
+\newcommand{\dvroiclip}[1]{%
+  \pgfmathsetmacro{\dvRoiW}{\roiR-\roiL}%
+  \pgfmathsetmacro{\dvRoiH}{\roiB-\roiT}%
+  \pgfmathsetmacro{\dvHFac}{\dvRoiH/\dvRoiW}%
+  \pgfmathsetmacro{\dvFullWFac}{\imgW/\dvRoiW}%
+  \pgfmathsetmacro{\dvOffXFac}{\roiL/\dvRoiW}%
+  \pgfmathsetmacro{\dvOffYFac}{\roiT/\dvRoiW}%
+  \pgfmathsetlengthmacro{\dvW}{\linewidth}%
+  \pgfmathsetlengthmacro{\dvH}{\dvHFac*\dvW}%
+  \pgfmathsetlengthmacro{\dvFullW}{\dvFullWFac*\dvW}%
+  \pgfmathsetlengthmacro{\dvOffX}{-\dvOffXFac*\dvW}%
+  \pgfmathsetlengthmacro{\dvOffY}{ \dvOffYFac*\dvW}%
+  \begin{tikzpicture}
+    \useasboundingbox (0,-\dvH) rectangle (\dvW,0);
+    \begin{scope}
+      \clip (0,-\dvH) rectangle (\dvW,0);
+      \node[anchor=north west, inner sep=0] at (\dvOffX,\dvOffY)
+        {\includegraphics[width=\dvFullW]{#1}};
+    \end{scope}
+  \end{tikzpicture}%
+}
+
+\centering
+\begin{subfigure}[b]{\textwidth}
+  \centering\dvroiclip{scn02_before.png}
+  \subcaption{通过前\;25\,m}
+\end{subfigure}\\[6pt]
+\begin{subfigure}[b]{\textwidth}
+  \centering\dvroiclip{scn02_during.png}
+  \subcaption{纵向对位}
+\end{subfigure}\\[6pt]
+\begin{subfigure}[b]{\textwidth}
+  \centering\dvroiclip{scn02_after.png}
+  \subcaption{通过后\;20\,m}
+\end{subfigure}
+\endgroup
