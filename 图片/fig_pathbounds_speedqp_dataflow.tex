@@ -1,0 +1,51 @@
+% 走廊约束在 Apollo 路径-速度流水线中的两条传递通道
+% 隐式通道：g_{p*}<W_ego → path 在 s_k 截断 → SpeedQP 视野自然受限
+% 显式通道：T={(s_k, τ_k)} 沿 ReferenceLineInfo 透传 → SpeedQP 收紧 s_j^{ub}
+\begin{tikzpicture}[scale=0.95, transform shape,
+    mod/.style={rectangle, rounded corners=3pt, draw=deepblue, fill=lightblue!35,
+        minimum width=3.0cm, minimum height=1.2cm, align=center, font=\small},
+    modimp/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink!50,
+        minimum width=3.0cm, minimum height=1.2cm, align=center, font=\small},
+    modunchg/.style={rectangle, rounded corners=3pt, draw=gray!60, fill=gray!10,
+        minimum width=3.0cm, minimum height=1.2cm, align=center, font=\small},
+    sig/.style={font=\scriptsize, anchor=south, inner sep=1pt},
+    arr/.style={-Stealth, thick, deepblue},
+    implicit/.style={-Stealth, very thick, deepblue!70!black, dashed},
+    explicit/.style={-Stealth, very thick, deeppink},
+]
+
+% 横向流水线：4 个模块
+\node[modimp] (pbd) at (0, 0) {PathBoundsDecider\\\textbf{时变 SL 投影}\\新增 $p^\star,\,\tau,\,\mathcal{T}$};
+\node[modunchg] (po)  at (4, 0) {PathOptimizer\\\textit{未改}};
+\node[modunchg] (sbd) at (8, 0) {SpeedBoundsDecider\\\textit{未改}};
+\node[modimp] (sqp) at (12, 0) {PiecewiseJerk\\SpeedOptimizer\\\textbf{$s_j^{ub}$ 双源融合}};
+
+% 主流箭头（同形信号）
+\draw[arr] (pbd) -- node[sig, above] {SL 边界 $[l^-,l^+]$} (po);
+\draw[arr] (po)  -- node[sig, above] {path $l(s)$} (sbd);
+\draw[arr] (sbd) -- node[sig, above] {$s_j^{ub,\text{SBD}}$} (sqp);
+
+% 隐式通道：path 截断信号绕过 PathOptimizer 直达 SBD
+\node[font=\scriptsize\bfseries, deepblue!70!black] at (0, -1.6) {隐式通道};
+\draw[implicit] (pbd.south) ..controls (1.0, -2.4) and (7.0, -2.4) .. (sbd.south)
+    node[midway, below=2pt, font=\scriptsize, deepblue!70!black, align=center]
+    {$g_{p^\star}{<}W_{ego}{\Rightarrow}$ path 在 $s_k$ 截断\\Speed 视野自然受限};
+
+% 显式通道：T 清单从 PBD 直达 SQP，挂在 ReferenceLineInfo 上
+\node[font=\scriptsize\bfseries, deeppink] at (0, 1.7) {显式通道};
+\draw[explicit] (pbd.north) ..controls (2.5, 2.6) and (9.5, 2.6) .. (sqp.north)
+    node[midway, above=2pt, font=\scriptsize, deeppink, align=center]
+    {时间清单 $\mathcal{T}{=}\{(s_k,\tau_k)\}_{i\in\mathcal{D}}$ 经 ReferenceLineInfo 透传};
+
+% 双源融合点说明
+\node[font=\tiny, deeppink, anchor=north, align=center] at (12, -1.45)
+    {$s_j^{ub}{\leftarrow}\min(s_j^{ub,\text{SBD}},\,s_j^{ub,\text{corridor}})$\\见 \eqref{eq:dual_source}};
+
+% 颜色图例
+\node[font=\tiny, anchor=west] at (-2, -3.4) {%
+  \textcolor{deepblue!70!black}{\textbf{--}\,\textbf{--}} 隐式 \quad
+  \textcolor{deeppink}{\textbf{----}} 显式 \quad
+  \textcolor{deepblue}{\textbf{----}} Apollo 原有信号
+};
+
+\end{tikzpicture}
