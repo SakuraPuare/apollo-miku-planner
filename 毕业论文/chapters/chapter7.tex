@@ -1,70 +1,388 @@
-\chapter{总结与展望}
+\chapter{时空可通行走廊与路径-速度协调}
 
-\section{研究工作总结}
+本章对应GTOC的第三项改进，针对Apollo PathBoundsDecider通过\texttt{IsStatic()}过滤将动态障碍物完全排除在路径决策之外、以及路径-速度规划之间缺乏时空约束传递通道的双重缺陷，提出基于到达时间函数与预测轨迹的时空可通行走廊及其与SpeedBoundsDecider的双源约束融合机制。本章首先深入剖析动态障碍物排除在多障碍物场景下导致路径与速度规划相互脱节的源码根源与影响，进而引入基于二阶运动学模型的到达时间函数$\tau(s)$，将动态障碍物在自车到达时刻的预测位置纳入路径边界决策；将时变最优通行带的时间有效性条件投影至ST空间，构建时空可通行走廊；最后将走廊边界与SpeedBoundsDecider的ST边界在速度QP层面双源融合，在不修改速度规划模块结构的前提下建立路径-速度约束传递通道。本章的SL层输入来自第五章的差异化$\delta_i$与第六章的连通分量分组结果，输出最终接入第八章的Apollo系统集成方案。
 
-本文以百度Apollo 11.0开源自动驾驶平台为研究对象，针对其路径规划模块在多障碍物密集场景下的决策失效问题，从源码分析、问题识别、算法设计到仿真验证进行了系统性研究。主要完成了以下工作。
+\section{ST层路径-速度协调缺失}
+\label{sec:problem_st}
 
-\begin{enumerate}
-\item \textbf{对Apollo Planning模块进行了源码级深度分析}\quad{}系统梳理了Planning模块的Scenario-Stage-Task三级管理架构、PublicRoadPlanner中基于EM Planner思想的路径-速度解耦两阶段优化流程、ReferenceLine平滑机制、PathDecider决策逻辑、PathBoundsDecider的路径边界构建流程以及SpeedBoundsDecider的ST边界构建机制。通过对关键源码的逐行分析，揭示了PathBoundsDecider在路径边界构建阶段的逐障碍物独立决策模式、统一安全裕度分配、动态障碍物排除机制，以及SpeedBoundsDecider与路径阶段之间单向且有限的信息传递特征，为后续问题识别和算法改进提供了可靠依据。
+\subsection{问题描述与源码定位}
 
-\item \textbf{从三个维度系统识别了多障碍物场景下路径规划失效的根本瓶颈}\quad{}通过源码分析从安全距离、决策粒度和时空协调三个维度识别了三个核心问题。问题一，所有障碍物使用统一的安全裕度$\delta$，不区分威胁程度，低威胁障碍物不必要地压缩了通行带宽度，加剧了路径阻塞的发生概率。问题二，PathBoundsDecider对每个障碍物独立执行贪心避让方向选择，当多个障碍物分布在参考线两侧时，独立决策产生的矛盾避让方向导致路径边界上下界交叉，即$l^+ < l^-$，触发BLOCKED状态，迫使车辆执行不必要的停车，是导致规划失败的直接瓶颈。问题三，动态障碍物在路径决策阶段被完全排除，即源码中通过\texttt{IsStatic()}过滤，使得路径边界无法反映动态障碍物的实际影响，且路径-速度之间缺乏时空约束传递通道，导致速度阶段只能基于静态快照做出过度保守的YIELD停车决策。三个问题的共同根源在于路径边界构建缺乏全局视野、分级机制和时间信息。
+\textbf{问题}\quad{}Apollo的路径决策模块在确定障碍物的避让方向时，完全排除了动态障碍物。所有非静态障碍物，包括行驶中的车辆、行走的行人、骑行的自行车等，不参与PathBoundsDecider的边界构建，而是被完全交给速度规划阶段的ST图处理。这意味着路径规划阶段看到的“世界”中只有静态障碍物，动态障碍物如同不存在。
 
-\item \textbf{建立了时变最优通行带的数学模型}\quad{}将多障碍物避让方向选择建模为组合优化问题$(\mathbf{d}^*, \tau^*) = \arg\max \min_s W(s, \mathbf{d}, \tau)$。通过引理1（最优分割的连续性），利用反证法证明了最优避让方向分配在障碍物横向排序中具有连续性，将搜索空间从$O(2^k)$降至$k+1$个候选；通过定理1（最大间隙最优性），直接代入验证了每个候选分割的通行带宽度恰好等于对应的横向间隙，将最优通行带的精确求解复杂度降为$O(k \log k)$。该数学框架为工程实现提供了严格的理论保证。
+\textbf{源码定位}\quad{}该问题的源码证据体现在\texttt{IsWithinPathDecider\-ScopeObstacle}函数中
 
-\item \textbf{设计并实现了基于预测轨迹的时变障碍物分组算法}\quad{}在SL层，提出多因子威胁度评估模型，结合TTC、横向重叠率、相对速度、障碍物类型和交互密度五个因子量化威胁程度，实现差异化安全裕度$\delta_i$的分配；通过扫描线算法检测障碍物的纵向重叠关系，将相互关联的障碍物聚为连通分量，在组内按横向位置排序并计算最大间隙，执行组级全局最优避让方向决策。在ST层，引入基于二阶运动学模型的到达时间函数$\tau(s)$和预测轨迹，将动态障碍物纳入路径边界决策；将时变通行带的时间有效性条件投影至ST空间，构建时空可通行走廊，其边界约束与SpeedBoundsDecider的ST边界在QP层面融合，建立了此前缺失的路径-速度约束传递通道。算法总复杂度为$O(n \log n)$，满足实时性要求。
+\begin{lstlisting}[language=C++,caption={动态障碍物被路径决策排除},label={lst:scope_obstacle}]
+// path_bounds_decider_util.cc: IsWithinPathDeciderScopeObstacle
+bool PathBoundsDeciderUtil::IsWithinPathDeciderScopeObstacle(
+    const Obstacle& obstacle) {
+  // 虚拟障碍物不参与路径决策
+  if (obstacle.IsVirtual()) {
+    return false;
+  }
+  // 已有IGNORE决策的障碍物跳过
+  if (obstacle.HasLongitudinalDecision() && obstacle.HasLateralDecision()
+      && obstacle.IsIgnore()) {
+    return false;
+  }
+  // 非静态障碍物或速度超过阈值的障碍物直接排除
+  if (!obstacle.IsStatic() ||
+      obstacle.speed() > FLAGS_static_obstacle_speed_threshold) {
+    return false;  // 动态障碍物不参与路径决策
+  }
+  // TODO(jiacheng):
+  // Some obstacles are not moving, but only because they are waiting
+  // for red light (traffic rule) or because they are blocked by
+  // others (social). These obstacles will almost certainly move in
+  // the near future and we should not side-pass such obstacles.
+  return true;
+}
+\end{lstlisting}
 
-\item \textbf{通过仿真实验全面验证了改进算法的性能}\quad{}在Apollo仿真环境中设计了纵向密集静态障碍物、横向密集障碍物、混合动静态障碍物和高密度交叉路口四类共12个测试场景，从规划成功率、通行速度、停车次数、规划耗时和加速度方差五个维度进行对比分析。实验结果表明，改进算法将平均规划成功率从79.8\%提升至95.6\%，平均通行速度提升31.7\%，平均停车次数减少81.5\%，平均规划耗时降低16.9\%，加速度方差降低36.5\%。在极端密集场景下，包含12个障碍物和4个冲突方向，，改进算法的成功率仍保持在86\%以上，且规划耗时远低于100ms的实时性要求。
-\end{enumerate}
+值得注意的是，Apollo开发团队在该函数中留下了\texttt{TODO}注释，表明他们意识到当前的处理方式存在不足，但尚未实施改进。这个\texttt{TODO}注释本身就是该问题存在的直接证据。
 
-\section{主要创新点}
+同样的过滤模式不止出现在PathBoundsDecider。路径决策器PathDecider的\texttt{MakeStaticObstacleDecision}在遍历障碍物列表的第一步同样调用\texttt{IsStatic()}过滤掉所有动态障碍物，再对剩余的静态障碍物执行STOP/NUDGE/IGNORE决策。Apollo路径规划阶段的两个核心决策模块都将动态障碍物完全排除在外，形成了系统性的路径-速度协调缺失。
 
-本文的主要创新点归纳如下。
+\subsection{影响分析}
 
-\begin{enumerate}
-\item \textbf{将多障碍物避让方向选择建模为最大通行带宽度优化问题，并给出了最大间隙策略最优性的理论分析}\quad{}引理1通过反证法证明了最优避让方向分配在障碍物横向排序中具有连续性，将指数级搜索空间降维为线性枚举；定理1进一步证明了每个候选分割的通行带宽度恰好等于对应的横向间隙，从而将最优避让策略等价为选择最宽间隙这一直观操作。该理论结果不仅提供了$O(k \log k)$的精确求解算法，也从数学上解释了为何Apollo原始贪心策略在多障碍物场景下必然失效。
+动态障碍物被排除在路径决策之外，产生以下影响。
 
-\item \textbf{提出了基于扫描线的时变障碍物分组算法}\quad{}通过纵向重叠检测将互相关联的障碍物聚为连通分量，在组级别应用全局最优决策，从根本上消除了逐障碍物贪心策略产生矛盾避让方向的问题。分组机制使得不同连通分量的决策互不干扰，在保证全局最优性的同时保持了算法的局部性和可扩展性。
+\textbf{影响一}，路径与速度规划之间缺乏协调
 
-\item \textbf{设计了面向通行带优化的威胁度分级与动态安全距离机制}\quad{}基于多因子评估方法，结合TTC、横向重叠率、相对速度、障碍物类型和交互密度五个因子量化威胁程度，据此分配差异化的安全裕度$\delta_i$。该机制的核心贡献不在于威胁度模型本身，而在于将差异化$\delta_i$与最大间隙算法相结合，引理1和定理1不依赖$\delta$是否为常数的性质保证了$\delta_i$可无缝接入最优求解框架。该设计使低威胁障碍物释放通行空间，在不降低安全性的前提下扩大通行带宽度。
+在Apollo的路径-速度解耦架构中，如第三章3.3节所述，路径规划先于速度规划执行，速度规划在路径规划的结果上构建ST图。当动态障碍物不参与路径决策时，路径阶段可能生成一条直行路径，而速度阶段在该路径上发现动态障碍物横穿，不得不急刹或停车等待。如果路径阶段考虑了动态障碍物的预测轨迹，完全可以提前规划一条避让路径，在保持速度的同时安全通过。
 
-\item \textbf{引入到达时间函数和预测轨迹，将动态障碍物纳入路径边界决策，并建立ST走廊与速度规划的协调机制}\quad{}弥补了Apollo PathBoundsDecider在路径边界构建阶段完全排除动态障碍物的不足，利用预测轨迹计算障碍物在自车到达时刻的预期位置，使路径边界能够反映动态障碍物的时变特性。对于正在横穿的行人等场景，时变投影能够捕捉到障碍物移开后间隙打开的可能性，避免过度保守的停车决策。进一步将时变通行带投影至ST空间，揭示其本质上构成时空可通行走廊，走廊边界转化为速度QP的上界约束，与SpeedBoundsDecider的ST边界形成双源融合，在不修改速度规划模块结构的前提下实现了路径-速度协调，解决了第四章所揭示的路径-速度信息断层问题。
-\end{enumerate}
+\textbf{影响二}，横穿行人在路径规划中完全不存在
 
-图\ref{fig:contribution_summary}将上述四项创新按"理论-算法-安全-系统"四层结构归纳，并给出综合实验收益。
+考虑一个典型场景：一名行人正在从右向左横穿道路。在路径规划阶段，由于该行人是动态障碍物（\texttt{IsStatic() == false}），PathBoundsDecider完全忽略其存在，路径规划生成的是一条沿车道中心线的直行路径。随后速度规划在ST图中检测到该行人的ST边界，只能通过减速或停车来避让。
 
-\begin{figure}[H]
+具体地，设自车以$v_{ego} = 8$\,m/s行驶，前方$s = 10$\,m处一名行人以$v_{lat} = 1.2$\,m/s从右向左横穿，当前位于车道中央$l = 0$处。自车到达该位置需$t = 10/8 = 1.25$\,s，届时行人已横移$1.2 \times 1.25 = 1.5$\,m，移至$l = 1.5$\,m处，接近车道左边缘。如果路径规划阶段纳入行人的预测轨迹，可以基于行人在$t = 1.25$\,s时的预测位置即$l = 1.5$\,m计算路径边界，此时行人已不在车道中央，自车可从行人右侧安全通过，无需停车。但由于行人被\texttt{IsWithinPathDeciderScopeObstacle}过滤，路径阶段对此一无所知，速度阶段只能被迫停车等待。该场景的完整时变分析将在本章下一节中给出。
+
+图\ref{fig:dynamic_exclusion}给出了该场景下行人时变位置与自车到达时刻的三帧对比。子图(a)为$t=0$时刻，自车刚开始规划，行人距自车10\,m，尚未进入车道，PathBoundsDecider看到的“世界”中该行人不存在。子图(b)为$t=0.625$\,s时刻，自车已行进5\,m，行人横移0.75\,m进入车道右半侧，恰好落在自车直行路径上形成碰撞窗口。子图(c)为$t=1.25$\,s时刻，行人已穿过车道抵达对侧，自车到达原障碍位置时通行带打开。若Path阶段能够利用行人的预测轨迹即“在自车到达该位置时行人已横移1.5\,m至车道边缘”这一事实，完全可以在规划初始即选择从行人右侧绕行或保持直行，无需进入Speed阶段的急刹降级。
+
+\begin{figure}[htbp]
 \centering
-\resizebox{0.8\textwidth}{!}{\input{../图片/fig_contribution_summary}}
-\caption{本文创新贡献的四层结构与综合实验收益}
-\label{fig:contribution_summary}
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_a}}
+  \caption{$t=0$ 行人未进入路径}
+  \label{fig:dynamic_exclusion:a}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_b}}
+  \caption{$t=0.625$ s 行人半入路径}
+  \label{fig:dynamic_exclusion:b}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_dynamic_exclusion_c}}
+  \caption{$t=1.25$ s 通行带打开}
+  \label{fig:dynamic_exclusion:c}
+\end{subfigure}
+\caption{动态障碍物排除后的时变演化示意}
+\label{fig:dynamic_exclusion}
 \end{figure}
 
-\section{研究局限性}
+\textbf{影响三}，加剧问题一的影响
 
-本研究仍存在以下不足。
+动态障碍物的排除使得PathBoundsDecider只能基于障碍物在$t = 0$时刻的静态快照做决策，无法利用时间维度的信息。例如，一辆缓慢移动的车辆在当前时刻$t = 0$占据车道中央，但$t = 2$s后将移至车道边缘甚至离开车道。如果纳入该动态障碍物的预测轨迹，PathBoundsDecider可以基于自车到达该$s$位置时障碍物的预测位置来决定避让方向，而非基于其当前位置。这种时间维度的利用可以显著减少问题一中BLOCKED判定的发生频率。
+
+\subsection{路径决策信息未传递至速度规划}
+
+除了动态障碍物被排除外，ST层面还存在一个更深层的问题，路径决策阶段产生的时空信息没有传递给速度规划阶段。
+
+在Apollo的路径-速度解耦架构中，PathBoundsDecider输出的是横向路径边界$[l^-(s), l^+(s)]$，SpeedBoundsDecider基于该路径独立构建ST边界。两个模块之间的信息传递是单向的、有限的，速度规划知道路径在哪里，但不知道路径为什么在那里。
+
+这种信息断层的后果在动态障碍物场景中尤为明显。考虑改进后的路径规划，路径决策可能基于“行人将在$t = 1.25$\,s后移开”这一预判选择了一条通过方案，但SpeedBoundsDecider不知道这一时间约束的存在。如果速度规划恰好让自车在行人移开之前到达该位置，路径决策的前提条件就被违反了。
+
+因此，ST层面的问题不仅是“排除了动态障碍物”，更本质的问题是路径规划和速度规划之间缺乏时空约束的传递通道。改进方案需要建立这样一个通道，路径层面的时变决策能够以约束的形式传递给速度层面，确保两者的一致性。图\ref{fig:path_speed_breakage}示意Apollo解耦架构中Path阶段已掌握的时空决策依据如何被瓶颈截断，并预告本章后续将建立的两条传递通道。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.92\textwidth}{!}{\input{../图片/fig_path_speed_breakage}}
+\caption{路径与速度规划之间的单向信息传递与时空约束缺口}
+\caption*{\scriptsize 漏斗体现Apollo解耦框架的窄通道，仅$[l^-(s),l^+(s)]$得以通过。Path阶段掌握的$p^\star,\,g_{p^\star}(s),\,\tau(s)$与时间清单$\{(s_k,\tau_k)\}$被全部截断。下方两个绿色补丁通道是本章新增的传递机制，详见7.2.6节。}
+\label{fig:path_speed_breakage}
+\end{figure}
+
+\section{ST层时空可通行走廊}
+第四章建立的统一时变最优通行带数学框架与本章前节所识别的ST层问题，即动态障碍物被排除、路径-速度缺乏协调，要求将第五章和第六章的SL层理论扩展至时变场景。本节构建时空可通行走廊，利用Apollo Prediction模块提供的障碍物预测轨迹，将SL空间的最优通行带投影至ST空间，建立路径决策与速度规划之间的约束传递通道。
+
+\subsection{到达时间估计}
+时变通行带的核心在于将自车的到达时间与障碍物的预测轨迹相耦合。到达时间函数$\tau(s)$估计自车到达纵向位置$s$的时刻。
+
+最简单的估计是匀速假设$\tau_0(s) = (s - s_{ego}) / v_{ego}$。然而，匀速假设在自车正在加速或减速时会引入显著误差，足以导致通行带的时间有效性判断失误，定量比较参见图\ref{fig:arrival_time_compare}。
+
+为提高精度，采用二阶运动学模型。根据匀加速运动方程$s - s_{ego} = v_{ego}\, t + \frac{1}{2} a_{ego}\, t^2$，解出到达时间
+
+\begin{equation}
+    \tau(s) = \frac{-v_{ego} + \sqrt{v_{ego}^2 + 2\, a_{ego}\, (s - s_{ego})}}{a_{ego}}
+    \label{eq:arrival_time}
+\end{equation}
+
+其中$s_{ego}$、$v_{ego}$和$a_{ego}$分别为自车当前的纵向位置、速度和加速度，均可从Apollo的\texttt{VehicleState}模块直接获取。
+
+该公式在两种边界情形下退化为更简单的形式。当$a_{ego} \to 0$时，对根号内进行Taylor展开$\sqrt{1 + x} \approx 1 + x/2$
+
+\begin{equation}
+    \tau(s) = \frac{v_{ego}\!\left(\sqrt{1 + \dfrac{2a_{ego}(s-s_{ego})}{v_{ego}^2}} - 1\right)}{a_{ego}} \;\approx\; \frac{v_{ego} \cdot \dfrac{a_{ego}(s-s_{ego})}{v_{ego}^2}}{a_{ego}} = \frac{s - s_{ego}}{v_{ego}}
+    \label{eq:arrival_time_degenerate}
+\end{equation}
+
+即退化为匀速估计。当$v_{ego} \approx 0$且$a_{ego} \approx 0$即自车近似静止时，令$\tau(s) = +\infty$，算法退化为静态版本，这在物理上是合理的，静止的自车不会到达任何前方位置，因此障碍物的预测轨迹不产生时变效应。
+
+在实际实现中，若上一规划周期已输出速度曲线$s_{prev}(t)$，可通过对其求逆$\tau(s) = s_{prev}^{-1}(s)$获得最精确的估计，作为图中“原始速度曲线反推”曲线的来源。二阶运动学模型作为首个规划周期即无历史速度曲线可用或速度曲线不可用时的回退方案。图\ref{fig:arrival_time_compare}以$v_{ego}=5$\,m/s、$a_{ego}=2$\,m/s$^2$的加速工况展示三种模型在前方30\,m范围内的估计曲线，以原始速度曲线反推为基准，在$s=20$\,m处匀速假设的误差约为0.87\,s，二阶运动学模型将残差压缩至约0.51\,s。在加速度持续变化的工况下，二阶模型相比匀速假设的精度仍有约四成提升，与历史速度曲线反推之间的残差则反映出常加速度假设无法完全捕捉非线性速度演化，因此实际工程中优先采用历史速度曲线反推，二阶模型仅作为首个规划周期或历史曲线不可用时的回退方案。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.78\textwidth}{!}{\input{../图片/fig_arrival_time_compare}}
+\caption{到达时间估计的匀速假设与二阶运动学模型对比}
+\label{fig:arrival_time_compare}
+\end{figure}
+
+需要指出的是，到达时间估计存在固有的循环依赖，$\tau(s)$用于计算时变通行带，通行带约束影响速度规划，而速度规划结果反过来决定了自车的实际到达时间。本文采用Apollo的周期性重规划机制，每100\,ms执行一次，隐式处理这一耦合，每个周期使用上一周期的速度输出更新$\tau(s)$，在连续多个规划周期中实现近似收敛。这种“单步延迟”策略在Apollo的路径-速度解耦框架中是标准做法，路径规划和速度规划本身就存在类似的耦合，其在城市道路工况下的实际效果已通过第八章的实验验证。
+
+\subsection{动态障碍物的时变SL投影}
+Apollo的Prediction模块为每个动态障碍物提供未来5\,s内的预测轨迹，以离散时间点序列$\{(x_i(t_j), y_i(t_j))\}$的形式给出。利用该预测轨迹，可以计算障碍物在自车到达时刻$\tau(s)$的SL位置。
 
 \begin{enumerate}
-\item \textbf{实验验证以仿真为主}\quad{}受限于实验条件，算法验证完全基于Apollo的PNC仿真环境，尚未在实车平台上进行测试。仿真环境无法完全模拟真实道路中的传感器噪声、感知延迟和执行误差等因素，算法在实际部署中的鲁棒性有待进一步检验。
+\item 在预测轨迹中查询时刻$\tau(s)$对应的障碍物位置，通过线性插值获取。
 
-\item \textbf{纵向部分重叠采用保守近似}\quad{}当障碍物在$s$方向仅部分重叠时，本文将整个连通分量作为一个整体处理，使用公共$s$截面上的间隙作为通行带宽度的估计。这种保守近似在障碍物纵向间距较小时是合理的，但在某些特殊几何构型下可能低估实际可用空间。
+\item 将该位置从Cartesian坐标投影至参考线的Frenet坐标，得到$(s_i(\tau), l_i(\tau))$。
 
-\item \textbf{到达时间估计未与速度规划进行迭代优化}\quad{}到达时间函数$\tau(s)$采用基于当前速度和加速度的二阶运动学模型，相比匀速假设已有显著改进，但仍属于单次前向估计，未与速度规划的输出进行迭代修正。当QP输出的速度曲线与$\tau(s)$的估计偏差较大时，例如需要大幅减速的场景，时变投影可能偏离实际情况。
+\item 结合障碍物的几何尺寸，计算时变SL边界$[l_i^{-}(\tau(s)), l_i^{+}(\tau(s))]$。
 
-\item \textbf{依赖预测轨迹的准确性}\quad{}动态障碍物的时变SL投影完全依赖Prediction模块输出的预测轨迹。在交互场景中，障碍物的行为可能因自车决策而改变，当前的开环预测无法捕捉这种耦合效应。
-
-\item \textbf{算法的跨版本兼容性未经验证}\quad{}本文算法仅在Apollo 11.0版本上实现和验证，Apollo平台版本迭代较快，算法的跨版本兼容性有待进一步测试。
+\item 若障碍物在$\tau(s)$时刻的纵向位置与$s$的距离超过其纵向尺寸的一半，即障碍物已移出该纵向截面的影响范围，则标记其在位置$s$处不活跃，不参与分组和间隙计算。
 \end{enumerate}
 
-\section{未来研究方向}
+这一机制使得即将移出自车路径的动态障碍物如横穿行人、变道车辆不再对路径边界构成约束，从而避免Baseline中因忽略动态信息而导致的不必要停车。
 
-基于上述局限性，未来的研究可从以下方向展开。
+需要特别说明的是，对于预测轨迹超出Prediction模块时间范围，通常为5\,s，的情形，采用保守策略，假设障碍物保持最后预测位置不变。这一假设的合理性在于，5\,s内自车以城市道路常见速度，取8至12\,m/s，可行驶40--60\,m，已覆盖绝大多数需要路径决策的场景。对于更远距离的障碍物，路径决策可以在后续规划周期中随着距离缩短而更新。
 
+此外，对于从Prediction模块接收到多条预测轨迹如车辆可能直行或变道的情况，当前实现取概率最高的轨迹。更精细的处理方式是对多条轨迹分别计算时变投影并取并集进行保守处理，但这会增加计算复杂度，留作后续工作。图\ref{fig:tvsl_pipeline}归纳了从Prediction模块原始轨迹到最终活跃障碍物集的四步数据流，到达时间$\tau(s)$在三个步骤中被共同引用；该步骤输出的活跃障碍物集即第六章定理1所需的输入。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_tvsl_pipeline}}
+\caption{动态障碍物时变SL投影的四步流水线}
+\label{fig:tvsl_pipeline}
+\end{figure}
+
+\subsection{时变间隙与ST走廊定义}
+基于7.2.1节的到达时间$\tau(s)$和7.2.2节的时变SL投影，本节完成第六章静态间隙优化向动态情形的推广，并把推广结果与$\tau(s)$合成ST平面上的二维可行域。本节交付两项定义。其一为作为$s$函数的时变间隙$g_p(s)$与全路径最优分割$p^*$，逐$s$截面给出空间维度的通行性判定。其二为时空可通行走廊$\Omega$，将SL通行性沿$\tau(s)$抬升至ST平面，作为7.2.4节速度规划约束的几何载体。
+
+对于连通分量内按$u_i(\tau(s))$排序的$k$个障碍物，时变间隙定义为
+
+\begin{equation}
+    g_p(s) = \begin{cases}
+        u_{(1)}(\tau(s)) - l_{road}^{-}(s) & p = 0 \\[0.3em]
+        u_{(p+1)}(\tau(s)) - v_{(p)}(\tau(s)) & p = 1, \ldots, k-1 \\[0.3em]
+        l_{road}^{+}(s) - v_{(k)}(\tau(s)) & p = k
+    \end{cases}
+    \label{eq:time_varying_gap}
+\end{equation}
+
+第六章定理1在每个$s$截面上仍然成立。这是因为定理1的证明过程即引理1的交换论证和定理1的直接代入验证仅依赖于$u$和$v$值的排序关系，不要求$u$和$v$是常数。只要在每个$s$处重新按$u_i(\tau(s))$排序并计算间隙，定理1的结论即可直接应用。
+
+全路径的最优通行带宽度定义为
+
+\begin{equation}
+    W^{*} = \max_{p} \min_{s} g_p(s)
+    \label{eq:time_varying_opt}
+\end{equation}
+
+该max-min问题要求在所有$s$截面上同时选择一个固定的分割点$p$，使得最窄处的间隙最大。精确求解需要枚举$k+1$个$p$值，对每个$p$遍历所有离散$s$求最小间隙，复杂度为$O(kK)$，其中$K$为离散点数。算法\ref{alg:optimal_band}在实际实现中采用保守近似，以连通分量内所有障碍物均同时活跃的假设，在最密集的$s$截面上计算间隙并选取$p^{*}$。这一近似的安全性由5.4.1节的分析保证，最密集截面上的决策自然适用于更稀疏的截面。
+
+与静态版本的关键差异在于动态障碍物的$u_i(s)$和$v_i(s)$随$s$变化，因为$\tau(s)$变化导致查询的预测时刻不同，使得间隙在不同$s$处可能打开或关闭。例如，横穿行人在$s$较小处自车尚未到达时间隙为零，但在$s$较大处到达时行人已移走间隙打开。
+
+至此空间维度上每个$s$截面的通行性已由$g_{p^*}(s) \geq W_{ego}$判定，把这一判定结果沿时间维度$\tau(s)$抬升，即在ST平面上构成本节定义的第二项对象，时空可通行走廊
+
+\begin{equation}
+    \Omega = \left\{(s, t) \;\middle|\; g_{p^*}(s) \geq W_{ego},\;\; t \geq \tau(s) \right\}
+    \label{eq:st_corridor}
+\end{equation}
+
+其中第一个条件要求位置$s$处的最大间隙足以容纳自车宽度，第二个条件要求自车的到达时间不早于$\tau(s)$。$\Omega$的物理含义是，自车的ST轨迹$s(t)$只要完全落在区域$\Omega$内，就能保证在每个纵向位置都有足够的横向通行空间。
+
+由式\eqref{eq:st_corridor}可见，$\Omega$在$s$维度由$g_{p^*}(s)\geq W_{ego}$判定通行与否，在$t$维度由$\tau(s)$作为下沿。若某位置$s_k$的最优间隙不足以容纳自车，整条纵向列$\{s_k\}\times \mathbb{R}_+$被从$\Omega$中排除，形成$s$方向的“禁行切片”。对于静态障碍物，$g_{p^*}(s)$仅取决于几何投影；对于动态障碍物，$g_{p^*}(s)$由自车抵达$s$的查询时刻$\tau(s)$决定，若自车到达$s_k$时障碍物恰好未移开，$s_k$列禁行，若已移开则打开。禁行切片在$\Omega$中呈现为$s$方向的水平缺口。
+
+图\ref{fig:corridor_gen}以三阶段递进形式展示$\Omega$的构建过程，从单截面判定起步、沿$s$推广为剖面、最终升至ST平面。构造场景设道路宽$l\in[-2,2]$、$W_{ego}=1.5$\,m、$v_{ego}=4$\,m/s（即$\tau(s)=s/4$），含静态偏置障碍A位于$s\in[2.5,4]$、$l\in[-1.2,0.3]$，及动态宽体障碍D，于$t=0$时占据$s\in[6.5,7]$、$l\in[-1.3,1.3]$，以$v_{lat}=+0.4$\,m/s朝右横向移动。
+
+子图(a)给出"单$s$截面如何判定通行"的微观流程，选$s=s^\star=3.25$位于A内部，A的SL投影$[u_A,v_A]=[-1.2,0.3]$将道路切成两段间隙，由式\eqref{eq:time_varying_gap}得$g_0=0.8<W_{ego}$（左段不够装下自车）、$g_1=1.7\geq W_{ego}$（右段够），$g^\star=\max(g_0,g_1)=1.7$决定$p^\star=1$且该截面通行，自车恰嵌入右侧$g_1$间隙。
+
+子图(b)将(a)的判定流程沿$s$推广为$g_{p^*}(s)$剖面，与$W_{ego}$参考线比对识别全路径上哪些$s$通行哪些禁行。A段为水平平台$1.7$\,m，与(a)中$s^\star$处取值相同，A静态故剖面平直；D段为斜线$1.35$至$1.4$\,m，D动态故剖面随$\tau(s)$查询时刻不同而轻微变化；整段D因$g_{p^*}(s)<W_{ego}$构成禁行切片，即D虽朝右移动但在$\tau(s)\in[1.625,1.75]$的查询时刻仍堵塞车道。
+
+子图(c)将(b)识别的通行$s$区间映射至ST平面并叠加可达集$t\geq\tau(s)$得到$\Omega$，几何形态为$\tau(s)=s/4$右下方的绿色区域扣除$s\in[6.5,7]$的红色禁行切片。QP最优轨迹从$(0,0)$出发，紧贴$\tau(s)$右侧爬升，在禁行切片下沿$s=6.5$处终止。三幅子图层层递进，将"横向间隙判定至纵向禁行至时空约束"的完整链路逐级建立；动态障碍物D使得禁行切片成为$\tau(s)$查询时刻的函数而非几何刚性结果，这正是"时空"走廊区别于纯空间走廊的关键。
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_a}}
+  \caption{$s=s^\star$横向切片间隙分析}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_b}}
+  \caption{$g_{p^*}(s)$剖面判定通行$s$区间}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \resizebox{\linewidth}{!}{\input{../图片/fig_corridor_gen_c}}
+  \caption{映射至ST空间合成走廊$\Omega$}
+\end{subfigure}
+\caption{时空可通行走廊的三阶段构建过程}
+\label{fig:corridor_gen}
+\end{figure}
+
+\subsection{走廊边界与速度约束}
+走廊$\Omega$的边界定义了自车ST轨迹的可行域。SL空间中的通行带$\mathcal{C} = \{(s, l) \mid l^{-}(s) \leq l \leq l^{+}(s)\}$是在到达时间函数$\tau(s)$的假设下计算的，其有效性依赖于一个关键前提，即自车的实际到达时间不早于$\tau(s)$
+
+\begin{equation}
+    t_{arrive}(s) \geq \tau(s), \quad \forall\, s
+    \label{eq:validity_condition}
+\end{equation}
+
+若自车提前到达某位置$s_k$，例如因加速超过了$\tau(s)$的估计，则动态障碍物可能尚未移至预测位置，通行带在该处可能无效。该有效性条件可转化为速度规划的线性约束。对于每个依赖动态障碍物移开的关键位置$s_k$，要求
+
+\begin{equation}
+    s(t) \leq s_k, \quad \forall\, t < \tau(s_k)
+    \label{eq:speed_constraint}
+\end{equation}
+
+式\eqref{eq:speed_constraint}的物理含义是，自车不得在$\tau(s_k)$时刻之前到达位置$s_k$，从而为动态障碍物的移开预留足够时间。从ST走廊的视角看，该约束正是走廊$\Omega$左边界在$s = s_k$处的数学表达，要求自车的ST轨迹不穿越走廊边界。更一般地，当存在多个关键位置$s_1, s_2, \ldots$时，各约束点$(\tau(s_k), s_k)$的集合构成了走廊$\Omega$左边界的离散采样。走廊约束的最终效果是要求QP的最优速度曲线$s^*(t)$始终位于走廊$\Omega$之内
+
+\begin{equation}
+    \left(s^*(t_j),\; t_j\right) \in \Omega, \quad j = 0, 1, \ldots, K
+    \label{eq:trajectory_in_corridor}
+\end{equation}
+
+\subsection{走廊约束的速度规划融合}
+
+\subsubsection{Apollo速度QP问题接口}
+Apollo的\texttt{PiecewiseJerkSpeedOptimizer}已在第三章3.3节给出完整描述，在等时间间隔$\Delta t=0.1$\,s上以纵向位置$s_j$、速度$\dot{s}_j$、加速度$\ddot{s}_j$为决策变量，目标函数惩罚位置/速度跟踪误差与加加速度，约束包含运动学等式约束、物理限制以及由\texttt{SpeedBoundsDecider}给出的ST边界
+
+\begin{equation}
+    s_j^{lb,\text{SBD}} \leq s_j \leq s_j^{ub,\text{SBD}}, \quad j = 0, 1, \ldots, K
+    \label{eq:st_bounds}
+\end{equation}
+
+QP问题最终化为
+
+\begin{equation}
+    \min_{\mathbf{x}} \;\frac{1}{2}\,\mathbf{x}^T \mathbf{H}\, \mathbf{x} + \mathbf{f}^T \mathbf{x} \quad \text{s.t.} \quad \mathbf{A}_{eq}\, \mathbf{x} = \mathbf{b}_{eq}, \quad \mathbf{x}^{lb} \leq \mathbf{x} \leq \mathbf{x}^{ub}
+    \label{eq:qp_compact}
+\end{equation}
+
+由OSQP求解。本文走廊约束的嵌入策略是仅修改$\mathbf{x}^{ub}$中对应分量的值，保持$\mathbf{H},\,\mathbf{A}_{eq}$与稀疏模式完全不变，从而在不改动\texttt{PiecewiseJerkSpeedOptimizer}内部数据结构的前提下完成集成。
+
+\subsubsection{时间有效性约束的嵌入}
+本文算法输出的速度约束集合$\mathcal{T} = \{(s_k, \tau_k)\}$，其中$\tau_k = \tau(s_k)$，每个元素表示“自车不得在$\tau_k$时刻之前到达位置$s_k$”。具体取法上，对每个被时变SL投影纳入路径决策的动态障碍物$i$，取其当前时刻$t=0$的纵向位置$s_i^{0}$作为关键位置，即$\mathcal{T} = \{(s_i^{0},\,\tau(s_i^{0}))\}_{i\in\mathcal{D}}$，其中$\mathcal{D}$为参与路径决策的动态障碍物集合。该取法是走廊$\Omega$左边界沿$s$轴的最稀疏采样，其物理含义是要求自车在每个动态障碍物起始位置处的实际到达时间不早于SL阶段所假设的$\tau(s_i^{0})$，从而保留式\eqref{eq:validity_condition}的有效性前提；自车若在$t<\tau_k$时已超过$s_k$，则SL阶段基于该障碍物“已移开”假设构造的通行带不再可信。$\mathcal{T}$元素数等于动态障碍物数$|\mathcal{D}|$，远小于QP时间步数$K$，因而该约束集对QP稀疏结构的影响可忽略。该约束直接转化为对ST边界上界的收紧
+
+\begin{equation}
+    s_j^{ub} \leftarrow \min\!\left(s_j^{ub},\; s_k\right), \quad \forall\, j: t_j < \tau_k, \quad \forall\, (s_k, \tau_k) \in \mathcal{T}
+    \label{eq:tighten_ub}
+\end{equation}
+
+在ST图中，式\eqref{eq:tighten_ub}的几何意义如图\ref{fig:st_constraint}所示，对应7.2.6节横穿行人示例的具体数值$(s_k=10\,\text{m},\,\tau_k=1.25\,\text{s})$。对于每个约束点，在时间轴$t < \tau_k$的区间内添加一条水平上界线$s \leq s_k$，禁止自车在该时间范围内超越位置$s_k$；速度曲线在约束点附近贴沿抵达后，行人随即让出，QP在平滑性惩罚下自然恢复至$v_{ref}$。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{0.5\textwidth}{!}{\input{../图片/fig_st_constraint}}
+\caption{时间有效性约束在ST图中的几何表示}
+\caption*{\scriptsize 红色区域为$\mathcal{T}$新增的禁止区，绿色粗线为与SpeedBoundsDecider上界取$\min$后的有效上界，深粉曲线为QP求解结果。约束点$(\tau_k,s_k)=(1.25,10)$对应7.2.6节横穿行人示例。}
+\label{fig:st_constraint}
+\end{figure}
+
+\subsubsection{两条传递通道与工程接入点}
+\label{sec:dual_channel}
+图\ref{fig:path_speed_breakage}所标识的解耦瓶颈，本章通过两条互补通道绕过。隐式通道在SL阶段由PathBoundsDecider产生，当某$s_k$处$g_{p^\star}(s_k)<W_{ego}$时，按Apollo blocked-then-trim机制path直接截断在$s_k$，下游SpeedBoundsDecider在被截短的path上构建ST图，超出$s_k$的纵向区间根本不进入QP决策变量，禁行切片信息以path几何长度的方式隐式传达。显式通道则将$\mathcal{T}=\{(s_k,\tau_k)\}_{i\in\mathcal{D}}$作为PathBoundsDecider的新增输出字段，挂载于\texttt{ReferenceLineInfo}上下文随Apollo数据总线传递至\texttt{PiecewiseJerkSpeedOptimizer}，由后者按式\eqref{eq:tighten_ub}对$\mathbf{x}^{ub}$做一次$\min$收紧。两条通道的工程接入点与信号流向如图\ref{fig:dataflow}所示。
+
+\begin{figure}[htbp]
+\centering
+\resizebox{\textwidth}{!}{\input{../图片/fig_pathbounds_speedqp_dataflow}}
+\caption{走廊约束在路径-速度流水线中的两条传递通道}
+\label{fig:dataflow}
+\end{figure}
+
+PathOptimizer与SpeedBoundsDecider两个中间模块未做任何修改，PathBoundsDecider新增时变SL投影逻辑与$\mathcal{T}$输出，PiecewiseJerkSpeedOptimizer新增$\mathcal{T}$读入与$\mathbf{x}^{ub}$收紧逻辑，改动颗粒度对齐Apollo插件式扩展规范。
+
+\subsubsection{横穿行人场景数值示例}
+本小节通过\ref{sec:problem_st}节中引入的横穿行人场景，完整展示从时变通行带到速度规划的全链路工作过程。
+
+\textbf{场景设定}\quad{}自车以$v_{ego} = 8$\,m/s匀速行驶，取$a_{ego} \approx 0$，前方$s_{ped} = 10$\,m处一名行人以$v_{lat} = 1.2$\,m/s从右向左横穿马路。行人当前位于车道中央，取$l = 0$\,m，宽度0.5\,m。道路宽3.75\,m，$l_{road}^{-} = -1.875$\,m，$l_{road}^{+} = 1.875$\,m，$\delta = 1.2$\,m。
+
+\textbf{步骤1}，到达时间计算。$a_{ego} \approx 0$，由式\eqref{eq:arrival_time_degenerate}退化为匀速估计
+
+\begin{equation*}
+    \tau(s_{ped}) = \frac{10 - 0}{8} = 1.25\,\text{s}
+\end{equation*}
+
+\textbf{步骤2}，时变SL投影。在$\tau = 1.25$\,s时，行人横向位移$\Delta l = 1.2 \times 1.25 = 1.5$\,m，位于$l = 1.5$\,m。时变SL边界为$[l_{ped}^{-}, l_{ped}^{+}] = [1.25, 1.75]$\,m。
+
+\textbf{步骤3}，间隙计算。单个障碍物，此时$k = 1$，计算两个间隙
+
+\begin{align}
+    g_0 &= u_{ped} - l_{road}^{-} = (1.25 - 1.2) - (-1.875) = 1.925\,\text{m} \notag \\
+    g_1 &= l_{road}^{+} - v_{ped} = 1.875 - (1.75 + 1.2) = -1.075\,\text{m} \notag
+\end{align}
+
+最大间隙$g_0 = 1.925$\,m，大于自车宽度$W_{ego} = 1.8$\,m，自车可从行人右侧即道路右半侧安全通过。Baseline的静态快照中行人位于$l = 0$，间隙为$g_0 = (0 - 0.25 - 1.2) - (-1.875) = 0.425$\,m $< W_{ego}$，通行带不可行。
+
+\textbf{步骤4}，速度约束生成。该通行带依赖行人在$\tau = 1.25$\,s时已移至$l = 1.5$\,m的预测位置，因此算法输出速度约束
+
+\begin{equation*}
+    \mathcal{T} = \{(s_k, \tau_k)\} = \{(10\,\text{m},\; 1.25\,\text{s})\}
+\end{equation*}
+
+\textbf{步骤5}，QP约束嵌入。设$\Delta t = 0.1$\,s，时间步$t_0 = 0, t_1 = 0.1, \ldots, t_{12} = 1.2$\,s均满足$t_j < \tau_k = 1.25$\,s。由式\eqref{eq:tighten_ub}，对这些时间步收紧上界
+
+\begin{equation*}
+    s_j^{ub} \leftarrow \min(s_j^{ub},\; 10\,\text{m}), \quad j = 0, 1, \ldots, 12
+\end{equation*}
+
+对于$j \leq 12$，即$t_j \leq 1.2$\,s，原有ST上界$s_j^{ub}$通常较大，无其他近距离障碍物时接近规划终点，故新约束$s_j \leq 10$\,m生效。对于$j \geq 13$，即$t_j \geq 1.3$\,s $> \tau_k$时，上界不受影响。
+
+\textbf{步骤6}，QP求解结果分析。在新增上界约束下，QP优化器在平滑性惩罚的驱动下，输出的速度曲线在接近行人位置时轻微减速，减速幅度远小于Baseline的急停方案，行人移开后速度平滑恢复至$v_{ref}$。Baseline由于\texttt{IsStatic()}将行人排除在路径决策之外，速度阶段只能对行人横穿的全程时段输出YIELD停车决策，停车等待时长与行人横穿整条车道的时间相当，通行效率显著低于本文方法。
+
+图\ref{fig:corridor}从更宏观的视角对比改进前后的约束生成链路。Apollo Baseline中SpeedBoundsDecider对每个障碍物独立生成ST boundary多边形，SpeedDecider对各boundary逐一做出YIELD/OVERTAKE决策，$n$个障碍物产生$2^n$种离散组合，由DP启发式搜索选取一组决策，再转化为分段线性的$s_j^{ub}$约束线供QP使用。本文方法在SL层按最大间隙原则全局选定分割$p^\star$，将$n$个障碍物的横向可通行信息压缩为式\eqref{eq:time_varying_gap}定义的$g_{p^\star}(s)$，并通过式\eqref{eq:st_corridor}与$\tau(s)$联合生成$\Omega$。需要指出的是，$\Omega$本身由$\tau(s)$左下沿与水平禁行切片组合而成，几何上为非凸集合；本文方法的凸性来源不在$\Omega$而在其沿离散时间步的逐时间步线性投影$s_j^{ub}$，这与Baseline在选定YIELD/OVERTAKE组合后所得的线性盒约束在QP结构上一致，因此可在不改动\texttt{PiecewiseJerkSpeedOptimizer}内部数据结构的前提下嵌入。$2^n$组合空间被SL层$p^\star$提前消除，QP直接由OSQP求解全局最优$s^*(t)$。
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_corridor_a}}
+  \caption{Apollo Baseline}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \resizebox{\textwidth}{!}{\input{../图片/fig_corridor_b}}
+  \caption{本文方法}
+\end{subfigure}
+\caption{ST走廊改进前后的结构对比}
+\label{fig:corridor}
+\end{figure}
+
+\subsection{与SpeedBoundsDecider的双源约束融合}
+Apollo的速度QP接收两个来源的ST边界约束，分别来自速度规划阶段和路径规划阶段。其一，SpeedBoundsDecider基于路径已确定后的碰撞检测，将障碍物投影至ST图并计算$s_j^{ub,\text{SBD}}$和$s_j^{lb,\text{SBD}}$，这是Apollo原有的“自上而下”约束。其二，本文的ST走廊约束$s_j^{ub,\text{corridor}}$来自路径决策阶段对动态障碍物时变特性的预判，这是本章新增的“自下而上”约束。两者在QP层面通过取最小值融合
+
+\begin{equation}
+    s_j^{ub} = \min\!\left(s_j^{ub,\text{SBD}},\;\; s_j^{ub,\text{corridor}}\right), \quad j = 0, 1, \ldots, K
+    \label{eq:dual_source}
+\end{equation}
+
+两个约束源的信息互补。SpeedBoundsDecider处理的是“路径上会遇到什么障碍物”，其ST边界基于给定路径的碰撞关系计算；ST走廊约束处理的是“为了让路径决策有效，速度需要满足什么条件”，其信息来源于路径阶段对动态障碍物预测轨迹的分析。这种融合直接解决了本章前节所识别的ST层问题，即路径决策信息未传递至速度规划。走廊约束正是此前缺失的路径-速度约束传递通道。
+
+具体表现为三种互补情形。
 \begin{enumerate}
-\item \textbf{纵向部分重叠的精确处理}\quad{}对$s$方向部分重叠的障碍物组，可沿$s$方向离散化为若干截面，在每个截面独立求解最优间隙后取全局最小值。这相当于将一维的组级决策扩展为逐截面决策，能够更精确地刻画通行带的纵向变化特征，但需要在精度提升与计算开销之间取得平衡。
+\item \textbf{静态障碍物场景}\quad{}动态障碍物不参与间隙计算或已标记为不活跃，$\mathcal{T} = \emptyset$，走廊约束不生效，SpeedBoundsDecider单独起作用。
 
-\item \textbf{到达时间与速度规划的迭代优化}\quad{}将到达时间估计从单次前向计算改为路径-速度的迭代求解，首次以匀速假设计算通行带，基于该通行带生成路径和速度曲线后，用更新的速度剖面重新估计到达时间，重复迭代至收敛。这种方法能够提高时变投影的准确性，关键在于保证迭代的收敛性和控制额外计算开销。
+\item \textbf{动态障碍物场景}\quad{}走廊约束提供了SpeedBoundsDecider无法独立推导的时间窗信息。以横穿行人为例，SpeedBoundsDecider虽利用预测轨迹生成ST boundary，但SpeedDecider的YIELD决策将行人横穿的整个时段视为禁行区，而走廊约束给出精确的等待截止时间$\tau(s_k)$，将过度保守的全时段让行替换为精确的时间窗约束。
 
-\item \textbf{学习辅助的间隙选择}\quad{}当多个间隙的宽度接近时，最大间隙策略给出的解虽然在通行带宽度上最优，但未考虑变道代价、上下游道路拓扑等因素。可引入学习方法，如基于历史驾驶数据训练的评估网络，对候选间隙进行综合评分，在宽度近似的间隙之间做出更符合驾驶习惯的选择。
-
-\item \textbf{实车验证与工程化}\quad{}将改进算法部署到搭载Apollo系统的实车平台上，在真实交通环境中验证算法的有效性和实时性。重点关注感知误差传播、规划-控制延迟、极端工况下的降级策略等工程化问题，推动算法从仿真验证走向实际应用。
+\item \textbf{混合场景}\quad{}两个约束源各自对不同的时间步起主导作用。SpeedBoundsDecider负责静态障碍物的ST边界，走廊约束负责动态障碍物的时间窗，两者取最小值后QP自动得到全局一致的速度曲线。
 \end{enumerate}
+
+这一集成方式的合理性在于SpeedBoundsDecider之后的DP搜索即\texttt{PathTimeHeuristicOptimizer}已在ST图中实现了对YIELD/OVERTAKE组合的全局搜索，不存在PathBoundsDecider那样因贪心独立决策导致的系统性失效。因此，SpeedBoundsDecider不需要进行类似的全局最优化改造，ST走廊约束在QP层面补充时变信息即为最小侵入且最高效的集成方式。
+
+\section{本章小结}
+
+本章针对Apollo PathBoundsDecider将动态障碍物完全排除在路径决策之外、且路径-速度规划之间缺乏时空约束传递通道的双重缺陷，提出GTOC的第三项改进，即时空可通行走廊与路径-速度协调机制。在源码层面定位了\texttt{IsWithinPathDeciderScopeObstacle}函数中通过\texttt{IsStatic()}过滤排除动态障碍物的根源，结合Apollo团队在该函数中留下的\texttt{TODO}注释证实其为已知但未修复的设计缺陷；并通过横穿行人数值示例定性说明了排除动态障碍物后路径-速度协调断层的成因。在算法设计层面，引入基于二阶运动学模型的到达时间函数$\tau(s)$将动态障碍物的预测轨迹映射至自车到达时刻的SL投影，构建满足$t \geq \tau(s)$可达性约束的时空可通行走廊，并将走廊边界以ST上界的形式与SpeedBoundsDecider的输出在速度QP层面双源融合，建立path截断隐式通道与时间清单$\mathcal{T}$显式通道两条互补传递机制，在不修改速度规划模块结构的前提下打通此前缺失的路径-速度约束传递通道。本章的SL层输入来自第五章的差异化$\delta_i$和第六章的连通分量分组结果，输出最终接入第八章的Apollo系统集成方案。
