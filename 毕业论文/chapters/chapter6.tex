@@ -230,7 +230,7 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
     \label{eq:global_width}
 \end{equation}
 
-下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见\S\ref{sec:dynamic_delta_synthesis}，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
+下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见第\ref{sec:dynamic_delta_synthesis}节，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
 
 从几何直觉看，$k$个按横向位置排列的障碍物将车道的横向空间分割为$k+1$个通道，包括最右侧障碍物与道路右边界之间、相邻障碍物之间、以及最左侧障碍物与道路左边界之间的间隙。最优策略是选择其中最宽的通道通行，通道一侧的所有障碍物划归左绕、另一侧的划归右绕，形成一个在排序中连续的分割。搜索空间从$2^k$个任意分配降为$k+1$个候选通道的选取。以下引理和定理给出严格证明，并建立通行带宽度与间隙之间的精确等式。
 
@@ -430,21 +430,21 @@ Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_02_ped_plus_parked_sl}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_sl}}
 \caption{场景二SL平面路径与边界对比}
 \label{fig:exp_ch6_sl_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_02_ped_plus_parked_st}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_st}}
 \caption{场景二ST平面速度规划对比}
 \label{fig:exp_ch6_st_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_02_ped_plus_parked_va}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_va}}
 \caption{场景二$v(t)$、$a(t)$、$j(t)$对比}
 \label{fig:exp_ch6_va_2}
 \end{figure}
@@ -455,21 +455,21 @@ Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_04_dense_construction_sl}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_sl}}
 \caption{场景三SL平面路径与边界对比}
 \label{fig:exp_ch6_sl_4}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_04_dense_construction_st}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_st}}
 \caption{场景三ST平面速度规划对比}
 \label{fig:exp_ch6_st_4}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_exp_04_dense_construction_va}
+\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_va}}
 \caption{场景三$v(t)$、$a(t)$、$j(t)$对比}
 \label{fig:exp_ch6_va_4}
 \end{figure}
