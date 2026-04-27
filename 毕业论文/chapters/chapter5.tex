@@ -218,7 +218,7 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 当$\Theta_i$对所有障碍物均取相同值时，式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}退化为式\eqref{eq:def_u}--\eqref{eq:def_v}。动态$\delta_i$的引入不影响后续引理1和定理1的成立，两者的证明仅依赖$u$和$v$值的排序关系，只需按$u_i$而非$l_i^{-}$排序即可。
 
 \section{数值仿真}
-\label{sec:exp_ch5}
+\label{sec:exp_ch4}
 
 本节通过双侧交通锥构成的窄路对照场景验证差异化安全裕度对横向通行空间的释放效果。仿真在Python复现的Apollo Planning流水线上进行，覆盖PathBoundsDecider至PiecewiseJerkSpeedOptimizer的完整阶段。Baseline模式下所有障碍物使用统一安全距离$\delta=0.30$\,m，MIKU模式则按式\eqref{eq:dynamic_delta}对每个障碍物独立计算$\delta_i$。
 
