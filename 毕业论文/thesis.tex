@@ -23,6 +23,8 @@
 
 % chapter 中通过 \MOneBaselineAvgV 等宏引用 meta.json 实测数据，实现幂等
 \input{_experiment_metrics}
+% 消融实验数据宏：由 可视化/metric_score.py 读 ablation.csv 派生
+\input{_ablation_macros}
 
 \begin{document}
 
@@ -38,7 +40,7 @@
 \mainmatter
 
 \input{chapters/chapter1}
-\input{chapters/chapter2}
+% \input{chapters/chapter2}  % 04-27 导师意见：屏蔽相关技术与理论基础章
 \input{chapters/chapter3}
 \input{chapters/chapter4}
 \input{chapters/chapter5}
@@ -54,6 +56,7 @@
 }
 
 \input{chapters/acknowledgment}
-\input{chapters/appendix}
+\input{chapters/achievements}
+% \input{chapters/appendix}
 
 \end{document}
