@@ -9,7 +9,7 @@
 # ///
 """MIKU 消融实验主控脚本 — 6 变体 × 4 场景全跑，输出 ablation.csv / ablation.json。
 
-变体定义（论文 §8.6 表）：
+变体定义（论文第八章第六节表）：
 
     M0_baseline   — Apollo 原始流程（IsStatic 过滤 + 逐障碍物贪心 nudge）
     M1_no_C1      — 仅关闭 C1 时变 SL 投影 (τ-shift)

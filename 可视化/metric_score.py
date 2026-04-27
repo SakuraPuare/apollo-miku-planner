@@ -36,7 +36,7 @@ DATA_DIR = os.path.normpath(os.path.join(HERE, "..", "图片", "data", "ablation
 THESIS_DIR = os.path.normpath(os.path.join(HERE, "..", "毕业论文"))
 
 
-# 维度权重（论文 §8.6 评分体系）
+# 维度权重（论文第八章第六节评分体系）
 DIM_WEIGHTS: Dict[str, float] = {
     "efficiency": 0.30,
     "smoothness": 0.30,

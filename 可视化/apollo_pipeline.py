@@ -80,7 +80,7 @@ class Obstacle:
     L: float = 0.5
     is_static: bool = False
     name: str = ""
-    # 论文 §5.2.4：障碍物类型，决定 f_type 因子
+    # 论文第五章第二节：障碍物类型，决定 f_type 因子
     obs_type: str = "vehicle"  # "ped" | "bike" | "vehicle" | "unknown_movable" | "static"
 
     def position_at(self, t: float) -> Tuple[float, float]:
@@ -97,7 +97,7 @@ class Scenario:
     l_road_max: float = 1.875
     # Baseline 用统一 δ（Apollo `GetBufferBetweenADCCenterAndEdge`）
     delta_baseline: float = 0.3
-    # MIKU 差异化 δ_i 上下界（论文 §5.4 式(5.10)）
+    # MIKU 差异化 δ_i 上下界（论文第五章第四节 式(5.10)）
     delta_min: float = 0.10
     delta_max: float = 0.40
     # LaneBorrow：模拟 Apollo LaneBorrowPath
@@ -105,17 +105,17 @@ class Scenario:
     lane_width: float = 3.75
 
 
-# ============================ §8 消融开关（5 个正交组件） ============================
+# ============================ 第八章 消融开关（5 个正交组件） ============================
 
 @dataclass
 class AblationFlags:
-    """MIKU 5 个组件级开关，对应论文 §5–§7 各小节算法步骤。
+    """MIKU 5 个组件级开关，对应论文第五至七章各小节算法步骤。
 
-    C1 tau_shift     §6 步骤1-2 — 时变 SL 投影 τ(s)-shifted 障碍位置
-    C2 grouping      §6 步骤3   — 扫描线纵向连通分量合并
-    C3 max_gap       §6 步骤4-5 — 组内 k+1 间隙 argmax 选 p*
-    C4 threat_delta  §5.4 (5.10) — 多因子威胁度 → 差异化 δ_i
-    C5 corridor_inject §7 SBD2 后扩展 — (s_k, τ_k) 走廊注入 ST
+    C1 tau_shift       第六章步骤1-2 — 时变 SL 投影 τ(s)-shifted 障碍位置
+    C2 grouping        第六章步骤3   — 扫描线纵向连通分量合并
+    C3 max_gap         第六章步骤4-5 — 组内 k+1 间隙 argmax 选 p*
+    C4 threat_delta    第五章第四节 式(5.10) — 多因子威胁度 → 差异化 δ_i
+    C5 corridor_inject 第七章 SBD2 后扩展 — (s_k, τ_k) 走廊注入 ST
     """
     tau_shift: bool = True
     grouping: bool = True
@@ -147,7 +147,7 @@ class AblationFlags:
                         self.threat_delta, self.corridor_inject])
 
 
-# ============================ §5 多因子威胁度 → δ_i ============================
+# ============================ 第五章 多因子威胁度 → δ_i ============================
 
 # 论文式 (5.5) 权重
 THREAT_WEIGHTS = (0.30, 0.20, 0.15, 0.10, 0.25)
@@ -215,7 +215,7 @@ def compute_threat(obs: Obstacle, scn: Scenario) -> float:
 
 
 def compute_delta(obs: Obstacle, scn: Scenario) -> float:
-    """论文 §5.4 式(5.10)：δ_i = δ_min + (δ_max - δ_min) · Θ_i"""
+    """论文第五章第四节 式(5.10)：δ_i = δ_min + (δ_max - δ_min) · Θ_i"""
     theta = compute_threat(obs, scn)
     return scn.delta_min + (scn.delta_max - scn.delta_min) * theta
 
@@ -351,7 +351,7 @@ def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
 
 def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
                        flags: Optional[AblationFlags] = None, debug=False):
-    """MIKU PathBoundsDecider — 论文 §6 算法\\ref{alg:optimal_band}：
+    """MIKU PathBoundsDecider — 论文第六章算法\\ref{alg:optimal_band}：
 
     步骤1: 到达时间 τ(s_i^-)
     步骤2: 时变 SL 投影 + 差异化 δ_i → u_i = l_i^- - δ_i, v_i = l_i^+ + δ_i
@@ -415,7 +415,7 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
     # —— 步骤4-5：组内 max-gap 求解，得到分组的 [l^-, l^+]
     group_decisions = []
     for grp in groups:
-        # 剔除已完全越出有效路面的障碍物（论文 §6.4.5 边界情形）
+        # 剔除已完全越出有效路面的障碍物（论文第六章第四节边界情形）
         active = [r for r in grp if r["u"] < eff_l_max and r["v"] > eff_l_min]
         if not active:
             group_decisions.append({
@@ -423,7 +423,7 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
                 "p_star": None, "g_star": eff_l_max - eff_l_min, "ordered": [],
             })
             continue
-        # 按 u_i 升序（u 相同时按 v 降序——论文 §6.4.5 第三条）
+        # 按 u_i 升序（u 相同时按 v 降序——论文第六章第四节第三条）
         ordered = sorted(active, key=lambda r: (r["u"], -r["v"]))
         k = len(ordered)
         # 计算 k+1 个间隙
@@ -458,7 +458,7 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
         })
 
     # —— 步骤6：把每组的决策投影回 path_boundary
-    # 论文 §7.2.4：每个 s 截面上用 τ(s) 重算障碍物位置 → l_min/l_max(s) 反映障碍物横向移动
+    # 论文第七章第二节：每个 s 截面上用 τ(s) 重算障碍物位置 → l_min/l_max(s) 反映障碍物横向移动
     # 分组结构与 p_star 沿用步骤 4-5 的 t=0 选择（论文保守近似），但每个 s 处重算 (u_i, v_i)
     for gd in group_decisions:
         grp = gd["grp"]
@@ -811,7 +811,7 @@ def run_pipeline(mode_or_flags, scn: Scenario):
 
     corridor = None
     if flags.corridor_inject and group_decisions:
-        # 论文 §6 步骤7：仅对"依赖动态障碍物移开"的位置注入 (s_k, τ_k)
+        # 论文第六章步骤7：仅对"依赖动态障碍物移开"的位置注入 (s_k, τ_k)
         # — 即：连通分量内含动态障碍物，且其 SL 投影是 ego 路径在该 s 段的活跃约束
         corridor = []
         for gd in group_decisions:
