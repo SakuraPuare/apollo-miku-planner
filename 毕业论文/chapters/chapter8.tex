@@ -159,10 +159,10 @@ MIKU的关键参数配置如表\ref{tab:algo_params}所示。
 共设计4个测试场景，每个场景定向验证一项MIKU改进，分别穿插在第四章至第六章的章节实验节中。
 
 \begin{enumerate}
-\item \textbf{场景一窄路+双侧交通锥}\quad{}见\S\ref{sec:exp_ch4}，验证第四章差异化安全裕度对横向通行空间的释放。
-\item \textbf{场景二行人加停车}\quad{}见\S\ref{sec:exp_ch6}，验证第五章组级最优在动+静混合分组中的方向协调。
-\item \textbf{场景三单车道维修封闭+借道}\quad{}见\S\ref{sec:exp_ch6}，验证第五章组级最优在18障碍物大规模连通分量中的全局协调。
-\item \textbf{场景四单行人横穿}\quad{}见\S\ref{sec:exp_ch7}，验证第六章时变投影与ST走廊。
+\item \textbf{场景一窄路+双侧交通锥}\quad{}见第\ref{sec:exp_ch4}节，验证第四章差异化安全裕度对横向通行空间的释放。
+\item \textbf{场景二行人加停车}\quad{}见第\ref{sec:exp_ch6}节，验证第五章组级最优在动+静混合分组中的方向协调。
+\item \textbf{场景三单车道维修封闭+借道}\quad{}见第\ref{sec:exp_ch6}节，验证第五章组级最优在18障碍物大规模连通分量中的全局协调。
+\item \textbf{场景四单行人横穿}\quad{}见第\ref{sec:exp_ch7}节，验证第六章时变投影与ST走廊。
 \end{enumerate}
 
 每个场景计算以下七项指标，数据来自仿真程序的输出。横向加速度$a_y$由路径曲率$\kappa$诱导，等价于向心加速度$a_c$，即$a_y = a_c = v^2 \kappa$；直道前提下参考线曲率为零，$\kappa$退化为路径横向偏移的二阶导$l''(s)$。
@@ -285,14 +285,14 @@ S_{\mathrm{overall}} = \begin{cases}
 \caption{6变体综合评分与排名}
 \label{tab:ablation_score}
 \small
-\input{../图片/data/ablation/score_table}
+\resizebox{\textwidth}{!}{\input{../图片/data/ablation/score_table}}
 \end{table}
 
 为暴露每个变体在不同场景下的具体表现，将$S_{\mathrm{scn}}$以热力图形式排布如图\ref{fig:ablation_heatmap}所示。色阶由RdYlGn色板从0红色经50黄色到100绿色连续映射，每格内部数字为该变体在该场景的得分。热力图能瞬间暴露出每个变体的失效场景，红色格子直接对应硬门触发的关键组件。
 
 \begin{figure}[H]
 \centering
-\input{../图片/data/ablation/score_heatmap}
+\resizebox{\textwidth}{!}{\input{../图片/data/ablation/score_heatmap}}
 \caption{6变体在4场景下的$S_{\mathrm{scn}}$得分热力图}
 \label{fig:ablation_heatmap}
 \end{figure}
@@ -301,7 +301,7 @@ S_{\mathrm{overall}} = \begin{cases}
 
 \begin{figure}[H]
 \centering
-\input{../图片/data/ablation/score_radar}
+\resizebox{\textwidth}{!}{\input{../图片/data/ablation/score_radar}}    
 \caption{6变体4维度综合雷达图}
 \label{fig:ablation_radar}
 \end{figure}
@@ -328,6 +328,7 @@ S_{\mathrm{overall}} = \begin{cases}
 
 \begin{figure}[H]
 \centering
+% no resizebox
 \input{../图片/fig_eng_scn01_dreamview}
 \caption{场景一动态超车的Dreamview在环序列}
 \label{fig:eng_scn01}
@@ -339,6 +340,7 @@ S_{\mathrm{overall}} = \begin{cases}
 
 \begin{figure}[H]
 \centering
+% no resizebox
 \input{../图片/fig_eng_scn02_dreamview}
 \caption{场景二窄路通行的Dreamview在环序列}
 \label{fig:eng_scn02}
@@ -350,7 +352,8 @@ S_{\mathrm{overall}} = \begin{cases}
 
 \begin{figure}[H]
 \centering
-\input{../图片/fig_eng_scn03_dreamview}
+% no resizebox
+\input{../图片/fig_eng_scn03_dreamview}  
 \caption{场景三单车道封闭导流的Dreamview在环序列}
 \label{fig:eng_scn03}
 \end{figure}
