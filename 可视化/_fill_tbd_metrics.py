@@ -6,7 +6,7 @@
 
 字段命名：%%TBD-METRIC-<NN>-<mode>-<field>%%
   NN     ∈ {01..08, summary}
-  mode   ∈ {baseline, gtoc}
+  mode   ∈ {baseline, miku}
   field  ∈ {avg_v, min_v, max_abs_a, max_abs_jerk, s_end, t_arrive,
             stop_dur, qp_solve_ms_path, qp_solve_ms_speed, qp_solve_ms_total,
             pass_count, v_improvement, extra_ms, efficiency}
@@ -23,7 +23,7 @@ DATA = ROOT / "图片" / "data"
 CHAPTERS = ROOT / "毕业论文" / "chapters"
 
 SCN_NAMES = [
-    "01_crossing_ped", "02_ped_plus_parked", "03_two_peds_sequential",
+    "01_crossing_ped", "02_ped_plus_parked", "03_narrow_cones",
     "04_dense_construction",
 ]
 
@@ -70,7 +70,7 @@ def collect_metrics():
         meta = json.loads((DATA / scn / "meta.json").read_text(encoding="utf-8"))
         metas[scn] = meta
         nn = scn.split("_")[0]
-        for mode in ("baseline", "gtoc"):
+        for mode in ("baseline", "miku"):
             m = meta["metrics"][mode]
             qp = m["qp_solve_ms"]
             out[(nn, mode, "avg_v")]      = m["avg_v"]
@@ -89,7 +89,7 @@ def collect_metrics():
     # 汇总：N 场景平均 + pass_count
     summary_avg = {}
     summary_path_qp = {}
-    for mode in ("baseline", "gtoc"):
+    for mode in ("baseline", "miku"):
         avg_vs = []
         pass_cnt = 0
         total_qp = 0.0
@@ -108,14 +108,14 @@ def collect_metrics():
         out[("summary", mode, "pass_count")] = pass_cnt
         out[("summary", mode, "qp_solve_ms_total")] = total_qp / len(SCN_NAMES)
 
-    # 派生：v_improvement = (gtoc - baseline) / baseline；extra_ms = path qp 差值
+    # 派生：v_improvement = (miku - baseline) / baseline；extra_ms = path qp 差值
     base = summary_avg["baseline"]
     if base > 0:
         out[("summary", "summary", "v_improvement")] = (
-            (summary_avg["gtoc"] - base) / base
+            (summary_avg["miku"] - base) / base
         )
     out[("summary", "summary", "extra_ms")] = (
-        summary_path_qp["gtoc"] - summary_path_qp["baseline"]
+        summary_path_qp["miku"] - summary_path_qp["baseline"]
     )
 
     return out

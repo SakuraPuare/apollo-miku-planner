@@ -10,12 +10,12 @@ r"""读 meta.json + st_curves.csv 派生指标，输出 LaTeX 宏定义文件。
 输出位置：毕业论文/_experiment_metrics.tex（gitignore，由 Makefile 自动重生成）
 
 chapter 用法（替代硬编码数字）：
-    平均速度从 \MOneBaselineAvgV\,m/s 提升至 \MOneGtocAvgV\,m/s
-    通行成功率：Baseline \MSummaryBaselinePassCount / GTOC \MSummaryGtocPassCount
+    平均速度从 \MOneBaselineAvgV\,m/s 提升至 \MOneMikuAvgV\,m/s
+    通行成功率：Baseline \MSummaryBaselinePassCount / MIKU \MSummaryMikuPassCount
 
 宏命名规则：M<场景><模式><字段>，全字母（LaTeX 宏不支持数字/下划线）。
 - 场景：One/Two/Three/Four/Summary
-- 模式：Baseline/Gtoc/Summary
+- 模式：Baseline/Miku/Summary
 - 字段：AvgV/MaxAbsA/MaxAbsJerk/SEnd/TArrive/QpPath/QpSpeed/QpTotal/PassCount/VImprovement/ExtraMs
 """
 from __future__ import annotations
@@ -29,7 +29,7 @@ DATA = ROOT / "图片" / "data"
 OUT  = ROOT / "毕业论文" / "_experiment_metrics.tex"
 
 SCN_NAMES = [
-    "01_crossing_ped", "02_ped_plus_parked", "03_two_peds_sequential",
+    "01_crossing_ped", "02_ped_plus_parked", "03_narrow_cones",
     "04_dense_construction",
 ]
 SCN_WORDS = {"01": "One", "02": "Two", "03": "Three", "04": "Four"}
@@ -64,9 +64,12 @@ FMT = {
 }
 
 
+MODE_WORDS = {"baseline": "Baseline", "miku": "Miku", "summary": "Summary"}
+
+
 def macro_name(scn: str, mode: str, field: str) -> str:
     s = SCN_WORDS.get(scn, scn.capitalize())
-    m = mode.capitalize()
+    m = MODE_WORDS.get(mode, mode.capitalize())
     f = FIELD_WORDS.get(field, "".join(w.capitalize() for w in field.split("_")))
     return f"M{s}{m}{f}"
 
@@ -111,7 +114,7 @@ def collect():
         meta = json.loads((DATA / scn / "meta.json").read_text(encoding="utf-8"))
         metas[scn] = meta
         nn = scn.split("_")[0]
-        for mode in ("baseline", "gtoc"):
+        for mode in ("baseline", "miku"):
             m = meta["metrics"][mode]
             qp = m["qp_solve_ms"]
             for f in ("avg_v", "max_abs_a", "max_abs_a_lat", "max_abs_jerk",
@@ -125,7 +128,7 @@ def collect():
             out[(nn, mode, "stop_dur")] = sd
 
     # 汇总
-    for mode in ("baseline", "gtoc"):
+    for mode in ("baseline", "miku"):
         avg_vs, qps, pths = [], [], []
         passed = 0
         for scn in SCN_NAMES:
@@ -141,16 +144,16 @@ def collect():
         out[("summary", mode, "pass_count")] = passed
 
     bavg = out[("summary", "baseline", "avg_v")]
-    gavg = out[("summary", "gtoc", "avg_v")]
+    gavg = out[("summary", "miku", "avg_v")]
     if bavg and bavg > 0:
         out[("summary", "summary", "v_improvement")] = (gavg - bavg) / bavg * 100
     bp = out[("summary", "baseline", "qp_solve_ms_path")] = sum(
         json.loads((DATA / s / "meta.json").read_text(encoding="utf-8"))
             ["metrics"]["baseline"]["qp_solve_ms"]["path"] for s in SCN_NAMES
     ) / len(SCN_NAMES)
-    gp = out[("summary", "gtoc", "qp_solve_ms_path")] = sum(
+    gp = out[("summary", "miku", "qp_solve_ms_path")] = sum(
         json.loads((DATA / s / "meta.json").read_text(encoding="utf-8"))
-            ["metrics"]["gtoc"]["qp_solve_ms"]["path"] for s in SCN_NAMES
+            ["metrics"]["miku"]["qp_solve_ms"]["path"] for s in SCN_NAMES
     ) / len(SCN_NAMES)
     out[("summary", "summary", "extra_ms")] = gp - bp
     return out
