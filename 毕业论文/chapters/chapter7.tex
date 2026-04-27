@@ -1,6 +1,6 @@
 \chapter{时空可通行走廊与路径-速度协调}
 
-本章对应MIKU的第三项改进，针对Apollo PathBoundsDecider通过\texttt{IsStatic()}过滤将动态障碍物完全排除在路径决策之外、以及路径-速度规划之间缺乏时空约束传递的双重缺陷，提出基于到达时间函数与预测轨迹的时空可通行走廊及其与SpeedBoundsDecider的双源约束融合机制。本章从源码层面定位动态障碍物排除在多障碍物场景下导致路径与速度规划脱节的根源与影响，在此基础上引入二阶运动学模型的到达时间函数$\tau(s)$，将动态障碍物在自车到达时刻的预测位置纳入路径边界决策；再将多障碍物统一规划的时间有效性条件投影至ST空间，构建时空可通行走廊；走廊边界与SpeedBoundsDecider的ST边界在速度QP层面双源融合，在不修改速度规划模块结构的前提下补全路径-速度约束传递。本章的SL层输入来自第四章的差异化$\delta_i$与第五章的连通分量分组结果，输出最终接入第七章的Apollo系统集成方案。
+本章针对Apollo PathBoundsDecider将动态障碍物完全排除在路径决策之外、路径-速度规划之间缺乏时空约束传递的双重缺陷，提出基于到达时间函数$\tau(s)$的时空可通行走廊与双源约束融合机制。
 
 \section{ST 路径-速度协调的源码缺陷}
 \label{sec:problem_st}
@@ -450,4 +450,4 @@ MIKU     & \MOneMikuAvgV     & \MOneMikuMaxAbsA     & \MOneMikuMaxAbsJerk     & 
 
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider将动态障碍物完全排除在路径决策之外、且路径-速度规划之间缺乏时空约束传递的双重缺陷，提出MIKU的第三项改进，即时空可通行走廊与路径-速度协调机制。源码层面定位了\texttt{IsWithinPathDeciderScopeObstacle}函数中通过\texttt{IsStatic()}过滤排除动态障碍物的根源，结合Apollo团队在该函数中留下的\texttt{TODO}注释证实其为已知但未修复的设计缺陷，并通过横穿行人数值示例说明了排除动态障碍物后路径-速度协调断层的成因。算法层面引入二阶运动学模型的到达时间函数$\tau(s)$将动态障碍物的预测轨迹映射至自车到达时刻的SL投影，构建满足$t \geq \tau(s)$可达性约束的时空可通行走廊，并将走廊边界以ST上界的形式与SpeedBoundsDecider的输出在速度QP层面双源融合，形成path截断隐式传递与时间清单$\mathcal{T}$显式传递两条互补机制，在不修改速度规划模块结构的前提下补全此前缺失的路径-速度约束传递。本章的SL层输入来自第四章的差异化$\delta_i$和第五章的连通分量分组结果，输出最终接入第七章的Apollo系统集成方案。
+本章定位了Apollo PathBoundsDecider通过\texttt{IsStatic()}过滤将动态障碍物完全排除在路径决策之外的设计缺陷，引入二阶运动学模型的到达时间函数$\tau(s)$将动态障碍物的预测轨迹映射至自车到达时刻的SL投影，构建满足$t \geq \tau(s)$可达性约束的时空可通行走廊。走廊边界以ST上界的形式与SpeedBoundsDecider的输出在速度QP层面双源融合，形成path截断隐式传递与时间清单$\mathcal{T}$显式传递两条互补机制，在不修改速度规划模块结构的前提下补全了此前缺失的路径-速度约束传递。

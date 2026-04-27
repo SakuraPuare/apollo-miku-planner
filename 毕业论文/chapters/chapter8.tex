@@ -1,9 +1,9 @@
 \chapter{系统集成与综合实验}
 
-本章介绍MIKU集成至Apollo Planning系统的工程方案，并通过工程在环仿真与全场景综合对比两类实验完成最终验证。各项改进对应的单场景数值仿真已分别在第\ref{sec:exp_ch4}、\ref{sec:exp_ch6}、\ref{sec:exp_ch7}节中给出，本章重点放在系统层面的集成方案、Apollo Dreamview 在环验证以及4个场景的横向对比与计算开销分析。
+本章介绍MIKU集成至Apollo Planning系统的工程方案，并通过消融实验、工程在环仿真与全场景综合对比完成最终验证。
 
 \section{与Apollo系统的集成}
-算法设计完成后，需要将其集成到Apollo的Scenario-Stage-Task架构中。集成遵循最小侵入原则，尽量少修改已有代码，保持与上下游模块的接口兼容，改进方案通过配置文件独立开关。图\ref{fig:sys_arch}给出了改进后的整体系统架构。输入层维持Apollo原有的Routing、感知障碍物、预测轨迹和车辆状态四类来源。处理层在参考线处理流水线之后，新增了以粉色标注的威胁度评估与动态权重ST边界构建两个改进模块，前者提供差异化安全裕度$\delta_i$，后者将时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的ADCTrajectory，下游Control模块无需任何修改即可直接使用。
+算法设计完成后，需要将其集成到Apollo的Scenario-Stage-Task架构中。集成以尽量小的代码改动量完成，保持与上下游模块的接口兼容，改进方案通过配置文件独立开关。图\ref{fig:sys_arch}给出了改进后的整体系统架构。输入层维持Apollo原有的Routing、感知障碍物、预测轨迹和车辆状态四类来源。处理层在参考线处理流水线之后，新增了以粉色标注的威胁度评估与动态权重ST边界构建两个改进模块，前者提供差异化安全裕度$\delta_i$，后者将时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的ADCTrajectory，下游Control模块无需任何修改即可直接使用。
 
 \begin{figure}[H]
 \centering
@@ -43,7 +43,7 @@ std::pair<double, double> GetTimeVaryingSLBoundary(
     const std::vector<PredictionTrajectory>& predictions);
 \end{lstlisting}
 
-本文的修改策略是最小侵入式的。原有的\texttt{UpdatePathBoundaryBySLPolygon}函数签名和输出格式不变，其内部的障碍物遍历和边界更新逻辑被替换为分组、排序、选间隙、分配方向的新流程。上层调用代码，如\texttt{LaneFollowPath::Process}和\texttt{LaneBorrowPath::Process}，无需任何修改，下游的路径优化器即\texttt{PiecewiseJerkPathOptimizer}接收到的路径边界格式也完全兼容。改进方案因此可以在不影响Apollo其他功能模块的前提下独立部署和测试。
+本文的修改策略以尽量小的代码改动量为目标。原有的\texttt{UpdatePathBoundaryBySLPolygon}函数签名和输出格式不变，其内部的障碍物遍历和边界更新逻辑被替换为分组、排序、选间隙、分配方向的新流程。上层调用代码，如\texttt{LaneFollowPath::Process}和\texttt{LaneBorrowPath::Process}，无需任何修改，下游的路径优化器即\texttt{PiecewiseJerkPathOptimizer}接收到的路径边界格式也完全兼容。改进方案因此可以在不影响Apollo其他功能模块的前提下独立部署和测试。
 
 另一个重要的实现细节是，动态障碍物的纳入需要注释掉\texttt{IsWithinPathDeciderScopeObstacle}中的静态性过滤条件。该过滤条件原本将所有非静态障碍物排除在路径决策之外，是Baseline时间维度次优性的直接根源。注释掉该条件后，动态障碍物通过时变SL投影参与路径边界构建，而非被简单忽略。
 
@@ -431,4 +431,4 @@ MIKU新增的扫描线分组与时变投影步骤的时间复杂度为$O(n \log 
 
 \section{本章小结}
 
-本章给出MIKU集成至Apollo Planning系统的完整工程方案，并通过消融实验、工程在环仿真与全场景综合对比完成最终验证。系统集成方面，MIKU以最小侵入方式嵌入PathBoundsDecider，与LaneBorrowPath机制形成互补，三级降级策略保证异常输入下的行为安全。消融实验以六变体对照量化了三项改进各自的贡献度与协同效应。工程仿真对动态超车、窄路通行与单车道封闭导流三个场景进行Dreamview在环验证，截图序列与各章数值仿真结论一致。全场景综合对比将分别在第四至六章完成的4个场景对照结果横向汇总，从通行成功率、平均速度、轨迹平顺性与计算耗时四个维度量化MIKU的整体收益。MIKU在路径阶段引入差异化裕度、组级全局决策与时变投影三项改进，将Baseline因静态快照决策产生的过度停车与方向冲突转化为精确的横向通带分配与时间窗等待，QP求解总耗时较Baseline降低约89\%，多障碍物密集场景下的通行成功率与行驶效率均有明显提升。不过，Baseline的较高QP耗时部分源于路径阻塞后触发的降级重规划，两者运行在不同的规划模式下，该数值差异不宜简单归因于算法效率提升。
+本章给出MIKU集成至Apollo Planning系统的工程方案，并通过消融实验、工程在环仿真与全场景综合对比完成最终验证。消融实验以六变体对照量化了三项改进各自的贡献度与协同效应；Dreamview在环验证覆盖动态超车、窄路通行与单车道封闭导流三个场景，截图序列与各章数值仿真结论一致。全场景综合对比表明，MIKU在4个场景中全部通过，Baseline均未达成通过判定，平均巡航速度与轨迹平顺性均有明显提升。计算开销方面，MIKU在正常规划模式下的QP耗时显著低于Baseline触发降级重规划后的耗时，但两者运行在不同的规划模式下，Baseline的较高QP耗时主要源于路径阻塞后触发的fallback迭代求解，该差异不宜直接归因于算法效率提升，而应理解为MIKU通过路径阶段的前置决策避免了Baseline的重规划开销。
