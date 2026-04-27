@@ -23,7 +23,7 @@
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
-\usepgfplotslibrary{fillbetween}
+\usepgfplotslibrary{fillbetween, polar, patchplots, colormaps}
 % 实验图 csv 数据搜索路径（论文 cwd 为 毕业论文/，fig 内引用形式 data/<scn>/xxx.csv）
 \pgfplotsset{table/search path={../图片/, ../, .}}
 \usepackage[backend=biber,style=gb7714-2015,gbpub=false,
@@ -67,7 +67,7 @@
 \definecolor{lightorange}{RGB}{255, 210, 140}
 \definecolor{dangerred}{RGB}{230, 100, 100}
 
-% 视觉增强：高饱和度对比色（实验图 GTOC vs Baseline）
+% 视觉增强：高饱和度对比色（实验图 MIKU vs Baseline）
 \definecolor{vibrantgreen}{RGB}{46, 175, 80}
 \definecolor{vibrantorange}{RGB}{240, 130, 30}
 \definecolor{vibrantred}{RGB}{220, 50, 50}
