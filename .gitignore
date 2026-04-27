@@ -562,4 +562,5 @@ __marimo__/
 图片/data/
 
 图片/.figs_stamp
-可视化/outputs/
+outputs/
+毕业论文/_ablation_macros.tex
