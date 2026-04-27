@@ -1,76 +1,67 @@
-% 综合性能对比柱状图
+% 综合性能对比柱状图（4场景真实数据，来源：_experiment_metrics.tex）
 \begin{tikzpicture}[scale=0.85, transform shape]
   % 参数定义
   \def\barwidth{0.55}
   \def\gap{0.25}
-  \def\groupwidth{2.2}
 
   % ===== 坐标轴 =====
-  \draw[-Stealth, thick] (-0.5, 0) -- (12.5, 0);
+  \draw[-Stealth, thick] (-0.5, 0) -- (10.5, 0);
   \draw[-Stealth, thick] (0, -0.3) -- (0, 7.5) node[above, font=\footnotesize] {指标值};
 
   % Y轴刻度
   \foreach \y/\lbl in {0/0, 1.5/25, 3/50, 4.5/75, 6/100} {
-    \draw[gray!50, thin] (0.1, \y) -- (12, \y);
+    \draw[gray!50, thin] (0.1, \y) -- (9.8, \y);
     \draw[thick] (-0.1, \y) -- (0.1, \y) node[left, font=\tiny] {\lbl};
   }
 
-  % ===== 指标1：规划成功率（%） =====
+  % ===== 指标1：场景通过率（%）=====
+  %   Baseline 0/4 = 0%，MIKU 4/4 = 100%
   \def\xbase{1.2}
-  % Apollo原始: 79.8%
-  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 4.788);
-  \node[font=\tiny, dangerred!80!black] at (\xbase, 5.05) {79.8};
-  % 改进: 95.6%
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 5.736);
-  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 6.0) {95.6};
-  % 标签
-  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {规划成功率\\(\%)};
+  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 0.02);
+  \node[font=\tiny, dangerred!80!black] at (\xbase, 0.30) {0};
+  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 6.0);
+  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 6.30) {100};
+  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {通过率\\(\%)};
 
-  % ===== 指标2：通行速度（m/s） =====
-  \def\xbase{3.6}
-  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 2.865);
-  \node[font=\tiny, dangerred!80!black] at (\xbase, 3.13) {3.82};
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 3.773);
-  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 4.04) {5.03};
-  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {通行速度\\(m/s)};
+  % ===== 指标2：平均速度（m/s）=====
+  %   Baseline 2.98，MIKU 6.50，+117.9%
+  %   缩放: 值 × (6/10) 映射到 [0,6] 区间（10 m/s 满刻度）
+  \def\xbase{3.5}
+  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 1.788);
+  \node[font=\tiny, dangerred!80!black] at (\xbase, 2.06) {2.98};
+  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 3.900);
+  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 4.17) {6.50};
+  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {平均速度\\(m/s)};
 
-  % ===== 指标3：停车次数 =====
-  \def\xbase{6.0}
-  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 3.36);
-  \node[font=\tiny, dangerred!80!black] at (\xbase, 3.63) {1.68};
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 0.62);
-  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 0.89) {0.31};
-  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {停车次数\\(次)};
+  % 改进百分比
+  \node[deepblue, font=\tiny\bfseries] at (\xbase+\gap/2+\barwidth/2, 4.65) {+117.9\%};
 
-  % 下降箭头标注
-  \draw[-Stealth, thick, deeppink] (\xbase+\gap/2+\barwidth/2, 3.6) -- (\xbase+\gap/2+\barwidth/2, 1.1);
-  \node[deeppink, font=\tiny\bfseries] at (\xbase+\gap/2+\barwidth/2+0.6, 2.35) {-81.5\%};
+  % ===== 指标3：平均通行效率（%）=====
+  %   Baseline avg(49,51,42,37) ≈ 45%，MIKU 100%
+  \def\xbase{5.8}
+  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 2.685);
+  \node[font=\tiny, dangerred!80!black] at (\xbase, 2.96) {45};
+  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 6.0);
+  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 6.30) {100};
+  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {通行效率\\(\%)};
 
-  % ===== 指标4：规划耗时（ms） =====
-  \def\xbase{8.4}
-  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 3.12);
-  \node[font=\tiny, dangerred!80!black] at (\xbase, 3.39) {26.0};
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 2.592);
-  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 2.86) {21.6};
-  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {规划耗时\\(ms)};
+  % ===== 指标4：QP总耗时（ms）=====
+  %   Baseline 43.14，MIKU 5.06，-88.3%
+  %   缩放: 值 × (6/60) 映射到 [0,6] 区间（60 ms 满刻度）
+  \def\xbase{8.1}
+  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 4.314);
+  \node[font=\tiny, dangerred!80!black] at (\xbase, 4.58) {43.14};
+  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 0.506);
+  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 0.78) {5.06};
+  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {QP总耗时\\(ms)};
 
-  % ===== 指标5：加速度方差 =====
-  \def\xbase{10.8}
-  \fill[dangerred!60, draw=dangerred!80, thick] (\xbase-\barwidth/2, 0) rectangle (\xbase+\barwidth/2, 3.7);
-  \node[font=\tiny, dangerred!80!black] at (\xbase, 3.97) {0.74};
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (\xbase+\gap+\barwidth/2, 0) rectangle (\xbase+\gap+3*\barwidth/2, 2.35);
-  \node[font=\tiny, lightgreen!70!black] at (\xbase+\gap+\barwidth, 2.62) {0.47};
-  \node[font=\tiny, align=center] at (\xbase+\gap/2+\barwidth/2, -0.6) {加速度方差\\($\text{m}^2/\text{s}^4$)};
+  % 改进百分比
+  \draw[-Stealth, thick, deeppink] (\xbase+\gap/2+\barwidth/2, 4.6) -- (\xbase+\gap/2+\barwidth/2, 1.1);
+  \node[deeppink, font=\tiny\bfseries] at (\xbase+\gap/2+\barwidth/2+0.8, 2.85) {$-$88.3\%};
 
   % ===== 图例 =====
-  \fill[dangerred!60, draw=dangerred!80, thick] (3.5, 7.0) rectangle (4.3, 7.35);
-  \node[font=\footnotesize, right] at (4.4, 7.175) {Apollo原始};
-  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (7.0, 7.0) rectangle (7.8, 7.35);
-  \node[font=\footnotesize, right] at (7.9, 7.175) {改进算法};
-
-  % ===== 改进百分比标注（顶部） =====
-  \node[deepblue, font=\tiny\bfseries] at (1.6, 6.3) {+15.8\%};
-  \node[deepblue, font=\tiny\bfseries] at (4.0, 4.4) {+31.7\%};
-  \node[deepblue, font=\tiny\bfseries] at (8.8, 3.7) {-16.9\%};
-  \node[deepblue, font=\tiny\bfseries] at (11.2, 4.3) {-36.5\%};
+  \fill[dangerred!60, draw=dangerred!80, thick] (2.2, 7.0) rectangle (3.0, 7.35);
+  \node[font=\footnotesize, right] at (3.1, 7.175) {Baseline};
+  \fill[lightgreen!70, draw=lightgreen!80!black, thick] (5.5, 7.0) rectangle (6.3, 7.35);
+  \node[font=\footnotesize, right] at (6.4, 7.175) {MIKU};
 \end{tikzpicture}

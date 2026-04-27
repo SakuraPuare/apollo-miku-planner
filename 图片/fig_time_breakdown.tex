@@ -46,8 +46,7 @@
 
   % 实时性参考线 20ms
   \draw[dangerred, very thick, dashed] (13.8,-0.1) -- (13.8,4.0);
-  \node[dangerred, font=\scriptsize, rotate=90, anchor=south] at (14.0,2) {实时阈值 20 ms};
-
+  \node[dangerred, font=\scriptsize, rotate=90, anchor=south] at (14.0,2) {实时阈值 20\,ms};
 
 \end{scope}
 
@@ -64,5 +63,9 @@
   \fill[skyblue] (12.5,0) rectangle (12.9,0.3);
   \node[font=\footnotesize, anchor=west] at (13.0,0.15) {QP 速度优化};
 \end{scope}
+
+% === 数据来源 ===
+\node[font=\scriptsize, text width=14cm, anchor=north west, text=black!60]
+  at (0,-1.6) {注：数据由apollo\_pipeline.py在$n=5,10,20,40$障碍物配置下测得，每组取10次运行中位数。};
 
 \end{tikzpicture}
