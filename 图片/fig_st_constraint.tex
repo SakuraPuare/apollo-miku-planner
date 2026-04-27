@@ -4,10 +4,10 @@
 %
 % 单一动态障碍物（横穿行人，v_s=0），故 ST boundary 与 SBD 上界都是水平
 % Baseline 视角：SBD 把行人 ST boundary 推到 s ≤ 9.75 m 在 t ∈ [0, 1.45] 全时段
-% GTOC 视角：PathBoundsDecider 用 τ-shifted 投影避让，SBD 上界恢复为 s_max 附近
+% MIKU 视角：PathBoundsDecider 用 τ-shifted 投影避让，SBD 上界恢复为 s_max 附近
 %   T 约束保留 ego 不得在 τ_k 之前到达 s_k 的硬性条款，是 path 决策有效性的前提
 %
-% 本图取 GTOC 视角：SBD 原上界 ≈ s_max（水平线 s≈13），T 引入 (0,0)-(τ_k,s_k) 禁止矩形
+% 本图取 MIKU 视角：SBD 原上界 ≈ s_max（水平线 s≈13），T 引入 (0,0)-(τ_k,s_k) 禁止矩形
 \begin{tikzpicture}[scale=0.95, transform shape]
     % 坐标轴
     \draw[->, thick] (0,0) -- (8.6,0) node[right, font=\small\bfseries] {$t$/s};
@@ -32,7 +32,7 @@
     \node[font=\small, dangerred!75!black, align=center] at (2.5, 6.0) {$\mathcal{T}$ 禁止区\\$t{<}\tau_k$ 内 $s{>}s_k$};
 
     % ====== SBD 原上界：横穿行人 v_s=0，故 SBD 推出的 s_ub 为水平 ======
-    %  GTOC 流水线下 path 已绕开行人，SBD 上界趋近 s_max；这里取 s≈13（接近道路尾端示意）
+    %  MIKU 流水线下 path 已绕开行人，SBD 上界趋近 s_max；这里取 s≈13（接近道路尾端示意）
     \draw[deepblue!65, very thick, dashed] (0, 6.5) -- (8, 6.5);
     \node[deepblue!65!black, font=\footnotesize, anchor=south] at (6.0, 6.55) {SBD $s_j^{ub,\text{SBD}}$};
     \node[deepblue!65!black, font=\tiny, anchor=south west] at (5.5, 6.05) {（行人 $v_s{=}0$，水平）};
