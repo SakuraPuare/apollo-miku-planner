@@ -1,4 +1,4 @@
-% 场景04 SL 平面 Baseline vs GTOC 对比（上下排，每子图占满 \textwidth）
+% 场景04 SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{data/04_dense_construction/}
 \pgfplotsset{
     discard if not/.style 2 args={x filter/.code={
@@ -126,14 +126,14 @@
 \draw[black!55, semithick] (axis cs:0,1.875) -- (axis cs:85.0,1.875);
 \draw[black!30, dashed, thin] (axis cs:0,0) -- (axis cs:85.0,0);
 % 可行带阴影（blocked 时按 blocked_s 截断）
-\addplot[name path=lmin_gtoc, draw=vibrantorange, thin, dashed, forget plot, ]
-    table[col sep=comma, x=s, y=l_min, discard if not={mode}{gtoc}] {\datapath sl.csv};
-\addplot[name path=lmax_gtoc, draw=vibrantorange, thin, dashed, forget plot, ]
-    table[col sep=comma, x=s, y=l_max, discard if not={mode}{gtoc}] {\datapath sl.csv};
-\addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_gtoc and lmax_gtoc];
+\addplot[name path=lmin_miku, draw=vibrantorange, thin, dashed, forget plot, ]
+    table[col sep=comma, x=s, y=l_min, discard if not={mode}{miku}] {\datapath sl.csv};
+\addplot[name path=lmax_miku, draw=vibrantorange, thin, dashed, forget plot, ]
+    table[col sep=comma, x=s, y=l_max, discard if not={mode}{miku}] {\datapath sl.csv};
+\addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_miku and lmax_miku];
 % 路径（blocked 时按 blocked_s 截断）
-\addplot[vibrantgreen, line width=2pt, unbounded coords=discard] table[col sep=comma, x=s, y=l_path, discard if not={mode}{gtoc}] {\datapath sl.csv};
-\addlegendentry{GTOC}
+\addplot[vibrantgreen, line width=2pt, unbounded coords=discard] table[col sep=comma, x=s, y=l_path, discard if not={mode}{miku}] {\datapath sl.csv};
+\addlegendentry{MIKU}
 
 
 % 障碍物 锥E1
@@ -195,5 +195,5 @@
 \node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
 \end{axis}
 \end{tikzpicture}
-\caption{GTOC}
+\caption{MIKU}
 \end{subfigure}

@@ -1,4 +1,4 @@
-% 场景02 速度/加速度 Baseline vs GTOC 对比
+% 场景02 速度/加速度 Baseline vs MIKU 对比
 \def\datapath{data/02_ped_plus_parked/}
 \pgfplotsset{
     discard if not/.style 2 args={x filter/.code={
@@ -34,8 +34,8 @@
     table[col sep=comma, x=t, y=v_qp, discard if not={mode}{baseline}] {\datapath st_curves.csv};
 \addlegendentry{Baseline\,(\,$\bar{v}{=}4.11$,\,$|a|_{max}{=}4.00$,\,$|j|_{max}{=}13.31$,\,$s_{end}{=}26.4$\,m\,)}
 \addplot[vibrantgreen, line width=2pt]
-    table[col sep=comma, x=t, y=v_qp, discard if not={mode}{gtoc}] {\datapath st_curves.csv};
-\addlegendentry{GTOC\,(\,$\bar{v}{=}8.00$,\,$|a|_{max}{=}0.00$,\,$|j|_{max}{=}0.00$,\,$s_{end}{=}52.0$\,m\,)}
+    table[col sep=comma, x=t, y=v_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,(\,$\bar{v}{=}8.00$,\,$|a|_{max}{=}0.00$,\,$|j|_{max}{=}0.00$,\,$s_{end}{=}52.0$\,m\,)}
 \end{axis}
 \end{tikzpicture}
 \caption{速度对比}
@@ -63,21 +63,21 @@
 \addplot[deepblue, line width=1.8pt]
     table[col sep=comma, x=t, y=a_qp, discard if not={mode}{baseline}] {\datapath st_curves.csv};
 \addlegendentry{Baseline\,$a_x$}
-% GTOC a_x 实线
+% MIKU a_x 实线
 \addplot[vibrantgreen, line width=1.8pt]
-    table[col sep=comma, x=t, y=a_qp, discard if not={mode}{gtoc}] {\datapath st_curves.csv};
-\addlegendentry{GTOC\,$a_x$}
+    table[col sep=comma, x=t, y=a_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,$a_x$}
 % Baseline a_y dashed
 \addplot[deepblue, line width=1.4pt, dashed]
     table[col sep=comma, x=t, y=a_y, discard if not={mode}{baseline}] {\datapath st_curves.csv};
 \addlegendentry{Baseline\,$a_y$}
-% GTOC a_y dashed
+% MIKU a_y dashed
 \addplot[vibrantgreen, line width=1.4pt, dashed]
-    table[col sep=comma, x=t, y=a_y, discard if not={mode}{gtoc}] {\datapath st_curves.csv};
-\addlegendentry{GTOC\,$a_y$}
+    table[col sep=comma, x=t, y=a_y, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,$a_y$}
 \end{axis}
 \end{tikzpicture}
-\caption{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 GTOC）}
+\caption{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 MIKU）}
 \end{subfigure}
 
 \vspace{0.8em}
@@ -100,8 +100,8 @@
     table[col sep=comma, x=t, y=j_qp, discard if not={mode}{baseline}] {\datapath st_curves.csv};
 \addlegendentry{Baseline\,$j$}
 \addplot[vibrantgreen, line width=1.6pt]
-    table[col sep=comma, x=t, y=j_qp, discard if not={mode}{gtoc}] {\datapath st_curves.csv};
-\addlegendentry{GTOC\,$j$}
+    table[col sep=comma, x=t, y=j_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,$j$}
 \end{axis}
 \end{tikzpicture}
 \caption{jerk 对比}
