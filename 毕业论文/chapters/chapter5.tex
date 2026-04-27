@@ -147,7 +147,7 @@ Apollo对安全距离的处理存在两个层面的粗粒度问题
     \label{eq:f_type}
 \end{equation}
 
-\textbf{取值依据}\quad{}该映射综合考虑运动不确定性与事故后果。行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲；交通锥等小尺寸标识物体积小且固定在路面，碰撞后果轻微，赋予最低权重0.15。同时，交通事故统计表明弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重1.0。
+\textbf{取值依据}\quad{}该映射综合考虑运动不确定性与事故后果。行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲；交通锥等小尺寸标识物体积小且固定在路面，碰撞后果轻微，赋予最低权重0.15。同时，一般认为弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重1.0。
 
 \textbf{Apollo感知映射}\quad{}Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入1.0分支，\texttt{VEHICLE}归入0.7分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入0.5分支，\texttt{UNKNOWN\_UNMOVABLE}归入0.3分支，交通锥等已知小尺寸标识物通过几何尺寸判别归入0.15分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
 
@@ -294,8 +294,8 @@ MIKU     & \MThreeMikuAvgV     & \MThreeMikuMaxAbsA     & \MThreeMikuMaxAbsJerk 
 \end{tabular}
 \end{table}
 
-实验结果与本章理论分析一致。当障碍物为低威胁的小尺寸静态目标时，Baseline的统一$\delta=0.30$\,m压缩了本可通行的横向空间，触发不必要的BLOCKED与停车；MIKU按多因子威胁度评估给出$\delta_i\approx0.19$\,m的差异化裕度，几何上把通行带宽度释放到自车宽度以上，使原本不可行的窄路变为可通行。这一对照为后续第五章组级最优分组与第六章时空走廊的$\delta_i$输入提供了量化参考。
+实验结果与本章理论分析一致。当障碍物为低威胁的小尺寸静态目标时，Baseline的统一$\delta=0.30$\,m压缩了本可通行的横向空间，触发不必要的BLOCKED与停车；MIKU按多因子威胁度评估给出$\delta_i\approx0.19$\,m的差异化裕度，几何上把通行带宽度释放到自车宽度以上，使原本不可行的窄路变为可通行。
 
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider安全裕度一刀切的设计缺陷，提出MIKU的第一项改进，即多因子威胁度评估与差异化安全距离机制。源码分析定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源，几何分析则量化了统一缓冲对通行带宽度的不必要压缩。算法层面构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度模型，将归一化威胁度经分段映射转化为差异化的安全裕度$\delta_i$。差异化$\delta_i$不依赖统一缓冲假设，可直接代入第五章的最大间隙公式与第六章的时空走廊边界构造，作为后续两章的共用输入。
+本章针对Apollo PathBoundsDecider安全裕度一刀切的设计缺陷，提出多因子威胁度评估与差异化安全距离机制。源码分析定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源，几何分析则量化了统一缓冲对通行带宽度的不必要压缩。算法层面构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度模型，将归一化威胁度经分段映射转化为差异化的安全裕度$\delta_i$，使低威胁障碍物释放横向空间、高威胁障碍物保持甚至增大安全裕度。
