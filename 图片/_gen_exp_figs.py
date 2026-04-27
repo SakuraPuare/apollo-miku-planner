@@ -17,7 +17,7 @@ FIGDIR = Path(__file__).parent
 SCENARIOS = [
     "01_crossing_ped",
     "02_ped_plus_parked",
-    "03_two_peds_sequential",
+    "03_narrow_cones",
     "04_dense_construction",
 ]
 
@@ -31,9 +31,14 @@ OBSTACLES = {
         ("行人", "ped", 10.0, -0.5, 0, 1.2, 0.5, 0.5),
         ("停车", "static", 22.0, 1.3, 0, 0, 1.0, 4.0),
     ],
-    "03_two_peds_sequential": [
-        ("行人A", "ped", 13.0, -0.4, 0, 1.0, 0.5, 0.5),
-        ("行人B", "ped", 26.0, -0.4, 0, 1.0, 0.5, 0.5),
+    "03_narrow_cones": [
+        # 双侧交通锥构成窄路，差异化裕度对照（第5章 §5.3）
+        ("锥L1", "cone", 20.0,  1.20, 0, 0, 0.15, 0.5),
+        ("锥L2", "cone", 30.0,  1.20, 0, 0, 0.15, 0.5),
+        ("锥L3", "cone", 40.0,  1.20, 0, 0, 0.15, 0.5),
+        ("锥R1", "cone", 20.0, -1.20, 0, 0, 0.15, 0.5),
+        ("锥R2", "cone", 30.0, -1.20, 0, 0, 0.15, 0.5),
+        ("锥R3", "cone", 40.0, -1.20, 0, 0, 0.15, 0.5),
     ],
     "04_dense_construction": [
         # 入口漏斗 5 锥
@@ -117,7 +122,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
                 lines.append(
                     rf"\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:{s0:.3f},{l0 + r + 0.3:.3f}) {{{name}}};"
                 )
-        elif otype == "static":
+        elif otype in ("static", "cone"):
             lines.append(
                 rf"\fill[dangerred!70, draw=dangerred, thick] (axis cs:{s0-half_l:.3f},{l0-half_w:.3f}) rectangle (axis cs:{s0+half_l:.3f},{l0+half_w:.3f});"
             )
@@ -282,7 +287,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
                   rf"\addlegendentry{{Trim @ $s$={bs:.1f}\,m}}")
         return path, marker, legend
 
-    def subfig(mode: str, color: str, label: str) -> str:
+    def subfig(mode: str, path_id: str, color: str, label: str) -> str:
         path_plot, x_marker, trim_legend = _blocked_marker(mode)
         path_plot = path_plot.replace("__COLOR__", color)
         # blocked 时 lmin/lmax 曲线也按 blocked_s 截断（避免冻结区双线重叠拉到 xmax）
@@ -306,11 +311,11 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
 {borrow_bg}
 {road_edges}
 % 可行带阴影（blocked 时按 blocked_s 截断）
-\addplot[name path=lmin_{mode}, draw=vibrantorange, thin, dashed, forget plot, {bound_restrict}]
+\addplot[name path=lmin_{path_id}, draw=vibrantorange, thin, dashed, forget plot, {bound_restrict}]
     table[col sep=comma, x=s, y=l_min, discard if not={{mode}}{{{mode}}}] {{\datapath sl.csv}};
-\addplot[name path=lmax_{mode}, draw=vibrantorange, thin, dashed, forget plot, {bound_restrict}]
+\addplot[name path=lmax_{path_id}, draw=vibrantorange, thin, dashed, forget plot, {bound_restrict}]
     table[col sep=comma, x=s, y=l_max, discard if not={{mode}}{{{mode}}}] {{\datapath sl.csv}};
-\addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_{mode} and lmax_{mode}];
+\addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_{path_id} and lmax_{path_id}];
 % 路径（blocked 时按 blocked_s 截断）
 {path_plot}
 \addlegendentry{{{label}}}
@@ -323,18 +328,18 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
 \caption{{{label}}}
 \end{{subfigure}}"""
 
-    baseline_sub = subfig("baseline", "deepblue", "Baseline")
-    gtoc_sub = subfig("gtoc", "vibrantgreen", "GTOC")
+    baseline_sub = subfig("baseline", "baseline", "deepblue", "Baseline")
+    miku_sub = subfig("miku", "miku", "vibrantgreen", "MIKU")
 
     scn_nn = scn[:2]
-    return rf"""% 场景{scn_nn} SL 平面 Baseline vs GTOC 对比（上下排，每子图占满 \textwidth）
+    return rf"""% 场景{scn_nn} SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 {baseline_sub}
 
 \vspace{{0.6em}}
 
-{gtoc_sub}
+{miku_sub}
 """
 
 
@@ -364,7 +369,7 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
 
     # st_bounds.csv 解析：按 (mode, obs_name) 分组，避免 \addplot table 把多障碍物连成乱跑的折线
     st_bounds_path = FIGDIR / "data" / scn / "st_bounds.csv"
-    st_obs = {"baseline": [], "gtoc": []}  # 保序 list，去重
+    st_obs = {"baseline": [], "miku": []}  # 保序 list，去重
     if st_bounds_path.exists():
         for line in st_bounds_path.read_text().splitlines()[1:]:
             parts = line.strip().split(",")
@@ -374,7 +379,7 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
                     st_obs[mode_v].append(obs_v)
     has_bounds = {m: bool(st_obs[m]) for m in st_obs}
 
-    # GTOC 子图额外走廊标注（hatch 禁行区 + 节点）
+    # MIKU 子图额外走廊标注（hatch 禁行区 + 节点）
     corridor_extra = ""
     if has_corridor:
         hatch_blocks = []
@@ -392,25 +397,25 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
             )
         hatch_str = "\n".join(hatch_blocks)
         nodes_str = "\n".join(node_labels)
-        corridor_extra = rf"""% GTOC 走廊禁行区 hatch
+        corridor_extra = rf"""% MIKU 走廊禁行区 hatch
 {hatch_str}
 {nodes_str}
-% GTOC 走廊关键点（tau_k 标注）
+% MIKU 走廊关键点（tau_k 标注）
 \addplot[deeppink, very thick, dashed, mark=diamond*, mark size=4pt, mark options={{fill=deeppink, draw=black, line width=0.6pt}}]
     table[col sep=comma, x=tau_k, y=s_k] {{\datapath corridor.csv}};
 \addlegendentry{{走廊节点 $\tau_k$}}"""
 
-    def subfig_st(mode: str, path_color: str, label: str, extra: str = "") -> str:
+    def subfig_st(mode: str, path_id: str, path_color: str, label: str, extra: str = "") -> str:
         # 按 obs_name 独立画 fill_between，避免 \addplot table 把多个障碍物的边界连成跨障碍物的乱多边形
         if has_bounds[mode]:
             blocks = []
             for i, obs in enumerate(st_obs[mode]):
                 blocks.append(rf"""% obs={obs}
-\addplot[name path=stlo_{mode}_{i}, draw=none, forget plot]
+\addplot[name path=stlo_{path_id}_{i}, draw=none, forget plot]
     table[col sep=comma, x=t, y=s_lo, discard if not2={{mode}}{{{mode}}}{{obs_name}}{{{obs}}}] {{\datapath st_bounds.csv}};
-\addplot[name path=sthi_{mode}_{i}, draw=none, forget plot]
+\addplot[name path=sthi_{path_id}_{i}, draw=none, forget plot]
     table[col sep=comma, x=t, y=s_hi, discard if not2={{mode}}{{{mode}}}{{obs_name}}{{{obs}}}] {{\datapath st_bounds.csv}};
-\addplot[fill=dangerred!40, draw=none, forget plot] fill between[of=stlo_{mode}_{i} and sthi_{mode}_{i}];""")
+\addplot[fill=dangerred!40, draw=none, forget plot] fill between[of=stlo_{path_id}_{i} and sthi_{path_id}_{i}];""")
             # 单一图例项（用 addlegendimage 避免 fill_between forget plot 不可加 legend）
             blocks.append(r"\addlegendimage{area legend, fill=dangerred!40, draw=none}")
             blocks.append(r"\addlegendentry{障碍物 ST 禁行区}")
@@ -447,15 +452,15 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
 \caption{{{label}}}
 \end{{subfigure}}"""
 
-    baseline_sub = subfig_st("baseline", "deepblue", "Baseline")
-    gtoc_sub = subfig_st("gtoc", "vibrantgreen", "GTOC", corridor_extra)
+    baseline_sub = subfig_st("baseline", "baseline", "deepblue", "Baseline")
+    miku_sub = subfig_st("miku", "miku", "vibrantgreen", "MIKU", corridor_extra)
 
     scn_nn = scn[:2]
-    return rf"""% 场景{scn_nn} ST 平面 Baseline vs GTOC 对比
+    return rf"""% 场景{scn_nn} ST 平面 Baseline vs MIKU 对比
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 {baseline_sub}\hfill
-{gtoc_sub}
+{miku_sub}
 """
 
 
@@ -474,7 +479,7 @@ def gen_va(scn: str, meta: dict) -> str:
     v0 = meta["ego"]["v0"]
     metrics = meta.get("metrics", {})
     mb = metrics.get("baseline", {})
-    mg = metrics.get("gtoc", {})
+    mg = metrics.get("miku", {})
 
     avg_v_b = _fmt_metric(mb.get("avg_v"))
     max_a_b = _fmt_metric(mb.get("max_abs_a"))
@@ -492,7 +497,7 @@ def gen_va(scn: str, meta: dict) -> str:
 
     scn_nn = scn[:2]
 
-    return rf"""% 场景{scn_nn} 速度/加速度 Baseline vs GTOC 对比
+    return rf"""% 场景{scn_nn} 速度/加速度 Baseline vs MIKU 对比
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 \begin{{subfigure}}[b]{{\textwidth}}
@@ -516,8 +521,8 @@ def gen_va(scn: str, meta: dict) -> str:
     table[col sep=comma, x=t, y=v_qp, discard if not={{mode}}{{baseline}}] {{\datapath st_curves.csv}};
 \addlegendentry{{Baseline\,(\,$\bar{{v}}{{=}}{avg_v_b}$,\,$|a|_{{max}}{{=}}{max_a_b}$,\,$|j|_{{max}}{{=}}{max_j_b}$,\,$s_{{end}}{{=}}{s_end_b}$\,m\,)}}
 \addplot[vibrantgreen, line width=2pt]
-    table[col sep=comma, x=t, y=v_qp, discard if not={{mode}}{{gtoc}}] {{\datapath st_curves.csv}};
-\addlegendentry{{GTOC\,(\,$\bar{{v}}{{=}}{avg_v_g}$,\,$|a|_{{max}}{{=}}{max_a_g}$,\,$|j|_{{max}}{{=}}{max_j_g}$,\,$s_{{end}}{{=}}{s_end_g}$\,m\,)}}
+    table[col sep=comma, x=t, y=v_qp, discard if not={{mode}}{{miku}}] {{\datapath st_curves.csv}};
+\addlegendentry{{MIKU\,(\,$\bar{{v}}{{=}}{avg_v_g}$,\,$|a|_{{max}}{{=}}{max_a_g}$,\,$|j|_{{max}}{{=}}{max_j_g}$,\,$s_{{end}}{{=}}{s_end_g}$\,m\,)}}
 \end{{axis}}
 \end{{tikzpicture}}
 \caption{{速度对比}}
@@ -545,21 +550,21 @@ def gen_va(scn: str, meta: dict) -> str:
 \addplot[deepblue, line width=1.8pt]
     table[col sep=comma, x=t, y=a_qp, discard if not={{mode}}{{baseline}}] {{\datapath st_curves.csv}};
 \addlegendentry{{Baseline\,$a_x$}}
-% GTOC a_x 实线
+% MIKU a_x 实线
 \addplot[vibrantgreen, line width=1.8pt]
-    table[col sep=comma, x=t, y=a_qp, discard if not={{mode}}{{gtoc}}] {{\datapath st_curves.csv}};
-\addlegendentry{{GTOC\,$a_x$}}
+    table[col sep=comma, x=t, y=a_qp, discard if not={{mode}}{{miku}}] {{\datapath st_curves.csv}};
+\addlegendentry{{MIKU\,$a_x$}}
 % Baseline a_y dashed
 \addplot[deepblue, line width=1.4pt, dashed]
     table[col sep=comma, x=t, y=a_y, discard if not={{mode}}{{baseline}}] {{\datapath st_curves.csv}};
 \addlegendentry{{Baseline\,$a_y$}}
-% GTOC a_y dashed
+% MIKU a_y dashed
 \addplot[vibrantgreen, line width=1.4pt, dashed]
-    table[col sep=comma, x=t, y=a_y, discard if not={{mode}}{{gtoc}}] {{\datapath st_curves.csv}};
-\addlegendentry{{GTOC\,$a_y$}}
+    table[col sep=comma, x=t, y=a_y, discard if not={{mode}}{{miku}}] {{\datapath st_curves.csv}};
+\addlegendentry{{MIKU\,$a_y$}}
 \end{{axis}}
 \end{{tikzpicture}}
-\caption{{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 GTOC）}}
+\caption{{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 MIKU）}}
 \end{{subfigure}}
 
 \vspace{{0.8em}}
@@ -582,8 +587,8 @@ def gen_va(scn: str, meta: dict) -> str:
     table[col sep=comma, x=t, y=j_qp, discard if not={{mode}}{{baseline}}] {{\datapath st_curves.csv}};
 \addlegendentry{{Baseline\,$j$}}
 \addplot[vibrantgreen, line width=1.6pt]
-    table[col sep=comma, x=t, y=j_qp, discard if not={{mode}}{{gtoc}}] {{\datapath st_curves.csv}};
-\addlegendentry{{GTOC\,$j$}}
+    table[col sep=comma, x=t, y=j_qp, discard if not={{mode}}{{miku}}] {{\datapath st_curves.csv}};
+\addlegendentry{{MIKU\,$j$}}
 \end{{axis}}
 \end{{tikzpicture}}
 \caption{{jerk 对比}}
