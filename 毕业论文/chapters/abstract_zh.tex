@@ -12,9 +12,9 @@
 
 {\zihao{-4}\songti
 
-\noindent\hspace{2em}{\heiti\bfseries 摘要：}多障碍物密集场景下，现有自动驾驶路径规划算法面临路径阻塞、决策保守和通行效率低下等问题。本文以百度Apollo开源自动驾驶平台为基础，分析了其Planning模块的架构设计与核心算法实现，从安全距离、决策粒度和时空协调三个维度识别了路径边界决策器PathBoundsDecider在多障碍物场景下的规划缺陷，即安全裕度一刀切压缩通行空间、逐障碍物独立决策导致矛盾避让方向、动态障碍物被完全排除在路径决策之外导致路径-速度协调缺失。
+\noindent\hspace{2em}{\heiti\bfseries 摘要：}多障碍物密集场景下，现有自动驾驶路径规划算法面临路径阻塞、决策保守和通行效率低下等问题。本文以百度Apollo开源自动驾驶平台为基础，分析了其Planning模块的架构设计与核心算法实现。分析表明，路径边界决策器PathBoundsDecider存在三方面规划缺陷：安全裕度一刀切压缩通行空间，逐障碍物独立决策导致矛盾避让方向，动态障碍物被完全排除在路径决策之外致使路径-速度协调缺失。
 
-针对上述问题，本文提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner，MIKU），将多障碍物避让方向选择建模为组合优化问题，从安全距离、决策粒度、时空协调三个方面分别改进。改进一通过多因子威胁度评估，将Apollo统一缓冲替换为融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度的差异化安全裕度$\delta_i$。改进二通过扫描线纵向重叠检测将关联障碍物聚为连通分量并在组级执行全局最优决策，本文证明了最优避让方向分割在横向排序后具有连续性以及最大间隙策略的最优性，将组合搜索复杂度从$O(2^k)$降至$O(k \log k)$。改进三引入到达时间函数与预测轨迹将动态障碍物纳入路径边界决策，构建时空可通行走廊，并将其边界约束与速度边界决策器SpeedBoundsDecider的纵向位移-时间（Station-Time，ST）边界在速度二次规划（Quadratic Programming，QP）层面融合，实现路径-速度协调规划。
+针对上述问题，本文提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner，MIKU），将多障碍物避让方向选择建模为组合优化问题并从三个方面改进。安全距离方面，通过多因子威胁度评估将Apollo统一缓冲替换为差异化安全裕度$\delta_i$，融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度五个因子。决策粒度方面，通过扫描线纵向重叠检测将关联障碍物聚为连通分量并在组级执行全局最优决策。本文证明了最优避让方向分割在横向排序后具有连续性以及最大间隙策略的最优性，将组合搜索复杂度从$O(2^k)$降至$O(k \log k)$。时空协调方面，引入到达时间函数与预测轨迹将动态障碍物纳入路径边界决策，构建时空可通行走廊，并将走廊边界约束与速度边界决策器SpeedBoundsDecider的纵向位移-时间（Station-Time，ST）边界在速度二次规划（Quadratic Programming，QP）层面融合，实现路径-速度协调规划。
 
 仿真实验结果表明，与Apollo原生分段加加速度路径优化算法（PiecewiseJerkPathOptimizer）相比，MIKU在4个多障碍物测试场景中全部完成通过而Baseline均未达成通过判定，平均通行速度从\MSummaryBaselineAvgV\,m/s提升至\MSummaryMikuAvgV\,m/s，提升\MSummarySummaryVImprovement\%，QP求解总耗时从\MSummaryBaselineQpTotal\,ms降至\MSummaryMikuQpTotal\,ms，算法总复杂度$O(n \log n)$，满足实时性要求。
 
