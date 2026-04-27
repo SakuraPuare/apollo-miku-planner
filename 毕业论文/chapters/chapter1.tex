@@ -80,7 +80,7 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad (PJPO) & 辅助模块 \\
 
 \textbf{OpenSpacePlanner补充时期，2020年至今}\quad{}为支持泊车、OpenSpace等结构化先验失效的场景，Apollo引入Hybrid A\*\cite{dolgov2008hybrid}与DL-IAPS\cite{zhou2021dliaps}的自由空间规划链路，与PublicRoad Planner并行。
 
-基于该演化脉络可以明确本文定位。本文不触碰EM与PJPO的优化器本身，而是在PathBoundsDecider这一路径边界构建环节把全局决策能力注入进去，属于在PublicRoad主干内部做精细化升级，改动粒度小，可与上下游解耦回归。
+基于该演化脉络可以明确本文定位。本文不触碰EM与PJPO的优化器本身，而是在PathBoundsDecider这一路径边界构建环节引入全局决策能力，属于在PublicRoad主干内部做精细化升级，改动粒度小，可与上下游解耦回归。
 
 \subsection{Apollo平台相关研究}
 

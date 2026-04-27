@@ -48,7 +48,7 @@ bool PathBoundsDeciderUtil::IsWithinPathDeciderScopeObstacle(
 
 \textbf{影响一}，路径与速度规划之间缺乏协调
 
-在Apollo的路径-速度解耦架构中，如第二章2.3节所述，路径规划先于速度规划执行，速度规划在路径规划的结果上构建ST图。当动态障碍物不参与路径决策时，路径阶段可能生成一条直行路径，而速度阶段在该路径上发现动态障碍物横穿，不得不急刹或停车等待。如果路径阶段考虑了动态障碍物的预测轨迹，完全可以提前规划一条避让路径，在保持速度的同时安全通过。
+在Apollo的路径-速度解耦架构中，路径规划先于速度规划执行，速度规划在路径规划的结果上构建ST图。当动态障碍物不参与路径决策时，路径阶段可能生成一条直行路径，而速度阶段在该路径上发现动态障碍物横穿，不得不急刹或停车等待。如果路径阶段考虑了动态障碍物的预测轨迹，完全可以提前规划一条避让路径，在保持速度的同时安全通过。
 
 \textbf{影响二}，横穿行人在路径规划中完全不存在
 
@@ -265,7 +265,7 @@ Apollo的Prediction模块为每个动态障碍物提供未来5\,s内的预测轨
 \subsection{走廊约束的速度规划融合}
 
 \subsubsection{Apollo速度QP问题接口}
-Apollo的\texttt{PiecewiseJerkSpeedOptimizer}已在第二章2.3节给出完整描述，在等时间间隔$\Delta t=0.1$\,s上以纵向位置$s_j$、速度$\dot{s}_j$、加速度$\ddot{s}_j$为决策变量，目标函数惩罚位置/速度跟踪误差与加加速度，约束包含运动学等式约束、物理限制以及由\texttt{SpeedBoundsDecider}给出的ST边界
+Apollo的\texttt{PiecewiseJerkSpeedOptimizer}在等时间间隔$\Delta t=0.1$\,s上以纵向位置$s_j$、速度$\dot{s}_j$、加速度$\ddot{s}_j$为决策变量，目标函数惩罚位置/速度跟踪误差与加加速度，约束包含运动学等式约束、物理限制以及由\texttt{SpeedBoundsDecider}给出的ST边界
 
 \begin{equation}
     s_j^{lb,\text{SBD}} \leq s_j \leq s_j^{ub,\text{SBD}}, \quad j = 0, 1, \ldots, K
