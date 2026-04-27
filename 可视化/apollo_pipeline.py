@@ -7,7 +7,7 @@
 #     "osqp>=0.6.3",
 # ]
 # ///
-"""Apollo path-then-speed 全链路复刻 — Baseline vs GTOC 对照可视化。
+"""Apollo path-then-speed 全链路复刻 — Baseline vs MIKU 对照可视化。
 
 执行链（对应 Apollo lane_follow/conf/pipeline.pb.txt）：
 
@@ -22,9 +22,9 @@
     ⑥ SpeedBoundsDecider 2  — 按决策重建 s_j^ub / s_j^lb
     ⑦ PiecewiseJerkSpeed    — QP 出最终平滑 s(t), v(t), a(t)
 
-  GTOC 改动：① 用 τ(s)-shifted 障碍位置；⑥ 之后多注入一路 corridor 约束。
+  MIKU 改动：① 用 τ(s)-shifted 障碍位置；⑥ 之后多注入一路 corridor 约束。
 
-输出 PNG：apollo_pipeline.png（6 子图：SL × ST × 时序，左 Baseline / 右 GTOC）。
+输出 PNG：apollo_pipeline.png（6 子图：SL × ST × 时序，左 Baseline / 右 MIKU）。
 """
 
 from __future__ import annotations
@@ -97,12 +97,54 @@ class Scenario:
     l_road_max: float = 1.875
     # Baseline 用统一 δ（Apollo `GetBufferBetweenADCCenterAndEdge`）
     delta_baseline: float = 0.3
-    # GTOC 差异化 δ_i 上下界（论文 §5.4 式(5.10)）
+    # MIKU 差异化 δ_i 上下界（论文 §5.4 式(5.10)）
     delta_min: float = 0.10
     delta_max: float = 0.40
     # LaneBorrow：模拟 Apollo LaneBorrowPath
     lane_borrow: str = "none"   # "none" | "left" | "right" | "both"
     lane_width: float = 3.75
+
+
+# ============================ §8 消融开关（5 个正交组件） ============================
+
+@dataclass
+class AblationFlags:
+    """MIKU 5 个组件级开关，对应论文 §5–§7 各小节算法步骤。
+
+    C1 tau_shift     §6 步骤1-2 — 时变 SL 投影 τ(s)-shifted 障碍位置
+    C2 grouping      §6 步骤3   — 扫描线纵向连通分量合并
+    C3 max_gap       §6 步骤4-5 — 组内 k+1 间隙 argmax 选 p*
+    C4 threat_delta  §5.4 (5.10) — 多因子威胁度 → 差异化 δ_i
+    C5 corridor_inject §7 SBD2 后扩展 — (s_k, τ_k) 走廊注入 ST
+    """
+    tau_shift: bool = True
+    grouping: bool = True
+    max_gap: bool = True
+    threat_delta: bool = True
+    corridor_inject: bool = True
+    name: str = "M5_full"
+
+    @classmethod
+    def baseline(cls) -> "AblationFlags":
+        return cls(False, False, False, False, False, "M0_baseline")
+
+    @classmethod
+    def full(cls) -> "AblationFlags":
+        return cls(True, True, True, True, True, "M5_full")
+
+    @classmethod
+    def from_mode(cls, mode_or_flags) -> "AblationFlags":
+        if isinstance(mode_or_flags, cls):
+            return mode_or_flags
+        if mode_or_flags == "baseline":
+            return cls.baseline()
+        if mode_or_flags == "miku":
+            return cls.full()
+        raise ValueError(f"unknown mode: {mode_or_flags!r}")
+
+    def all_off(self) -> bool:
+        return not any([self.tau_shift, self.grouping, self.max_gap,
+                        self.threat_delta, self.corridor_inject])
 
 
 # ============================ §5 多因子威胁度 → δ_i ============================
@@ -118,6 +160,7 @@ V_LIMIT = 12.0   # 道路限速（用于 f_vel sigmoid 归一化）
 F_TYPE_MAP = {
     "ped": 1.0, "bike": 1.0, "vehicle": 0.7,
     "unknown_movable": 0.5, "static": 0.3,
+    "cone": 0.15,  # 交通锥/反光屏障：小尺寸、低质量、置信度高，威胁权重最低
 }
 
 
@@ -199,22 +242,34 @@ SCENARIOS = {
         s_max=32.0, t_max=6.5,
     ),
 
-    "03_two_peds_sequential": Scenario(
-        # 两个同向横穿行人在不同 s — GTOC 可同侧 thread；Baseline 两次 yield
-        ego=Ego(s0=0.0, l0=0.0, v0=8.0, a0=0.0),
+    "03_narrow_cones": Scenario(
+        # 双侧交通锥构成窄路 — 第5章差异化裕度对照
+        # Baseline 一刀切 δ=0.30 → l_min > l_max → blocked；
+        # MIKU 识别交通锥低威胁 → δ_i≈0.19 → ego 中心可走余量约 0.07 m → 通过。
+        ego=Ego(s0=0.0, l0=0.0, v0=4.0, a0=0.0),
         obstacles=[
-            Obstacle(s0=13.0, l0=-0.4, vs=0.0, vl=1.0, W=0.5, L=0.5,
-                     is_static=False, name="行人A", obs_type="ped"),
-            Obstacle(s0=26.0, l0=-0.4, vs=0.0, vl=1.0, W=0.5, L=0.5,
-                     is_static=False, name="行人B", obs_type="ped"),
+            # 左侧锥列（l=+1.20, W=0.15）三个，纵向 s=20/30/40
+            Obstacle(s0=20.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥L1", obs_type="cone"),
+            Obstacle(s0=30.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥L2", obs_type="cone"),
+            Obstacle(s0=40.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥L3", obs_type="cone"),
+            # 右侧锥列（l=-1.20, W=0.15）三个，与左列对称
+            Obstacle(s0=20.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥R1", obs_type="cone"),
+            Obstacle(s0=30.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥R2", obs_type="cone"),
+            Obstacle(s0=40.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
+                     is_static=True, name="锥R3", obs_type="cone"),
         ],
-        s_max=35.0, t_max=7.0,
+        s_max=50.0, t_max=14.0,
     ),
 
     "04_dense_construction": Scenario(
         # 单车道维修封闭 + 交通锥导流至左侧相邻车道
         # 入口漏斗 5 锥（由右沿斜跨至左沿）+ 维持段 8 屏障（沿左沿连续墙）+ 出口漏斗 5 锥（反向）
-        # 所有锥与屏障构成单一大型连通分量；GTOC 识别为整体导流, 一次性 LaneBorrow
+        # 所有锥与屏障构成单一大型连通分量；MIKU 识别为整体导流, 一次性 LaneBorrow
         # Baseline 逐障碍物贪心：入口漏斗段每锥独立选侧, 受 room_left/room_right 摆动, 路径锯齿
         ego=Ego(s0=0.0, l0=0.0, v0=6.0, a0=0.0),
         obstacles=[
@@ -294,8 +349,9 @@ def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
     return l_min, l_max, eff_l_min, eff_l_max
 
 
-def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
-    """GTOC PathBoundsDecider — 论文 §6 算法\\ref{alg:optimal_band}：
+def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
+                       flags: Optional[AblationFlags] = None, debug=False):
+    """MIKU PathBoundsDecider — 论文 §6 算法\\ref{alg:optimal_band}：
 
     步骤1: 到达时间 τ(s_i^-)
     步骤2: 时变 SL 投影 + 差异化 δ_i → u_i = l_i^- - δ_i, v_i = l_i^+ + δ_i
@@ -304,8 +360,12 @@ def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
     步骤5: p* = argmax g_p；分配 d_(i)：i ≤ p* → L（左绕），i > p* → R（右绕）
     步骤6: 在该组的纵向区间内置 l^+ = u_(p*+1)（or l_road^+），l^- = v_(p*)（or l_road^-）
 
+    flags 控制 4 个组件的启停（C1/C2/C3/C4），默认 full。
+
     返回 (l_min, l_max, eff_l_min, eff_l_max, debug_info)。
     """
+    if flags is None:
+        flags = AblationFlags.full()
     e = scn.ego
     eff_l_max = scn.l_road_max + (scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0)
     eff_l_min = scn.l_road_min - (scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0)
@@ -319,15 +379,16 @@ def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
     for obs in scn.obstacles:
         s_minus_static = obs.s0 - obs.L / 2
         s_plus_static = obs.s0 + obs.L / 2
-        # 动态障碍物：用 τ(s_i^-) 时刻的预测位置
-        if obs.is_static:
+        # 动态障碍物：用 τ(s_i^-) 时刻的预测位置；C1 关闭时退化为 t=0 快照
+        if obs.is_static or not flags.tau_shift:
             tau = 0.0
         else:
             tau = arrival_time(s_minus_static, scn)
         os_, ol_ = obs.position_at(tau)
         s_minus = os_ - obs.L / 2
         s_plus = os_ + obs.L / 2
-        delta = compute_delta(obs, scn)
+        # C4：差异化 δ_i 关闭时退化为统一 delta_baseline
+        delta = compute_delta(obs, scn) if flags.threat_delta else scn.delta_baseline
         u = ol_ - obs.W / 2 - delta  # 右侧通行边（自车从右过则 ego 中心 ≤ u - W/2）
         v = ol_ + obs.W / 2 + delta  # 左侧通行边（自车从左过则 ego 中心 ≥ v + W/2）
         obs_proj.append({
@@ -336,16 +397,20 @@ def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
         })
 
     # —— 步骤3：按 s_i^- 升序，扫描线合连通分量
+    # C2 关闭：每个障碍物自成一组（退化为逐障碍物决策）
     obs_proj.sort(key=lambda r: r["s_minus"])
     groups: List[List[dict]] = []
-    s_max_run = -float("inf")
-    for r in obs_proj:
-        if not groups or r["s_minus"] > s_max_run:
-            groups.append([r])
-            s_max_run = r["s_plus"]
-        else:
-            groups[-1].append(r)
-            s_max_run = max(s_max_run, r["s_plus"])
+    if not flags.grouping:
+        groups = [[r] for r in obs_proj]
+    else:
+        s_max_run = -float("inf")
+        for r in obs_proj:
+            if not groups or r["s_minus"] > s_max_run:
+                groups.append([r])
+                s_max_run = r["s_plus"]
+            else:
+                groups[-1].append(r)
+                s_max_run = max(s_max_run, r["s_plus"])
 
     # —— 步骤4-5：组内 max-gap 求解，得到分组的 [l^-, l^+]
     group_decisions = []
@@ -369,7 +434,11 @@ def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
             gaps.append(ordered[p]["u"] - ordered[p - 1]["v"])
         # g_k = l_road^+ - v_(k)
         gaps.append(eff_l_max - ordered[-1]["v"])
-        p_star = int(np.argmax(gaps))
+        # C3 关闭：退化为「整组绕一侧」二元决策，比较 g_0 与 g_k
+        if flags.max_gap:
+            p_star = int(np.argmax(gaps))
+        else:
+            p_star = k if gaps[k] >= gaps[0] else 0
         # 分配 L/R：i ≤ p* → 左绕（在通道左侧 → ego 走通道右侧 → ego l ≤ u_(p*+1)）
         # 论文记号：L_p = {(1)..(p)}，R_p = {(p+1)..(k)}；通行带 l^+ = min_{R} u, l^- = max_{L} v
         if p_star == 0:
@@ -461,22 +530,24 @@ def _gtoc_path_bounds(scn: Scenario, s_arr: np.ndarray, debug=False):
     return l_min, l_max, eff_l_min, eff_l_max, group_decisions
 
 
-def path_bounds_decider(scn: Scenario, mode: str):
-    """Apollo PathBoundsDecider 双模式入口。
+def path_bounds_decider(scn: Scenario, mode_or_flags):
+    """Apollo PathBoundsDecider 入口（支持字符串 mode 与 AblationFlags 两种调用）。
 
-    - mode='baseline': IsStatic 过滤 + 逐障碍物贪心 nudge（Apollo 现状）
-    - mode='gtoc'    : 扫描线分组 + 最大间隙策略（论文 §6 算法\\ref{alg:optimal_band}）
+    - 'baseline' / AblationFlags.baseline()：Apollo IsStatic 过滤 + 逐障碍物贪心 nudge
+    - 'miku'     / AblationFlags.full()    ：扫描线分组 + 最大间隙策略
+    - 任意 AblationFlags                    ：5 个组件级开关消融
 
     返回 (s_arr, l_min, l_max, blocked_idx, group_decisions)。
-    blocked_idx=-1 表示全程通畅；group_decisions 仅 GTOC 模式非空。
+    blocked_idx=-1 表示全程通畅；group_decisions 仅 MIKU 路径分支非空。
     """
+    flags = AblationFlags.from_mode(mode_or_flags)
     e = scn.ego
     s_arr = np.arange(0.0, scn.s_max + 0.01, 0.5)
     group_decisions = []
-    if mode == "baseline":
+    if flags.all_off():
         l_min, l_max, _, _ = _baseline_path_bounds(scn, s_arr)
     else:
-        l_min, l_max, _, _, group_decisions = _gtoc_path_bounds(scn, s_arr)
+        l_min, l_max, _, _, group_decisions = _miku_path_bounds(scn, s_arr, flags)
 
     # ego 起点位置硬约束
     l_min[0] = l_max[0] = e.l0
@@ -731,14 +802,15 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
 
 # ============================ 全链路执行 ============================
 
-def run_pipeline(mode: str, scn: Scenario):
-    s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(scn, mode)
+def run_pipeline(mode_or_flags, scn: Scenario):
+    flags = AblationFlags.from_mode(mode_or_flags)
+    s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(scn, flags)
     l_path, path_qp_ms = path_optimizer(s_arr, l_min, l_max)
     st_bounds = st_boundary_mapper(scn, s_arr, l_path)
     ts, s_dp, forbidden, ss = speed_dp(scn, st_bounds)
 
     corridor = None
-    if mode == "gtoc":
+    if flags.corridor_inject and group_decisions:
         # 论文 §6 步骤7：仅对"依赖动态障碍物移开"的位置注入 (s_k, τ_k)
         # — 即：连通分量内含动态障碍物，且其 SL 投影是 ego 路径在该 s 段的活跃约束
         corridor = []
@@ -793,7 +865,7 @@ C_PED   = "#d62728"
 C_STAT  = "#7f7f7f"
 C_PATH  = "#2ca02c"
 C_BAS   = "#1f77b4"
-C_GTOC  = "#2ca02c"
+C_MIKU  = "#2ca02c"
 C_BOUND = "#ff7f0e"
 C_DP    = "#9467bd"
 C_QP    = "#000000"
@@ -986,14 +1058,36 @@ def plot_st(ax, r, title, scn: Scenario):
 
 
 def compute_metrics(r, scn: Scenario):
-    """轨迹质量指标：通行效率、平顺性、到达时间。"""
+    """轨迹质量指标：通行效率、平顺性、鲁棒性、计算开销，覆盖消融评分四个维度。"""
     qp_solve_ms = r.get("qp_solve_ms", {"path": 0.0, "speed": 0.0, "total": 0.0})
+    s_target = scn.s_max - 1.0
+
+    # 路径阶段几何指标（即便速度 QP 不可行，路径几何也存在）
+    l_path = r.get("l_path")
+    l_max_dev = 0.0
+    decision_switches = 0
+    if l_path is not None and len(l_path) >= 1:
+        l_max_dev = float(np.max(np.abs(l_path)))
+    if l_path is not None and len(l_path) >= 3:
+        dl = np.diff(l_path)
+        sign_changes = np.sum(np.diff(np.sign(dl)) != 0)
+        decision_switches = int(sign_changes)
+    kappa_s = r.get("kappa_s")
+    kappa_rms = (float(np.sqrt(np.mean(kappa_s ** 2)))
+                 if kappa_s is not None and len(kappa_s) > 0 else 0.0)
+
+    blocked_flag = int(r.get("blocked_idx", -1) >= 0)
+
     if r["v_qp"] is None:
-        return {"qp_solve_ms": qp_solve_ms, "_infeasible": True}
+        return {"qp_solve_ms": qp_solve_ms, "_infeasible": True,
+                "success": 0, "blocked": blocked_flag,
+                "l_max_dev": l_max_dev, "kappa_rms": kappa_rms,
+                "decision_switches": decision_switches,
+                "tau_violation": 0}
+
     ts, v, a, s = r["ts"], r["v_qp"], r["a_qp"], r["s_qp"]
     dt = ts[1] - ts[0]
     # 巡航段平均速度：只算 ego 在主动行驶时（排除末端到达后停留）
-    s_target = scn.s_max - 1.0
     arrive_idx = int(np.argmax(s >= s_target)) if (s >= s_target).any() else -1
     if arrive_idx > 0:
         v_active = v[:arrive_idx + 1]
@@ -1009,8 +1103,11 @@ def compute_metrics(r, scn: Scenario):
     max_abs_a = float(np.max(np.abs(a_active)))
     jerk = np.diff(a) / dt
     max_abs_jerk = float(np.max(np.abs(jerk))) if len(jerk) > 0 else 0.0
+    jerk_rms = (float(np.sqrt(np.mean(jerk ** 2)))
+                if len(jerk) > 0 else 0.0)
     s_end = float(s[-1])
     efficiency = avg_v_cruise / scn.ego.v0
+    success = 1 if (s_end >= s_target and not np.isnan(t_arrive)) else 0
     # 横向（向心）加速度极值
     a_y_arr = r.get("a_y")
     if a_y_arr is not None and len(a_y_arr) > 0:
@@ -1022,9 +1119,22 @@ def compute_metrics(r, scn: Scenario):
         max_abs_a_lat = float(np.max(np.abs(a_y_active)))
     else:
         max_abs_a_lat = 0.0
+
+    # τ(s) 走廊违反次数：t<τ_k 时 ego 已越过 s_k 即违反
+    tau_violation = 0
+    corridor = r.get("corridor") or []
+    for (s_k, tau_k) in corridor:
+        for j, t_j in enumerate(ts):
+            if t_j < tau_k and s[j] >= s_k:
+                tau_violation += 1
     return dict(avg_v=avg_v_cruise, max_abs_a=max_abs_a,
                 max_abs_a_lat=max_abs_a_lat,
-                max_abs_jerk=max_abs_jerk, s_end=s_end,
+                max_abs_jerk=max_abs_jerk, jerk_rms=jerk_rms,
+                kappa_rms=kappa_rms, l_max_dev=l_max_dev,
+                decision_switches=decision_switches,
+                tau_violation=tau_violation,
+                blocked=blocked_flag, success=success,
+                s_end=s_end,
                 efficiency=efficiency, t_arrive=t_arrive,
                 qp_solve_ms=qp_solve_ms)
 
@@ -1047,7 +1157,7 @@ def plot_compare_v(ax, r_b, r_g, scn: Scenario):
     if r_b["v_qp"] is not None:
         ax.plot(r_b["ts"], r_b["v_qp"], color=C_BAS, lw=2.4, label="Baseline")
     if r_g["v_qp"] is not None:
-        ax.plot(r_g["ts"], r_g["v_qp"], color=C_GTOC, lw=2.4, label="GTOC")
+        ax.plot(r_g["ts"], r_g["v_qp"], color=C_MIKU, lw=2.4, label="MIKU")
     ax.axhline(scn.ego.v0, color="gray", ls=":", lw=0.8,
                label=f"v_ref={scn.ego.v0}")
     ax.set_xlabel("t [s]")
@@ -1065,9 +1175,9 @@ def plot_compare_v(ax, r_b, r_g, scn: Scenario):
             bbox=dict(facecolor="white", edgecolor=C_BAS, lw=1.0,
                       alpha=0.92, boxstyle="round,pad=0.3"))
     ax.text(0.45, 0.98,
-            f"GTOC\n{_metrics_text(m_g)}",
+            f"MIKU\n{_metrics_text(m_g)}",
             transform=ax.transAxes, fontsize=8, va="top", ha="left",
-            bbox=dict(facecolor="white", edgecolor=C_GTOC, lw=1.0,
+            bbox=dict(facecolor="white", edgecolor=C_MIKU, lw=1.0,
                       alpha=0.92, boxstyle="round,pad=0.3"))
 
 
@@ -1080,10 +1190,10 @@ def plot_compare_a(ax, r_b, r_g, scn: Scenario):
         ax.plot(r_b["ts"][1:], jerk_b * 0.2, color=C_BAS, lw=1.0, ls=":",
                 alpha=0.6, label="Baseline jerk×0.2")
     if r_g["a_qp"] is not None:
-        ax.plot(r_g["ts"], r_g["a_qp"], color=C_GTOC, lw=2.4, label="GTOC a")
+        ax.plot(r_g["ts"], r_g["a_qp"], color=C_MIKU, lw=2.4, label="MIKU a")
         jerk_g = np.diff(r_g["a_qp"]) / dt
-        ax.plot(r_g["ts"][1:], jerk_g * 0.2, color=C_GTOC, lw=1.0, ls=":",
-                alpha=0.6, label="GTOC jerk×0.2")
+        ax.plot(r_g["ts"][1:], jerk_g * 0.2, color=C_MIKU, lw=1.0, ls=":",
+                alpha=0.6, label="MIKU jerk×0.2")
     ax.axhline(0, color="gray", ls=":", lw=0.6)
     ax.set_xlabel("t [s]")
     ax.set_ylabel("a [m/s²]  /  jerk×0.2 [m/s³]")
@@ -1094,10 +1204,10 @@ def plot_compare_a(ax, r_b, r_g, scn: Scenario):
 
 
 SCENARIO_META = {
-    "01_crossing_ped":           "场景①：单行人横穿（基础对照）",
-    "02_ped_plus_parked":        "场景②：行人横穿 + 左侧停车（动+静混合）",
-    "03_two_peds_sequential":    "场景③：双行人同向递进横穿（多障碍物时序）",
-    "04_dense_construction":     "场景④：单车道维修封闭 + 交通锥导流借道（18 个静态障碍构成单一导流连通分量）",
+    "01_crossing_ped":           "场景四：单行人横穿（基础对照）",
+    "02_ped_plus_parked":        "场景二：行人横穿 + 左侧停车（动+静混合）",
+    "03_narrow_cones":           "场景一：窄路通行+双侧交通锥（差异化裕度对照）",
+    "04_dense_construction":     "场景三：单车道维修封闭 + 交通锥导流借道（18 个静态障碍构成单一导流连通分量）",
 }
 
 
@@ -1107,7 +1217,7 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
     with open(os.path.join(data_dir, "sl.csv"), "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["mode", "s", "l_min", "l_max", "l_path"])
-        for mode, r in [("baseline", r_b), ("gtoc", r_g)]:
+        for mode, r in [("baseline", r_b), ("miku", r_g)]:
             # blocked 模式下，path/bounds 在 blocked_idx 之后被冻结复制；
             # CSV 写入时直接截断到 blocked_idx + 1（含），让 pgfplots 看不到冻结行
             blocked_idx = r.get("blocked_idx", -1)
@@ -1120,7 +1230,7 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
     with open(os.path.join(data_dir, "st_curves.csv"), "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["mode", "t", "s_ub", "s_dp", "s_qp", "v_qp", "a_qp", "a_y", "j_qp"])
-        for mode, r in [("baseline", r_b), ("gtoc", r_g)]:
+        for mode, r in [("baseline", r_b), ("miku", r_g)]:
             ts = r["ts"]
             dt = (ts[1] - ts[0]) if len(ts) > 1 else 0.1
             a_arr = r["a_qp"] if r["a_qp"] is not None else None
@@ -1145,7 +1255,7 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
     with open(os.path.join(data_dir, "st_bounds.csv"), "w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)
         w.writerow(["mode", "obs_name", "t", "s_lo", "s_hi", "is_static"])
-        for mode, r in [("baseline", r_b), ("gtoc", r_g)]:
+        for mode, r in [("baseline", r_b), ("miku", r_g)]:
             for b in r["st_bounds"]:
                 is_s = 1 if b["is_static"] else 0
                 for (t, s_lo, s_hi) in b["intervals"]:
@@ -1218,7 +1328,7 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
         },
         "metrics": {
             "baseline": _metrics_dict(m_b, r_b),
-            "gtoc": _metrics_dict(m_g, r_g),
+            "miku": _metrics_dict(m_g, r_g),
         },
     }
     with open(os.path.join(data_dir, "meta.json"), "w", encoding="utf-8") as f:
@@ -1228,8 +1338,8 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
 def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str = None):
     print(f"\n[{scn_name}] Running ...")
     r_b = run_pipeline("baseline", scn)
-    r_g = run_pipeline("gtoc", scn)
-    for label, r in [("Baseline", r_b), ("GTOC", r_g)]:
+    r_g = run_pipeline("miku", scn)
+    for label, r in [("Baseline", r_b), ("MIKU", r_g)]:
         bi = r.get("blocked_idx", -1)
         bs = r.get("blocked_s")
         qp_ok = "OK" if r["s_qp"] is not None else "INF"
@@ -1250,14 +1360,14 @@ def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str =
     ax_a    = fig.add_subplot(gs[2, 1])
 
     plot_sl(ax_sl_b, r_b, "Baseline ① PathBounds → ② Path QP", scn)
-    plot_sl(ax_sl_g, r_g, "GTOC     ① PathBounds (τ-shifted) → ② Path QP", scn)
+    plot_sl(ax_sl_g, r_g, "MIKU     ① PathBounds (τ-shifted) → ② Path QP", scn)
     plot_st(ax_st_b, r_b, "Baseline ③ SBD → ④ DP → ⑤⑥ → ⑦ QP", scn)
-    plot_st(ax_st_g, r_g, "GTOC     ③ SBD → ④ DP → ⑤⑥ → 走廊注入 → ⑦ QP", scn)
+    plot_st(ax_st_g, r_g, "MIKU     ③ SBD → ④ DP → ⑤⑥ → 走廊注入 → ⑦ QP", scn)
     plot_compare_v(ax_v, r_b, r_g, scn)
     plot_compare_a(ax_a, r_b, r_g, scn)
 
     title = SCENARIO_META.get(scn_name, scn_name)
-    fig.suptitle(f"{title} —— Baseline vs GTOC 全链路对照",
+    fig.suptitle(f"{title} —— Baseline vs MIKU 全链路对照",
                  fontsize=14, fontweight="bold", y=0.995)
     plt.savefig(out_path, dpi=130, bbox_inches="tight")
     plt.close(fig)
@@ -1268,7 +1378,7 @@ def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str =
         print(f"  → {data_dir}/")
 
     summary = []
-    for label, r in [("Baseline", r_b), ("GTOC", r_g)]:
+    for label, r in [("Baseline", r_b), ("MIKU", r_g)]:
         if r["v_qp"] is None:
             summary.append((label, None))
         else:
