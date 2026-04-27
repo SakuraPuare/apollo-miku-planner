@@ -1,11 +1,9 @@
 \chapter{多因子威胁度与差异化安全距离}
 
-本章对应GTOC的第一项改进，针对Apollo PathBoundsDecider对所有障碍物使用统一安全距离的设计缺陷，提出基于多因子威胁度评估的差异化安全裕度$\delta_i$分配机制。本章首先深入剖析Apollo一刀切缓冲在多障碍物场景下压缩通行空间的源码根源与几何后果，进而设计融合TTC、横向重叠率、相对速度、障碍物类型与交互密度五个因子的威胁度评估模型，并将其映射为差异化的安全裕度。差异化$\delta_i$将作为基础量被第六章的最大间隙公式与第七章的时空走廊边界共同采用。
+本章对应MIKU的第一项改进，针对Apollo PathBoundsDecider对所有障碍物使用统一安全距离的设计缺陷，提出基于多因子威胁度评估的差异化安全裕度$\delta_i$分配机制。本章首先深入剖析Apollo一刀切缓冲在多障碍物场景下压缩通行空间的源码根源与几何后果，进而设计融合TTC、横向重叠率、相对速度、障碍物类型与交互密度五个因子的威胁度评估模型，并将其映射为差异化的安全裕度。差异化$\delta_i$将作为基础量被第五章的最大间隙公式与第六章的时空走廊边界共同采用。
 
-\section{安全裕度一刀切压缩通行空间}
+\section{一刀切缓冲的源码逻辑}
 \label{sec:problem_margin}
-
-\subsection{问题描述}
 
 PathBoundsDecider在构建路径边界时，需要在障碍物边缘外预留安全距离，以确保自车与障碍物之间保持足够的横向间距。该安全距离由\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数统一计算
 
@@ -51,7 +49,7 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 \item Apollo虽然在\texttt{nudge\_l\_buffer}参数中区分了静态0.3\,m和非静态0.4\,m两个等级，但仅以0.5\,m/s的速度阈值做二分，低于该阈值视为静态，高于则视为非静态。该二分判定在 PathBoundsDecider 与 ObstacleNudgeDecider 的缓冲计算中通过 \texttt{!IsStatic() || speed() > FLAGS\_static\_obstacle\_speed\_threshold} 条件式生效。这种二分法无法区分运动方向随时突变的行人与轨迹可预测的同向行驶车辆，也无法区分碰撞时间短的正面接近障碍物与碰撞风险低的横向远离障碍物。
 \end{enumerate}
 
-\subsection{影响分析}
+\section{统一缓冲对通行空间的几何压缩}
 
 以下通过一个具体场景说明统一安全距离如何导致不必要的通行失败。定义净间距为道路边界到障碍物边缘之间扣除缓冲距离后的剩余宽度，自车可从某一侧通过当且仅当该侧净间距不小于自车宽度。
 
@@ -79,24 +77,22 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 \caption{统一缓冲与差异化缓冲下的通行带对比}
 \label{fig:safety_margin_compression}
 \end{figure}
-\section{多因子威胁度评估与动态安全距离}
-上一节识别了Baseline在安全裕度维度的次优性，式\eqref{eq:safety_margin}中的统一$\delta$不区分障碍物威胁程度，导致低威胁障碍物过度压缩通行带。本节建立量化模型，为每个障碍物计算综合威胁度$\Theta_i$，并据此确定差异化的安全裕度$\delta_i$。
+\section{多因子威胁度评估模型}
+前两节识别了Baseline在安全裕度维度的次优性，式\eqref{eq:safety_margin}中的统一$\delta$不区分障碍物威胁程度，导致低威胁障碍物过度压缩通行带。本节建立量化模型，为每个障碍物计算综合威胁度$\Theta_i$，作为下一节差异化安全裕度$\delta_i$的输入。
 
-\subsection{威胁度计算模型}
 对第$i$个障碍物，其综合威胁度$\Theta_i \in [0, 1]$由五个因子加权求和得到
 
 \begin{equation}
-    \Theta_i = w_1 \cdot f_{TTC}(i) + \\
-    w_2 \cdot f_{overlap}(i) + \\
-    w_3 \cdot f_{vel}(i) + \\
-    w_4 \cdot f_{type}(i) + \\
-    w_5 \cdot f_{inter}(i)
+\begin{split}
+    \Theta_i = {} & w_1 \cdot f_{TTC}(i) + w_2 \cdot f_{overlap}(i) \\
+                  & + w_3 \cdot f_{vel}(i) + w_4 \cdot f_{type}(i) + w_5 \cdot f_{inter}(i)
+\end{split}
     \label{eq:threat_score}
 \end{equation}
 
 权重默认取值为$w_1 = 0.30$，$w_2 = 0.20$，$w_3 = 0.15$，$w_4 = 0.10$，$w_5 = 0.25$。上述权重通过以下方式确定。首先基于各因子对多障碍物场景区分度的定性分析确定初始权重，然后通过对称路锥、横穿行人等典型场景的定性观察调整至最终取值。TTC因子和交互密度因子对场景风险的区分度最高，因此赋予较大权重，障碍物类型在同一场景中变化较小，赋予较小权重。各因子的取值范围均归一化到$[0, 1]$，定义如下。
 
-\subsubsection{碰撞时间因子$f_{TTC}$}
+\subsection{碰撞时间因子$f_{TTC}$}
 碰撞时间（Time-to-Collision, TTC）是衡量碰撞紧迫性的经典指标
 
 \begin{equation}
@@ -117,7 +113,7 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 
 其中$T_{crit} = 2$\,s为临界碰撞时间，$T_{max} = 7$\,s为最大关注时间，与Apollo ST图的时间范围一致。$TTC_i \leq 2$\,s意味着碰撞迫在眉睫，威胁最大；$TTC_i \geq 7$\,s的障碍物已超出当前规划周期的关注范围。
 
-\subsubsection{横向重叠率因子$f_{overlap}$}
+\subsection{横向重叠率因子$f_{overlap}$}
 横向重叠率衡量障碍物与自车行驶走廊在横向上的重叠程度
 
 \begin{equation}
@@ -127,7 +123,7 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 
 其中$l_{ego}^{+} = l_{ego} + W_{ego}/2$、$l_{ego}^{-} = l_{ego} - W_{ego}/2$为自车走廊的横向边界。$f_{overlap} = 0$表示完全不重叠即障碍物在自车投影之外，$f_{overlap} = 1$表示完全重叠即障碍物正对自车。该因子直接反映了碰撞的“几何可能性”，横向偏移较大的障碍物即使TTC较小，实际碰撞风险也低。
 
-\subsubsection{相对速度因子$f_{vel}$}
+\subsection{相对速度因子$f_{vel}$}
 相对速度因子反映障碍物与自车的接近速度
 
 \begin{equation}
@@ -137,26 +133,27 @@ if (path_bound_point->is_nudge_bound[LEFT_INDEX]) {
 
 其中$v_{rel,i} = \dot{s}_{ego} - \dot{s}_i$为相对纵向速度，正值表示自车接近障碍物，$v_{max}$为道路限速。Sigmoid函数将相对速度平滑映射至$(0, 1)$，快速接近的障碍物即$v_{rel} \gg 0$时趋近1，同向远离的障碍物即$v_{rel} < 0$时趋近0。选择Sigmoid而非线性映射的原因在于，相对速度为零附近的区分度更重要，即低速接近和低速远离的差异，而极高相对速度间的差异不需要精细区分。
 
-\subsubsection{障碍物类型因子$f_{type}$}
+\subsection{障碍物类型因子$f_{type}$}
 \textbf{取值映射}\quad{}不同类型障碍物的运动不确定性与受伤严重度差异显著，按下式取离散值
 
 \begin{equation}
     f_{type}(i) = \begin{cases}
-        1.0 & \text{行人、自行车等弱势道路使用者} \\
-        0.7 & \text{机动车，运动相对可预测} \\
-        0.5 & \text{未知可动目标，按保守权重处理} \\
-        0.3 & \text{静态障碍物，仅需基本缓冲}
+        1.0  & \text{行人、自行车等弱势道路使用者} \\
+        0.7  & \text{机动车，运动相对可预测} \\
+        0.5  & \text{未知可动目标，按保守权重处理} \\
+        0.3  & \text{静态障碍物，仅需基本缓冲} \\
+        0.15 & \text{交通锥等小尺寸标识物，威胁极低}
     \end{cases}
     \label{eq:f_type}
 \end{equation}
 
-\textbf{取值依据}\quad{}该映射由运动不确定性与事故后果两方面共同确定。一方面，行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，其轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲。另一方面，交通事故统计表明弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重1.0。
+\textbf{取值依据}\quad{}该映射由运动不确定性与事故后果两方面共同确定。一方面，行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，其轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲；交通锥等小尺寸标识物体积小且固定在路面，碰撞后果轻微，赋予最低权重0.15。另一方面，交通事故统计表明弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重1.0。
 
-\textbf{Apollo感知映射}\quad{}Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入1.0分支，\texttt{VEHICLE}归入0.7分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入0.5分支，\texttt{UNKNOWN\_UNMOVABLE}归入0.3分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
+\textbf{Apollo感知映射}\quad{}Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入1.0分支，\texttt{VEHICLE}归入0.7分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入0.5分支，\texttt{UNKNOWN\_UNMOVABLE}归入0.3分支，交通锥等已知小尺寸标识物通过几何尺寸判别归入0.15分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
 
 \textbf{合成方式}\quad{}$f_{type}$作为乘性类别因子进入式\eqref{eq:threat_score}，与碰撞时间、横向重叠率、相对速度三项连续因子加权叠加，合成综合威胁度$\Theta_i$，并经式\eqref{eq:dynamic_delta}映射为差异化安全裕度$\delta_i$，实现对VRU的主动倾斜保护。
 
-\subsubsection{交互密度因子$f_{inter}$}
+\subsection{交互密度因子$f_{inter}$}
 交互密度因子量化障碍物$i$与周围其他障碍物的聚集程度，是本文威胁度模型中与分组策略直接相关的因子
 
 \begin{equation}
@@ -198,7 +195,8 @@ $f_{inter}$的物理含义是，若障碍物$i$周围有大量其他障碍物聚
 \label{fig:threat_radar}
 \end{figure}
 
-\subsection{动态安全距离}
+\section{差异化安全裕度的合成机制}
+\label{sec:dynamic_delta_synthesis}
 基于综合威胁度$\Theta_i$，将式\eqref{eq:safety_margin}中的统一安全裕度替换为差异化版本
 
 \begin{equation}
@@ -219,6 +217,85 @@ $f_{inter}$的物理含义是，若障碍物$i$周围有大量其他障碍物聚
 
 当$\Theta_i$对所有障碍物均取相同值时，式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}退化为式\eqref{eq:def_u}--\eqref{eq:def_v}。动态$\delta_i$的引入不影响后续引理1和定理1的成立，两者的证明仅依赖$u$和$v$值的排序关系，只需按$u_i$而非$l_i^{-}$排序即可。
 
+\section{数值仿真}
+\label{sec:exp_ch5}
+
+本节通过双侧交通锥构成的窄路对照场景验证差异化安全裕度对横向通行空间的释放效果。仿真在Python复现的Apollo Planning流水线上进行，覆盖PathBoundsDecider至PiecewiseJerkSpeedOptimizer的完整阶段。Baseline模式下所有障碍物使用统一安全距离$\delta=0.30$\,m，MIKU模式则按式\eqref{eq:dynamic_delta}对每个障碍物独立计算$\delta_i$。
+
+\subsection{场景设置与威胁度计算}
+
+场景参数列于表\ref{tab:exp_ch5_scn}。窄路由两列对称交通锥构成，左右各3个，纵向间距10\,m，横向距车道中线$\pm$1.20\,m。锥本体宽$W=0.15$\,m，自车以$v_{ego}=4$\,m/s匀速接近窄路。
+
+\begin{table}[htbp]
+\centering
+\caption{场景一窄路+双侧交通锥参数配置}
+\label{tab:exp_ch5_scn}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{对象} & \textbf{参数} & \textbf{取值} \\
+\midrule
+道路 & 车道边界 & $l_{road}\in[-1.875,\,1.875]$\,m \\
+自车 & 初始状态 & $s_{ego}=0$, $v_{ego}=4$\,m/s, $W_{ego}=1.8$\,m \\
+左侧锥列 & 中心位置 & $(s,l)\in\{(20,1.20),(30,1.20),(40,1.20)\}$\,m \\
+右侧锥列 & 中心位置 & $(s,l)\in\{(20,-1.20),(30,-1.20),(40,-1.20)\}$\,m \\
+锥几何 & $W\times L$ & $0.15\times0.5$\,m，$f_{type}{=}0.15$（cone类） \\
+Baseline & 统一安全距离 & $\delta=0.30$\,m \\
+MIKU & 差异化裕度上下界 & $\delta_{min}=0.10$\,m，$\delta_{max}=0.40$\,m \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+按式\eqref{eq:threat_score}对最近一个交通锥（$s=20$\,m，$l=1.20$\,m）计算综合威胁度。$TTC=20/4=5.0$\,s，$f_{TTC}=(7-5.0)/5=0.40$、$f_{overlap}=0$（锥与自车横向投影不重叠）、$f_{vel}=\sigma(4/12)\approx0.84$、$f_{type}=0.15$、$f_{inter}\approx0.15$（仅同纵向对侧锥落入聚类半径）。综合得$\Theta_i\approx0.30$，由式\eqref{eq:dynamic_delta}得$\delta_i\approx0.10+0.30\times0.30\approx0.19$\,m，明显低于Baseline的$0.30$\,m。
+
+\subsection{通行结果对比}
+
+图\ref{fig:exp_ch5_sl}给出SL平面的对照。Baseline在窄路前$s\approx16$\,m处，左右两侧锥的nudge边界使$l_{\max}=-0.10$\,m、$l_{\min}=0.10$\,m，触发$l_{\min}>l_{\max}$的BLOCKED判定，path被截断。MIKU将差异化$\delta_i\approx0.19$\,m代入后，最大间隙公式的中央通道宽度$g_1=2\times(1.20-0.075-0.19)\approx1.87$\,m，大于自车宽度$W_{ego}=1.8$\,m，自车沿车道中线全程通过。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_narrow_cones_sl}
+\caption{场景一SL平面路径与边界对比}
+\label{fig:exp_ch5_sl}
+\end{figure}
+
+图\ref{fig:exp_ch5_st}对比了ST平面的速度规划结果。Baseline速度QP接收到path截断后的$s_{ub}=16$\,m上界，被迫减速直至停车，最终$s_{end}=\MThreeBaselineSEnd$\,m，停车时长$\MThreeBaselineStopDur$\,s；MIKU因path全程通畅，速度QP无附加上界，自车保持$v_{ego}=4$\,m/s匀速通过，$\MThreeMikuTArrive$\,s到达终点。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_narrow_cones_st}
+\caption{场景一ST平面速度规划对比}
+\label{fig:exp_ch5_st}
+\end{figure}
+
+图\ref{fig:exp_ch5_va}给出$v(t)$、$a(t)$、$j(t)$三条时序曲线。Baseline在接近窄路时持续减速，纵向加速度峰值$|a_x|_{\max}=\MThreeBaselineMaxAbsA$\,m/s$^2$、jerk峰值$|j|_{\max}=\MThreeBaselineMaxAbsJerk$\,m/s$^3$；MIKU全程匀速，$|a_x|_{\max}=\MThreeMikuMaxAbsA$、$|j|_{\max}=\MThreeMikuMaxAbsJerk$。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_03_narrow_cones_va}
+\caption{场景一$v(t)$、$a(t)$、$j(t)$对比}
+\label{fig:exp_ch5_va}
+\end{figure}
+
+七项指标汇总于表\ref{tab:exp_ch5_metrics}。差异化裕度将通行成功率从0翻转为1，平均巡航速度由\MThreeBaselineAvgV\,m/s提升至\MThreeMikuAvgV\,m/s。
+
+\begin{table}[htbp]
+\centering
+\caption{场景一Baseline与MIKU指标对照}
+\label{tab:exp_ch5_metrics}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+\textbf{模式} & $\bar{v}$\,(m/s) & $|a_x|_{\max}$\,(m/s$^2$) & $|j|_{\max}$\,(m/s$^3$) & $s_{end}$\,(m) & $t_{arrive}$\,(s) & 通过 \\
+\midrule
+Baseline & \MThreeBaselineAvgV & \MThreeBaselineMaxAbsA & \MThreeBaselineMaxAbsJerk & \MThreeBaselineSEnd & \MThreeBaselineTArrive & $\times$ \\
+MIKU     & \MThreeMikuAvgV     & \MThreeMikuMaxAbsA     & \MThreeMikuMaxAbsJerk     & \MThreeMikuSEnd     & \MThreeMikuTArrive     & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验结论与本章理论分析一致。当障碍物为低威胁的小尺寸静态目标时，Baseline的统一$\delta=0.30$\,m压缩了本可通行的横向空间，触发不必要的BLOCKED与停车；MIKU按多因子威胁度评估给出$\delta_i\approx0.19$\,m的差异化裕度，几何上把通行带宽度释放到自车宽度以上，使原本不可行的窄路变为可通行。该对照验证了式\eqref{eq:dynamic_delta}的工程价值，也为后续第五章组级最优分组与第六章时空走廊的$\delta_i$输入提供了量化依据。
+
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider安全裕度一刀切的设计缺陷，提出GTOC的第一项改进，即多因子威胁度评估与差异化安全距离机制。在源码层面定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源，并通过几何分析量化了统一缓冲对通行带宽度的不必要压缩。在算法设计层面，构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度模型，并将归一化威胁度通过分段映射转化为差异化的安全裕度$\delta_i$。差异化$\delta_i$不依赖统一缓冲假设，可直接代入第六章的最大间隙公式与第七章的时空走廊边界构造，作为后续两章设计的共用输入。
+本章针对Apollo PathBoundsDecider安全裕度一刀切的设计缺陷，提出MIKU的第一项改进，即多因子威胁度评估与差异化安全距离机制。在源码层面定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源，并通过几何分析量化了统一缓冲对通行带宽度的不必要压缩。在算法设计层面，构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度模型，并将归一化威胁度通过分段映射转化为差异化的安全裕度$\delta_i$。差异化$\delta_i$不依赖统一缓冲假设，可直接代入第五章的最大间隙公式与第六章的时空走廊边界构造，作为后续两章设计的共用输入。
