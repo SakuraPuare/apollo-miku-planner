@@ -1,5 +1,4 @@
 % ==================== 附录 ====================
-\ifshowdebug
 \appendix
 \ctexset{chapter/format = \centering\zihao{3}\heiti\bfseries,
          chapter/name = {附录,~},
@@ -9,7 +8,7 @@
 \label{appendix:apollo-pipeline}
 
 \zihao{-4}\songti
-本附录列出第八章数值仿真所用程序 \texttt{apollo\_pipeline.py} 的完整源码。该程序按 Apollo \texttt{lane\_follow} 流水线顺序复现路径与速度规划的七个核心阶段，Baseline 与 GTOC 两种算法在同一文件内并列实现，所需依赖通过 PEP~723 内联元数据声明。
+本附录列出第七章数值仿真所用程序 \texttt{apollo\_pipeline.py} 的完整源码。该程序按 Apollo \texttt{lane\_follow} 流水线顺序复现路径与速度规划的七个核心阶段，Baseline 与 MIKU 两种算法在同一文件内并列实现，所需依赖通过 PEP~723 内联元数据声明。
 
 % 附录代码 basicstyle 走 DejaVu Sans Mono，原生覆盖 τ/δ/→/× 等 Unicode 数学符号
 \newfontfamily\codefont{DejaVu Sans Mono}[Scale=0.95]
@@ -32,4 +31,3 @@
   aboveskip=4pt,
   belowskip=4pt,
 ]{../可视化/apollo_pipeline.py}
-\fi
