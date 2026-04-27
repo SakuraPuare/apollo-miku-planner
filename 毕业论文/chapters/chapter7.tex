@@ -446,8 +446,8 @@ MIKU     & \MOneMikuAvgV     & \MOneMikuMaxAbsA     & \MOneMikuMaxAbsJerk     & 
 \end{tabular}
 \end{table}
 
-实验结论与本章理论分析一致。当动态障碍物的预测轨迹可用且自车到达时刻晚于障碍物的SL占用窗口时，时变SL投影机制将Baseline下"行人挡路必须停车"的伪约束识别为"自车通过时行人已离开"的实际可通行情形，将整段YIELD替换为零干预匀速通过。该对照定量验证了式\eqref{eq:st_corridor}定义的时空走廊与式\eqref{eq:tighten_ub}速度QP上界收紧机制的工程价值。
+实验结论与本章理论分析一致。当动态障碍物的预测轨迹可用且自车到达时刻晚于障碍物的SL占用窗口时，时变SL投影机制将Baseline下"行人占据通行空间导致被迫停车"的伪约束识别为"自车通过时行人已离开"的实际可通行情形，将整段YIELD替换为零干预匀速通过。该对照定量验证了式\eqref{eq:st_corridor}定义的时空走廊与式\eqref{eq:tighten_ub}速度QP上界收紧机制的工程价值。
 
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider将动态障碍物完全排除在路径决策之外、且路径-速度规划之间缺乏时空约束传递通道的双重缺陷，提出MIKU的第三项改进，即时空可通行走廊与路径-速度协调机制。在源码层面定位了\texttt{IsWithinPathDeciderScopeObstacle}函数中通过\texttt{IsStatic()}过滤排除动态障碍物的根源，结合Apollo团队在该函数中留下的\texttt{TODO}注释证实其为已知但未修复的设计缺陷；并通过横穿行人数值示例定性说明了排除动态障碍物后路径-速度协调断层的成因。在算法设计层面，引入基于二阶运动学模型的到达时间函数$\tau(s)$将动态障碍物的预测轨迹映射至自车到达时刻的SL投影，构建满足$t \geq \tau(s)$可达性约束的时空可通行走廊，并将走廊边界以ST上界的形式与SpeedBoundsDecider的输出在速度QP层面双源融合，建立path截断隐式通道与时间清单$\mathcal{T}$显式通道两条互补传递机制，在不修改速度规划模块结构的前提下打通此前缺失的路径-速度约束传递通道。本章的SL层输入来自第四章的差异化$\delta_i$和第五章的连通分量分组结果，输出最终接入第七章的Apollo系统集成方案。
+本章针对Apollo PathBoundsDecider将动态障碍物完全排除在路径决策之外、且路径-速度规划之间缺乏时空约束传递通道的双重缺陷，提出MIKU的第三项改进，即时空可通行走廊与路径-速度协调机制。在源码层面定位了\texttt{IsWithinPathDeciderScopeObstacle}函数中通过\texttt{IsStatic()}过滤排除动态障碍物的根源，结合Apollo团队在该函数中留下的\texttt{TODO}注释证实其为已知但未修复的设计缺陷；并通过横穿行人数值示例定性说明了排除动态障碍物后路径-速度协调断层的成因。在算法设计层面，引入基于二阶运动学模型的到达时间函数$\tau(s)$将动态障碍物的预测轨迹映射至自车到达时刻的SL投影，构建满足$t \geq \tau(s)$可达性约束的时空可通行走廊，并将走廊边界以ST上界的形式与SpeedBoundsDecider的输出在速度QP层面双源融合，建立path截断隐式通道与时间清单$\mathcal{T}$显式通道两条互补传递机制，在不修改速度规划模块结构的前提下建立此前缺失的路径-速度约束传递通道。本章的SL层输入来自第四章的差异化$\delta_i$和第五章的连通分量分组结果，输出最终接入第七章的Apollo系统集成方案。

@@ -94,9 +94,9 @@ ReferenceLine是Planning模块的规划基准线，由\texttt{ReferenceLineProvi
 
 \item \textbf{生成原始参考线}\quad{}将路由段转换为\texttt{hdmap::Path}，再转换为\texttt{ReferenceLine}。此时的参考线直接来自高精地图的车道中心线，存在噪声和不连续性。
 
-\item \textbf{生成锚点}\quad{}调用\texttt{GetAnchorPoints()}，按\texttt{max\_constraint\_interval}间隔在参考线上均匀采样锚点，默认取5\,m。每个锚点包含位置、航向角、横向和纵向边界。
+\item \textbf{生成锚点}\quad{}调用\texttt{GetAnchorPoints()}，按\texttt{max\_constraint\_interval}间隔在参考线上均匀采样锚点，默认取0.25\,m。每个锚点包含位置、航向角和横向边界。
 
-\item \textbf{QP样条平滑}\quad{}以锚点为约束，通过QP优化生成平滑的参考线。
+\item \textbf{离散点平滑}\quad{}以锚点为约束，通过离散点偏差最小化QP优化生成平滑的参考线。
 
 \item \textbf{验证与裁剪}\quad{}验证平滑后的参考线偏差不超过阈值，并根据车辆位置裁剪。
 \end{enumerate}
@@ -110,41 +110,31 @@ ReferenceLine是Planning模块的规划基准线，由\texttt{ReferenceLineProvi
 \label{fig:ref_smooth}
 \end{figure}
 
-\subsection{QP样条平滑的数学建模}
+\subsection{离散点偏差平滑的数学建模}
 
-参考线平滑采用分段五次多项式（Quintic Spline）表示，平滑问题建模为二维QP问题。
+Apollo早期版本采用分段五次多项式（Quintic Spline）的QP样条方法平滑参考线。自Apollo 7.0起，默认配置已切换至\texttt{DiscretePointsReferenceLineSmoother}，底层调用\texttt{FemPosDeviationSmoother}，以有限元离散点位置偏差最小化为目标。在Apollo 11.0的\texttt{planning.conf}中，QP样条方案已被注释，\texttt{discrete\_points\_smoother\_config.pb.txt}为唯一生效的配置。
 
-\textbf{目标函数}
+该方法将平滑问题建模为离散点的二次规划。给定$n$个锚点$\mathbf{p}_i = (x_i, y_i)$，目标函数为
+
 \begin{equation}
 \begin{aligned}
-\min_{\mathbf{p}} \; J ={}& w_2 \sum_{i=1}^{n} \int_{t_i}^{t_{i+1}} \left[(x_i''(t))^2 + (y_i''(t))^2 \right] dt \\
-&+ w_3 \sum_{i=1}^{n} \int_{t_i}^{t_{i+1}} \left[(x_i'''(t))^2 + (y_i'''(t))^2 \right] dt \\
-&+ w_r \|\mathbf{p}\|^2
+\min_{\mathbf{p}} \; J ={}& w_{fem} \sum_{i=1}^{n-2} \|\mathbf{p}_{i-1} - 2\mathbf{p}_i + \mathbf{p}_{i+1}\|^2 \\
+&+ w_{ref} \sum_{i=0}^{n-1} \|\mathbf{p}_i - \mathbf{p}_{i,ref}\|^2 + w_{len} \sum_{i=0}^{n-2} \|\mathbf{p}_{i+1} - \mathbf{p}_i\|^2
 \end{aligned}
 \label{eq:refline_obj}
 \end{equation}
-其中$w_2$为二阶导数权重，默认取0.0；$w_3$为三阶导数权重，默认取100；$w_r$为正则化权重，默认取0.1。三阶导数权重远大于二阶导数权重，表明Apollo更注重曲率变化率的平滑性。
+其中$w_{fem}$为有限元位置偏差权重，默认取$10^{10}$；$w_{ref}$为参考点偏差权重，默认取1.0；$w_{len}$为路径长度正则化权重，默认取1.0。$w_{fem}$远大于其余两项，表明Apollo优先保证相邻三点的共线性即曲率平滑，在此前提下兼顾与原始参考线的贴合度。
 
-约束条件包括三类。
+约束条件包括两类。
 \begin{enumerate}
-\item \textbf{边界约束}\quad{}对每个锚点$i$，在其局部坐标系下约束横向和纵向偏移
+\item \textbf{边界约束}\quad{}对每个锚点$i$，约束其横向偏移不超过车道边界
 \begin{equation}
--\Delta l_i \leq d_{lateral}(t_i) \leq \Delta l_i, \quad -\Delta s_i \leq d_{longitudinal}(t_i) \leq \Delta s_i
+\|\mathbf{p}_i - \mathbf{p}_{i,ref}\| \leq \Delta l_i
 \end{equation}
-其中$\Delta l_i$根据车道宽度计算，默认最大0.5\,m；$\Delta s_i$为纵向边界，默认取1.0\,m。
+其中$\Delta l_i$根据车道宽度计算，默认最大0.5\,m，最小0.1\,m。首末锚点的横向边界强制为零以固定端点。
 
-\item \textbf{起点航向约束}
-\begin{equation}
-\frac{dy}{dt}\bigg|_{t=t_0} \bigg/ \frac{dx}{dt}\bigg|_{t=t_0} = \tan(\theta_0)
-\end{equation}
-
-\item \textbf{连续性约束}\quad{}在每个knot连接处保证$C^2$连续
-\begin{equation}
-f_i(t_{i+1}) = f_{i+1}(t_{i+1}), \quad f_i'(t_{i+1}) = f_{i+1}'(t_{i+1}), \quad f_i''(t_{i+1}) = f_{i+1}''(t_{i+1})
-\end{equation}
+\item \textbf{端点固定}\quad{}参考线首末两个锚点的横向偏移约束为零，防止端点偏离车道中心。
 \end{enumerate}
-
-\textbf{Knot划分}\quad{}根据参考线总长度和\texttt{max\_spline\_length}计算样条段数，默认25\,m$n = \lceil L / 25 \rceil$，在参数空间$t \in [0, n]$均匀分布knot节点。
 
 \subsection{参考线数据结构}
 
@@ -333,7 +323,7 @@ PathBoundsDecider的完整处理流程如下。
 \item 初始化路径边界，将上下界分别设为道路左右边界$[l_{road}^-(s), l_{road}^+(s)]$；
 \item 遍历参考线上的纵向采样点$s_i$；
 \item 对每个$s_i$，调用\texttt{UpdatePathBoundaryBySLPolygon}函数，依次处理该截面上的各个障碍物；
-\item 对每个障碍物，通过\texttt{SetNudgeInfo}函数判定避让方向，若障碍物中心在参考线右侧则左绕，即将右边界收缩，若在左侧则右绕，即将左边界收缩；
+\item 对每个障碍物，通过\texttt{SetNudgeInfo}函数判定避让方向。源码中该判定实际包含三层分支，近距离障碍物即纵向距离小于5\,m且横向接近参考线中心时以自车初始SL状态为参考，中距离障碍物即位于自车纵向范围内时以自车尾部横向位置为参考，远距离障碍物才以上一次nudge记录的横向位置为参考。本文关注的是远距离障碍物的兜底逻辑，其判据为障碍物中心与参考值的相对位置，若障碍物中心在参考线右侧则左绕即将右边界收缩，若在左侧则右绕即将左边界收缩；
 \item 逐障碍物更新边界后，若出现$l^+(s_i) < l^-(s_i)$则标记为BLOCKED。
 \end{enumerate}
 

@@ -310,11 +310,11 @@ S_{\mathrm{overall}} = \begin{cases}
 
 \textbf{C1 时变 SL 投影的不可或缺性}\quad{}M1关闭C1后，在场景四、场景二全部失败，平均到达时间$T_{\mathrm{arrive}}$退化至$t_{\max}+\AblationFailPenalty$\,s的惩罚上限。原因在于C1关闭后动态行人退化为$t=0$快照，此时行人仍在自车前方车道内，IsStatic过滤本应剔除该约束，但MIKU不剔除任何障碍物，导致路径阶段被错误约束至当前位置而强制减速等待。这印证了「时变投影必须配合组级决策才生效」这一论断，即C1单独存在但若无后续组件配合反而比Baseline更差。
 
-\textbf{C2--C3 组级决策的杠杆点}\quad{}M2关闭C2与C3后，在场景三失败，$\bar v$ 仅 \AblationMTwoScFourVAvg\,m/s，$s_{end}$ 为 \AblationMTwoScFourSEnd\,m，仅占目标距离的 \AblationMTwoScFourSEndPct\%。原因在于场景三的18个静态障碍物构成单一大型连通分量，逐障碍物贪心决策时入口漏斗的5锥每个独立选择左推，与维持段水马的右推产生$l_{\min} > l_{\max}$冲突，触发blocked-then-trim降级停车。组级最大间隙搜索将整个连通分量识别为单一组并赋予一致的左/右分配，从根本上消解了这种贪心决策互斥。
+\textbf{C2--C3 组级决策的关键作用}\quad{}M2关闭C2与C3后，在场景三失败，$\bar v$ 仅 \AblationMTwoScFourVAvg\,m/s，$s_{end}$ 为 \AblationMTwoScFourSEnd\,m，仅占目标距离的 \AblationMTwoScFourSEndPct\%。原因在于场景三的18个静态障碍物构成单一大型连通分量，逐障碍物贪心决策时入口漏斗的5锥每个独立选择左推，与维持段水马的右推产生$l_{\min} > l_{\max}$冲突，触发blocked-then-trim降级停车。组级最大间隙搜索将整个连通分量识别为单一组并赋予一致的左/右分配，从根本上消解了这种贪心决策互斥。
 
-\textbf{C4 差异化裕度的杠杆点}\quad{}M3关闭C4后，在场景一失败，$\bar v$ 仅 \AblationMThreeScThreeVAvg\,m/s。场景一的双侧交通锥间隙宽度仅略大于车身宽度，统一$\delta_{\mathrm{baseline}}=\DeltaBaseline$\,m对小尺寸锥桶过度保守，将通行带压缩至$l_{\min} > l_{\max}$。多因子威胁度模型按障碍物类型与TTC动态调整$\delta_i$至$[\DeltaIntervalLow, \DeltaIntervalHigh]$区间，对低威胁锥桶下调缓冲，使本不可行的窄路通过变为可行。
+\textbf{C4 差异化裕度的关键作用}\quad{}M3关闭C4后，在场景一失败，$\bar v$ 仅 \AblationMThreeScThreeVAvg\,m/s。场景一的双侧交通锥间隙宽度仅略大于车身宽度，统一$\delta_{\mathrm{baseline}}=\DeltaBaseline$\,m对小尺寸锥桶过度保守，将通行带压缩至$l_{\min} > l_{\max}$。多因子威胁度模型按障碍物类型与TTC动态调整$\delta_i$至$[\DeltaIntervalLow, \DeltaIntervalHigh]$区间，对低威胁锥桶下调缓冲，使本不可行的窄路通过变为可行。
 
-\textbf{C5 走廊注入的边际贡献}\quad{}M4关闭C5后，在4场景全部成功且综合得分以\AblationMarginMFourMFive 分微弱超越M5。这一反直觉现象的物理解释是，当前4个测试场景中路径阶段已通过C1的时变投影提前规避了所有动态时间冲突，速度阶段仅需保守通过，C5走廊在SBD2后注入的额外约束未触发活跃边界。在更复杂动态场景中C5仍是必要的安全保险，例如多动态障碍物时间窗交织或交叉路口冲突点决策；本节4个场景未能充分激活该组件的杠杆作用。
+\textbf{C5 走廊注入的边际贡献}\quad{}M4关闭C5后，在4场景全部成功且综合得分以\AblationMarginMFourMFive 分微弱超越M5。这一反直觉现象的物理解释是，当前4个测试场景中路径阶段已通过C1的时变投影提前规避了所有动态时间冲突，速度阶段仅需保守通过，C5走廊在SBD2后注入的额外约束未触发活跃边界。在更复杂动态场景中C5仍是必要的安全保险，例如多动态障碍物时间窗交织或交叉路口冲突点决策；本节4个场景未能充分激活该组件的作用。
 
 \textbf{综合结论}\quad{}消融实验定量验证了C1、C2、C3、C4在MIKU算法中均不可或缺，4个变体在各自的关键场景下均触发硬门失效；C5的边际贡献在简单场景下为负，即计算开销$+\AblationComputeAdvMFourPct\%$，在复杂场景下为正，是「鲁棒性的保险阀」而非「常态收益项」。这一发现支持论文的主体论点，即多障碍物路径规划的核心改进在于路径阶段的时变与组级建模而非速度阶段的额外约束。
 
