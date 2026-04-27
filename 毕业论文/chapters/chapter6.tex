@@ -1,15 +1,13 @@
 \chapter{组级最优通行带与最大间隙策略}
 
-本章对应GTOC的第二项改进，针对Apollo PathBoundsDecider对每个障碍物独立决定避让方向所导致的矛盾决策与路径BLOCKED问题，提出基于扫描线分组与最大间隙策略的组级全局最优算法。本章首先深入剖析Apollo \texttt{UpdatePathBoundary\-BySLPolygon}函数的逐障碍物贪心决策逻辑及其在两侧夹击场景下的失败模式，进而构建基于纵向重叠的连通分量分组方法，在组内严格证明最优分割连续性引理与最大间隙最优性定理，将组合搜索复杂度从$O(2^k)$降至$O(k\log k)$。本章使用的差异化安全裕度$\delta_i$来自第五章的多因子威胁度评估，最终输出的组级避让方向决策与通行带宽度将作为第七章ST走廊边界构造的SL层基础。
+本章对应MIKU的第二项改进，针对Apollo PathBoundsDecider对每个障碍物独立决定避让方向所导致的矛盾决策与路径BLOCKED问题，提出基于扫描线分组与最大间隙策略的组级全局最优算法。本章首先深入剖析Apollo \texttt{UpdatePathBoundary\-BySLPolygon}函数的逐障碍物贪心决策逻辑及其在两侧夹击场景下的失败模式，进而构建基于纵向重叠的连通分量分组方法，在组内严格证明最优分割连续性引理与最大间隙最优性定理，将组合搜索复杂度从$O(2^k)$降至$O(k\log k)$。本章使用的差异化安全裕度$\delta_i$来自第四章的多因子威胁度评估，最终输出的组级避让方向决策与通行带宽度将作为第六章ST走廊边界构造的SL层基础。
 
-\section{SL层路径边界独立决策缺陷}
+\section{Apollo 逐障碍物决策的源码缺陷与失败模式}
 \label{sec:problem_sl}
 
-\subsection{问题描述}
+\subsection{源码逻辑与决策入口}
 
 PathBoundsDecider是Apollo路径规划阶段的关键模块，负责在每个离散纵向位置$s$处构建横向路径边界$[l^-(s),\; l^+(s)]$。其核心缺陷在于对每个障碍物独立地决定避让方向（LEFT\_NUDGE或RIGHT\_NUDGE），而不考虑同一$s$截面上其他活跃障碍物的存在。当道路两侧同时存在障碍物时，这种逐障碍物的贪心决策可能产生相互矛盾的避让方向，即左侧障碍物使上边界下压、右侧障碍物使下边界上抬，导致$l^+(s) < l^-(s)$，路径边界被判定为BLOCKED，最终触发FallbackPath停车。
-
-\subsection{源码定位与决策逻辑}
 
 该问题的根源在于\texttt{UpdatePathBoundary\-BySLPolygon}函数。其核心逻辑包括三个环节，即逐障碍物独立决定避让方向、根据避让方向收缩路径边界、检测边界交叉并截断路径。代码\ref{lst:update_path_boundary}展示了该函数的关键流程。
 
@@ -68,7 +66,7 @@ for (size_t i = 1; i < path_boundary->size(); ++i) {
 
 代码中步骤1，即第7至22行，展示了避让方向的独立决策，对每个在位置$s$处活跃的障碍物，通过\texttt{SetNudgeInfo}函数根据障碍物中心相对于参考线的横向位置独立决定\texttt{RIGHT\_NUDGE}，即从右侧绕行使上边界下压，或\texttt{LEFT\_NUDGE}，即从左侧绕行使下边界上抬。步骤2，即第23至44行，根据避让方向对路径边界进行收缩，其中安全距离\texttt{delta}由自车半宽，即\texttt{GetBufferBetweenADCCenterAndEdge}的返回值，与额外缓冲参数\texttt{obstacle\_lat\_buffer}相加得到。步骤3，即第46至49行，在上下边界交叉，即存在BLOCKED标记的障碍物时，调用\texttt{TrimPathBounds}清除后续路径边界并返回\texttt{false}，最终触发\texttt{FallbackPath}生成减速停车轨迹。
 
-\subsection{失败模式分析}
+\subsection{独立决策的失败模式}
 
 以下通过一个对称场景说明独立决策如何导致不必要的停车。
 
@@ -97,7 +95,7 @@ l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.7
 \]
 通行带宽度$W = -1.6 - (-3.75) = 2.15$\,m，自车可借用相邻车道从右侧安全通过。由对称性，统一LEFT\_NUDGE同样可行，$W = 3.75 - 1.6 = 2.15$\,m。
 
-贪心策略将两个偏向不同侧的障碍物分别向内挤压，全局协调只需统一绕行方向，即可利用道路另一侧的充裕空间。当$k$个障碍物在同一纵向位置活跃时，避让方向共有$2^k$种组合，贪心策略只检查了其中一种，可能恰好选中不可行的组合而遗漏可行解。该问题的形式化建模在第四章统一框架下已经给出，高效求解方法将在本章下一节详细展开。
+贪心策略将两个偏向不同侧的障碍物分别向内挤压，全局协调只需统一绕行方向，即可利用道路另一侧的充裕空间。当$k$个障碍物在同一纵向位置活跃时，避让方向共有$2^k$种组合，贪心策略只检查了其中一种，可能恰好选中不可行的组合而遗漏可行解。该问题的形式化建模在第三章统一框架下已经给出，高效求解方法将在本章下一节详细展开。
 
 图\ref{fig:path_conservative}直观展示了该场景中独立决策与全局协调的对比。
 
@@ -119,7 +117,7 @@ l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.7
 \label{fig:path_conservative}
 \end{figure}
 
-除了两个障碍物的极端情形外，随着障碍物数量增加，独立决策导致的可行域压缩会以近似指数方式恶化。图\ref{fig:feasible_compress}给出了同一车道内从2个、5个到极端密度障碍物场景下的可行域演化。在2个障碍物场景下，尚存较宽的可行通带可供自车选择，尽管贪心决策已开始压缩通带宽度；5个障碍物场景下，多次独立收缩使得可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发BLOCKED；极端密度场景下，可行域进一步碎片化，几乎任何贪心决策组合都会导致某处边界失效。这一演化揭示了问题二在高密度场景下的致命性，也量化说明了改进“决策粒度”对可行性恢复的杠杆效应远高于单纯调整安全裕度。
+除了两个障碍物的极端情形外，随着障碍物数量增加，独立决策导致的可行域压缩会以近似指数方式恶化。图\ref{fig:feasible_compress}给出了同一车道内从2个、4个到极端密度障碍物场景下的可行域演化。在2个障碍物场景下，尚存较宽的可行通带可供自车选择，尽管贪心决策已开始压缩通带宽度；4个障碍物场景下，多次独立收缩使得可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发BLOCKED；极端密度场景下，可行域进一步碎片化，几乎任何贪心决策组合都会导致某处边界失效。这一演化揭示了问题二在高密度场景下的致命性，也量化说明了改进“决策粒度”对可行性恢复的杠杆效应远高于单纯调整安全裕度。
 
 \begin{figure}[htbp]
 \centering
@@ -145,7 +143,7 @@ l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.7
 \label{fig:feasible_compress}
 \end{figure}
 
-\subsection{BLOCKED后的截断与恢复机制局限}
+\subsection{BLOCKED 后的截断与恢复机制局限}
 
 当PathBoundsDecider判定BLOCKED后，调用\texttt{TrimPathBounds}截断路径
 
@@ -197,11 +195,10 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
 }
 \end{lstlisting}
 
-这意味着：即使存在可行的借道方案，系统也必须先经历至少3个规划周期，约300\,ms，的停车等待才会尝试借道；且借道仅在单参考线、低速、远离路口等条件同时满足时才被允许。在路口附近、高速行驶、或多参考线场景下，LaneBorrow机制不会触发，BLOCKED判定将直接导致停车。
-\section{SL层基于重叠分组的最优通行带}
-本节中所有$u_i$和$v_i$均使用式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}中的动态安全距离$\delta_i$计算。后续引理和定理的证明不依赖$\delta$是否为常数，仅依赖$u$和$v$值的排序性。
-
-\subsection{纵向重叠关系与连通分量}
+这意味着，即使存在可行的借道方案，系统也必须先经历至少3个规划周期，约300\,ms，的停车等待才会尝试借道；且借道仅在单参考线、低速、远离路口等条件同时满足时才被允许。在路口附近、高速行驶、或多参考线场景下，LaneBorrow机制不会触发，BLOCKED判定将直接导致停车。
+\section{纵向重叠分组与连通分量}
+\label{sec:grouping_connected}
+本节起所有$u_i$和$v_i$均使用式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}中的动态安全距离$\delta_i$计算，后续引理和定理的证明不依赖$\delta$是否为常数，仅依赖$u$和$v$值的排序性。
 在全路径范围内，不同纵向位置$s$处的活跃障碍物集合不同，因此式\eqref{eq:joint_opt}的优化不能在单一截面上完成。关键观察是，如果两组障碍物在纵向上完全不重叠，则它们的避让决策相互独立。
 
 定义纵向重叠关系。两个障碍物$O_i$和$O_j$纵向重叠，当且仅当它们的纵向区间有交集
@@ -233,9 +230,12 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
     \label{eq:global_width}
 \end{equation}
 
-下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见5.3.3节，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
+下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见\S\ref{sec:dynamic_delta_synthesis}，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
 
 从几何直觉看，$k$个按横向位置排列的障碍物将车道的横向空间分割为$k+1$个通道，包括最右侧障碍物与道路右边界之间、相邻障碍物之间、以及最左侧障碍物与道路左边界之间的间隙。最优策略显然是选择其中最宽的通道通行，这自然地将通道一侧的所有障碍物划归左绕、另一侧的划归右绕，形成一个在排序中连续的分割。换言之，搜索空间从$2^k$个任意分配降为$k+1$个候选通道的选取。下面通过引理和定理严格验证这一直觉，并建立通行带宽度与间隙之间的精确等价关系。
+
+\section{最优分割连续性与最大间隙定理}
+本节给出MIKU通行带求解的两个核心理论结果。引理1将组合搜索空间从$2^k$降为$k+1$个连续分割，定理1把通行带宽度与候选间隙建立精确等式，使最优解可经一次线性扫描定位。
 
 \subsection{最优分割连续性引理}
 \textbf{引理1（最优分割的连续性）}\quad 按$u_i$值升序排列后，存在最优解$\mathbf{d}^{*}$，使得分割在排序中是连续的，即存在$p \in \{0, 1, \ldots, k\}$，满足
@@ -331,18 +331,18 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
 
 需要注意几个边界情形。第一，当某些障碍物在横向上存在重叠即$v_{(p)} > u_{(p+1)}$时，对应的间隙$g_p$为负值，表示该通道不可通行，算法自然跳过。第二，当所有$k+1$个间隙均为负或不足车宽时，$W^{*} \leq 0$，说明本车道确实不存在可通行路径，这是真实的BLOCKED而非算法的局限。第三，引理1的证明仅要求$u$值按排序单调不减。当存在$u_i$相同的障碍物时，可以按$v_i$的降序作为二级排序键，不影响引理和定理的成立。
 
-\subsection{算法描述}
-基于上述理论，算法\ref{alg:optimal_band}给出了时变最优通行带求解的完整流程。该算法将理论推导中的引理1和定理1转化为可执行的计算步骤，依次完成到达时间估计、时变SL投影、扫描线分组、间隙计算与最大间隙选取、避让方向分配、路径边界构建和速度约束输出等七个步骤。算法的总体结构如图\ref{fig:algorithm_flow}所示，从参考线与障碍物集合起步，先经威胁度评估与动态安全距离确定每个障碍物的$\delta_i$，再由扫描线完成纵向重叠分组，组内按$u_i$排序查找最大间隙并分配避让方向，最后将所有组的边界合并为全局\texttt{path\_boundary}并投影至ST空间生成走廊。图中每一步骤右侧标注了复杂度，主要开销集中在扫描线分组的$O(n\log n)$，其余步骤均为线性，总体满足$O(n\log n + n N_s)$的实时性目标。
+\section{算法描述与复杂度分析}
+基于上述理论，算法\ref{alg:optimal_band}给出了多障碍物统一规划求解的完整流程。该算法将理论推导中的引理1和定理1转化为可执行的计算步骤，依次完成到达时间估计、时变SL投影、扫描线分组、间隙计算与最大间隙选取、避让方向分配、路径边界构建和速度约束输出等七个步骤。算法的总体结构如图\ref{fig:algorithm_flow}所示，从参考线与障碍物集合起步，先经威胁度评估与动态安全距离确定每个障碍物的$\delta_i$，再由扫描线完成纵向重叠分组，组内按$u_i$排序查找最大间隙并分配避让方向，最后将所有组的边界合并为全局\texttt{path\_boundary}并投影至ST空间生成走廊。图中每一步骤右侧标注了复杂度，主要开销集中在扫描线分组的$O(n\log n)$，其余步骤均为线性，总体满足$O(n\log n + n N_s)$的实时性目标。
 
 \begin{figure}[htbp]
 \centering
 \resizebox{0.8\textwidth}{!}{\input{../图片/fig_algorithm_flow}}
-\caption{时变最优通行带算法的总体流程与复杂度}
+\caption{多障碍物统一规划算法的总体流程与复杂度}
 \label{fig:algorithm_flow}
 \end{figure}
 
 \begin{algorithm}[htbp]
-\caption{时变最优通行带求解算法}
+\caption{多障碍物统一规划求解算法}
 \label{alg:optimal_band}
 \KwIn{$n$个障碍物，含预测轨迹，道路边界$[l_{road}^{-}(s), l_{road}^{+}(s)]$、自车状态$(s_{ego}, v_{ego}, a_{ego})$、各障碍物安全裕度$\delta_i$}
 \KwOut{路径边界$\{[l^{-}(s), l^{+}(s)]\}$、速度约束集合$\mathcal{T}$}
@@ -391,8 +391,7 @@ $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
 \KwRet $\{[l^{-}(s), l^{+}(s)]\}$，$\mathcal{T}$ \;
 \end{algorithm}
 
-\subsection{复杂度分析}
-本节分析算法\ref{alg:optimal_band}各步骤的时间和空间复杂度。
+下面分析算法\ref{alg:optimal_band}各步骤的时间和空间复杂度。
 
 对单个含$k$个障碍物的连通分量，算法步骤4中按$u_i$排序的时间复杂度为$O(k \log k)$，计算$k+1$个间隙和选取最大值均为$O(k)$，因此单分量的时间复杂度为$O(k \log k)$。空间复杂度为$O(k)$，用于存储排序后的障碍物列表和间隙数组。
 
@@ -411,7 +410,7 @@ $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
 \midrule
 \textbf{决策粒度} & 逐障碍物独立决策 & 组级全局决策 \\
 \textbf{最优性保证} & 贪心策略，无最优性保证 & 定理保证组内最优 \\
-\textbf{时间信息} & 仅$t=0$快照 & 预测轨迹$O_i(\tau(s))$ \\
+\textbf{时间信息} & path阶段仅$t=0$快照（speed阶段使用预测轨迹） & 预测轨迹$O_i(\tau(s))$ \\
 \textbf{动态障碍物} & 不参与路径决策 & 通过预测位置参与 \\
 \textbf{BLOCKED处理} & 截断路径$\to$停车 & 时变间隙可能打开$\to$继续通行 \\
 \textbf{速度协调} & 无 & 输出$\tau(s_k)$约束 \\
@@ -422,6 +421,85 @@ $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
 
 Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总复杂度为$O(nK)$，本文算法在排序后只需对$k+1$个候选分割点做线性扫描，复杂度为$O(n\log n)$。两者在常规多障碍物规模下均可在毫秒级完成，远低于100\,ms规划周期限制。本文算法的核心价值不在于计算效率的提升，而在于保证了决策的全局最优性，这是Baseline的贪心策略无法提供的。
 
+\section{数值仿真}
+\label{sec:exp_ch6}
+
+本节通过两个对照场景验证扫描线分组与最大间隙策略对Baseline独立决策矛盾的修正效果。场景二为动+静混合的小规模分组，场景三为单车道维修封闭+借道的大规模连通分量，分别检验组内方向冲突的破解与跨车道全局协调的能力。
+
+\subsection{场景二动静混合的组内方向协调}
+
+场景二由一名横穿行人加左前方静态停车构成，行人与停车在纵向上存在重叠区，构成同一连通分量。Baseline逐障碍物决策时，行人横向位置触发右推，停车横向位置又强制左推，两者冲突使$l_{\min}>l_{\max}$。MIKU将两者并入同一组，按$u_i$排序计算两个候选间隙，选取最大间隙$g^{*}$对应的统一避让方向。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_sl}
+\caption{场景二SL平面路径与边界对比}
+\label{fig:exp_ch6_sl_2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_st}
+\caption{场景二ST平面速度规划对比}
+\label{fig:exp_ch6_st_2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_va}
+\caption{场景二$v(t)$、$a(t)$、$j(t)$对比}
+\label{fig:exp_ch6_va_2}
+\end{figure}
+
+\subsection{场景三单车道封闭导流的跨车道全局协调}
+
+场景三由18个静态障碍构成，包括入口漏斗5个交通锥、维持段8段水马、出口漏斗5个交通锥，所有障碍属于同一大型连通分量，要求自车借用左侧相邻车道通过。Baseline在入口漏斗段对每锥独立选择左推或右推，与维持段水马跨越车道分界线的几何产生方向矛盾，在维持段入口处$l_{\min}>l_{\max}$，path被截断停车于$s\approx$\,\MFourBaselineSEnd\,m。MIKU将整段导流识别为单一组，组级最大间隙搜索将$p^{*}$分配至所有水马的左侧，路径在入口处即决定借入相邻车道深处，全程平顺通过。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_sl}
+\caption{场景三SL平面路径与边界对比}
+\label{fig:exp_ch6_sl_4}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_st}
+\caption{场景三ST平面速度规划对比}
+\label{fig:exp_ch6_st_4}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_va}
+\caption{场景三$v(t)$、$a(t)$、$j(t)$对比}
+\label{fig:exp_ch6_va_4}
+\end{figure}
+
+\subsection{指标汇总}
+
+两个场景的关键指标列于表\ref{tab:exp_ch6_metrics}。Baseline在两个场景下均因方向冲突触发BLOCKED，MIKU通过组级最优分配将通行成功率从0翻转为1。
+
+\begin{table}[htbp]
+\centering
+\caption{场景二三Baseline与MIKU指标对照}
+\label{tab:exp_ch6_metrics}
+\small
+\begin{tabular}{clccccc}
+\toprule
+\textbf{场景} & \textbf{模式} & $\bar{v}$\,(m/s) & $|a_x|_{\max}$\,(m/s$^2$) & $s_{end}$\,(m) & $t_{arrive}$\,(s) & 通过 \\
+\midrule
+\multirow{2}{*}{二} & Baseline & \MTwoBaselineAvgV  & \MTwoBaselineMaxAbsA  & \MTwoBaselineSEnd  & \MTwoBaselineTArrive  & $\times$ \\
+                   & MIKU     & \MTwoMikuAvgV      & \MTwoMikuMaxAbsA      & \MTwoMikuSEnd      & \MTwoMikuTArrive      & $\checkmark$ \\
+\midrule
+\multirow{2}{*}{三} & Baseline & \MFourBaselineAvgV & \MFourBaselineMaxAbsA & \MFourBaselineSEnd & \MFourBaselineTArrive & $\times$ \\
+                   & MIKU     & \MFourMikuAvgV     & \MFourMikuMaxAbsA     & \MFourMikuSEnd     & \MFourMikuTArrive     & $\checkmark$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+实验结论与本章理论分析一致。在场景二的小规模分组中，MIKU的组级方向协调避免了Baseline逐障碍物贪心的方向冲突；在场景三的18障碍物大规模连通分量中，MIKU的最大间隙搜索发现了Baseline贪心策略遗漏的统一借入相邻车道全局最优解。两个场景均证明定理1所述组级最优替代逐障碍物贪心对实际通行成功率的决定性提升。
+
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider独立决策矛盾导致路径BLOCKED的核心瓶颈，提出GTOC的第二项改进，即组级最优通行带与最大间隙策略。在源码层面定位了\texttt{UpdatePathBoundary\-BySLPolygon}函数的逐障碍物贪心决策模式，并通过对称双障碍物场景的几何分析揭示了贪心策略将$2^k$种避让方向组合中的不可行解错误选中的失败机理。在算法设计层面，提出基于扫描线的纵向重叠检测将相互关联的障碍物聚为连通分量，在组内通过引理证明最优分割在横向排序中的连续性，进而通过定理证明每个候选分割的通行带宽度恰好等于对应的横向间隙，将组合搜索复杂度从$O(2^k)$降至$O(k\log k)$。两个证明对$\delta$是否为常数不做假设，因此第五章的差异化$\delta_i$可直接代入本章求解算法。本章输出的组级避让方向决策与通行带宽度，是第七章构造时空可通行走廊的SL层基础。
+本章针对Apollo PathBoundsDecider独立决策矛盾导致路径BLOCKED的核心瓶颈，提出MIKU的第二项改进，即组级最优通行带与最大间隙策略。在源码层面定位了\texttt{UpdatePathBoundary\-BySLPolygon}函数的逐障碍物贪心决策模式，并通过对称双障碍物场景的几何分析揭示了贪心策略将$2^k$种避让方向组合中的不可行解错误选中的失败机理。在算法设计层面，提出基于扫描线的纵向重叠检测将相互关联的障碍物聚为连通分量，在组内通过引理证明最优分割在横向排序中的连续性，进而通过定理证明每个候选分割的通行带宽度恰好等于对应的横向间隙，将组合搜索复杂度从$O(2^k)$降至$O(k\log k)$。两个证明对$\delta$是否为常数不做假设，因此第四章的差异化$\delta_i$可直接代入本章求解算法。本章输出的组级避让方向决策与通行带宽度，是第六章构造时空可通行走廊的SL层基础。
