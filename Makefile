@@ -20,8 +20,10 @@ SVGS     := $(addprefix $(SVGDIR)/,$(addsuffix .svg,$(FIGNAMES)))
 DATA_STAMP    := $(FIGDIR)/data/.stamp
 FIGS_STAMP    := $(FIGDIR)/.figs_stamp
 METRICS_TEX   := $(THESISDIR)/_experiment_metrics.tex
+ABLATION_CSV  := $(FIGDIR)/data/ablation/ablation.csv
+ABLATION_TEX  := $(THESISDIR)/_ablation_macros.tex
 
-.PHONY: all svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics
+.PHONY: all svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics sim-ablation
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -76,7 +78,7 @@ svg-clean:
 # ══════════════════════════════════════════════════
 #  论文 / 答辩 / 开题
 # ══════════════════════════════════════════════════
-thesis: $(METRICS_TEX) svg
+thesis: $(METRICS_TEX) $(ABLATION_TEX) svg
 	cd $(THESISDIR) && latexmk thesis.tex >/dev/null 2>&1
 	@test -f $(THESISDIR)/thesis.pdf || { echo "错误: thesis.pdf 未生成"; exit 1; }
 	@echo "✓ 论文: $(THESISDIR)/thesis.pdf"
@@ -103,11 +105,22 @@ $(METRICS_TEX): $(DATA_STAMP) 可视化/_gen_metrics_tex.py
 	@cd 可视化 && uv run _gen_metrics_tex.py >/dev/null
 	@echo "✓ 指标宏: $(METRICS_TEX)"
 
+# 4) 消融数据：apollo_pipeline.py 或 run_ablation.py 改了才重跑 6 变体 × 4 场景
+$(ABLATION_CSV): 可视化/apollo_pipeline.py 可视化/run_ablation.py
+	@cd 可视化 && uv run run_ablation.py >/dev/null
+	@echo "✓ 消融数据: $(ABLATION_CSV)"
+
+# 5) 消融评分宏与 LaTeX 三件套：ablation.csv 或 metric_score.py 改了才重写
+$(ABLATION_TEX): $(ABLATION_CSV) 可视化/metric_score.py
+	@cd 可视化 && uv run metric_score.py >/dev/null
+	@echo "✓ 消融评分: $(ABLATION_TEX)"
+
 # 便捷别名
-sim-data:    $(DATA_STAMP)
-sim-figs:    $(FIGS_STAMP)
-sim-metrics: $(METRICS_TEX)
-sim:         sim-figs sim-metrics
+sim-data:     $(DATA_STAMP)
+sim-figs:     $(FIGS_STAMP)
+sim-metrics:  $(METRICS_TEX)
+sim-ablation: $(ABLATION_TEX)
+sim:          sim-figs sim-metrics sim-ablation
 	@echo "✓ 仿真产物已增量更新"
 
 slides: $(SLIDEDIR)/main.pdf
