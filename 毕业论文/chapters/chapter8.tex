@@ -278,6 +278,8 @@ S_{\mathrm{overall}} = \begin{cases}
 \end{equation}
 几何平均比算术平均更适合工程评分体系，因其具有否决性，单项极差直接拉低总分而非被其他高分项掩盖。当某变体在任一场景触发硬门导致$S_{\mathrm{scn}}=0$时，几何平均会退化为零分；为区分不同程度的部分失效，此时退回算术平均并折半惩罚。
 
+需要指出，上述以M5\_full为基准的相对归一化使得通过率对总分起主导作用。硬门系数$G$将未通过场景的得分直接归零，而M1、M2、M3在各自关键场景中的失败导致$S_{\mathrm{scn}}=0$，几何平均随之退化，全局得分骤降至\AblationFailedScoreCeil 分以下。这意味着综合得分在很大程度上反映的是「通过率差异」而非「通过场景内的四维度质量差异」。读者在解读表\ref{tab:ablation_score}的综合排名时，应同时关注图\ref{fig:ablation_heatmap}中各变体在通过场景内的逐场景明细得分，以及图\ref{fig:ablation_radar}的四维度雷达图，以获得各组件在非硬门维度上的真实贡献幅度。
+
 \subsection{综合排名与单场景明细}
 
 本实验定义通过判据为$s_{\mathrm{end}} \geq s_{\max} - 1\,\mathrm{m}$，即仿真终点距目标终点不超过1\,m视为成功通过。按式(\ref{eq:score_overall})计算的6变体综合排名如表\ref{tab:ablation_score}所示。M5\_Full作为基准取\AblationScoreMFive 分；M4\_no\_C5以\AblationScoreMFour 分微弱超过M5，源自走廊注入步骤少一组约束带来的求解器加速；M3、M2、M1因各自一个场景失败被硬门扣分而落到\AblationFailedScoreCeil 分以下；M0\_Apollo\_Baseline在4场景全部失败，全局得\AblationScoreMZero 分。
