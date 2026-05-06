@@ -1,6 +1,11 @@
 TEX      := xelatex
 TEXFLAGS := -interaction=nonstopmode -halt-on-error
 BIBER    := biber
+FC_MATCH := fc-match
+
+# 编译前必须存在于 PATH 的外部命令（缺一则立即失败）
+DEPS     := $(TEX) $(BIBER) pdfcrop pdf2svg latexmk uv $(FC_MATCH)
+MAIN_FONT:= TeX Gyre Termes
 
 FIGDIR   := 图片
 THESISDIR:= 毕业论文
@@ -23,8 +28,27 @@ METRICS_TEX   := $(THESISDIR)/_experiment_metrics.tex
 ABLATION_CSV  := $(FIGDIR)/data/ablation/ablation.csv
 ABLATION_TEX  := $(THESISDIR)/_ablation_macros.tex
 
-.PHONY: all svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics sim-ablation
+.PHONY: all check-deps svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics sim-ablation
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
+
+# ══════════════════════════════════════════════════
+#  依赖检查（未安装所需命令时不进入编译）
+# ══════════════════════════════════════════════════
+check-deps:
+	@for cmd in $(DEPS); do \
+	  command -v "$$cmd" >/dev/null 2>&1 || { \
+	    printf '%s\n' "错误: 未找到命令 \"$$cmd\"（PATH 中不可用）。请先安装对应依赖后再编译。" >&2; \
+	    exit 1; \
+	  }; \
+	done
+	@echo "✓ 外部依赖检查通过 ($(words $(DEPS)) 个命令)"
+	@matched_font="$$( $(FC_MATCH) -f '%{family}\n' '$(MAIN_FONT)' | head -n 1 )"; \
+	  printf '%s\n' "$$matched_font" | tr ',' '\n' | sed 's/^ *//;s/ *$$//' | grep -Fx '$(MAIN_FONT)' >/dev/null 2>&1 || { \
+	    printf '%s\n' "错误: 未找到字体 \"$(MAIN_FONT)\"。Arch Linux 可执行：sudo pacman -S tex-gyre-fonts" >&2; \
+	    printf '%s\n' "当前 fontconfig 匹配结果: $$matched_font" >&2; \
+	    exit 1; \
+	  }
+	@echo "✓ 字体依赖检查通过 ($(MAIN_FONT))"
 
 # ══════════════════════════════════════════════════
 #  默认：并行 SVG + 论文 + 答辩演示
@@ -36,7 +60,7 @@ all: svg thesis slides
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
 # ══════════════════════════════════════════════════
 
-svg: $(FIGS_STAMP) $(SVGS)
+svg: check-deps $(FIGS_STAMP) $(SVGS)
 	@echo "✓ SVG 共 $(words $(SVGS)) 个 → $(SVGDIR)/"
 
 # 1) 生成单图 wrapper（统一 preamble + \input{<name>}）
@@ -78,7 +102,7 @@ svg-clean:
 # ══════════════════════════════════════════════════
 #  论文 / 答辩 / 开题
 # ══════════════════════════════════════════════════
-thesis: $(METRICS_TEX) $(ABLATION_TEX) svg
+thesis: check-deps $(METRICS_TEX) $(ABLATION_TEX) svg
 	cd $(THESISDIR) && latexmk thesis.tex >/dev/null 2>&1
 	@test -f $(THESISDIR)/thesis.pdf || { echo "错误: thesis.pdf 未生成"; exit 1; }
 	@echo "✓ 论文: $(THESISDIR)/thesis.pdf"
@@ -116,21 +140,21 @@ $(ABLATION_TEX): $(ABLATION_CSV) 可视化/metric_score.py
 	@echo "✓ 消融评分: $(ABLATION_TEX)"
 
 # 便捷别名
-sim-data:     $(DATA_STAMP)
-sim-figs:     $(FIGS_STAMP)
-sim-metrics:  $(METRICS_TEX)
-sim-ablation: $(ABLATION_TEX)
-sim:          sim-figs sim-metrics sim-ablation
+sim-data:     check-deps $(DATA_STAMP)
+sim-figs:     check-deps $(FIGS_STAMP)
+sim-metrics:  check-deps $(METRICS_TEX)
+sim-ablation: check-deps $(ABLATION_TEX)
+sim:          check-deps sim-figs sim-metrics sim-ablation
 	@echo "✓ 仿真产物已增量更新"
 
 slides: $(SLIDEDIR)/main.pdf
-$(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex
+$(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex | check-deps
 	-cd $(SLIDEDIR) && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1
 	@test -f $(SLIDEDIR)/main.pdf || { echo "错误: slides main.pdf 未生成"; exit 1; }
 	@echo "✓ 答辩演示: $(SLIDEDIR)/main.pdf"
 
 kaiti: $(KAITIDIR)/slides.pdf
-$(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.tex)
+$(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.tex) | check-deps
 	cd $(KAITIDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
 	@echo "✓ 开题答辩: $(KAITIDIR)/slides.pdf"
 
@@ -147,6 +171,7 @@ clean:
 #  帮助
 # ══════════════════════════════════════════════════
 help:
+	@echo "make check-deps 检查 TeX / pdfcrop / pdf2svg / latexmk / uv / 字体是否可用"
 	@echo "make            并行 SVG + 论文 + 答辩"
 	@echo "make -jN svg    并行编译全部单图 SVG（推荐 N=$$(nproc)）"
 	@echo "make svg-clean  清空 svg/ 与 build/ 目录"
