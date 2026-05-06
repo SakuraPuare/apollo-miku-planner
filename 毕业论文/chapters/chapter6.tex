@@ -283,7 +283,7 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
 
 $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_k$表示最后一个即最左侧障碍物到道路左边界之间的间隙，$g_p$，其中$1 \leq p \leq k-1$，表示排序中相邻障碍物之间的间隙。
 
-\textbf{定理1（最大间隙最优性）}\quad 对于分割点$p$，通行带宽度$W(p) = g_p$。因此最优通行带宽度为
+\textbf{定理1（最大间隙最优性）}\quad 若所有障碍物的安全裕度扩展后均未超出道路边界，即对任意$i$均有$u_i \geq l_{road}^{-}$且$v_i \leq l_{road}^{+}$，则对于分割点$p$，通行带宽度$W(p) = g_p$。因此最优通行带宽度为
 
 \begin{equation}
     W^{*} = \max_{p=0,1,\ldots,k} g_p
