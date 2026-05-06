@@ -1,5 +1,5 @@
 % !TEX program = xelatex
-\documentclass[aspectratio=169,10pt]{ctexbeamer}
+\documentclass[aspectratio=169,10pt,fontset=none]{ctexbeamer}
 
 % ---------- 主题 ----------
 \usetheme{Madrid}
@@ -9,8 +9,8 @@
 \setbeamertemplate{caption}[numbered]
 
 % ---------- 字体 ----------
-\setCJKmainfont{Noto Serif CJK SC}
-\setCJKsansfont{Noto Sans CJK SC}
+\def\ProjectFontDir{../fonts}
+\input{../fonts/local-fonts}
 
 % ---------- 宏包 ----------
 \usepackage{amsmath,amssymb}

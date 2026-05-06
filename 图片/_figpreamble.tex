@@ -2,7 +2,13 @@
 %% 注意：本文件只放包/颜色/tikzset，不出现 \documentclass / \begin{document}
 
 \usepackage{fontspec}
-\setmainfont{TeX Gyre Termes}
+\IfFileExists{../../fonts/local-fonts.tex}{%
+  \def\ProjectFontDir{../../fonts}%
+  \input{../../fonts/local-fonts}%
+}{%
+  \def\ProjectFontDir{../fonts}%
+  \input{../fonts/local-fonts}%
+}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
 \usepackage{pgfplots}
