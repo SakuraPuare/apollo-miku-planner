@@ -1,0 +1,81 @@
+% Project-local font setup for XeLaTeX.
+% Callers may set \ProjectFontDir before \input'ing this file.
+\providecommand{\ProjectFontDir}{../fonts}
+
+\setmainfont[
+  Path = \ProjectFontDir/tex-gyre/,
+  Extension = .otf,
+  UprightFont = *-regular,
+  BoldFont = *-bold,
+  ItalicFont = *-italic,
+  BoldItalicFont = *-bolditalic,
+  Ligatures = TeX
+]{texgyretermes}
+
+\setCJKmainfont[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf,
+  BoldFont = FandolSong-Bold,
+  ItalicFont = FandolKai-Regular
+]{FandolSong-Regular}
+\setCJKsansfont[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf,
+  BoldFont = FandolHei-Bold,
+  ItalicFont = FandolKai-Regular
+]{FandolHei-Regular}
+\setCJKmonofont[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf,
+  ItalicFont = FandolKai-Regular
+]{FandolFang-Regular}
+
+\setCJKfamilyfont{zhsong}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf,
+  BoldFont = FandolSong-Bold
+]{FandolSong-Regular}
+\setCJKfamilyfont{zhsongb}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf
+]{FandolSong-Bold}
+\setCJKfamilyfont{zhhei}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf,
+  BoldFont = FandolHei-Bold,
+  ItalicFont = FandolKai-Regular
+]{FandolHei-Regular}
+\setCJKfamilyfont{zhheib}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf
+]{FandolHei-Bold}
+\setCJKfamilyfont{zhfs}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf
+]{FandolFang-Regular}
+\setCJKfamilyfont{zhkai}[
+  Path = \ProjectFontDir/fandol/,
+  Extension = .otf
+]{FandolKai-Regular}
+
+\ExplSyntaxOn
+\cs_if_exist:NT \ctex_punct_set:n
+  {
+    \ctex_punct_set:n { fandol }
+    \ctex_punct_map_family:nn   { \CJKrmdefault         } { zhsong  }
+    \ctex_punct_map_family:nn   { \CJKsfdefault         } { zhhei   }
+    \ctex_punct_map_family:nn   { \CJKttdefault         } { zhfs    }
+    \ctex_punct_map_bfseries:nn { \CJKrmdefault, zhsong } { zhsongb }
+    \ctex_punct_map_bfseries:nn { \CJKsfdefault, zhhei  } { zhheib  }
+    \ctex_punct_map_itshape:nn  { \CJKrmdefault         } { zhkai   }
+  }
+\ExplSyntaxOff
+
+\providecommand{\songti}{}
+\providecommand{\heiti}{}
+\providecommand{\fangsong}{}
+\providecommand{\kaishu}{}
+\renewcommand{\songti}{\CJKfamily{zhsong}}
+\renewcommand{\heiti}{\CJKfamily{zhhei}}
+\renewcommand{\fangsong}{\CJKfamily{zhfs}}
+\renewcommand{\kaishu}{\CJKfamily{zhkai}}
