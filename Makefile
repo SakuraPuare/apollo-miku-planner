@@ -22,6 +22,7 @@ THESISDIR:= 毕业论文
 SLIDEDIR := 答辩演示
 KAITIDIR := 开题答辩
 FOREIGNDIR := 外文文献
+DEFENSEDIR := 毕业答辩
 
 SVGDIR   := $(FIGDIR)/svg
 BUILDDIR := $(FIGDIR)/build
@@ -41,7 +42,7 @@ ABLATION_TEX  := $(THESISDIR)/_ablation_macros.tex
 SENSITIVITY_TEX := $(THESISDIR)/_sensitivity_macros.tex
 CONTEXT_TEX   := $(THESISDIR)/_experiment_context.tex
 
-.PHONY: all check-deps svg svg-clean thesis slides kaiti foreign foreign-original foreign-translation clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
+.PHONY: all check-deps svg svg-clean thesis slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -67,7 +68,7 @@ check-deps:
 #  默认：并行 SVG + 论文 + 答辩演示
 #  全量推荐：make -j$(nproc)
 # ══════════════════════════════════════════════════
-all: svg thesis slides kaiti foreign
+all: svg thesis slides kaiti foreign defense
 
 # ══════════════════════════════════════════════════
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
@@ -173,11 +174,11 @@ sim-context:  check-deps $(CONTEXT_TEX)
 sim:          check-deps sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 	@echo "✓ 仿真产物已增量更新"
 
-slides: $(SLIDEDIR)/main.pdf
-$(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex $(FONT_FILES) | check-deps
-	-cd $(SLIDEDIR) && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1
-	@test -f $(SLIDEDIR)/main.pdf || { echo "错误: slides main.pdf 未生成"; exit 1; }
-	@echo "✓ 答辩演示: $(SLIDEDIR)/main.pdf"
+slides: $(SLIDEDIR)/slides.pdf
+$(SLIDEDIR)/slides.pdf: $(SLIDEDIR)/slides.tex $(FONT_FILES) | check-deps
+	-cd $(SLIDEDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
+	@test -f $(SLIDEDIR)/slides.pdf || { echo "错误: 答辩演示 slides.pdf 未生成"; exit 1; }
+	@echo "✓ 答辩演示: $(SLIDEDIR)/slides.pdf"
 
 kaiti: $(KAITIDIR)/slides.pdf
 $(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.tex) $(FONT_FILES) | check-deps
@@ -185,27 +186,48 @@ $(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.
 	@echo "✓ 开题答辩: $(KAITIDIR)/slides.pdf"
 
 # ══════════════════════════════════════════════════
+#  毕业答辩（beamer slides + 独立讲稿，两份 PDF）
+# ══════════════════════════════════════════════════
+defense: defense-slides defense-script
+	@echo "✓ 毕业答辩: $(DEFENSEDIR)/slides.pdf + $(DEFENSEDIR)/script.pdf"
+
+defense-slides: $(DEFENSEDIR)/slides.pdf
+$(DEFENSEDIR)/slides.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(DEFENSEDIR)/_slides_part2.tex $(FONT_FILES) | check-deps
+	cd $(DEFENSEDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
+	@test -f $(DEFENSEDIR)/slides.pdf || { echo "错误: 毕业答辩 slides.pdf 未生成"; exit 1; }
+	@echo "✓ 毕业答辩幻灯片: $(DEFENSEDIR)/slides.pdf"
+
+defense-script: $(DEFENSEDIR)/script.pdf
+$(DEFENSEDIR)/script.pdf: $(DEFENSEDIR)/script.tex $(DEFENSEDIR)/preamble.tex $(FONT_FILES) | check-deps
+	cd $(DEFENSEDIR) && $(TEX) $(TEXFLAGS) script.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) script.tex >/dev/null 2>&1
+	@test -f $(DEFENSEDIR)/script.pdf || { echo "错误: 毕业答辩 script.pdf 未生成"; exit 1; }
+	@echo "✓ 毕业答辩讲稿: $(DEFENSEDIR)/script.pdf"
+
+
+# ══════════════════════════════════════════════════
 #  外文文献原文及译文
 # ══════════════════════════════════════════════════
 foreign: foreign-original foreign-translation
 
-foreign-original: $(FOREIGNDIR)/original/main.pdf
-$(FOREIGNDIR)/original/main.pdf: $(FOREIGNDIR)/original/main.tex $(FOREIGNDIR)/original/refs.bib | check-deps
-	cd $(FOREIGNDIR)/original && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1 \
-	  && bibtex main >/dev/null 2>&1 \
-	  && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1 \
-	  && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1
-	@test -f $(FOREIGNDIR)/original/main.pdf || { echo "错误: 外文文献原文未生成"; exit 1; }
-	@echo "✓ 外文文献原文: $(FOREIGNDIR)/original/main.pdf"
+foreign-original: $(FOREIGNDIR)/original/original.pdf
+$(FOREIGNDIR)/original/original.pdf: $(FOREIGNDIR)/original/original.tex $(FOREIGNDIR)/original/refs.bib | check-deps
+	cd $(FOREIGNDIR)/original && pdflatex $(TEXFLAGS) original.tex >/dev/null 2>&1 \
+	  && bibtex original >/dev/null 2>&1 \
+	  && pdflatex $(TEXFLAGS) original.tex >/dev/null 2>&1 \
+	  && pdflatex $(TEXFLAGS) original.tex >/dev/null 2>&1
+	@test -f $(FOREIGNDIR)/original/original.pdf || { echo "错误: 外文文献原文未生成"; exit 1; }
+	@echo "✓ 外文文献原文: $(FOREIGNDIR)/original/original.pdf"
 
-foreign-translation: $(FOREIGNDIR)/translation/main.pdf
-$(FOREIGNDIR)/translation/main.pdf: $(FOREIGNDIR)/translation/main.tex $(FOREIGNDIR)/translation/refs.bib $(FONT_FILES) | check-deps
-	cd $(FOREIGNDIR)/translation && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1 \
-	  && $(BIBER) main >/dev/null 2>&1 \
-	  && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1 \
-	  && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1
-	@test -f $(FOREIGNDIR)/translation/main.pdf || { echo "错误: 外文文献译文未生成"; exit 1; }
-	@echo "✓ 外文文献译文: $(FOREIGNDIR)/translation/main.pdf"
+foreign-translation: $(FOREIGNDIR)/translation/translation.pdf
+$(FOREIGNDIR)/translation/translation.pdf: $(FOREIGNDIR)/translation/translation.tex $(FOREIGNDIR)/translation/refs.bib $(FONT_FILES) | check-deps
+	cd $(FOREIGNDIR)/translation && $(TEX) $(TEXFLAGS) translation.tex >/dev/null 2>&1 \
+	  && $(BIBER) translation >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) translation.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) translation.tex >/dev/null 2>&1
+	@test -f $(FOREIGNDIR)/translation/translation.pdf || { echo "错误: 外文文献译文未生成"; exit 1; }
+	@echo "✓ 外文文献译文: $(FOREIGNDIR)/translation/translation.pdf"
 
 # ══════════════════════════════════════════════════
 #  清理
@@ -214,13 +236,16 @@ clean:
 	rm -rf $(SVGDIR) $(BUILDDIR)
 	rm -r $(THESISDIR)/_*.tex
 	rm -f $(THESISDIR)/thesis.{pdf,aux,log,toc,bbl,blg,out,bcf,run.xml,xdv,fls,auxlock}
-	rm -f $(SLIDEDIR)/main.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -f $(SLIDEDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -f $(KAITIDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -rf $(THESISDIR)/thesis-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
-	rm -rf $(SLIDEDIR)/main-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
+	rm -rf $(SLIDEDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
 	rm -rf $(KAITIDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
-	rm -f $(FOREIGNDIR)/original/main.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
-	rm -f $(FOREIGNDIR)/translation/main.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
+	rm -f $(FOREIGNDIR)/original/original.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
+	rm -f $(FOREIGNDIR)/translation/translation.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
+	rm -f $(DEFENSEDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -f $(DEFENSEDIR)/script.{pdf,aux,log,out,toc}
+	rm -rf $(DEFENSEDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
 
 # ══════════════════════════════════════════════════
 #  帮助
@@ -234,4 +259,5 @@ help:
 	@echo "make slides     编译答辩演示"
 	@echo "make kaiti      编译开题答辩"
 	@echo "make foreign    编译外文文献原文及译文"
+	@echo "make defense    编译毕业答辩 (slides + 讲稿)"
 	@echo "make clean      清理全部生成物"
