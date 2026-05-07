@@ -30,6 +30,7 @@
 from __future__ import annotations
 
 import csv
+import copy
 import json
 import os
 import time
@@ -47,8 +48,14 @@ from matplotlib.patches import Circle, Polygon, Rectangle
 warnings.filterwarnings("ignore")
 
 # CJK 字体兜底
-for f in ("Noto Sans CJK SC", "Noto Sans CJK JP", "WenQuanYi Zen Hei",
-          "Source Han Sans CN", "Source Han Sans SC", "Noto Sans"):
+for f in (
+    "Noto Sans CJK SC",
+    "Noto Sans CJK JP",
+    "WenQuanYi Zen Hei",
+    "Source Han Sans CN",
+    "Source Han Sans SC",
+    "Noto Sans",
+):
     try:
         mpl.font_manager.findfont(f, fallback_to_default=False)
         plt.rcParams["font.sans-serif"] = [f]
@@ -60,13 +67,27 @@ plt.rcParams["axes.unicode_minus"] = False
 
 # ============================ 场景定义 ============================
 
+DELTA_BASELINE = 0.30
+DELTA_MIN = 0.10
+DELTA_MAX = 0.40
+PLANNER_CYCLE_MS = 100
+GROUPING_THRESHOLD = 12.0
+ALPHA_COEFF = 1.25
+BORROW_MAX_DEPTH = 3
+MIN_BORROW_WIDTH = 2.0
+PLANNING_TIME_RANGE_MIN = 6.0
+PLANNING_TIME_RANGE_MAX = 15.0
+PATH_BOUNDARY_STEP = 0.5
+ABLATION_FAIL_PENALTY_S = 5
+
+
 @dataclass
 class Ego:
     s0: float = 0.0
     l0: float = 0.0
     v0: float = 8.0
     a0: float = 0.0
-    W: float = 1.8
+    W: float = 2.11
     L: float = 4.0
 
 
@@ -81,7 +102,9 @@ class Obstacle:
     is_static: bool = False
     name: str = ""
     # 论文第五章第二节：障碍物类型，决定 f_type 因子
-    obs_type: str = "vehicle"  # "ped" | "bike" | "vehicle" | "unknown_movable" | "static"
+    obs_type: str = (
+        "vehicle"  # "ped" | "bike" | "vehicle" | "unknown_movable" | "static"
+    )
 
     def position_at(self, t: float) -> Tuple[float, float]:
         return self.s0 + self.vs * t, self.l0 + self.vl * t
@@ -96,16 +119,17 @@ class Scenario:
     l_road_min: float = -1.875
     l_road_max: float = 1.875
     # Baseline 用统一 δ（Apollo `GetBufferBetweenADCCenterAndEdge`）
-    delta_baseline: float = 0.3
+    delta_baseline: float = DELTA_BASELINE
     # MIKU 差异化 δ_i 上下界（论文第五章第四节 式(5.10)）
-    delta_min: float = 0.10
-    delta_max: float = 0.40
+    delta_min: float = DELTA_MIN
+    delta_max: float = DELTA_MAX
     # LaneBorrow：模拟 Apollo LaneBorrowPath
-    lane_borrow: str = "none"   # "none" | "left" | "right" | "both"
+    lane_borrow: str = "none"  # "none" | "left" | "right" | "both"
     lane_width: float = 3.75
 
 
 # ============================ 第八章 消融开关（5 个正交组件） ============================
+
 
 @dataclass
 class AblationFlags:
@@ -117,6 +141,7 @@ class AblationFlags:
     C4 threat_delta    第五章第四节 式(5.10) — 多因子威胁度 → 差异化 δ_i
     C5 corridor_inject 第七章 SBD2 后扩展 — (s_k, τ_k) 走廊注入 ST
     """
+
     tau_shift: bool = True
     grouping: bool = True
     max_gap: bool = True
@@ -143,23 +168,33 @@ class AblationFlags:
         raise ValueError(f"unknown mode: {mode_or_flags!r}")
 
     def all_off(self) -> bool:
-        return not any([self.tau_shift, self.grouping, self.max_gap,
-                        self.threat_delta, self.corridor_inject])
+        return not any(
+            [
+                self.tau_shift,
+                self.grouping,
+                self.max_gap,
+                self.threat_delta,
+                self.corridor_inject,
+            ]
+        )
 
 
 # ============================ 第五章 多因子威胁度 → δ_i ============================
 
 # 论文式 (5.5) 权重
 THREAT_WEIGHTS = (0.30, 0.20, 0.15, 0.10, 0.25)
-T_CRIT = 2.0     # 临界 TTC
-T_MAX = 7.0      # 最大关注 TTC
-D_CLUSTER = 10.0 # 交互密度聚类半径
-V_LIMIT = 12.0   # 道路限速（用于 f_vel sigmoid 归一化）
+T_CRIT = 2.0  # 临界 TTC
+T_MAX = 7.0  # 最大关注 TTC
+D_CLUSTER = 10.0  # 交互密度聚类半径
+V_LIMIT = 12.0  # 道路限速（用于 f_vel sigmoid 归一化）
 
 # 论文式 (5.8) f_type 离散映射
 F_TYPE_MAP = {
-    "ped": 1.0, "bike": 1.0, "vehicle": 0.7,
-    "unknown_movable": 0.5, "static": 0.3,
+    "ped": 1.0,
+    "bike": 1.0,
+    "vehicle": 0.7,
+    "unknown_movable": 0.5,
+    "static": 0.3,
     "cone": 0.15,  # 交通锥/反光屏障：小尺寸、低质量、置信度高，威胁权重最低
 }
 
@@ -209,9 +244,13 @@ def f_inter(obs: Obstacle, all_obs: List[Obstacle]) -> float:
 
 def compute_threat(obs: Obstacle, scn: Scenario) -> float:
     w = THREAT_WEIGHTS
-    return (w[0] * f_ttc(obs, scn.ego) + w[1] * f_overlap(obs, scn.ego)
-            + w[2] * f_vel(obs, scn.ego) + w[3] * f_type(obs)
-            + w[4] * f_inter(obs, scn.obstacles))
+    return (
+        w[0] * f_ttc(obs, scn.ego)
+        + w[1] * f_overlap(obs, scn.ego)
+        + w[2] * f_vel(obs, scn.ego)
+        + w[3] * f_type(obs)
+        + w[4] * f_inter(obs, scn.obstacles)
+    )
 
 
 def compute_delta(obs: Obstacle, scn: Scenario) -> float:
@@ -220,52 +259,132 @@ def compute_delta(obs: Obstacle, scn: Scenario) -> float:
     return scn.delta_min + (scn.delta_max - scn.delta_min) * theta
 
 
-# 场景库 —— 每个场景一个独立 PNG
-SCENARIOS = {
+# 四个原始压力场景：保留 Baseline 易失败的临界构型，用于说明问题存在性与消融退化。
+PRESSURE_SCENARIOS = {
     "01_crossing_ped": Scenario(
         ego=Ego(s0=0.0, l0=0.0, v0=8.0, a0=0.0),
         obstacles=[
-            Obstacle(s0=12.0, l0=-0.6, vs=0.0, vl=1.2, W=0.5, L=0.5,
-                     is_static=False, name="行人", obs_type="ped"),
+            Obstacle(
+                s0=12.0,
+                l0=-0.6,
+                vs=0.0,
+                vl=1.25,
+                W=0.5,
+                L=0.5,
+                is_static=False,
+                name="行人",
+                obs_type="ped",
+            ),
         ],
-        s_max=25.0, t_max=5.0,
+        s_max=25.0,
+        t_max=5.0,
     ),
-
     "02_ped_plus_parked": Scenario(
         ego=Ego(s0=0.0, l0=0.0, v0=8.0, a0=0.0),
         obstacles=[
-            Obstacle(s0=10.0, l0=-0.5, vs=0.0, vl=1.2, W=0.5, L=0.5,
-                     is_static=False, name="行人", obs_type="ped"),
-            Obstacle(s0=22.0, l0=1.3, vs=0.0, vl=0.0, W=1.0, L=4.0,
-                     is_static=True, name="停车", obs_type="static"),
+            Obstacle(
+                s0=10.0,
+                l0=-0.5,
+                vs=0.0,
+                vl=1.5,
+                W=0.5,
+                L=0.5,
+                is_static=False,
+                name="行人",
+                obs_type="ped",
+            ),
+            Obstacle(
+                s0=22.0,
+                l0=1.3,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="停车",
+                obs_type="static",
+            ),
         ],
-        s_max=32.0, t_max=6.5,
+        s_max=32.0,
+        t_max=6.5,
     ),
-
     "03_narrow_cones": Scenario(
-        # 双侧交通锥构成窄路 — 第5章差异化裕度对照
-        # Baseline 一刀切 δ=0.30 → l_min > l_max → blocked；
-        # MIKU 识别交通锥低威胁 → δ_i≈0.19 → ego 中心可走余量约 0.07 m → 通过。
+        # 双侧交通锥构成窄路 — 第5章差异化裕度对照。
+        # 原压力构型使用对称锥列，统一安全裕度会把通行带压缩到不可行。
         ego=Ego(s0=0.0, l0=0.0, v0=4.0, a0=0.0),
         obstacles=[
-            # 左侧锥列（l=+1.20, W=0.15）三个，纵向 s=20/30/40
-            Obstacle(s0=20.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥L1", obs_type="cone"),
-            Obstacle(s0=30.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥L2", obs_type="cone"),
-            Obstacle(s0=40.0, l0=1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥L3", obs_type="cone"),
-            # 右侧锥列（l=-1.20, W=0.15）三个，与左列对称
-            Obstacle(s0=20.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥R1", obs_type="cone"),
-            Obstacle(s0=30.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥R2", obs_type="cone"),
-            Obstacle(s0=40.0, l0=-1.20, vs=0.0, vl=0.0, W=0.15, L=0.5,
-                     is_static=True, name="锥R3", obs_type="cone"),
+            # 左侧锥列（l=+1.35, W=0.15）三个，纵向 s=20/30/40
+            Obstacle(
+                s0=20.0,
+                l0=1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥L1",
+                obs_type="cone",
+            ),
+            Obstacle(
+                s0=30.0,
+                l0=1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥L2",
+                obs_type="cone",
+            ),
+            Obstacle(
+                s0=40.0,
+                l0=1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥L3",
+                obs_type="cone",
+            ),
+            # 右侧锥列（l=-1.35, W=0.15）三个，与左列对称
+            Obstacle(
+                s0=20.0,
+                l0=-1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥R1",
+                obs_type="cone",
+            ),
+            Obstacle(
+                s0=30.0,
+                l0=-1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥R2",
+                obs_type="cone",
+            ),
+            Obstacle(
+                s0=40.0,
+                l0=-1.35,
+                vs=0.0,
+                vl=0.0,
+                W=0.15,
+                L=0.5,
+                is_static=True,
+                name="锥R3",
+                obs_type="cone",
+            ),
         ],
-        s_max=50.0, t_max=14.0,
+        s_max=50.0,
+        t_max=14.0,
     ),
-
     "04_dense_construction": Scenario(
         # 单车道维修封闭 + 交通锥导流至左侧相邻车道
         # 入口漏斗 5 锥（由右沿斜跨至左沿）+ 维持段 8 屏障（沿左沿连续墙）+ 出口漏斗 5 锥（反向）
@@ -274,38 +393,256 @@ SCENARIOS = {
         ego=Ego(s0=0.0, l0=0.0, v0=6.0, a0=0.0),
         obstacles=[
             # 入口漏斗 (s=15-27): 5 锥连续, 由原车道右沿斜跨至左沿; ego 在 s=0-15 段有 15m 加速与对齐
-            Obstacle(s0=16.0, l0=-1.50, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥E1", obs_type="static"),
-            Obstacle(s0=18.5, l0=-0.85, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥E2", obs_type="static"),
-            Obstacle(s0=21.0, l0=-0.20, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥E3", obs_type="static"),
-            Obstacle(s0=23.5, l0=0.50,  vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥E4", obs_type="static"),
-            Obstacle(s0=26.0, l0=1.20,  vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥E5", obs_type="static"),
-            # 维持段 (s=27-59): 8 段水马横跨车道分界线 (l=2.0, W=1.0 → 占据 l∈[1.5,2.5], 跨入借道车道)
-            # Baseline 视作 "borrow 车道有障碍" → 反方向 push 右, 与入口锥桶 push 左产生 l_min > l_max 冲突
-            Obstacle(s0=29.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M1", obs_type="static"),
-            Obstacle(s0=33.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M2", obs_type="static"),
-            Obstacle(s0=37.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M3", obs_type="static"),
-            Obstacle(s0=41.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M4", obs_type="static"),
-            Obstacle(s0=45.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M5", obs_type="static"),
-            Obstacle(s0=49.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M6", obs_type="static"),
-            Obstacle(s0=53.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M7", obs_type="static"),
-            Obstacle(s0=57.0, l0=2.00, vs=0.0, vl=0.0, W=1.0, L=4.0, is_static=True, name="水马M8", obs_type="static"),
+            Obstacle(
+                s0=16.0,
+                l0=-1.50,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥E1",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=18.5,
+                l0=-0.85,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥E2",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=21.0,
+                l0=-0.20,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥E3",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=23.5,
+                l0=0.50,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥E4",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=26.0,
+                l0=1.20,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥E5",
+                obs_type="static",
+            ),
+            # 维持段 (s=27-59): 8 段水马横跨车道分界线
+            # Baseline 先受入口锥桶左推，再被水马右推，形成互斥边界。
+            Obstacle(
+                s0=29.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M1",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=33.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M2",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=37.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M3",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=41.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M4",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=45.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M5",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=49.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M6",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=53.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M7",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=57.0,
+                l0=2.00,
+                vs=0.0,
+                vl=0.0,
+                W=1.0,
+                L=4.0,
+                is_static=True,
+                name="水马M8",
+                obs_type="static",
+            ),
             # 出口漏斗 (s=59-71): 5 锥连续, 由左沿斜跨回原车道右沿
-            Obstacle(s0=60.0, l0=1.20,  vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥X1", obs_type="static"),
-            Obstacle(s0=62.5, l0=0.50,  vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥X2", obs_type="static"),
-            Obstacle(s0=65.0, l0=-0.20, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥X3", obs_type="static"),
-            Obstacle(s0=67.5, l0=-0.85, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥X4", obs_type="static"),
-            Obstacle(s0=70.0, l0=-1.50, vs=0.0, vl=0.0, W=0.4, L=2.5, is_static=True, name="锥X5", obs_type="static"),
+            Obstacle(
+                s0=60.0,
+                l0=1.20,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥X1",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=62.5,
+                l0=0.50,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥X2",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=65.0,
+                l0=-0.20,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥X3",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=67.5,
+                l0=-0.85,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥X4",
+                obs_type="static",
+            ),
+            Obstacle(
+                s0=70.0,
+                l0=-1.50,
+                vs=0.0,
+                vl=0.0,
+                W=0.4,
+                L=2.5,
+                is_static=True,
+                name="锥X5",
+                obs_type="static",
+            ),
         ],
-        s_max=85.0, t_max=15.0,
+        s_max=85.0,
+        t_max=15.0,
         lane_borrow="left",
     ),
 }
+
+# 四个配对可比场景：逐一复制原场景，只做时间窗或几何参数的轻量放宽。
+COMPARABLE_SCENARIOS = copy.deepcopy(PRESSURE_SCENARIOS)
+
+COMPARABLE_SCENARIOS["05_crossing_ped_cmp"] = COMPARABLE_SCENARIOS.pop(
+    "01_crossing_ped"
+)
+COMPARABLE_SCENARIOS["05_crossing_ped_cmp"].t_max = 6.0
+
+COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"] = COMPARABLE_SCENARIOS.pop(
+    "02_ped_plus_parked"
+)
+for _obs in COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"].obstacles:
+    if _obs.name == "停车":
+        _obs.l0 = 1.60
+
+COMPARABLE_SCENARIOS["07_narrow_cones_cmp"] = COMPARABLE_SCENARIOS.pop(
+    "03_narrow_cones"
+)
+for _obs in COMPARABLE_SCENARIOS["07_narrow_cones_cmp"].obstacles:
+    _obs.l0 = 1.55 if _obs.l0 > 0 else -1.35
+
+COMPARABLE_SCENARIOS["08_dense_construction_cmp"] = COMPARABLE_SCENARIOS.pop(
+    "04_dense_construction"
+)
+for _obs in COMPARABLE_SCENARIOS["08_dense_construction_cmp"].obstacles:
+    if _obs.name.startswith("水马"):
+        _obs.l0 = 1.875
+
+# 场景库 —— 主实验输出 8 个 PNG/CSV：4 压力 + 4 配对可比。
+SCENARIOS = {}
+SCENARIOS.update(PRESSURE_SCENARIOS)
+SCENARIOS.update(COMPARABLE_SCENARIOS)
+
+# 消融实验只使用原始压力场景，避免把可比复制场景重复计入组件必要性评分。
+STRESS_SCENARIOS = PRESSURE_SCENARIOS
 
 # 默认场景（兼容旧接口）
 SCENARIO = SCENARIOS["01_crossing_ped"]
 
 
 # ============================ 到达时间 τ(s) ============================
+
 
 def arrival_time(s: float, scn: Scenario) -> float:
     e = scn.ego
@@ -314,7 +651,7 @@ def arrival_time(s: float, scn: Scenario) -> float:
         return 0.0
     if abs(e.a0) < 1e-3:
         return ds / max(e.v0, 1e-3)
-    disc = e.v0 ** 2 + 2 * e.a0 * ds
+    disc = e.v0**2 + 2 * e.a0 * ds
     if disc < 0:
         return 1e6
     return (-e.v0 + np.sqrt(disc)) / e.a0
@@ -322,11 +659,16 @@ def arrival_time(s: float, scn: Scenario) -> float:
 
 # ============================ ① PathBoundsDecider ============================
 
+
 def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
     """Apollo PathBoundsDecider 复刻 — IsStatic 过滤 + 逐障碍物贪心 nudge。"""
     e = scn.ego
-    eff_l_max = scn.l_road_max + (scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0)
-    eff_l_min = scn.l_road_min - (scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0)
+    eff_l_max = scn.l_road_max + (
+        scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0
+    )
+    eff_l_min = scn.l_road_min - (
+        scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0
+    )
     road_buffer = scn.delta_baseline
     l_min = np.full_like(s_arr, eff_l_min + road_buffer + e.W / 2)
     l_max = np.full_like(s_arr, eff_l_max - road_buffer - e.W / 2)
@@ -349,8 +691,9 @@ def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
     return l_min, l_max, eff_l_min, eff_l_max
 
 
-def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
-                       flags: Optional[AblationFlags] = None, debug=False):
+def _miku_path_bounds(
+    scn: Scenario, s_arr: np.ndarray, flags: Optional[AblationFlags] = None, debug=False
+):
     """MIKU PathBoundsDecider — 论文第六章算法\\ref{alg:optimal_band}：
 
     步骤1: 到达时间 τ(s_i^-)
@@ -358,7 +701,8 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
     步骤3: 按 s_i^- 升序，扫描线分组（s_i^- ≤ s_max 入当前组）
     步骤4: 组内按 u_i 升序排，计算 k+1 个间隙 g_p（式 6.gap_def）
     步骤5: p* = argmax g_p；分配 d_(i)：i ≤ p* → L（左绕），i > p* → R（右绕）
-    步骤6: 在该组的纵向区间内置 l^+ = u_(p*+1)（or l_road^+），l^- = v_(p*)（or l_road^-）
+    步骤6: 将整组 L/R 决策写回各障碍物自身 SLBoundary 对应的 s 截面；
+           分组只统一绕行方向，不把整组纵向区间统一收缩成一个大边界。
 
     flags 控制 4 个组件的启停（C1/C2/C3/C4），默认 full。
 
@@ -367,8 +711,12 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
     if flags is None:
         flags = AblationFlags.full()
     e = scn.ego
-    eff_l_max = scn.l_road_max + (scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0)
-    eff_l_min = scn.l_road_min - (scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0)
+    eff_l_max = scn.l_road_max + (
+        scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0
+    )
+    eff_l_min = scn.l_road_min - (
+        scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0
+    )
 
     road_buffer = scn.delta_min  # 路边裕度退化为最小裕度（无威胁）
     l_min = np.full_like(s_arr, eff_l_min + road_buffer + e.W / 2)
@@ -391,10 +739,16 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
         delta = compute_delta(obs, scn) if flags.threat_delta else scn.delta_baseline
         u = ol_ - obs.W / 2 - delta  # 右侧通行边（自车从右过则 ego 中心 ≤ u - W/2）
         v = ol_ + obs.W / 2 + delta  # 左侧通行边（自车从左过则 ego 中心 ≥ v + W/2）
-        obs_proj.append({
-            "obs": obs, "s_minus": s_minus, "s_plus": s_plus,
-            "u": u, "v": v, "delta": delta,
-        })
+        obs_proj.append(
+            {
+                "obs": obs,
+                "s_minus": s_minus,
+                "s_plus": s_plus,
+                "u": u,
+                "v": v,
+                "delta": delta,
+            }
+        )
 
     # —— 步骤3：按 s_i^- 升序，扫描线合连通分量
     # C2 关闭：每个障碍物自成一组（退化为逐障碍物决策）
@@ -418,10 +772,16 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
         # 剔除已完全越出有效路面的障碍物（论文第六章第四节边界情形）
         active = [r for r in grp if r["u"] < eff_l_max and r["v"] > eff_l_min]
         if not active:
-            group_decisions.append({
-                "grp": grp, "l_minus": eff_l_min, "l_plus": eff_l_max,
-                "p_star": None, "g_star": eff_l_max - eff_l_min, "ordered": [],
-            })
+            group_decisions.append(
+                {
+                    "grp": grp,
+                    "l_minus": eff_l_min,
+                    "l_plus": eff_l_max,
+                    "p_star": None,
+                    "g_star": eff_l_max - eff_l_min,
+                    "ordered": [],
+                }
+            )
             continue
         # 按 u_i 升序（u 相同时按 v 降序——论文第六章第四节第三条）
         ordered = sorted(active, key=lambda r: (r["u"], -r["v"]))
@@ -451,15 +811,22 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
             # 0 < p* < k：L = {(1)..(p*)}, R = {(p*+1)..(k)}
             l_minus = max(r["v"] for r in ordered[:p_star])
             l_plus = min(r["u"] for r in ordered[p_star:])
-        group_decisions.append({
-            "grp": grp, "l_minus": l_minus, "l_plus": l_plus,
-            "p_star": p_star, "g_star": gaps[p_star],
-            "ordered": ordered, "gaps": gaps,
-        })
+        group_decisions.append(
+            {
+                "grp": grp,
+                "l_minus": l_minus,
+                "l_plus": l_plus,
+                "p_star": p_star,
+                "g_star": gaps[p_star],
+                "ordered": ordered,
+                "gaps": gaps,
+            }
+        )
 
-    # —— 步骤6：把每组的决策投影回 path_boundary
-    # 论文第七章第二节：每个 s 截面上用 τ(s) 重算障碍物位置 → l_min/l_max(s) 反映障碍物横向移动
-    # 分组结构与 p_star 沿用步骤 4-5 的 t=0 选择（论文保守近似），但每个 s 处重算 (u_i, v_i)
+    # —— 步骤6：把每组的 L/R 决策投影回 path_boundary
+    # 分组只决定同一连通分量内各障碍物的绕行侧；道路边界仍按单个障碍物
+    # 自身的 SLBoundary 逐截面收缩，避免把整组区间压成一个统一大台阶。
+    # 动态障碍物在每个 s 截面用 τ(s) 重算 (u_i, v_i)，静态障碍物保持 t=0。
     for gd in group_decisions:
         grp = gd["grp"]
         s_lo = min(r["s_minus"] for r in grp) - e.L / 2
@@ -467,61 +834,40 @@ def _miku_path_bounds(scn: Scenario, s_arr: np.ndarray,
         p_star = gd["p_star"]
         ordered = gd["ordered"]  # 按 t=0 时 u_i 升序
 
-        # 对纯静态组 fallback 到原标量结果（无时变）
-        all_static = all(r["obs"].is_static for r in grp)
-
         for i, s in enumerate(s_arr):
             if not (s_lo <= s <= s_hi):
                 continue
             if p_star is None:
                 continue
 
-            if all_static:
-                # 静态组：直接用 step 4-5 的固定 l_minus / l_plus
-                l_lo_ego = gd["l_minus"] + e.W / 2
-                l_hi_ego = gd["l_plus"] - e.W / 2
-            else:
-                # 动态组：在该 s 处重算 τ(s) 与每个障碍物的时变 (u, v)
-                tau_s = arrival_time(float(s), scn)
-                uv_pairs = []
-                active_mask = []
-                for r_orig in ordered:
-                    obs = r_orig["obs"]
-                    tau_use = 0.0 if obs.is_static else tau_s
-                    os_t, ol_t = obs.position_at(tau_use)
-                    # 活跃性：障碍物当前纵向位置与该 s 的距离 ≤ L/2 + ego_L/2 才记入
-                    is_active = abs(os_t - s) <= (obs.L / 2 + e.L / 2)
-                    delta = r_orig["delta"]
-                    uv_pairs.append((ol_t - obs.W / 2 - delta,
-                                     ol_t + obs.W / 2 + delta))
-                    active_mask.append(is_active)
-
-                # 仅活跃障碍物参与 L/R 分配；若全不活跃则该 s 处不收紧
-                if not any(active_mask):
+            tau_s = arrival_time(float(s), scn) if flags.tau_shift else 0.0
+            left_v = []
+            right_u = []
+            for idx, r_orig in enumerate(ordered):
+                obs = r_orig["obs"]
+                tau_use = 0.0 if obs.is_static else tau_s
+                os_t, ol_t = obs.position_at(tau_use)
+                s_minus_t = os_t - obs.L / 2
+                s_plus_t = os_t + obs.L / 2
+                if not (s_minus_t - e.L / 2 <= s <= s_plus_t + e.L / 2):
                     continue
 
-                # 沿用 t=0 选定的 p_star 进行 L/R 分配
-                k = len(uv_pairs)
-                left_uv = [uv_pairs[idx] for idx in range(p_star)
-                           if active_mask[idx]]
-                right_uv = [uv_pairs[idx] for idx in range(p_star, k)
-                            if active_mask[idx]]
-                if p_star == 0:
-                    l_minus_s = eff_l_min
-                    l_plus_s = min((uv[0] for uv in right_uv),
-                                   default=eff_l_max)
-                elif p_star == k:
-                    l_minus_s = max((uv[1] for uv in left_uv),
-                                    default=eff_l_min)
-                    l_plus_s = eff_l_max
+                delta = r_orig["delta"]
+                u_t = ol_t - obs.W / 2 - delta
+                v_t = ol_t + obs.W / 2 + delta
+                if idx < p_star:
+                    left_v.append(v_t)
                 else:
-                    l_minus_s = max((uv[1] for uv in left_uv),
-                                    default=eff_l_min)
-                    l_plus_s = min((uv[0] for uv in right_uv),
-                                   default=eff_l_max)
+                    right_u.append(u_t)
 
-                l_lo_ego = l_minus_s + e.W / 2
-                l_hi_ego = l_plus_s - e.W / 2
+            # 仅活跃障碍物收缩当前截面；若全不活跃，该 s 保持原道路边界。
+            if not left_v and not right_u:
+                continue
+
+            l_minus_s = max(left_v, default=eff_l_min)
+            l_plus_s = min(right_u, default=eff_l_max)
+            l_lo_ego = l_minus_s + e.W / 2
+            l_hi_ego = l_plus_s - e.W / 2
 
             # 取多组重叠时的并集收紧（保守）
             l_min[i] = max(l_min[i], l_lo_ego)
@@ -573,6 +919,7 @@ def path_bounds_decider(scn: Scenario, mode_or_flags):
 
 # ============================ ② Path QP（piecewise jerk path） ============================
 
+
 def path_optimizer(s_arr, l_min, l_max):
     N = len(s_arr)
     ds = s_arr[1] - s_arr[0]
@@ -584,12 +931,14 @@ def path_optimizer(s_arr, l_min, l_max):
     for j in range(N):
         P[j, j] += 2 * w_l
     for j in range(N - 1):
-        c = 2 * w_dl / ds ** 2
-        P[j, j] += c; P[j+1, j+1] += c
-        P[j, j+1] -= c; P[j+1, j] -= c
+        c = 2 * w_dl / ds**2
+        P[j, j] += c
+        P[j + 1, j + 1] += c
+        P[j, j + 1] -= c
+        P[j + 1, j] -= c
     for j in range(N - 2):
-        c = 2 * w_ddl / ds ** 4
-        idx = [j, j+1, j+2]
+        c = 2 * w_ddl / ds**4
+        idx = [j, j + 1, j + 2]
         coef = [1, -2, 1]
         for a in range(3):
             for b in range(3):
@@ -598,9 +947,18 @@ def path_optimizer(s_arr, l_min, l_max):
     q = np.zeros(N)
     A = sp.eye(N, format="csc")
     prob = osqp.OSQP()
-    prob.setup(P_sp, q, A, l_min, l_max,
-               verbose=False, polish=True, max_iter=40000,
-               eps_abs=1e-6, eps_rel=1e-6)
+    prob.setup(
+        P_sp,
+        q,
+        A,
+        l_min,
+        l_max,
+        verbose=False,
+        polish=True,
+        max_iter=40000,
+        eps_abs=1e-6,
+        eps_rel=1e-6,
+    )
     t0 = time.perf_counter()
     res = prob.solve()
     qp_ms = (time.perf_counter() - t0) * 1000
@@ -610,6 +968,7 @@ def path_optimizer(s_arr, l_min, l_max):
 
 
 # ============================ ③ SpeedBoundsDecider 1：障碍物投到 ST ============================
+
 
 def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
     """对每个障碍物，沿时间 t 检查它和 ego path 的横向重叠；重叠时给出 (t, s_lo, s_hi)。"""
@@ -634,12 +993,14 @@ def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
             s_lo = os_ - obs.L / 2 - e.L / 2
             s_hi = os_ + obs.L / 2 + e.L / 2
             intervals.append((float(t), float(s_lo), float(s_hi)))
-        boundaries.append({"name": obs.name, "intervals": intervals,
-                           "is_static": obs.is_static})
+        boundaries.append(
+            {"name": obs.name, "intervals": intervals, "is_static": obs.is_static}
+        )
     return boundaries
 
 
 # ============================ ④ PathTimeHeuristicOptimizer (DP) ============================
+
 
 def speed_dp(scn: Scenario, st_bounds):
     e = scn.ego
@@ -652,12 +1013,12 @@ def speed_dp(scn: Scenario, st_bounds):
 
     forbidden = np.zeros((nt, ns), dtype=bool)
     for b in st_bounds:
-        for (t, s_lo, s_hi) in b["intervals"]:
+        for t, s_lo, s_hi in b["intervals"]:
             ti = int(round(t / dt))
             if 0 <= ti < nt:
                 lo = max(0, int(np.floor(s_lo / ds)))
                 hi = min(ns - 1, int(np.ceil(s_hi / ds)))
-                forbidden[ti, lo:hi+1] = True
+                forbidden[ti, lo : hi + 1] = True
 
     INF = 1e15
     cost = np.full((nt, ns), INF)
@@ -685,7 +1046,7 @@ def speed_dp(scn: Scenario, st_bounds):
                 a_eff = (v_eff - v_now) / dt
                 if a_eff < a_min - 0.1 or a_eff > a_max + 0.1:
                     continue
-                step = w_v * (v_eff - v_ref) ** 2 + w_a * a_eff ** 2
+                step = w_v * (v_eff - v_ref) ** 2 + w_a * a_eff**2
                 nc = cost[ti, si] + step
                 if nc < cost[ti + 1, sj]:
                     cost[ti + 1, sj] = nc
@@ -709,8 +1070,14 @@ def speed_dp(scn: Scenario, st_bounds):
 
 # ============================ ⑤ SpeedDecider + ⑥ SBD final ============================
 
-def build_st_bounds(scn: Scenario, st_bounds, s_dp, ts,
-                    corridor: Optional[List[Tuple[float, float]]] = None):
+
+def build_st_bounds(
+    scn: Scenario,
+    st_bounds,
+    s_dp,
+    ts,
+    corridor: Optional[List[Tuple[float, float]]] = None,
+):
     """重建 s_j^ub / s_j^lb；动态障碍物默认 YIELD（Apollo DP 失败时的兜底逻辑）。"""
     dt = ts[1] - ts[0]
     nt = len(ts)
@@ -728,13 +1095,13 @@ def build_st_bounds(scn: Scenario, st_bounds, s_dp, ts,
     for b in st_bounds:
         if b["is_static"]:
             continue
-        for (t, s_lo, _s_hi) in b["intervals"]:
+        for t, s_lo, _s_hi in b["intervals"]:
             ti = int(round(t / dt))
             if 0 <= ti < nt:
                 s_ub[ti] = min(s_ub[ti], s_lo)
 
     if corridor:
-        for (s_k, tau_k) in corridor:
+        for s_k, tau_k in corridor:
             for j in range(nt):
                 if ts[j] < tau_k:
                     s_ub[j] = min(s_ub[j], s_k)
@@ -742,6 +1109,7 @@ def build_st_bounds(scn: Scenario, st_bounds, s_dp, ts,
 
 
 # ============================ ⑦ PiecewiseJerkSpeedOptimizer (QP) ============================
+
 
 def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     e = scn.ego
@@ -754,43 +1122,66 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     P = np.zeros((n, n))
     q = np.zeros(n)
     for j in range(K):
-        P[3*j+1, 3*j+1] += 2 * w_v
-        P[3*j+2, 3*j+2] += 2 * w_a
-        q[3*j+1] += -2 * w_v * v_ref
+        P[3 * j + 1, 3 * j + 1] += 2 * w_v
+        P[3 * j + 2, 3 * j + 2] += 2 * w_a
+        q[3 * j + 1] += -2 * w_v * v_ref
     for j in range(K - 1):
-        c = 2 * w_jerk / dt ** 2
-        P[3*j+2, 3*j+2] += c
-        P[3*(j+1)+2, 3*(j+1)+2] += c
-        P[3*j+2, 3*(j+1)+2] -= c
-        P[3*(j+1)+2, 3*j+2] -= c
+        c = 2 * w_jerk / dt**2
+        P[3 * j + 2, 3 * j + 2] += c
+        P[3 * (j + 1) + 2, 3 * (j + 1) + 2] += c
+        P[3 * j + 2, 3 * (j + 1) + 2] -= c
+        P[3 * (j + 1) + 2, 3 * j + 2] -= c
 
     eq_r, eq_c, eq_v, eq_b = [], [], [], []
     r = 0
     for j in range(K - 1):
-        eq_r += [r]*4; eq_c += [3*(j+1), 3*j, 3*j+1, 3*j+2]
-        eq_v += [1.0, -1.0, -dt, -0.5*dt**2]; eq_b.append(0.0); r += 1
-        eq_r += [r]*3; eq_c += [3*(j+1)+1, 3*j+1, 3*j+2]
-        eq_v += [1.0, -1.0, -dt]; eq_b.append(0.0); r += 1
+        eq_r += [r] * 4
+        eq_c += [3 * (j + 1), 3 * j, 3 * j + 1, 3 * j + 2]
+        eq_v += [1.0, -1.0, -dt, -0.5 * dt**2]
+        eq_b.append(0.0)
+        r += 1
+        eq_r += [r] * 3
+        eq_c += [3 * (j + 1) + 1, 3 * j + 1, 3 * j + 2]
+        eq_v += [1.0, -1.0, -dt]
+        eq_b.append(0.0)
+        r += 1
     for k, val in [(0, e.s0), (1, e.v0), (2, e.a0)]:
-        eq_r += [r]; eq_c += [k]; eq_v += [1.0]; eq_b.append(val); r += 1
+        eq_r += [r]
+        eq_c += [k]
+        eq_v += [1.0]
+        eq_b.append(val)
+        r += 1
 
     A_eq = sp.csc_matrix((eq_v, (eq_r, eq_c)), shape=(r, n))
     b_eq = np.array(eq_b)
 
-    lb = np.empty(n); ub = np.empty(n)
+    lb = np.empty(n)
+    ub = np.empty(n)
     for j in range(K):
-        lb[3*j] = s_lb[j];   ub[3*j] = max(s_ub[j], s_lb[j] + 1e-6)
-        lb[3*j+1] = 0;       ub[3*j+1] = v_max
-        lb[3*j+2] = a_min;   ub[3*j+2] = a_max
+        lb[3 * j] = s_lb[j]
+        ub[3 * j] = max(s_ub[j], s_lb[j] + 1e-6)
+        lb[3 * j + 1] = 0
+        ub[3 * j + 1] = v_max
+        lb[3 * j + 2] = a_min
+        ub[3 * j + 2] = a_max
 
     A = sp.vstack([A_eq, sp.eye(n, format="csc")], format="csc")
     l = np.concatenate([b_eq, lb])
     u = np.concatenate([b_eq, ub])
 
     prob = osqp.OSQP()
-    prob.setup(sp.csc_matrix(P), q, A, l, u,
-               verbose=False, polish=True, max_iter=60000,
-               eps_abs=1e-5, eps_rel=1e-5)
+    prob.setup(
+        sp.csc_matrix(P),
+        q,
+        A,
+        l,
+        u,
+        verbose=False,
+        polish=True,
+        max_iter=60000,
+        eps_abs=1e-5,
+        eps_rel=1e-5,
+    )
     t0 = time.perf_counter()
     res = prob.solve()
     qp_ms = (time.perf_counter() - t0) * 1000
@@ -801,6 +1192,7 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
 
 
 # ============================ 全链路执行 ============================
+
 
 def run_pipeline(mode_or_flags, scn: Scenario):
     flags = AblationFlags.from_mode(mode_or_flags)
@@ -827,6 +1219,11 @@ def run_pipeline(mode_or_flags, scn: Scenario):
 
     s_ub, s_lb = build_st_bounds(scn, st_bounds, s_dp, ts, corridor)
 
+    # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
+    # 避免全程匀速穿透终点后再用 t_max 尾段掩盖减速行为。
+    s_target = max(scn.s_max - 1.0, scn.ego.s0)
+    s_ub = np.minimum(s_ub, s_target)
+
     # Apollo TrimPathBounds：blocked 时强制 ego 在阻塞 s 之前停下
     blocked_s = None
     if blocked_idx >= 0:
@@ -845,131 +1242,264 @@ def run_pipeline(mode_or_flags, scn: Scenario):
         kappa_s[-1] = kappa_s[-2]
     if s_qp is not None:
         kappa_t = np.interp(s_qp, s_arr, kappa_s)
-        a_y = v_qp ** 2 * kappa_t
+        a_y = v_qp**2 * kappa_t
     else:
         a_y = None
 
-    return dict(s_arr=s_arr, l_min=l_min, l_max=l_max, l_path=l_path,
-                kappa_s=kappa_s,
-                blocked_idx=blocked_idx, blocked_s=blocked_s,
-                st_bounds=st_bounds, ts=ts, s_dp=s_dp, forbidden=forbidden,
-                ss=ss, s_ub=s_ub, s_lb=s_lb,
-                s_qp=s_qp, v_qp=v_qp, a_qp=a_qp, a_y=a_y, corridor=corridor,
-                qp_solve_ms={"path": path_qp_ms, "speed": speed_qp_ms,
-                             "total": path_qp_ms + speed_qp_ms})
+    return dict(
+        s_arr=s_arr,
+        l_min=l_min,
+        l_max=l_max,
+        l_path=l_path,
+        kappa_s=kappa_s,
+        blocked_idx=blocked_idx,
+        blocked_s=blocked_s,
+        st_bounds=st_bounds,
+        ts=ts,
+        s_dp=s_dp,
+        forbidden=forbidden,
+        ss=ss,
+        s_ub=s_ub,
+        s_lb=s_lb,
+        s_qp=s_qp,
+        v_qp=v_qp,
+        a_qp=a_qp,
+        a_y=a_y,
+        corridor=corridor,
+        qp_solve_ms={
+            "path": path_qp_ms,
+            "speed": speed_qp_ms,
+            "total": path_qp_ms + speed_qp_ms,
+        },
+    )
 
 
 # ============================ 绘图 ============================
 
-C_PED   = "#d62728"
-C_STAT  = "#7f7f7f"
-C_PATH  = "#2ca02c"
-C_BAS   = "#1f77b4"
-C_MIKU  = "#2ca02c"
+C_PED = "#d62728"
+C_STAT = "#7f7f7f"
+C_PATH = "#2ca02c"
+C_BAS = "#1f77b4"
+C_MIKU = "#2ca02c"
 C_BOUND = "#ff7f0e"
-C_DP    = "#9467bd"
-C_QP    = "#000000"
-C_CORR  = "#e377c2"
+C_DP = "#9467bd"
+C_QP = "#000000"
+C_CORR = "#e377c2"
 
 
-def _draw_vehicle(ax, x, y, length, width, heading_dir=1.0,
-                  facecolor="gray", alpha=0.85, edgecolor="black",
-                  name=None, name_color="white", zorder=3):
+def _draw_vehicle(
+    ax,
+    x,
+    y,
+    length,
+    width,
+    heading_dir=1.0,
+    facecolor="gray",
+    alpha=0.85,
+    edgecolor="black",
+    name=None,
+    name_color="white",
+    zorder=3,
+):
     """车辆/自行车：长方形 + 朝向三角（车头）。heading_dir: +1 沿+s 行驶，-1 沿-s。"""
-    ax.add_patch(Rectangle((x - length/2, y - width/2), length, width,
-                           facecolor=facecolor, alpha=alpha,
-                           edgecolor=edgecolor, lw=0.6, zorder=zorder))
+    ax.add_patch(
+        Rectangle(
+            (x - length / 2, y - width / 2),
+            length,
+            width,
+            facecolor=facecolor,
+            alpha=alpha,
+            edgecolor=edgecolor,
+            lw=0.6,
+            zorder=zorder,
+        )
+    )
     # 车头三角（方向指示）
-    front_x = x + heading_dir * length/2
-    base_x = x + heading_dir * (length/2 - min(length*0.25, 0.6))
-    tri = Polygon([(front_x, y),
-                   (base_x, y + width*0.45),
-                   (base_x, y - width*0.45)],
-                  facecolor="white", edgecolor=edgecolor, lw=0.6,
-                  alpha=min(1.0, alpha+0.1), zorder=zorder+0.1)
+    front_x = x + heading_dir * length / 2
+    base_x = x + heading_dir * (length / 2 - min(length * 0.25, 0.6))
+    tri = Polygon(
+        [(front_x, y), (base_x, y + width * 0.45), (base_x, y - width * 0.45)],
+        facecolor="white",
+        edgecolor=edgecolor,
+        lw=0.6,
+        alpha=min(1.0, alpha + 0.1),
+        zorder=zorder + 0.1,
+    )
     ax.add_patch(tri)
     if name:
-        ax.text(x - heading_dir*length*0.15, y, name,
-                ha="center", va="center", fontsize=7.5,
-                color=name_color, fontweight="bold", zorder=zorder+0.2)
+        ax.text(
+            x - heading_dir * length * 0.15,
+            y,
+            name,
+            ha="center",
+            va="center",
+            fontsize=7.5,
+            color=name_color,
+            fontweight="bold",
+            zorder=zorder + 0.2,
+        )
 
 
 def _draw_pedestrian(ax, x, y, color=C_PED, alpha=0.85, radius=0.3, zorder=3):
     """行人/VRU：圆形（顶视近圆柱）。"""
-    ax.add_patch(Circle((x, y), radius, facecolor=color, alpha=alpha,
-                        edgecolor=color, lw=0.4, zorder=zorder))
+    ax.add_patch(
+        Circle(
+            (x, y),
+            radius,
+            facecolor=color,
+            alpha=alpha,
+            edgecolor=color,
+            lw=0.4,
+            zorder=zorder,
+        )
+    )
 
 
 def _draw_obstacle(ax, obs: Obstacle, t: float, alpha: float = 0.85):
     os_, ol_ = obs.position_at(t)
     if obs.obs_type in ("ped",):
-        _draw_pedestrian(ax, os_, ol_, color=C_PED, alpha=alpha,
-                         radius=max(obs.W, obs.L)/2)
+        _draw_pedestrian(
+            ax, os_, ol_, color=C_PED, alpha=alpha, radius=max(obs.W, obs.L) / 2
+        )
     elif obs.obs_type in ("bike", "vehicle"):
         # 车头朝向：vs>0 → +s；vs<0 → -s；vs=0 → +s（默认沿路停）
         heading = 1.0 if obs.vs >= 0 else -1.0
         col = "#7fb069" if obs.obs_type == "bike" else "#5b8def"
-        _draw_vehicle(ax, os_, ol_, obs.L, obs.W, heading_dir=heading,
-                      facecolor=col, alpha=alpha,
-                      name=obs.name, name_color="white")
+        _draw_vehicle(
+            ax,
+            os_,
+            ol_,
+            obs.L,
+            obs.W,
+            heading_dir=heading,
+            facecolor=col,
+            alpha=alpha,
+            name=obs.name,
+            name_color="white",
+        )
     else:  # static (parked, truck, cone)
-        _draw_vehicle(ax, os_, ol_, obs.L, obs.W, heading_dir=1.0,
-                      facecolor=C_STAT, alpha=alpha,
-                      name=obs.name, name_color="white")
+        _draw_vehicle(
+            ax,
+            os_,
+            ol_,
+            obs.L,
+            obs.W,
+            heading_dir=1.0,
+            facecolor=C_STAT,
+            alpha=alpha,
+            name=obs.name,
+            name_color="white",
+        )
 
 
 def plot_sl(ax, r, title, scn: Scenario):
     ax.set_title(title, fontsize=11, fontweight="bold")
     # 主车道
-    ax.fill_between(r["s_arr"], scn.l_road_min, scn.l_road_max,
-                    color="#f0f0f0", zorder=0)
+    ax.fill_between(
+        r["s_arr"], scn.l_road_min, scn.l_road_max, color="#f0f0f0", zorder=0
+    )
     # 车道中心虚线
     ax.axhline(0, color="#aaa", ls=(0, (8, 8)), lw=0.8, zorder=0)
     # LaneBorrow：邻车道用淡蓝色区分
     if scn.lane_borrow in ("left", "both"):
-        ax.fill_between(r["s_arr"], scn.l_road_max, scn.l_road_max + scn.lane_width,
-                        color="#dde7f5", zorder=0, label="借用左车道")
+        ax.fill_between(
+            r["s_arr"],
+            scn.l_road_max,
+            scn.l_road_max + scn.lane_width,
+            color="#dde7f5",
+            zorder=0,
+            label="借用左车道",
+        )
         ax.axhline(scn.l_road_max, color="#888", ls="--", lw=0.5, zorder=0)
     if scn.lane_borrow in ("right", "both"):
-        ax.fill_between(r["s_arr"], scn.l_road_min - scn.lane_width, scn.l_road_min,
-                        color="#dde7f5", zorder=0, label="借用右车道")
+        ax.fill_between(
+            r["s_arr"],
+            scn.l_road_min - scn.lane_width,
+            scn.l_road_min,
+            color="#dde7f5",
+            zorder=0,
+            label="借用右车道",
+        )
         ax.axhline(scn.l_road_min, color="#888", ls="--", lw=0.5, zorder=0)
-    ax.fill_between(r["s_arr"], r["l_min"], r["l_max"],
-                    color="#fff3cc", alpha=0.6, label="可行 l 区间", zorder=1)
+    ax.fill_between(
+        r["s_arr"],
+        r["l_min"],
+        r["l_max"],
+        color="#fff3cc",
+        alpha=0.6,
+        label="可行 l 区间",
+        zorder=1,
+    )
     ax.plot(r["s_arr"], r["l_min"], color=C_BOUND, lw=0.8, ls="--", zorder=2)
     ax.plot(r["s_arr"], r["l_max"], color=C_BOUND, lw=0.8, ls="--", zorder=2)
-    ax.plot(r["s_arr"], r["l_path"], color=C_PATH, lw=2.6,
-            label="Path l(s)", zorder=4)
+    ax.plot(r["s_arr"], r["l_path"], color=C_PATH, lw=2.6, label="Path l(s)", zorder=4)
 
     for obs in scn.obstacles:
         if obs.is_static:
             _draw_obstacle(ax, obs, 0, alpha=0.85)
         else:
             t_show_max = min(scn.t_max, 2.0)
-            for t_show, alpha in [(0.0, 0.9), (t_show_max*0.33, 0.55),
-                                  (t_show_max*0.66, 0.35), (t_show_max, 0.2)]:
+            for t_show, alpha in [
+                (0.0, 0.9),
+                (t_show_max * 0.33, 0.55),
+                (t_show_max * 0.66, 0.35),
+                (t_show_max, 0.2),
+            ]:
                 _draw_obstacle(ax, obs, t_show, alpha=alpha)
             os0, ol0 = obs.position_at(0)
             os1, ol1 = obs.position_at(t_show_max)
-            ax.annotate("", xy=(os1, ol1), xytext=(os0, ol0),
-                        arrowprops=dict(arrowstyle="->", color=C_PED, lw=1.2,
-                                        alpha=0.8))
-            ax.text(os0, ol0 + max(obs.W, 0.4) + 0.5,
-                    f"{obs.name} v=({obs.vs:+.1f},{obs.vl:+.1f})",
-                    fontsize=7.5, color=C_PED, ha="center")
+            ax.annotate(
+                "",
+                xy=(os1, ol1),
+                xytext=(os0, ol0),
+                arrowprops=dict(arrowstyle="->", color=C_PED, lw=1.2, alpha=0.8),
+            )
+            ax.text(
+                os0,
+                ol0 + max(obs.W, 0.4) + 0.5,
+                f"{obs.name} v=({obs.vs:+.1f},{obs.vl:+.1f})",
+                fontsize=7.5,
+                color=C_PED,
+                ha="center",
+            )
 
     # ego 也用车辆样式
-    _draw_vehicle(ax, scn.ego.s0, scn.ego.l0, scn.ego.L, scn.ego.W,
-                  heading_dir=1.0, facecolor=C_BAS, alpha=0.55,
-                  edgecolor=C_BAS, name="EGO", name_color="white", zorder=4)
+    _draw_vehicle(
+        ax,
+        scn.ego.s0,
+        scn.ego.l0,
+        scn.ego.L,
+        scn.ego.W,
+        heading_dir=1.0,
+        facecolor=C_BAS,
+        alpha=0.55,
+        edgecolor=C_BAS,
+        name="EGO",
+        name_color="white",
+        zorder=4,
+    )
 
     # blocked 标记
     if r.get("blocked_s") is not None:
         bs = r["blocked_s"]
-        ax.axvline(bs, color="red", lw=1.6, ls="--", zorder=6,
-                   label=f"Trim @ s={bs:.1f}（path blocked）")
-        ax.plot(bs, 0, marker="X", color="red", markersize=14,
-                mec="white", mew=1.5, zorder=7)
+        ax.axvline(
+            bs,
+            color="red",
+            lw=1.6,
+            ls="--",
+            zorder=6,
+            label=f"Trim @ s={bs:.1f}（path blocked）",
+        )
+        ax.plot(
+            bs,
+            0,
+            marker="X",
+            color="red",
+            markersize=14,
+            mec="white",
+            mew=1.5,
+            zorder=7,
+        )
 
     ax.axhline(0, color="gray", ls=":", lw=0.5)
     ax.set_xlabel("s [m]")
@@ -999,8 +1529,9 @@ def plot_st(ax, r, title, scn: Scenario):
         s_lo_p = [s for (_, s, _) in b["intervals"]]
         s_hi_p = [s for (_, _, s) in b["intervals"]]
         col = C_STAT if b["is_static"] else C_PED
-        ax.fill_between(ts_p, s_lo_p, s_hi_p, color=col, alpha=0.35,
-                        label=f"{b['name']} ST 边界")
+        ax.fill_between(
+            ts_p, s_lo_p, s_hi_p, color=col, alpha=0.35, label=f"{b['name']} ST 边界"
+        )
 
     if r["corridor"]:
         # —— 走廊左下沿：连续 τ(s) 斜线 ——
@@ -1010,45 +1541,65 @@ def plot_st(ax, r, title, scn: Scenario):
         tau_grid = np.array([arrival_time(float(s), scn) for s in s_grid])
         mask = (tau_grid >= 0) & (tau_grid <= scn.t_max)
         if mask.any():
-            ax.plot(tau_grid[mask], s_grid[mask],
-                    color=C_CORR, lw=2.2, ls="-",
-                    label=r"$t{=}\tau(s)$ 走廊左下沿")
+            ax.plot(
+                tau_grid[mask],
+                s_grid[mask],
+                color=C_CORR,
+                lw=2.2,
+                ls="-",
+                label=r"$t{=}\tau(s)$ 走廊左下沿",
+            )
             # ego 不可达区（t < τ(s)）淡填色
-            ax.fill_betweenx(s_grid[mask], 0, tau_grid[mask],
-                             color=C_CORR, alpha=0.08)
+            ax.fill_betweenx(s_grid[mask], 0, tau_grid[mask], color=C_CORR, alpha=0.08)
             # 斜率注解（在曲线中段）
             mid_idx = mask.sum() // 2
             mid_t = tau_grid[mask][mid_idx]
             mid_s = s_grid[mask][mid_idx]
-            slope_lbl = (f"斜率$\\,{{=}}\\,v_{{ego}}{{=}}{scn.ego.v0:.0f}$ m/s"
-                         if abs(scn.ego.a0) < 1e-3
-                         else f"$v_0{{=}}{scn.ego.v0:.0f}$, $a_0{{=}}{scn.ego.a0:.1f}$")
-            ax.annotate(slope_lbl,
-                        (mid_t, mid_s),
-                        xytext=(mid_t + 0.4, mid_s - 1.2),
-                        fontsize=7.5, color=C_CORR,
-                        arrowprops=dict(arrowstyle="-", color=C_CORR, lw=0.5, alpha=0.6))
+            slope_lbl = (
+                f"斜率$\\,{{=}}\\,v_{{ego}}{{=}}{scn.ego.v0:.0f}$ m/s"
+                if abs(scn.ego.a0) < 1e-3
+                else f"$v_0{{=}}{scn.ego.v0:.0f}$, $a_0{{=}}{scn.ego.a0:.1f}$"
+            )
+            ax.annotate(
+                slope_lbl,
+                (mid_t, mid_s),
+                xytext=(mid_t + 0.4, mid_s - 1.2),
+                fontsize=7.5,
+                color=C_CORR,
+                arrowprops=dict(arrowstyle="-", color=C_CORR, lw=0.5, alpha=0.6),
+            )
 
         # —— 离散采样点 (s_k, τ_k) 及对应的 s_j^ub 收紧效果矩形 ——
-        for (s_k, tau_k) in r["corridor"]:
-            ax.fill_betweenx([s_k, scn.s_max], 0, tau_k,
-                             color=C_CORR, alpha=0.16, hatch="///",
-                             edgecolor=C_CORR, linewidth=0.8,
-                             label=f"$\\mathcal{{T}}$ 收紧 ($s{{>}}{s_k:.1f}$, $t{{<}}{tau_k:.2f}$)")
-            ax.plot(tau_k, s_k, "P", color=C_CORR, markersize=11,
-                    mec="black", mew=0.5)
-            ax.annotate(f"$(\\tau_k{{=}}{tau_k:.2f}, s_k{{=}}{s_k:.1f})$",
-                        (tau_k, s_k), xytext=(tau_k+0.15, s_k-2.0),
-                        fontsize=8, color=C_CORR,
-                        arrowprops=dict(arrowstyle="->", color=C_CORR, lw=0.6))
+        for s_k, tau_k in r["corridor"]:
+            ax.fill_betweenx(
+                [s_k, scn.s_max],
+                0,
+                tau_k,
+                color=C_CORR,
+                alpha=0.16,
+                hatch="///",
+                edgecolor=C_CORR,
+                linewidth=0.8,
+                label=f"$\\mathcal{{T}}$ 收紧 ($s{{>}}{s_k:.1f}$, $t{{<}}{tau_k:.2f}$)",
+            )
+            ax.plot(tau_k, s_k, "P", color=C_CORR, markersize=11, mec="black", mew=0.5)
+            ax.annotate(
+                f"$(\\tau_k{{=}}{tau_k:.2f}, s_k{{=}}{s_k:.1f})$",
+                (tau_k, s_k),
+                xytext=(tau_k + 0.15, s_k - 2.0),
+                fontsize=8,
+                color=C_CORR,
+                arrowprops=dict(arrowstyle="->", color=C_CORR, lw=0.6),
+            )
 
-    ax.plot(r["ts"], r["s_ub"], color="red", lw=0.9, alpha=0.7,
-            label="$s_j^{ub}$ (融合后)")
-    ax.plot(r["ts"], r["s_dp"], color=C_DP, lw=1.4, ls="--",
-            label="DP 粗解 $s_{dp}(t)$")
+    ax.plot(
+        r["ts"], r["s_ub"], color="red", lw=0.9, alpha=0.7, label="$s_j^{ub}$ (融合后)"
+    )
+    ax.plot(
+        r["ts"], r["s_dp"], color=C_DP, lw=1.4, ls="--", label="DP 粗解 $s_{dp}(t)$"
+    )
     if r["s_qp"] is not None:
-        ax.plot(r["ts"], r["s_qp"], color=C_QP, lw=2.6,
-                label="QP 精解 $s^*(t)$")
+        ax.plot(r["ts"], r["s_qp"], color=C_QP, lw=2.6, label="QP 精解 $s^*(t)$")
     ax.set_xlabel("t [s]")
     ax.set_ylabel("s [m]")
     ax.set_xlim(0, scn.t_max)
@@ -1060,7 +1611,8 @@ def plot_st(ax, r, title, scn: Scenario):
 def compute_metrics(r, scn: Scenario):
     """轨迹质量指标：通行效率、平顺性、鲁棒性、计算开销，覆盖消融评分四个维度。"""
     qp_solve_ms = r.get("qp_solve_ms", {"path": 0.0, "speed": 0.0, "total": 0.0})
-    s_target = scn.s_max - 1.0
+    s_target = max(scn.s_max - 1.0, scn.ego.s0)
+    eps = 1e-3
 
     # 路径阶段几何指标（即便速度 QP 不可行，路径几何也存在）
     l_path = r.get("l_path")
@@ -1073,25 +1625,35 @@ def compute_metrics(r, scn: Scenario):
         sign_changes = np.sum(np.diff(np.sign(dl)) != 0)
         decision_switches = int(sign_changes)
     kappa_s = r.get("kappa_s")
-    kappa_rms = (float(np.sqrt(np.mean(kappa_s ** 2)))
-                 if kappa_s is not None and len(kappa_s) > 0 else 0.0)
+    kappa_rms = (
+        float(np.sqrt(np.mean(kappa_s**2)))
+        if kappa_s is not None and len(kappa_s) > 0
+        else 0.0
+    )
 
     blocked_flag = int(r.get("blocked_idx", -1) >= 0)
 
     if r["v_qp"] is None:
-        return {"qp_solve_ms": qp_solve_ms, "_infeasible": True,
-                "success": 0, "blocked": blocked_flag,
-                "l_max_dev": l_max_dev, "kappa_rms": kappa_rms,
-                "decision_switches": decision_switches,
-                "tau_violation": 0}
+        return {
+            "qp_solve_ms": qp_solve_ms,
+            "_infeasible": True,
+            "success": 0,
+            "blocked": blocked_flag,
+            "l_max_dev": l_max_dev,
+            "kappa_rms": kappa_rms,
+            "decision_switches": decision_switches,
+            "tau_violation": 0,
+        }
 
     ts, v, a, s = r["ts"], r["v_qp"], r["a_qp"], r["s_qp"]
     dt = ts[1] - ts[0]
     # 巡航段平均速度：只算 ego 在主动行驶时（排除末端到达后停留）
-    arrive_idx = int(np.argmax(s >= s_target)) if (s >= s_target).any() else -1
+    arrive_idx = (
+        int(np.argmax(s >= s_target - eps)) if (s >= s_target - eps).any() else -1
+    )
     if arrive_idx > 0:
-        v_active = v[:arrive_idx + 1]
-        a_active = a[:arrive_idx + 1]
+        v_active = v[: arrive_idx + 1]
+        a_active = a[: arrive_idx + 1]
         t_arrive = float(ts[arrive_idx])
     else:
         # 没到达：用 v>0.3 部分
@@ -1103,16 +1665,15 @@ def compute_metrics(r, scn: Scenario):
     max_abs_a = float(np.max(np.abs(a_active)))
     jerk = np.diff(a) / dt
     max_abs_jerk = float(np.max(np.abs(jerk))) if len(jerk) > 0 else 0.0
-    jerk_rms = (float(np.sqrt(np.mean(jerk ** 2)))
-                if len(jerk) > 0 else 0.0)
+    jerk_rms = float(np.sqrt(np.mean(jerk**2))) if len(jerk) > 0 else 0.0
     s_end = float(s[-1])
     efficiency = avg_v_cruise / scn.ego.v0
-    success = 1 if (s_end >= s_target and not np.isnan(t_arrive)) else 0
+    success = 1 if (s_end >= s_target - eps and not np.isnan(t_arrive)) else 0
     # 横向（向心）加速度极值
     a_y_arr = r.get("a_y")
     if a_y_arr is not None and len(a_y_arr) > 0:
         if arrive_idx > 0:
-            a_y_active = a_y_arr[:arrive_idx + 1]
+            a_y_active = a_y_arr[: arrive_idx + 1]
         else:
             mask = v > 0.3
             a_y_active = a_y_arr[mask] if mask.any() else a_y_arr
@@ -1123,20 +1684,27 @@ def compute_metrics(r, scn: Scenario):
     # τ(s) 走廊违反次数：t<τ_k 时 ego 已越过 s_k 即违反
     tau_violation = 0
     corridor = r.get("corridor") or []
-    for (s_k, tau_k) in corridor:
+    for s_k, tau_k in corridor:
         for j, t_j in enumerate(ts):
             if t_j < tau_k and s[j] >= s_k:
                 tau_violation += 1
-    return dict(avg_v=avg_v_cruise, max_abs_a=max_abs_a,
-                max_abs_a_lat=max_abs_a_lat,
-                max_abs_jerk=max_abs_jerk, jerk_rms=jerk_rms,
-                kappa_rms=kappa_rms, l_max_dev=l_max_dev,
-                decision_switches=decision_switches,
-                tau_violation=tau_violation,
-                blocked=blocked_flag, success=success,
-                s_end=s_end,
-                efficiency=efficiency, t_arrive=t_arrive,
-                qp_solve_ms=qp_solve_ms)
+    return dict(
+        avg_v=avg_v_cruise,
+        max_abs_a=max_abs_a,
+        max_abs_a_lat=max_abs_a_lat,
+        max_abs_jerk=max_abs_jerk,
+        jerk_rms=jerk_rms,
+        kappa_rms=kappa_rms,
+        l_max_dev=l_max_dev,
+        decision_switches=decision_switches,
+        tau_violation=tau_violation,
+        blocked=blocked_flag,
+        success=success,
+        s_end=s_end,
+        efficiency=efficiency,
+        t_arrive=t_arrive,
+        qp_solve_ms=qp_solve_ms,
+    )
 
 
 def _metrics_text(m):
@@ -1146,10 +1714,12 @@ def _metrics_text(m):
         arrive_str = "未通过"
     else:
         arrive_str = f"t_arrive = {m['t_arrive']:.2f} s"
-    return (f"巡航 v = {m['avg_v']:.2f} m/s   eff = {m['efficiency']*100:.0f}%\n"
-            f"{arrive_str}     s_end = {m['s_end']:.1f} m\n"
-            f"|a|max = {m['max_abs_a']:.2f} m/s²\n"
-            f"|jerk|max = {m['max_abs_jerk']:.2f} m/s³")
+    return (
+        f"巡航 v = {m['avg_v']:.2f} m/s   eff = {m['efficiency'] * 100:.0f}%\n"
+        f"{arrive_str}     s_end = {m['s_end']:.1f} m\n"
+        f"|a|max = {m['max_abs_a']:.2f} m/s²\n"
+        f"|jerk|max = {m['max_abs_jerk']:.2f} m/s³"
+    )
 
 
 def plot_compare_v(ax, r_b, r_g, scn: Scenario):
@@ -1158,8 +1728,7 @@ def plot_compare_v(ax, r_b, r_g, scn: Scenario):
         ax.plot(r_b["ts"], r_b["v_qp"], color=C_BAS, lw=2.4, label="Baseline")
     if r_g["v_qp"] is not None:
         ax.plot(r_g["ts"], r_g["v_qp"], color=C_MIKU, lw=2.4, label="MIKU")
-    ax.axhline(scn.ego.v0, color="gray", ls=":", lw=0.8,
-               label=f"v_ref={scn.ego.v0}")
+    ax.axhline(scn.ego.v0, color="gray", ls=":", lw=0.8, label=f"v_ref={scn.ego.v0}")
     ax.set_xlabel("t [s]")
     ax.set_ylabel("v [m/s]")
     ax.legend(fontsize=9, loc="lower right")
@@ -1169,16 +1738,38 @@ def plot_compare_v(ax, r_b, r_g, scn: Scenario):
     # 指标文字框
     m_b = compute_metrics(r_b, scn)
     m_g = compute_metrics(r_g, scn)
-    ax.text(0.02, 0.98,
-            f"Baseline\n{_metrics_text(m_b)}",
-            transform=ax.transAxes, fontsize=8, va="top", ha="left",
-            bbox=dict(facecolor="white", edgecolor=C_BAS, lw=1.0,
-                      alpha=0.92, boxstyle="round,pad=0.3"))
-    ax.text(0.45, 0.98,
-            f"MIKU\n{_metrics_text(m_g)}",
-            transform=ax.transAxes, fontsize=8, va="top", ha="left",
-            bbox=dict(facecolor="white", edgecolor=C_MIKU, lw=1.0,
-                      alpha=0.92, boxstyle="round,pad=0.3"))
+    ax.text(
+        0.02,
+        0.98,
+        f"Baseline\n{_metrics_text(m_b)}",
+        transform=ax.transAxes,
+        fontsize=8,
+        va="top",
+        ha="left",
+        bbox=dict(
+            facecolor="white",
+            edgecolor=C_BAS,
+            lw=1.0,
+            alpha=0.92,
+            boxstyle="round,pad=0.3",
+        ),
+    )
+    ax.text(
+        0.45,
+        0.98,
+        f"MIKU\n{_metrics_text(m_g)}",
+        transform=ax.transAxes,
+        fontsize=8,
+        va="top",
+        ha="left",
+        bbox=dict(
+            facecolor="white",
+            edgecolor=C_MIKU,
+            lw=1.0,
+            alpha=0.92,
+            boxstyle="round,pad=0.3",
+        ),
+    )
 
 
 def plot_compare_a(ax, r_b, r_g, scn: Scenario):
@@ -1187,13 +1778,27 @@ def plot_compare_a(ax, r_b, r_g, scn: Scenario):
     if r_b["a_qp"] is not None:
         ax.plot(r_b["ts"], r_b["a_qp"], color=C_BAS, lw=2.4, label="Baseline a")
         jerk_b = np.diff(r_b["a_qp"]) / dt
-        ax.plot(r_b["ts"][1:], jerk_b * 0.2, color=C_BAS, lw=1.0, ls=":",
-                alpha=0.6, label="Baseline jerk×0.2")
+        ax.plot(
+            r_b["ts"][1:],
+            jerk_b * 0.2,
+            color=C_BAS,
+            lw=1.0,
+            ls=":",
+            alpha=0.6,
+            label="Baseline jerk×0.2",
+        )
     if r_g["a_qp"] is not None:
         ax.plot(r_g["ts"], r_g["a_qp"], color=C_MIKU, lw=2.4, label="MIKU a")
         jerk_g = np.diff(r_g["a_qp"]) / dt
-        ax.plot(r_g["ts"][1:], jerk_g * 0.2, color=C_MIKU, lw=1.0, ls=":",
-                alpha=0.6, label="MIKU jerk×0.2")
+        ax.plot(
+            r_g["ts"][1:],
+            jerk_g * 0.2,
+            color=C_MIKU,
+            lw=1.0,
+            ls=":",
+            alpha=0.6,
+            label="MIKU jerk×0.2",
+        )
     ax.axhline(0, color="gray", ls=":", lw=0.6)
     ax.set_xlabel("t [s]")
     ax.set_ylabel("a [m/s²]  /  jerk×0.2 [m/s³]")
@@ -1204,10 +1809,14 @@ def plot_compare_a(ax, r_b, r_g, scn: Scenario):
 
 
 SCENARIO_META = {
-    "01_crossing_ped":           "场景四：单行人横穿（基础对照）",
-    "02_ped_plus_parked":        "场景二：行人横穿 + 左侧停车（动+静混合）",
-    "03_narrow_cones":           "场景一：窄路通行+双侧交通锥（差异化裕度对照）",
-    "04_dense_construction":     "场景三：单车道维修封闭 + 交通锥导流借道（18 个静态障碍构成单一导流连通分量）",
+    "01_crossing_ped": "P1：单行人横穿（压力参数）",
+    "02_ped_plus_parked": "P2：行人横穿 + 左侧停车（压力参数）",
+    "03_narrow_cones": "P3：窄路通行 + 双侧交通锥（压力参数）",
+    "04_dense_construction": "P4：单车道维修封闭 + 导流借道（压力参数）",
+    "05_crossing_ped_cmp": "C1：单行人横穿（可比参数）",
+    "06_ped_plus_parked_cmp": "C2：行人横穿 + 左侧停车（可比参数）",
+    "07_narrow_cones_cmp": "C3：窄路通行 + 双侧交通锥（可比参数）",
+    "08_dense_construction_cmp": "C4：单车道维修封闭 + 导流借道（可比参数）",
 }
 
 
@@ -1224,10 +1833,19 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
             n_rows = (blocked_idx + 1) if blocked_idx >= 0 else len(r["s_arr"])
             for i in range(n_rows):
                 s = r["s_arr"][i]
-                w.writerow([mode, f"{s:.4f}", f"{r['l_min'][i]:.4f}",
-                            f"{r['l_max'][i]:.4f}", f"{r['l_path'][i]:.4f}"])
+                w.writerow(
+                    [
+                        mode,
+                        f"{s:.4f}",
+                        f"{r['l_min'][i]:.4f}",
+                        f"{r['l_max'][i]:.4f}",
+                        f"{r['l_path'][i]:.4f}",
+                    ]
+                )
 
-    with open(os.path.join(data_dir, "st_curves.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(data_dir, "st_curves.csv"), "w", newline="", encoding="utf-8"
+    ) as f:
         w = csv.writer(f)
         w.writerow(["mode", "t", "s_ub", "s_dp", "s_qp", "v_qp", "a_qp", "a_y", "j_qp"])
         for mode, r in [("baseline", r_b), ("miku", r_g)]:
@@ -1244,49 +1862,88 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
                     a_qp_val = f"{r['a_qp'][i]:.4f}"
                     a_y_val = f"{a_y_arr[i]:.4f}" if a_y_arr is not None else ""
                     if i + 1 < len(a_arr):
-                        j_qp_val = f"{(a_arr[i+1] - a_arr[i]) / dt:.4f}"
+                        j_qp_val = f"{(a_arr[i + 1] - a_arr[i]) / dt:.4f}"
                     else:
                         j_qp_val = "0.0000"
                 else:
                     s_qp_val = v_qp_val = a_qp_val = a_y_val = j_qp_val = ""
-                w.writerow([mode, f"{t:.3f}", s_ub_val, s_dp_val,
-                            s_qp_val, v_qp_val, a_qp_val, a_y_val, j_qp_val])
+                w.writerow(
+                    [
+                        mode,
+                        f"{t:.3f}",
+                        s_ub_val,
+                        s_dp_val,
+                        s_qp_val,
+                        v_qp_val,
+                        a_qp_val,
+                        a_y_val,
+                        j_qp_val,
+                    ]
+                )
 
-    with open(os.path.join(data_dir, "st_bounds.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(data_dir, "st_bounds.csv"), "w", newline="", encoding="utf-8"
+    ) as f:
         w = csv.writer(f)
         w.writerow(["mode", "obs_name", "t", "s_lo", "s_hi", "is_static"])
         for mode, r in [("baseline", r_b), ("miku", r_g)]:
             for b in r["st_bounds"]:
                 is_s = 1 if b["is_static"] else 0
-                for (t, s_lo, s_hi) in b["intervals"]:
-                    w.writerow([mode, b["name"], f"{t:.3f}",
-                                f"{s_lo:.4f}", f"{s_hi:.4f}", is_s])
+                for t, s_lo, s_hi in b["intervals"]:
+                    w.writerow(
+                        [
+                            mode,
+                            b["name"],
+                            f"{t:.3f}",
+                            f"{s_lo:.4f}",
+                            f"{s_hi:.4f}",
+                            is_s,
+                        ]
+                    )
 
-    with open(os.path.join(data_dir, "corridor.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(data_dir, "corridor.csv"), "w", newline="", encoding="utf-8"
+    ) as f:
         w = csv.writer(f)
         w.writerow(["s_k", "tau_k"])
         if r_g["corridor"]:
-            for (s_k, tau_k) in r_g["corridor"]:
+            for s_k, tau_k in r_g["corridor"]:
                 w.writerow([f"{s_k:.4f}", f"{tau_k:.4f}"])
 
-    with open(os.path.join(data_dir, "obstacles.csv"), "w", newline="", encoding="utf-8") as f:
+    with open(
+        os.path.join(data_dir, "obstacles.csv"), "w", newline="", encoding="utf-8"
+    ) as f:
         w = csv.writer(f)
         w.writerow(["name", "obs_type", "is_static", "s0", "l0", "vs", "vl", "W", "L"])
         for obs in scn.obstacles:
-            w.writerow([obs.name, obs.obs_type, 1 if obs.is_static else 0,
-                        f"{obs.s0:.4f}", f"{obs.l0:.4f}",
-                        f"{obs.vs:.4f}", f"{obs.vl:.4f}",
-                        f"{obs.W:.4f}", f"{obs.L:.4f}"])
+            w.writerow(
+                [
+                    obs.name,
+                    obs.obs_type,
+                    1 if obs.is_static else 0,
+                    f"{obs.s0:.4f}",
+                    f"{obs.l0:.4f}",
+                    f"{obs.vs:.4f}",
+                    f"{obs.vl:.4f}",
+                    f"{obs.W:.4f}",
+                    f"{obs.L:.4f}",
+                ]
+            )
 
     def _metrics_dict(m, r):
         if m is None or m.get("_infeasible"):
             qp_ms = m["qp_solve_ms"] if m else {"path": 0.0, "speed": 0.0, "total": 0.0}
             return {
-                "avg_v": None, "max_abs_a": None, "max_abs_a_lat": None,
+                "avg_v": None,
+                "max_abs_a": None,
+                "max_abs_a_lat": None,
                 "max_abs_jerk": None,
-                "s_end": None, "t_arrive": None,
+                "s_end": None,
+                "t_arrive": None,
                 "blocked_idx": int(r.get("blocked_idx", -1)),
-                "blocked_s": None if r.get("blocked_s") is None else round(float(r["blocked_s"]), 4),
+                "blocked_s": None
+                if r.get("blocked_s") is None
+                else round(float(r["blocked_s"]), 4),
                 "qp_solve_ms": {
                     "path": round(qp_ms["path"], 4),
                     "speed": round(qp_ms["speed"], 4),
@@ -1316,15 +1973,21 @@ def dump_data(data_dir: str, r_b, r_g, scn: Scenario, m_b, m_g):
     meta = {
         "scenario": os.path.basename(data_dir),
         "ego": {
-            "s0": scn.ego.s0, "l0": scn.ego.l0,
-            "v0": scn.ego.v0, "L": scn.ego.L, "W": scn.ego.W,
+            "s0": scn.ego.s0,
+            "l0": scn.ego.l0,
+            "v0": scn.ego.v0,
+            "L": scn.ego.L,
+            "W": scn.ego.W,
         },
         "scn_params": {
-            "s_max": scn.s_max, "t_max": scn.t_max,
-            "l_road_min": scn.l_road_min, "l_road_max": scn.l_road_max,
+            "s_max": scn.s_max,
+            "t_max": scn.t_max,
+            "l_road_min": scn.l_road_min,
+            "l_road_max": scn.l_road_max,
             "lane_borrow": scn.lane_borrow,
             "delta_baseline": scn.delta_baseline,
-            "delta_min": scn.delta_min, "delta_max": scn.delta_max,
+            "delta_min": scn.delta_min,
+            "delta_max": scn.delta_max,
         },
         "metrics": {
             "baseline": _metrics_dict(m_b, r_b),
@@ -1356,8 +2019,8 @@ def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str =
     ax_sl_g = fig.add_subplot(gs[0, 1])
     ax_st_b = fig.add_subplot(gs[1, 0])
     ax_st_g = fig.add_subplot(gs[1, 1])
-    ax_v    = fig.add_subplot(gs[2, 0])
-    ax_a    = fig.add_subplot(gs[2, 1])
+    ax_v = fig.add_subplot(gs[2, 0])
+    ax_a = fig.add_subplot(gs[2, 1])
 
     plot_sl(ax_sl_b, r_b, "Baseline ① PathBounds → ② Path QP", scn)
     plot_sl(ax_sl_g, r_g, "MIKU     ① PathBounds (τ-shifted) → ② Path QP", scn)
@@ -1367,8 +2030,12 @@ def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str =
     plot_compare_a(ax_a, r_b, r_g, scn)
 
     title = SCENARIO_META.get(scn_name, scn_name)
-    fig.suptitle(f"{title} —— Baseline vs MIKU 全链路对照",
-                 fontsize=14, fontweight="bold", y=0.995)
+    fig.suptitle(
+        f"{title} —— Baseline vs MIKU 全链路对照",
+        fontsize=14,
+        fontweight="bold",
+        y=0.995,
+    )
     plt.savefig(out_path, dpi=130, bbox_inches="tight")
     plt.close(fig)
     print(f"  → {out_path}")
@@ -1386,8 +2053,9 @@ def render_scenario(scn_name: str, scn: Scenario, out_path: str, data_dir: str =
             v_min_t = float(r["ts"][int(np.argmin(r["v_qp"]))])
             a_min = float(r["a_qp"].min())
             s_end = float(r["s_qp"][-1])
-            summary.append((label, dict(v_min=v_min, v_min_t=v_min_t,
-                                        a_min=a_min, s_end=s_end)))
+            summary.append(
+                (label, dict(v_min=v_min, v_min_t=v_min_t, a_min=a_min, s_end=s_end))
+            )
     return summary
 
 
@@ -1413,9 +2081,11 @@ def main():
             if m is None:
                 print(f"{title:<32} {label:<10} {'INF':>7} {'INF':>7} {'-':>7}")
             else:
-                print(f"{title:<32} {label:<10} "
-                      f"{m['v_min']:>6.2f}m/s {m['a_min']:>6.2f}m/s² "
-                      f"{m['s_end']:>5.1f}m")
+                print(
+                    f"{title:<32} {label:<10} "
+                    f"{m['v_min']:>6.2f}m/s {m['a_min']:>6.2f}m/s² "
+                    f"{m['s_end']:>5.1f}m"
+                )
         print("-" * 78)
 
 
