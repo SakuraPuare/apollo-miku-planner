@@ -11,6 +11,8 @@
 }
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usetikzlibrary{external}
+\tikzexternalize % 激活全自动外部化
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{fillbetween}
@@ -25,6 +27,7 @@
 \usepackage{geometry}
 \geometry{a4paper, margin=1cm}
 \usepackage{amsmath,amssymb}
+\usepackage{adjustbox}
 
 % 无页码（整本/单图都无标题栏）
 \pagestyle{empty}
