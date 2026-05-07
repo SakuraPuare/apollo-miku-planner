@@ -12,13 +12,13 @@
 
 {\zihao{-4}\songti
 
-\noindent\hspace{2em}{\heiti\bfseries 摘要：}多障碍物密集场景下，现有自动驾驶路径规划算法面临路径阻塞、决策保守和通行效率低下等问题。本文以百度Apollo开源自动驾驶平台为基础，分析了其Planning模块的架构设计与核心算法实现。分析表明，路径边界决策器PathBoundsDecider存在三方面规划缺陷：安全裕度一刀切压缩通行空间，逐障碍物独立决策导致矛盾避让方向，动态障碍物被完全排除在路径决策之外致使路径-速度协调缺失。
+\noindent\hspace{2em}{\heiti\bfseries 摘要：}多障碍物密集场景下，自动驾驶路径规划常出现路径阻塞与过度保守避让。本文以百度Apollo 11.0开源自动驾驶平台Planning模块为研究对象，梳理PathBoundsDeciderUtil所承载的路径边界构建逻辑，识别出三处缺陷，即统一安全裕度压缩可行通道、逐障碍物独立决策产生相互矛盾的避让方向、动态障碍物未进入路径边界计算而使路径与速度脱节。
 
-针对上述问题，本文提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner，MIKU），将多障碍物避让方向选择建模为组合优化问题并从三个方面改进。安全距离方面，通过多因子威胁度评估将Apollo统一缓冲替换为差异化安全裕度$\delta_i$，融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度五个因子。决策粒度方面，通过扫描线纵向重叠检测将关联障碍物聚为连通分量并在组级执行全局最优决策。本文证明了最优避让方向分割在横向排序后具有连续性以及最大间隙策略的最优性，将组合搜索复杂度从$O(2^k)$降至$O(k \log k)$。时空协调方面，引入到达时间函数与预测轨迹将动态障碍物纳入路径边界决策，构建时空可通行走廊，并将走廊边界约束与速度边界决策器SpeedBoundsDecider的纵向位移-时间（Station-Time，ST）边界在速度二次规划（Quadratic Programming，QP）层面融合，实现路径-速度协调规划。
+本文据此提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU），将多障碍物避让方向选择建模为组合优化问题，从三个维度改进。安全距离上，用融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度评估替换统一缓冲，得到差异化安全裕度$\delta_i$。决策粒度上，以扫描线纵向重叠检测将关联障碍物聚为连通分量，在组级执行全局最优决策，证明了横向排序后最优分割的连续性引理与最大间隙最优性定理，将组合搜索复杂度由$O(2^k)$降至$O(k\log k)$。时空协调上，引入到达时间函数$\tau(s)$与预测轨迹，把动态障碍物纳入路径边界构建以得到时空可通行走廊，并在速度二次规划（Quadratic Programming, QP）层将走廊边界约束与SpeedBoundsDecider所得纵向位移-时间（Station-Time, ST）边界做双源融合。
 
-仿真实验结果表明，与Apollo原生分段加加速度路径优化算法（PiecewiseJerkPathOptimizer）相比，MIKU在4个多障碍物测试场景中全部完成通过而Baseline均未达成通过判定，平均通行速度从\MSummaryBaselineAvgV\,m/s提升至\MSummaryMikuAvgV\,m/s，提升\MSummarySummaryVImprovement\%，QP求解总耗时从\MSummaryBaselineQpTotal\,ms降至\MSummaryMikuQpTotal\,ms，算法总复杂度$O(n \log n)$，满足实时性要求。
+仿真共设计\MScenarioTotal{}个测试场景，含\MPressureScenarioTotal{}个原始压力场景与\MComparableScenarioTotal{}个经轻量微调的可比场景。压力场景下，Baseline通过率为\MPressureBaselinePassCount{}/\MPressureScenarioTotal{}，MIKU通过率为\MPressureMikuPassCount{}/\MPressureScenarioTotal{}。可比场景下两者均可完成通过，MIKU降低了动态场景的加减速峰值，平均QP求解总耗时由\MComparableBaselineQpTotal\,ms降至\MComparableMikuQpTotal\,ms。算法整体复杂度$O(n\log n+K)$，其中$K$为路径或时间离散化规模，满足Planning模块的实时预算。工程上，MIKU作为LaneFollowPath新增路径边界分支接入Apollo，并经STDrivableBoundary将走廊约束传递至PiecewiseJerkSpeedOptimizer。
 
 \vspace{1em}
-\noindent\hspace{2em}{\heiti\bfseries 关键词：}自动驾驶；路径规划；Apollo；MIKU算法；时变最优走廊；障碍物分组；组合优化
+\noindent\hspace{2em}{\heiti\bfseries 关键词：}自动驾驶；路径规划；Apollo；MIKU算法；组合优化
 
 }
