@@ -35,7 +35,7 @@
 
 \item \textbf{优化规划方法}\quad{}基于优化的方法将路径规划建模为带约束的数学优化问题，本文所属的技术路线即在该范式之下。二次规划方法将轨迹表示为分段多项式，以平滑度、偏离参考线程度等为目标函数，以障碍物约束、动力学约束等为约束条件，利用算子分裂二次规划求解器（Operator Splitting Quadratic Program, OSQP）\cite{stellato2020osqp}等高效求解器求解，非线性场景则可借助内点优化器（Interior Point OPTimizer, IPOPT）\cite{wachter2006ipopt}等内点法求解器。该路线的早期代表是\citet{borrelli2005mpc}提出的基于模型预测控制（Model Predictive Control, MPC）的主动转向方法、\citet{xu2012realtime}提出的面向自动驾驶的实时轨迹优化器，以及\citet{ziegler2014}在Bertha Benz自动驾驶车上首次将连续局部优化部署到公开城市道路的工作。\citet{fan2018baidu}详细描述了Apollo 期望最大化（Expectation-Maximization, EM）Motion Planner，采用路径QP和速度QP的两阶段优化方法，\citet{zhou2021pathqp,zhou2021dliaps}进一步给出了Apollo路径QP的分段Jerk形式化表达与双环迭代锚点平滑（Dual-Loop Iterative Anchoring Path Smoothing, DL-IAPS）和分段Jerk速度优化（Piecewise Jerk Speed Optimizer, PJSO）算法。\citet{chen2019em}提出了迭代EM规划框架，进一步增强了优化方法的灵活性；\citet{sun2022robust}则专门针对大曲率道路给出了鲁棒路径优化器。受无人机轨迹生成中最小Snap方法\cite{mellinger2011minsnap}与安全飞行走廊（Safe Flight Corridor, SFC）\cite{liu2017sfc}的启发，地面自动驾驶也逐步引入了类似的走廊凸分解思想。优化方法在凸优化框架下能保证全局最优性与实时性，是Apollo、Waymo等工业级L4平台的主流选择。
 
-\item \textbf{学习型方法}\quad{}近年来基于深度学习与强化学习的端到端规划方法\cite{zhang2021autonomous,alahi2016social,li2024decision,shalevshwartz2017rss}发展迅速，在感知、决策、控制一体化与场景泛化方面展现出潜力，目前在工业级自动驾驶系统中主要作为传统方法的补充。
+\item \textbf{学习型方法}\quad{}近年来基于深度学习与强化学习的端到端规划方法\cite{zhang2021autonomous,alahi2016social,li2024decision,shalevshwartz2017rss}发展迅速，在感知、决策、控制一体化与场景泛化方面有一定进展，目前在工业级自动驾驶系统中主要作为传统方法的补充。
 \end{enumerate}
 
 \begin{table}[H]
@@ -131,7 +131,7 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad PJPO & 辅助模块 \\
 
 \subsection{技术路线}
 
-本文的技术路线如图\ref{fig:tech_route}所示，分为七个阶段依次推进。前两个阶段围绕Apollo~11.0~Planning模块的源码分析与多障碍物场景下的问题识别展开，为整体改进提供工程锚定；第三阶段建立多障碍物统一规划的数学模型，把避让方向选择刻画为组合优化问题，并引入到达时间函数沟通路径与速度两个子问题；第四至第六阶段分别落地三项改进，依次给出多因子威胁度与差异化安全裕度、基于扫描线的组级最优通行带、以预测轨迹为输入的时空可通行走廊，每一项均配套章内仿真；第七阶段完成MIKU到Apollo Planning流水线的C++接入与综合实验，用以系统性评估与Apollo Baseline的差异。
+本文的技术路线如图\ref{fig:tech_route}所示，分为七个阶段依次推进。前两个阶段围绕Apollo~11.0~Planning模块的源码分析与多障碍物场景下的问题识别展开，为整体改进建立工程参照；第三阶段建立多障碍物统一规划的数学模型，把避让方向选择刻画为组合优化问题，并引入到达时间函数沟通路径与速度两个子问题；第四至第六阶段分别落地三项改进，依次给出多因子威胁度与差异化安全裕度、基于扫描线的组级最优通行带、以预测轨迹为输入的时空可通行走廊，每一项均配套章内仿真；第七阶段完成MIKU到Apollo Planning流水线的C++接入与综合实验，用以系统性评估与Apollo Baseline的差异。
 
 \begin{figure}[htbp]
 \centering

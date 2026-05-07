@@ -355,7 +355,7 @@ stage {
 
 第二，决策协调机制不同。\texttt{PathBoundsDecider}相关边界构建逻辑对每个障碍物独立做出左绕/右绕的贪心决策，没有全局协调。\texttt{SpeedBoundsDecider}之后的\texttt{PathTimeHeuristicOptimizer}即DP启发式搜索，在ST图中对YIELD/OVERTAKE的组合进行全局搜索，将DP输出作为后续QP的暖启动参考，避免了逐障碍物贪心策略在速度层继续累积。
 
-第三，信息传递方向单向。路径阶段的输出即\texttt{PathData}传递给速度阶段作为已知条件，但路径阶段做出决策时的上下文信息，例如\emph{该路径依赖某动态障碍物在特定时刻移开}这一时间有效性前提，并未传递给速度阶段。速度阶段只知道路径在哪里，不知道路径为什么在那里。路径决策和速度规划之间因此缺乏时空约束的协调，这是第\ref{chap:st_corridor}章所分析的ST层问题的架构根源。第\ref{chap:st_corridor}章提出的时变通行带框架输出时间有效性约束，以ST上界的形式与\texttt{SpeedBoundsDecider}的输出在QP层面融合，补上路径-速度之间缺失的约束传递。
+第三，信息传递方向单向。路径阶段的输出即\texttt{PathData}传递给速度阶段作为已知条件，但路径阶段做出决策时的上下文信息，例如\emph{该路径依赖某动态障碍物在特定时刻移开}这一时间有效性前提，并未传递给速度阶段。速度阶段仅看到路径的几何形态，无法获知其背后的决策依据。路径决策和速度规划之间因此缺乏时空约束的协调，这是第\ref{chap:st_corridor}章所分析的ST层问题的架构根源。第\ref{chap:st_corridor}章提出的时变通行带框架输出时间有效性约束，以ST上界的形式与\texttt{SpeedBoundsDecider}的输出在QP层面融合，补上路径-速度之间缺失的约束传递。
 
 \section{本章小结}
 

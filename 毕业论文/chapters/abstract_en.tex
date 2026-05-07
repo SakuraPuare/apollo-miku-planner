@@ -10,7 +10,7 @@
 
 \vspace{0.5em}
 
-{\zihao{-4}\setstretch{1.25}
+{\zihao{-4}\setstretch{1.5}
 
 \noindent\hspace{2em}{\bfseries Abstract: }In dense multi-obstacle scenes, mainstream autonomous driving path planners are prone to blockage and over-conservative nudging. This thesis takes the Planning module of Baidu's Apollo 11.0 open-source autonomous driving platform as the study object and dissects the path-boundary construction logic carried by PathBoundsDeciderUtil. Three deficiencies are identified. The uniform safety buffer squeezes the passage band beyond what local obstacle geometry requires. Per-obstacle nudge decisions are taken independently and may assign mutually contradictory avoidance directions. Dynamic obstacles never enter path-boundary computation, so the downstream path and speed planners cannot act consistently.
 
