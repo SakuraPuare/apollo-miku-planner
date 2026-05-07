@@ -192,7 +192,7 @@ defense: defense-slides defense-script
 	@echo "✓ 毕业答辩: $(DEFENSEDIR)/slides.pdf + $(DEFENSEDIR)/script.pdf"
 
 defense-slides: $(DEFENSEDIR)/slides.pdf
-$(DEFENSEDIR)/slides.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(DEFENSEDIR)/_slides_part2.tex $(FONT_FILES) | check-deps
+$(DEFENSEDIR)/slides.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(FONT_FILES) | check-deps
 	cd $(DEFENSEDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1 \
 	  && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
 	@test -f $(DEFENSEDIR)/slides.pdf || { echo "错误: 毕业答辩 slides.pdf 未生成"; exit 1; }
