@@ -16,15 +16,19 @@
 %   chapters/appendix.tex       附录
 %   references.bib              参考文献数据库
 % ==========================================================================
-\documentclass[a4paper,12pt,openany,oneside]{ctexbook}
+\documentclass[fontset=none,a4paper,12pt,openany,oneside]{ctexbook}
 
 \input{info}
 \input{preamble}
 
 % chapter 中通过 \MOneBaselineAvgV 等宏引用 meta.json 实测数据，实现幂等
 \input{_experiment_metrics}
+% 场景参数与方法常量宏：由 可视化/_gen_context_tex.py 从仿真配置派生
+\input{_experiment_context}
 % 消融实验数据宏：由 可视化/metric_score.py 读 ablation.csv 派生
 \input{_ablation_macros}
+% 灵敏度分析宏：由 可视化/sensitivity_analysis.py 自动生成
+\input{_sensitivity_macros}
 
 \begin{document}
 
