@@ -3,8 +3,10 @@
 \usepackage{setspace}
 \setstretch{1.5}
 \usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsthm}
 \let\emptyset\varnothing
 \usepackage{graphicx}
+\usepackage{adjustbox}
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{multirow}
@@ -21,6 +23,8 @@
 \usepackage{url}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usetikzlibrary{external}
+\tikzexternalize % 激活全自动外部化
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{fillbetween, polar, patchplots, colormaps}
@@ -33,7 +37,8 @@
 \usepackage{titletoc}
 
 % ==================== 字体设置 ====================
-\setmainfont{TeX Gyre Termes}
+\def\ProjectFontDir{../fonts}
+\input{../fonts/local-fonts}
 % 圆圈数字 ①-⑳ 等 (U+2460-U+24FF) 强制走 CJK 字体，避免 TeX Gyre Termes Bold 缺字符渲染为空
 \xeCJKDeclareCharClass{CJK}{"2460->"24FF}
 
@@ -51,7 +56,7 @@
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
 
-\usepackage{hyperref}
+\usepackage[unicode=true,pdfencoding=unicode,psdextra=true]{hyperref}
 
 % ==================== TikZ 统一配色 ====================
 \definecolor{deepblue}{RGB}{81, 132, 178}
@@ -156,9 +161,9 @@
 \renewcommand{\lstlistingname}{代码}
 \lstset{
     basicstyle=\linespread{0.85}\selectfont\zihao{-5}\ttfamily,
-    keywordstyle=\color{blue},
-    commentstyle=\color{green!60!black},
-    stringstyle=\color{red!60!black},
+    keywordstyle=\color{deepblue},
+    commentstyle=\color{lightgreen!60!black},
+    stringstyle=\color{dangerred!70!black},
     numbers=left,
     numberstyle=\tiny\color{gray},
     frame=single,
@@ -173,13 +178,13 @@
 % listings 不自带 json 语法，本项目 Apollo pipeline.pb.txt 配置文件按 JSON 风格高亮
 \lstdefinelanguage{json}{
     keywords={true,false,null,stage,task,name,type},
-    keywordstyle=\color{blue},
+    keywordstyle=\color{deepblue},
     sensitive=true,
     comment=[l]{//},
     morecomment=[s]{/*}{*/},
-    commentstyle=\color{green!60!black},
+    commentstyle=\color{lightgreen!60!black},
     morestring=[b]",
-    stringstyle=\color{red!60!black},
+    stringstyle=\color{dangerred!70!black},
     showstringspaces=false,
 }
 
@@ -193,3 +198,8 @@
 \SetKw{KwRet}{返回}
 
 \renewcommand{\algorithmautorefname}{算法}
+
+% ==================== 定理环境 ====================
+\theoremstyle{definition}
+\newtheorem{lemma}{引理}
+\newtheorem{theorem}{定理}
