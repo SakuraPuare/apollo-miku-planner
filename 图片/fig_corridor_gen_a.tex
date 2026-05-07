@@ -1,8 +1,8 @@
 % 子图 (a)：单 s 截面横向间隙判定（教学起点）
 % 选 s = s^* = 3.25 卡在静态障碍 A 中部，沿 l 轴展示 max-gap 选 p^* 过程
 % A 静态：l ∈ [-1.2, 0.3]，u_A=-1.2, v_A=0.3
-% g_0 = u_A - l_road^- = -1.2 - (-2) = 0.8 < W_ego = 1.5 → ✗
-% g_1 = l_road^+ - v_A =  2  - 0.3  = 1.7 ≥ W_ego = 1.5 → ✓，p^* = 1
+% g_0 = u_A - l_road^- = -1.2 - (-2) = 0.8 < W_ego = 1.5, no
+% g_1 = l_road^+ - v_A =  2  - 0.3  = 1.7 >= W_ego = 1.5, ok, p^* = 1
 % 自车宽度 W_ego = 1.5 嵌入右侧间隙 g_1
 \begin{tikzpicture}[scale=1.0, transform shape]
   \useasboundingbox (-3.0, -2.1) rectangle (3.0, 2.4);

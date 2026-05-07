@@ -1,9 +1,9 @@
 % 威胁度五因子函数曲线
-% 每个 tikzpicture 用 \useasboundingbox 统一尺寸，\resizebox 缩放不变形
+% 每个 tikzpicture 用 \useasboundingbox 统一尺寸，\adjustbox 缩放不变形
 
 \begin{subfigure}[b]{0.32\textwidth}
 \centering
-\resizebox{\textwidth}{!}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}
   \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
   \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {TTC (s)};
@@ -25,7 +25,7 @@
 \hfill
 \begin{subfigure}[b]{0.32\textwidth}
 \centering
-\resizebox{\textwidth}{!}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}
   \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
   \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {重叠率};
@@ -42,7 +42,7 @@
 \hfill
 \begin{subfigure}[b]{0.32\textwidth}
 \centering
-\resizebox{\textwidth}{!}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}
   \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
   % 内容居中: sigmoid 画在 [0.4, 2.8] 范围, 对称轴在 1.6
@@ -69,7 +69,7 @@
 \hfill
 \begin{subfigure}[b]{0.32\textwidth}
 \centering
-\resizebox{\textwidth}{!}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}
   \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
   \draw[->, thick] (0,0) -- (2.8,0);
@@ -93,7 +93,7 @@
 \hspace{0.02\textwidth}
 \begin{subfigure}[b]{0.32\textwidth}
 \centering
-\resizebox{\textwidth}{!}{%
+\adjustbox{max width=\textwidth}{%
 \begin{tikzpicture}
   \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
   \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {$d_{ij}$ (m)};

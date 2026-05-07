@@ -1,5 +1,5 @@
 % 时间有效性约束在 ST 图中的几何表示
-% 与 7.2.6 横穿行人示例完全闭环：v_ego=8 m/s, s_ped=10 m, τ_k=1.25 s
+% 与 7.2.6 横穿行人示例保持一致：v_ego=8 m/s, s_ped=10 m, τ_k=1.25 s
 % 网格：横轴 1 单位 = 0.25 s，纵轴 1 单位 = 2 m
 %
 % 单一动态障碍物（横穿行人，v_s=0），故 ST boundary 与 SBD 上界都是水平
@@ -43,7 +43,7 @@
 
     % 约束点 (τ_k, s_k)
     \filldraw[dangerred] (5.0, 5.0) circle (3pt);
-    \node[dangerred, font=\small\bfseries, anchor=south west] at (5.10, 5.10) {$(\tau_k,\,s_k){=}(1.25,\,10)$};
+    \node[dangerred, font=\small\bfseries, anchor=south west] at (5.10, 5.10) {$(\tau_k,\,s_k){=}(\PedExampleTauK,\,\PedExampleSk)$};
 
     % ====== 融合上界 = min(SBD, T) ======
     %  t ∈ [0, τ_k]：T=10 < SBD=13，T 主导，融合上界 = 5（网格）

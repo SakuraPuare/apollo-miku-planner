@@ -10,17 +10,17 @@
   \fill[egopt] (0.5,0) rectangle (1.35,0.6);
   \node[white, font=\scriptsize\bfseries] at (0.925,0.3) {ADC};
   \draw[-Stealth, thick, deepblue] (1.4,0.3) -- (2.5,0.3);
-  \node[font=\scriptsize, deepblue] at (1.95,0.55) {$v_{ego}{=}8$ m/s};
+  \node[font=\scriptsize, deepblue] at (1.95,0.55) {$v_{ego}{=}\PedExampleVel$ m/s};
 
   % 行人
   \fill[obsdyn] (5.7,-0.2) rectangle (6.1,0.3);
   \node[font=\scriptsize, dangerred!70!black, anchor=west] at (6.15, 0.05) {行人};
   \draw[-Stealth, thick, dangerred] (5.9,0.35) -- (5.9,1.4);
-  \node[font=\scriptsize, dangerred!70!black] at (5.5,1.05) {$v_{lat}{=}1.2$ m/s};
+  \node[font=\scriptsize, dangerred!70!black] at (5.5,1.05) {$v_{lat}{=}\PedExampleLatVel$ m/s};
 
   % 距离标尺
   \draw[<->, thin, gray] (1.4,-0.75) -- (5.7,-0.75);
-  \node[font=\scriptsize, gray] at (3.55,-0.6) {$s_{\text{rel}}{=}10$ m};
+  \node[font=\scriptsize, gray] at (3.55,-0.6) {$s_{\text{rel}}{=}\PedExampleS$ m};
 
   % 时刻标
   \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}0$};
