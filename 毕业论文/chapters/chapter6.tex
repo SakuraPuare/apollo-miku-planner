@@ -1,23 +1,24 @@
 \chapter{组级最优通行带与最大间隙策略}
+\label{chap:group}
 
-本章针对Apollo PathBoundsDecider对每个障碍物独立决定避让方向所导致的矛盾决策与路径BLOCKED问题，提出基于扫描线分组与最大间隙策略的组级全局最优算法。
+Apollo \texttt{PathBoundsDecider} 对每个障碍物独立决定避让方向，在两侧障碍物同时活跃时容易形成相互矛盾的方向分配，使路径边界出现上下交叉而被判为 BLOCKED。本章以扫描线纵向重叠检测把相互关联的障碍物聚为连通分量，再在组内求解最大间隙分割，把 $2^k$ 组合搜索降为 $O(k\log k)$ 的线性扫描，并给出链式分量的保守包络处理与章内数值仿真。
 
 \section{Apollo 逐障碍物决策的源码缺陷与失败模式}
 \label{sec:problem_sl}
 
 \subsection{源码逻辑与决策入口}
 
-PathBoundsDecider是Apollo路径规划阶段的关键模块，负责在每个离散纵向位置$s$处构建横向路径边界$[l^-(s),\; l^+(s)]$。问题在于它对每个障碍物独立地决定避让方向，即LEFT\_NUDGE或RIGHT\_NUDGE，而不考虑同一$s$截面上其他活跃障碍物的存在。当道路两侧同时存在障碍物时，这种逐障碍物的贪心决策可能产生相互矛盾的避让方向，即左侧障碍物使上边界下压、右侧障碍物使下边界上抬，导致$l^+(s) < l^-(s)$，路径边界被判定为BLOCKED，最终触发FallbackPath停车。
+\texttt{PathBoundsDecider} 是 Apollo 路径规划阶段的关键模块，在每个离散纵向位置 $s$ 处构建横向路径边界 $[l^-(s),\; l^+(s)]$。问题在于它对每个障碍物独立决定 LEFT\_NUDGE 或 RIGHT\_NUDGE，而不考虑同一 $s$ 截面上其余活跃障碍物。当道路两侧同时存在障碍物时，这种逐障碍物贪心有可能得到相互矛盾的避让方向，左侧障碍物把上边界下压、右侧障碍物把下边界上抬，使 $l^+(s) < l^-(s)$，路径边界被判为 BLOCKED 并触发 FallbackPath 停车。
 
-问题根源在\texttt{UpdatePathBoundary\-BySLPolygon}函数，其逻辑分三步：逐障碍物独立决定避让方向、根据避让方向收缩路径边界、检测边界交叉并截断路径。代码\ref{lst:update_path_boundary}展示了该函数的关键流程。
+问题根源在 \texttt{UpdatePathBoundary\-BySLPolygon} 函数。该函数依次对每个障碍物独立决定避让方向、按该方向收缩路径边界、再检测边界交叉并截断路径，代码 \ref{lst:update_path_boundary} 展示了其关键流程。
 
 \begin{lstlisting}[language=C++,caption={UpdatePathBoundaryBySLPolygon核心逻辑},label={lst:update_path_boundary}]
-// path_bounds_decider_util.cc: UpdatePathBoundaryBySLPolygon
+// path_bounds_decider_util.cc: \texttt{UpdatePathBoundaryBySLPolygon}
 for (size_t i = 1; i < path_boundary->size(); ++i) {
   auto& left_bound = path_boundary->at(i).l_upper;   // 上边界
   auto& right_bound = path_boundary->at(i).l_lower;  // 下边界
   for (size_t j = 0; j < sl_polygon->size(); j++) {
-    // --- 步骤1: 逐障碍物独立决定避让方向 ---
+    // --- 逐障碍物独立决定避让方向 ---
     if (sl_polygon->at(j).NudgeInfo() == SLPolygon::UNDEFINED) {
       double obs_l = (l_lower + l_upper) / 2;  // 障碍物中心横向位置
       if (is_passable_right && is_passable_left) {
@@ -33,13 +34,13 @@ for (size_t i = 1; i < path_boundary->size(); ++i) {
         sl_polygon->at(j).SetNudgeInfo(SLPolygon::LEFT_NUDGE);
       }
     }
-    // --- 步骤2: 根据避让方向更新边界 ---
+    // --- 根据避让方向更新边界 ---
     if (sl_polygon->at(j).NudgeInfo() == SLPolygon::RIGHT_NUDGE) {
       if (!sl_polygon->at(j).is_passable()[RIGHT_INDEX]) {
         sl_polygon->at(j).SetNudgeInfo(SLPolygon::BLOCKED);
         break;  // 右侧不可通行，标记BLOCKED
       }
-      // 上边界收缩至障碍物左边缘减安全距离
+      // 上边界收缩至障碍物右（小l）边缘减安全距离
       if (obs_right_nudge_bound.l_upper.l < left_bound.l) {
         left_bound.l = obs_right_nudge_bound.l_upper.l;
         left_bound.type = BoundType::OBSTACLE;
@@ -49,14 +50,14 @@ for (size_t i = 1; i < path_boundary->size(); ++i) {
         sl_polygon->at(j).SetNudgeInfo(SLPolygon::BLOCKED);
         break;  // 左侧不可通行，标记BLOCKED
       }
-      // 下边界上抬至障碍物右边缘加安全距离
+      // 下边界上抬至障碍物左（大l）边缘加安全距离
       if (obs_left_nudge_bound.l_lower.l > right_bound.l) {
         right_bound.l = obs_left_nudge_bound.l_lower.l;
         right_bound.type = BoundType::OBSTACLE;
       }
     }
   }
-  // --- 步骤3: BLOCKED判定与路径截断 ---
+  // --- BLOCKED判定与路径截断 ---
   if (!blocked_id->empty()) {
     TrimPathBounds(i, path_boundary);  // 截断后续路径边界
     return false;                      // 触发FallbackPath停车
@@ -64,52 +65,52 @@ for (size_t i = 1; i < path_boundary->size(); ++i) {
 }
 \end{lstlisting}
 
-步骤1对每个在位置$s$处活跃的障碍物，通过\texttt{SetNudgeInfo}函数根据障碍物中心相对于参考线的横向位置独立决定\texttt{RIGHT\_NUDGE}即从右侧绕行使上边界下压，或\texttt{LEFT\_NUDGE}即从左侧绕行使下边界上抬。步骤2根据避让方向对路径边界进行收缩，安全距离\texttt{delta}由自车半宽即\texttt{GetBufferBetweenADCCenterAndEdge}的返回值与额外缓冲参数\texttt{obstacle\_lat\_buffer}相加得到。步骤3在上下边界交叉即存在BLOCKED标记的障碍物时，调用\texttt{TrimPathBounds}清除后续路径边界并返回\texttt{false}，最终触发\texttt{FallbackPath}生成减速停车轨迹。
+该流程对位置 $s$ 处每个活跃障碍物，先由 \texttt{SetNudgeInfo} 按障碍物中心相对参考线的横向位置，独立判定 \texttt{RIGHT\_NUDGE} 即右绕使上边界下压，或 \texttt{LEFT\_NUDGE} 即左绕使下边界上抬；随后按该方向收缩路径边界，安全距离 \texttt{delta} 等于自车半宽 \texttt{GetBufferBetweenADCCenterAndEdge} 的返回值与额外缓冲参数 \texttt{obstacle\_lat\_buffer} 之和；一旦上下边界交叉，即存在 BLOCKED 标记的障碍物，\texttt{TrimPathBounds} 会清除后续路径边界并返回 \texttt{false}，交由 \texttt{FallbackPath} 生成减速停车轨迹。
 
 \subsection{独立决策的失败模式}
 
-以下通过一个对称场景说明独立决策如何导致不必要的停车。
+下面以一个对称场景说明独立决策如何把自车挤停。
 
-\textbf{场景设定}\quad 双车道道路总宽7.5\,m，$l_{road}^- = -3.75$\,m，$l_{road}^+ = 3.75$\,m。在某纵向位置$s^*$处同时存在两个路锥，关于参考线近似对称
+\textbf{场景设定}\quad 双车道道路总宽\GroupExampleRoadWidth\,m，$l_{road}^- = \GroupExampleRoadLeft$\,m，$l_{road}^+ = \GroupExampleRoadRight$\,m。在某纵向位置$s^*$处同时存在两个路锥，关于参考线近似对称
 
 \begin{itemize}[noitemsep]
-\item $O_a$偏右，横向占据$[0.1,\; 0.4]$\,m，中心$0.25$\,m
-\item $O_b$偏左，横向占据$[-0.4,\; -0.1]$\,m，中心$-0.25$\,m
+\item $O_a$偏左，横向占据$[\GroupExampleRightObsLow,\; \GroupExampleRightObsHigh]$\,m，中心$\GroupExampleRightObsCenter$\,m
+\item $O_b$偏右，横向占据$[\GroupExampleLeftObsLow,\; \GroupExampleLeftObsHigh]$\,m，中心$\GroupExampleLeftObsCenter$\,m
 \end{itemize}
 
-两个路锥均未越过车道中线，安全距离$\delta = 1.2$\,m。
+两个路锥均未越过车道中线，安全距离$\delta = \GroupExampleDelta$\,m。
 
-\textbf{Apollo独立决策}\quad $O_a$中心$0.25 > 0$，分配RIGHT\_NUDGE，上边界收缩至
+\textbf{Apollo独立决策}\quad $O_a$中心$\GroupExampleRightObsCenter > 0$，分配RIGHT\_NUDGE，上边界收缩至
 \[
-l^+(s^*) = 0.1 - 1.2 = -1.1\,\text{m}
+l^+(s^*) = \GroupExampleRightObsLow - \GroupExampleDelta = \GroupExampleGreedyUpper\,\text{m}
 \]
-$O_b$中心$-0.25 < 0$，分配LEFT\_NUDGE，下边界抬升至
+$O_b$中心$\GroupExampleLeftObsCenter < 0$，分配LEFT\_NUDGE，下边界抬升至
 \[
-l^-(s^*) = -0.1 + 1.2 = 1.1\,\text{m}
+l^-(s^*) = \GroupExampleLeftObsHigh + \GroupExampleDelta = \GroupExampleGreedyLower\,\text{m}
 \]
-$l^+ = -1.1 < l^- = 1.1$，判定BLOCKED。贪心策略将自车挤入两个路锥之间仅0.2\,m的间隙，路径不可行，触发停车。
+$l^+ = \GroupExampleGreedyUpper < l^- = \GroupExampleGreedyLower$，判定BLOCKED。贪心策略将自车挤入两个路锥之间仅\GroupExampleInnerGap\,m的间隙，路径不可行，触发停车。
 
 \textbf{全局统一决策}\quad 将两个路锥作为一组，统一分配RIGHT\_NUDGE，自车从两者右侧绕行
 \[
-l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.75\,\text{m}
+l^+(s^*) = \min(\GroupExampleRightObsLow - \GroupExampleDelta,\; \GroupExampleLeftObsLow - \GroupExampleDelta) = \GroupExampleUnifiedUpper\,\text{m}, \quad l^-(s^*) = \GroupExampleRoadLeft\,\text{m}
 \]
-通行带宽度$W = -1.6 - (-3.75) = 2.15$\,m，自车可借用相邻车道从右侧安全通过。由对称性，统一LEFT\_NUDGE同样可行，$W = 3.75 - 1.6 = 2.15$\,m。
+通行带宽度$W = \GroupExampleUnifiedUpper - (\GroupExampleRoadLeft) = \GroupExampleUnifiedWidth$\,m，自车可借用相邻车道从右侧安全通过。由对称性，统一LEFT\_NUDGE同样可行，$W = \GroupExampleRoadRight - \GroupExampleUnifiedLower = \GroupExampleUnifiedWidth$\,m。
 
-贪心策略将两个偏向不同侧的障碍物分别向内挤压，全局协调只需统一绕行方向，即可利用道路另一侧的充裕空间。当$k$个障碍物在同一纵向位置活跃时，避让方向共有$2^k$种组合，贪心策略只检查了其中一种，可能恰好选中不可行的组合而遗漏可行解。该问题的形式化建模在第三章统一框架下已经给出，高效求解方法将在本章下一节详细展开。
+贪心策略把两个偏向不同侧的障碍物分别向内挤压，而全局协调只要统一绕行方向就能利用道路另一侧的充裕空间。当 $k$ 个障碍物在同一纵向位置同时活跃时，避让方向共有 $2^k$ 种组合，贪心仅检查其中一种，很可能选中不可行组合而遗漏可行解。该问题的形式化建模已在第 \ref{chap:framework} 章统一框架下给出，高效求解方法在本章下一节展开。
 
-图\ref{fig:path_conservative}展示了该场景中独立决策与全局协调的对比。
+图 \ref{fig:path_conservative} 对比了该场景中的独立决策与全局协调。图 \ref{fig:path_conservative:a} 对应矛盾避让导致的 BLOCKED，图 \ref{fig:path_conservative:b} 对应统一右绕后的可通行结果。
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
-  \resizebox{\linewidth}{!}{\input{../图片/fig_path_conservative_a}}
+  \adjustbox{max width=\linewidth}{\input{../图片/fig_path_conservative_a}}
   \caption{独立决策，矛盾避让 $\to$ BLOCKED}
   \label{fig:path_conservative:a}
 \end{subfigure}\hfill
 \begin{subfigure}[b]{0.48\textwidth}
   \centering
-  \resizebox{\linewidth}{!}{\input{../图片/fig_path_conservative_b}}
+  \adjustbox{max width=\linewidth}{\input{../图片/fig_path_conservative_b}}
   \caption{全局协调，统一右绕 $\to$ 通行}
   \label{fig:path_conservative:b}
 \end{subfigure}
@@ -117,25 +118,25 @@ l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.7
 \label{fig:path_conservative}
 \end{figure}
 
-除了两个障碍物的极端情形外，随着障碍物数量增加，独立决策导致的可行域压缩会以近似指数方式恶化。图\ref{fig:feasible_compress}给出了同一车道内从2个、4个到极端密度障碍物场景下的可行域演化。2个障碍物场景下，尚存较宽的可行通带可供自车选择，尽管贪心决策已开始压缩通带宽度；4个障碍物场景下，多次独立收缩使可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发BLOCKED；极端密度场景下，可行域进一步碎片化，几乎任何贪心决策组合都会导致某处边界失效。这一演化说明，在高密度场景下改进决策粒度对可行性恢复的贡献远高于单纯调整安全裕度。
+两个障碍物的极端情形之外，随障碍物数量增加，独立决策对可行域的压缩会近似指数恶化。图 \ref{fig:feasible_compress} 给出同一车道内 2 个、4 个和极端密度障碍物场景下的可行域演化。图 \ref{fig:feasible_compress:a} 中 2 个障碍物尚存较宽的通带可供自车选择，但贪心已开始压缩通带宽度；图 \ref{fig:feasible_compress:b} 中 4 个障碍物经过多次独立收缩，可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发 BLOCKED；图 \ref{fig:feasible_compress:c} 的极端密度下可行域进一步碎片化，几乎任何贪心组合都会在某处边界失效。这说明高密度场景下改进决策粒度对恢复可行性的贡献远高于单纯调整安全裕度。
 
 \begin{figure}[htbp]
 \centering
 \begin{subfigure}[b]{0.32\textwidth}
   \centering
-  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_a}}
+  \adjustbox{max width=\linewidth}{\input{../图片/fig_feasible_compress_a}}
   \caption{2 个障碍物}
   \label{fig:feasible_compress:a}
 \end{subfigure}\hfill
 \begin{subfigure}[b]{0.32\textwidth}
   \centering
-  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_b}}
+  \adjustbox{max width=\linewidth}{\input{../图片/fig_feasible_compress_b}}
   \caption{4 个障碍物}
   \label{fig:feasible_compress:b}
 \end{subfigure}\hfill
 \begin{subfigure}[b]{0.32\textwidth}
   \centering
-  \resizebox{\linewidth}{!}{\input{../图片/fig_feasible_compress_c}}
+  \adjustbox{max width=\linewidth}{\input{../图片/fig_feasible_compress_c}}
   \caption{密集障碍物}
   \label{fig:feasible_compress:c}
 \end{subfigure}
@@ -145,11 +146,11 @@ l^+(s^*) = \min(0.1 - 1.2,\; -0.4 - 1.2) = -1.6\,\text{m}, \quad l^-(s^*) = -3.7
 
 \subsection{BLOCKED 后的截断与恢复机制局限}
 
-当PathBoundsDecider判定BLOCKED后，调用\texttt{TrimPathBounds}截断路径
+\texttt{PathBoundsDecider} 一旦判定 BLOCKED，会调用代码 \ref{lst:trim_path} 所示的 \texttt{TrimPathBounds} 截断路径。
 
 \begin{lstlisting}[language=C++,caption={TrimPathBounds路径截断},label={lst:trim_path}]
 // path_bounds_decider_util.cc: TrimPathBounds
-void PathBoundsDeciderUtil::TrimPathBounds(
+void \texttt{PathBoundsDeciderUtil}::TrimPathBounds(
     const int path_blocked_idx, PathBoundary* const path_boundaries) {
   if (path_blocked_idx != -1) {
     if (path_blocked_idx == 0) {
@@ -167,9 +168,9 @@ void PathBoundsDeciderUtil::TrimPathBounds(
 }
 \end{lstlisting}
 
-该函数将路径边界截断至BLOCKED位置的前方即减去车头到中心的距离，后续\texttt{FallbackPath}模块基于截断后的短路径生成减速停车轨迹。一旦某个避让方向组合导致BLOCKED，系统不会回溯尝试其他方向组合，而是直接进入停车流程。
+该函数把路径边界截断至 BLOCKED 位置的前方，即减去车头到中心的距离，后续 \texttt{FallbackPath} 基于截断后的短路径生成减速停车轨迹。一旦某个避让方向组合触发 BLOCKED，系统不会回溯尝试其他方向组合，而是直接进入停车流程。
 
-Apollo提供的\texttt{LaneBorrowPath}机制可以在一定条件下缓解BLOCKED问题，但该机制的触发条件非常严格。代码\ref{lst:lane_borrow_conditions}展示了借道决策需要通过的5个前置检查及条件4的具体实现
+Apollo 提供的 \texttt{LaneBorrowPath} 机制可在一定条件下缓解 BLOCKED，但触发条件相当严格。代码 \ref{lst:lane_borrow_conditions} 给出借道决策需要通过的 5 项前置检查，以及条件 4 的具体实现
 
 \begin{lstlisting}[language=C++,caption={LaneBorrowPath的前置条件与长期阻塞判定},label={lst:lane_borrow_conditions}]
 // lane_borrow_path.cc: IsNecessaryToBorrowLane
@@ -195,11 +196,11 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
 }
 \end{lstlisting}
 
-即使存在可行的借道方案，系统也必须先经历至少3个规划周期约300\,ms的停车等待才会尝试借道，且借道仅在单参考线、低速、远离路口等条件同时满足时才被允许。在路口附近、高速行驶或多参考线场景下，LaneBorrow机制不会触发，BLOCKED判定将直接导致停车。
+即使存在可行的借道方案，系统也必须先经历至少 3 个规划周期、约 300\,ms 的停车等待才会尝试借道，且借道仅在单参考线、低速、远离路口等条件同时满足时才允许。在路口附近、高速行驶或多参考线场景下，LaneBorrow 不会触发，BLOCKED 判定将直接导致停车。
 \section{纵向重叠分组与连通分量}
 \label{sec:grouping_connected}
-本节起所有$u_i$和$v_i$均使用式\eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic}中的动态安全距离$\delta_i$计算，后续引理和定理的证明不依赖$\delta$是否为常数，仅依赖$u$和$v$值的排序性。
-在全路径范围内，不同纵向位置$s$处的活跃障碍物集合不同，因此式\eqref{eq:joint_opt}的优化不能在单一截面上完成。关键观察是，如果两组障碍物在纵向上完全不重叠，则它们的避让决策相互独立。
+本节起所有 $u_i$ 和 $v_i$ 均采用式 \eqref{eq:def_u_dynamic}--\eqref{eq:def_v_dynamic} 中的动态安全距离 $\delta_i$ 计算，后续引理和定理的证明不依赖 $\delta$ 是否为常数，仅依赖 $u$ 值排序和 $v$ 值形成的前缀安全边界。
+在全路径范围内，不同纵向位置 $s$ 处的活跃障碍物集合不同，因此式 \eqref{eq:joint_opt} 的优化无法在单一截面上完成。关键观察是，若两组障碍物在纵向上完全不重叠，它们的避让决策彼此独立。
 
 定义纵向重叠关系。两个障碍物$O_i$和$O_j$纵向重叠，当且仅当它们的纵向区间有交集
 
@@ -208,88 +209,98 @@ bool LaneBorrowPath::IsLongTermBlockingObstacle() {
     \label{eq:overlap_relation}
 \end{equation}
 
-该重叠关系是对称的但不具有传递性。取其传递闭包，即存在一系列中间障碍物依次纵向重叠，将$n$个障碍物划分为$m$个连通分量$C_1, C_2, \ldots, C_m$。同一连通分量内的障碍物通过重叠链相连，不同连通分量之间在纵向上完全分离。由于不同连通分量在纵向上不重叠，其避让决策互不影响，可以独立求解。
+该重叠关系对称但不具传递性。取其传递闭包，即存在一系列中间障碍物依次纵向重叠，把 $n$ 个障碍物划分为 $m$ 个连通分量 $C_1, C_2, \ldots, C_m$。同一连通分量内的障碍物通过重叠链相连；不同分量的区间并集互不相交，因此没有某个 $s$ 截面同时含两个不同分量中的障碍物。路径边界在任一 $s$ 处至多受一个连通分量影响，分量之间的避让决策可独立求解。
 
-连通分量的检测采用扫描线算法，将所有障碍物按$s_i^{-}$升序排列，维护一个变量$s_{max}$记录当前连通分量中所有障碍物的最大$s^{+}$值。扫描过程中，若下一个障碍物的$s^{-}$不超过$s_{max}$，则将其归入当前分量并更新$s_{max}$；否则开始新的分量。该过程的时间复杂度为$O(n \log n)$其中排序占主导，扫描本身仅需$O(n)$。
+连通分量的检测采用扫描线算法，把全部障碍物按 $s_i^{-}$ 升序排列，并维护变量 $s_{max}$ 记录当前连通分量中所有障碍物的最大 $s^{+}$ 值。扫描时若下一个障碍物的 $s^{-}$ 不超过 $s_{max}$，则将其并入当前分量并更新 $s_{max}$；否则开始新的分量。排序占主导，扫描本身仅需 $O(n)$，总体为 $O(n \log n)$。
 
-纵向上彼此重叠的障碍物需要在同一个横向截面上协调决策，因此必须归为同一组；纵向上完全分离的障碍物组，自车在通过一组时尚未遇到下一组，决策互不影响。问题因此天然分解为多个独立子问题，这是算法高效性的基础。图\ref{fig:scanline_grouping}以六障碍物算例展示了扫描过程，$s_{max}$扫描线沿$s$轴从左到右推进，遇到与当前组重叠的障碍物即并入，否则切出新分量，最终得到三个互不重叠的连通分量$C_1$到$C_3$。
+纵向直接重叠的障碍物需要在同一横向截面上协调，必须归为同一组；经重叠链相连的障碍物未必全部出现在同一截面，但若对避让方向施加组级一致性，也会被同一决策变量间接耦合。纵向完全分离的障碍物组，自车通过一组时尚未遇到下一组，彼此决策互不影响。问题因此自然分解为多个独立子问题，这是算法高效性的基础。图 \ref{fig:scanline_grouping} 以六障碍物算例展示扫描过程，$s_{max}$ 扫描线沿 $s$ 轴从左到右推进，与当前组重叠的障碍物即并入，否则切出新分量，最终得到三个互不重叠的连通分量 $C_1$ 到 $C_3$。
 
 \begin{figure}[htbp]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_scanline_grouping}}
+\adjustbox{max width=\textwidth}{\input{../图片/fig_scanline_grouping}}
 \caption{扫描线算法按$s_i^-$升序合并连通分量的过程}
 \label{fig:scanline_grouping}
 \end{figure}
 
-当障碍物仅在纵向上部分重叠即存在某些$s$截面上只有部分障碍物活跃时，组内处理采用保守近似，以所有障碍物均同时活跃为假设计算间隙。这可能导致轻微的次优性，但算法的正确性可由以下两步论证保证。首先，在最密集截面上按定理1选定的分割点$p^{*}$将障碍物划分为左绕集合$\mathcal{L}_{p^{*}}$和右绕集合$\mathcal{R}_{p^{*}}$，此时通行带上下界由$l^{+} = \min_{i \in \mathcal{R}_{p^{*}}} u_i$和$l^{-} = \max_{i \in \mathcal{L}_{p^{*}}} v_i$给出。其次，任意稀疏截面对应的活跃障碍物集合均为最密集截面的子集，移除部分障碍物使$\min$和$\max$分别作用于子集，因此$l^{+}$不会超过原值而$l^{-}$不会低于原值，即$\min$作用于子集的结果不小于$\min$作用于全集，$\max$作用于子集的结果不大于$\max$作用于全集。若$\mathcal{L}_{p^{*}}$或$\mathcal{R}_{p^{*}}$被移空，则相应方向退化为道路边界。因此通行带宽度$W = l^{+} - l^{-}$单调不减，最密集截面上的决策在所有稀疏截面上均保持可行，且通行带不会更窄。
+还需强调，连通分量并不保证存在一个所有障碍物共同活跃的公共 $s$ 截面。典型链式情形中 $O_1$ 与 $O_2$ 重叠、$O_2$ 与 $O_3$ 重叠，但 $O_1$ 与 $O_3$ 可以完全不重叠。因此最密集截面未必包含该分量的全部障碍物，也不能把任一稀疏截面的活跃集合视为某个最密集截面的子集。
 
-全路径的最小通行带宽度由最窄的连通分量决定，即木桶效应
+本文在工程实现中对链式连通分量采用保守包络处理。对分量 $C$ 及其覆盖区间 $I_C$，记活跃集合为 $\mathcal{A}_C(s)=\{i\in C\mid s\in[s_i^{-},s_i^{+}]\}$。固定某个组级分割后，实际截面边界为
 
 \begin{equation}
-    W^{*} = \min_{j=1,\ldots,m} W^{*}(C_j)
+    l^{+}(s) = \min_{i\in\mathcal{A}_C(s)\cap\mathcal{R}} u_i(s), \quad
+    l^{-}(s) = \max_{i\in\mathcal{A}_C(s)\cap\mathcal{L}} v_i(s)
+\end{equation}
+
+若某一侧活跃集合为空，则对应边界退化为道路边界。保守包络把同一分量内所有障碍物视为同时施加约束，即把 $\mathcal{A}_C(s)$ 替换为 $C$，并在 $I_C$ 上取 $u_i$ 的最小值与 $v_i$ 的最大值。由于 $\mathcal{A}_C(s)\subseteq C$，该包络给出的上边界不大于实际上边界、下边界不小于实际下边界，包络宽度因此是实际宽度的下界。若包络宽度仍不小于自车宽度，则所有真实截面均可通行；反之，包络不可行仅说明该充分条件失败，并不意味着真实场景必然不可行。这一处理保证安全性，但不声称对一般链式分量给出全局最优解。
+
+采用独立分量与保守包络后，全路径可保证的最小通行带宽度由最窄的连通分量决定，形成木桶效应
+
+\begin{equation}
+    \widehat{W} = \min_{j=1,\ldots,m} \widehat{W}(C_j)
     \label{eq:global_width}
 \end{equation}
 
-下面聚焦于单个连通分量的最优求解。设该分量内有$k$个障碍物，在其公共$s$截面上按$u_i$值升序排列为$O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，使得$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按$u_i$排序而非$l_i^{-}$排序的原因在于引入动态安全距离$\delta_i$后，$u_i = l_i^{-} - \delta_i$的排序可能不再与$l_i^{-}$一致，详见第\ref{sec:dynamic_delta_synthesis}节，而后续引理和定理的证明仅依赖$u$值的排序性。问题转化为在$k$个按$u_i$排列的障碍物上，如何分配左绕/右绕决策以最大化通行带宽度。
+下面聚焦单个横向截面上的精确最优求解。若某连通分量确有公共重叠截面，或已经过前述保守包络把分量化为一组同时生效的约束，均可直接套用该截面问题。设该截面上有 $k$ 个障碍物，按 $u_i$ 升序记为 $O_{(1)}, O_{(2)}, \ldots, O_{(k)}$，$u_{(1)} \leq u_{(2)} \leq \cdots \leq u_{(k)}$。按 $u_i$ 排序而非 $l_i^{-}$ 排序，是因为引入动态安全距离 $\delta_i$ 后，$u_i = l_i^{-} - \delta_i$ 的排序可能不再与 $l_i^{-}$ 一致，详见第 \ref{sec:dynamic_delta_synthesis} 节，而后续引理和定理仅依赖 $u$ 值的排序性。问题转化为在 $k$ 个按 $u_i$ 排列的障碍物上分配左绕/右绕决策，使截面通行带宽度最大化。
 
-从几何直觉看，$k$个按横向位置排列的障碍物将车道的横向空间分割为$k+1$个通道，包括最右侧障碍物与道路右边界之间、相邻障碍物之间、以及最左侧障碍物与道路左边界之间的间隙。最优策略是选择其中最宽的通道通行，通道一侧的所有障碍物划归左绕、另一侧的划归右绕，形成一个在排序中连续的分割。搜索空间从$2^k$个任意分配降为$k+1$个候选通道的选取。以下引理和定理给出严格证明，并建立通行带宽度与间隙之间的精确等式。
+从几何直觉看，$k$ 个按横向位置排列的障碍物将车道横向空间分割为 $k+1$ 个候选通道，依次是最右侧障碍物与道路右边界之间、前缀障碍物安全包络与后续障碍物之间、以及全部障碍物安全包络与道路左边界之间的间隙。最优策略是选择其中最宽的通道通行，通道一侧的障碍物划归左绕、另一侧划归右绕，形成排序中连续的分割。搜索空间由 $2^k$ 个任意分配降为 $k+1$ 个候选通道。以下引理和定理给出严格证明，并建立通行带宽度与间隙的精确等式。
 
 \section{最优分割连续性与最大间隙定理}
-本节给出MIKU通行带求解的两个核心理论结果。引理1将组合搜索空间从$2^k$降为$k+1$个连续分割，定理1把通行带宽度与候选间隙建立精确等式，使最优解可经一次线性扫描定位。
+本节给出 MIKU 通行带求解的两个核心理论结果。引理 \ref{lem:continuous_partition} 把单截面组合搜索空间由 $2^k$ 压缩到 $k+1$ 个连续分割；定理 \ref{thm:max_gap} 进一步把通行带宽度与候选间隙建立精确等式，使最优解可经一次线性扫描定位。
 
 \subsection{最优分割连续性引理}
-\textbf{引理1（最优分割的连续性）}\quad 按$u_i$值升序排列后，存在最优解$\mathbf{d}^{*}$，使得分割在排序中是连续的，即存在$p \in \{0, 1, \ldots, k\}$，满足
+\begin{lemma}[最优分割的连续性]
+\label{lem:continuous_partition}
+按$u_i$值升序排列后，存在最优解$\mathbf{d}^{*}$，使得分割在排序中是连续的，即存在$p \in \{0, 1, \ldots, k\}$，满足
 
 \begin{equation}
     d_{(i)}^{*} = L, \;\forall\, i \leq p; \quad d_{(i)}^{*} = R, \;\forall\, i > p
     \label{eq:continuous_partition}
 \end{equation}
-
-\textbf{证明}\quad 反证法。设某个最优解$\mathbf{d}^{*}$中存在排序位置$a < b < c$，使得$d_{(a)} = R$，$d_{(b)} = L$，$d_{(c)} = R$。构造新解$\mathbf{d}'$，将$d_{(b)}$从$L$改为$R$，其余不变。
-
-分析上界变化，令$\mathcal{R}' = \mathcal{R} \cup \{(b)\}$。由于$(a) \in \mathcal{R}$且按排序有$u_{(a)} \leq u_{(b)}$，故
+\end{lemma}
+\textbf{证明}\quad 任取一个最优解$\mathbf{d}^{*}$。若$\mathcal{R}=\emptyset$或$\mathcal{L}=\emptyset$，则分别对应$p=k$或$p=0$，结论显然成立。下面考虑两侧均非空的情形。令
 
 \begin{equation}
-    l^{+}(\mathbf{d}^{*}) \leq u_{(a)} \leq u_{(b)}
+    \beta = \min_{i\in\mathcal{R}} u_i
 \end{equation}
 
-因此$\min_{i \in \mathcal{R}'} u_i = \min_{i \in \mathcal{R}} u_i$，即$l^{+}(\mathbf{d}') = l^{+}(\mathbf{d}^{*})$，上界不变。
+并将所有满足$u_i \geq \beta$且原本属于$\mathcal{L}$的障碍物改入$\mathcal{R}$，其余决策保持不变。由于加入$\mathcal{R}$的障碍物均有$u_i \geq \beta$，$\min_{i\in\mathcal{R}}u_i$不变；由于$\mathcal{L}$只会减少元素，$\max_{i\in\mathcal{L}}v_i$不增，若$\mathcal{L}$被移空则下界退化为$l_{road}^{-}$。因此新解的通行带宽度不小于原最优解，仍为最优解。
 
-分析下界变化，令$\mathcal{L}' = \mathcal{L} \setminus \{(b)\}$。集合缩小，取$\max$的结果不增，故下界不升。若$\mathcal{L}' = \emptyset$，按约定$\max$取道路左边界形成的平凡下界$l_{road}^{-}$，下界不升的结论仍成立。
-
-\begin{equation}
-    l^{-}(\mathbf{d}') = \max_{i \in \mathcal{L}'} v_i \leq \max_{i \in \mathcal{L}} v_i = l^{-}(\mathbf{d}^{*})
-\end{equation}
-
-
-
-综合两方面，$W(\mathbf{d}') = l^{+}(\mathbf{d}') - l^{-}(\mathbf{d}') \geq l^{+}(\mathbf{d}^{*}) - l^{-}(\mathbf{d}^{*}) = W(\mathbf{d}^{*})$。因此$\mathbf{d}'$也是最优解，且消除了$(a), (b), (c)$处的一个不连续点。对所有不连续点重复此操作，有限次后即可得到满足式\eqref{eq:continuous_partition}的连续分割。
+此时所有$u_i < \beta$的障碍物均在$\mathcal{L}$，所有$u_i \geq \beta$的障碍物均在$\mathcal{R}$。按$u_i$升序排列后，必存在某个$p$使得前$p$个障碍物属于$\mathcal{L}$、后$k-p$个障碍物属于$\mathcal{R}$。于是存在满足式\eqref{eq:continuous_partition}的连续分割最优解。
 
 \textbf{推论}\quad 搜索空间从$2^k$降为$k+1$个候选分割点$p = 0, 1, \ldots, k$。其中$p = 0$表示所有障碍物均从右侧绕行即自车走最右侧通道，$p = k$表示所有障碍物均从左侧绕行即自车走最左侧通道，$1 \leq p \leq k-1$表示自车从第$p$和第$p+1$个障碍物之间的间隙通过。
 
 \subsection{最大间隙最优性定理}
-基于引理1，只需枚举$k+1$个候选分割点。对于分割点$p$，定义左绕集合$\mathcal{L}_p = \{(1), \ldots, (p)\}$和右绕集合$\mathcal{R}_p = \{(p+1), \ldots, (k)\}$。
+基于引理 \ref{lem:continuous_partition}，只需枚举 $k+1$ 个候选分割点。对分割点 $p$，定义左绕集合 $\mathcal{L}_p = \{(1), \ldots, (p)\}$ 和右绕集合 $\mathcal{R}_p = \{(p+1), \ldots, (k)\}$。
+
+由于仅按$u_i$排序并不能保证$v_i$也单调，需先定义前缀左安全边界
+
+\begin{equation}
+    V_p = \max_{1\leq q\leq p} v_{(q)}, \quad p=1,\ldots,k
+    \label{eq:prefix_v}
+\end{equation}
 
 定义$k+1$个间隙，包含道路边界形成的两个端部间隙
 
 \begin{equation}
     g_p = \begin{cases}
         u_{(1)} - l_{road}^{-} & p = 0 \\[0.3em]
-        u_{(p+1)} - v_{(p)} & p = 1, 2, \ldots, k-1 \\[0.3em]
-        l_{road}^{+} - v_{(k)} & p = k
+        u_{(p+1)} - V_p & p = 1, 2, \ldots, k-1 \\[0.3em]
+        l_{road}^{+} - V_k & p = k
     \end{cases}
     \label{eq:gap_def}
 \end{equation}
 
-$g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_k$表示最后一个即最左侧障碍物到道路左边界之间的间隙，$g_p$，其中$1 \leq p \leq k-1$，表示排序中相邻障碍物之间的间隙。
+$g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_k$表示前$k$个障碍物共同形成的左安全边界到道路左边界之间的间隙，$g_p$，其中$1 \leq p \leq k-1$，表示前$p$个障碍物的最左安全边界$V_p$与后续障碍物中最右安全边界$u_{(p+1)}$之间的间隙。当障碍物横向边界不交错时，$V_p=v_{(p)}$，该定义退化为相邻障碍物之间的普通几何间隙。
 
-\textbf{定理1（最大间隙最优性）}\quad 若所有障碍物的安全裕度扩展后均未超出道路边界，即对任意$i$均有$u_i \geq l_{road}^{-}$且$v_i \leq l_{road}^{+}$，则对于分割点$p$，通行带宽度$W(p) = g_p$。因此最优通行带宽度为
+\begin{theorem}[最大间隙最优性]
+\label{thm:max_gap}
+若所有障碍物的安全裕度扩展后均未超出道路边界，即对任意$i$均有$u_i \geq l_{road}^{-}$且$v_i \leq l_{road}^{+}$，则对于分割点$p$，通行带宽度$W(p) = g_p$。因此最优通行带宽度为
 
 \begin{equation}
     W^{*} = \max_{p=0,1,\ldots,k} g_p
     \label{eq:max_gap_opt}
 \end{equation}
-
+\end{theorem}
 \textbf{证明}\quad 对各分割点$p$直接代入验证。
 
 当$p = 0$即所有障碍物均为右绕时，$\mathcal{L}_0 = \emptyset$，$\mathcal{R}_0 = \{(1), \ldots, (k)\}$
@@ -303,48 +314,62 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
 当$1 \leq p \leq k-1$时，$\mathcal{L}_p = \{(1), \ldots, (p)\}$，$\mathcal{R}_p = \{(p+1), \ldots, (k)\}$
 
 \begin{equation}
-    l^{+}(p) = \min(l_{road}^{+},\; u_{(p+1)}) = u_{(p+1)}, \quad l^{-}(p) = \max(l_{road}^{-},\; v_{(p)}) = v_{(p)}
+    l^{+}(p) = \min(l_{road}^{+},\; u_{(p+1)}) = u_{(p+1)}, \quad l^{-}(p) = \max(l_{road}^{-},\; V_p) = V_p
 \end{equation}
 
-故$W(p) = u_{(p+1)} - v_{(p)} = g_p$。
+故$W(p) = u_{(p+1)} - V_p = g_p$。
 
 当$p = k$即所有障碍物均为左绕时，$\mathcal{L}_k = \{(1), \ldots, (k)\}$，$\mathcal{R}_k = \emptyset$
 
 \begin{equation}
-    l^{+}(k) = l_{road}^{+}, \quad l^{-}(k) = \max(l_{road}^{-},\; v_{(k)}) = v_{(k)}
+    l^{+}(k) = l_{road}^{+}, \quad l^{-}(k) = \max(l_{road}^{-},\; V_k) = V_k
 \end{equation}
 
-故$W(k) = l_{road}^{+} - v_{(k)} = g_k$。
+故$W(k) = l_{road}^{+} - V_k = g_k$。
 
-以上$l^{+}$和$l^{-}$的化简中，对中间分割点$1 \leq p \leq k-1$假设$l_{road}^{+} \geq u_{(p+1)}$且$l_{road}^{-} \leq v_{(p)}$。该假设在障碍物位于道路范围内时自然成立，因为$u_{(p+1)} = l_{(p+1)}^{-} - \delta_{(p+1)} < l_{road}^{+}$，$v_{(p)} = l_{(p)}^{+} + \delta_{(p)} > l_{road}^{-}$。对端部分割点$p = 0$或$p = k$，道路边界可能构成约束瓶颈。分以下两种情形讨论。其一，若对所有障碍物均有$u_{(1)} \leq l_{road}^{+}$且$v_{(k)} \geq l_{road}^{-}$即所有障碍物均在道路范围内，则$W(p) = g_p$对$p = 0, 1, \ldots, k$均严格成立。其二，若存在$u_{(1)} > l_{road}^{+}$，说明该障碍物已完全超出道路左边界，不构成右绕约束，几何上应将其从考虑集合中剔除，此时$k$减$1$、间隙重新编号后回到情形一。$v_{(k)} < l_{road}^{-}$的情形对称处理。因此在剔除道路边界外的障碍物后，选取最大$g_p$对应的分割点$p^{*}$即为最大化$W(p)$的分割点，$W^{*} = \max_p g_p$严格成立。
+以上化简仅使用了定理前提$u_i \geq l_{road}^{-}$、$v_i \leq l_{road}^{+}$以及安全扩展区间的基本关系$u_i\leq v_i$。因此，选取最大$g_p$对应的分割点$p^{*}$即为最大化$W(p)$的分割点，$W^{*} = \max_p g_p$严格成立。\hfill$\blacksquare$
 
-图\ref{fig:max_gap_theorem}以一维几何图示给出引理1与定理1的直观证明。上半部分将排序后的$k=4$个障碍物投影在$l$轴上，每个障碍物两侧以虚线标出各自的安全边界$u_i$与$v_i$。相邻障碍物之间以及障碍物与道路边界之间形成$k+1=5$个候选间隙$g_0,\ldots,g_4$。粉色加粗的$g_2^\star$即为该算例中的最大间隙，对应最优分割点$p^\star=2$。下半部分给出该分割对应的决策向量$\mathbf{d}^\star=(R,R,L,L)$，右绕群$\mathcal{R}$与左绕群$\mathcal{L}$在横向排序中形成连续区段，没有任何“RLR”式的交错，这正是引理1所保证的最优分割连续性。可见，原本$2^k=16$种组合中的最优解，必然落在$k+1=5$个连续分割对应的候选解之中，算法只需线性扫描比较间隙大小即可定位。
+\begin{lemma}[越界障碍物的预处理规则]
+\label{lem:boundary_trim}
+若存在障碍物$i$使得$u_i < l_{road}^{-}$或$v_i > l_{road}^{+}$，则按以下规则预处理后，定理\ref{thm:max_gap}的结论仍然成立。
+\begin{itemize}
+\item \textbf{规则A（双侧越界剔除）}\quad 若$u_i < l_{road}^{-}$且$v_i > l_{road}^{+}$，即障碍物膨胀后完全覆盖道路横截面，则判定当前$s$截面BLOCKED，不进入后续分割搜索。
+\item \textbf{规则B（右侧越界剔除）}\quad 若$u_i < l_{road}^{-}$且$v_i \leq l_{road}^{+}$，即障碍物右膨胀区越过道路右边界，则强制$d_i = L$即左绕并从候选列表中移除，其约束由$v_i$并入$V_p$的\texttt{max}运算，不影响其它分割点$g_p$。
+\item \textbf{规则C（左侧越界剔除）}\quad 若$u_i \geq l_{road}^{-}$且$v_i > l_{road}^{+}$，即障碍物左膨胀区越过道路左边界，则强制$d_i = R$即右绕并从候选列表中移除，其约束由$u_i$并入$\min$运算，不影响其它分割点$g_p$。
+\end{itemize}
+\end{lemma}
+
+\textbf{证明}\quad 规则A下$l^{+}(\mathbf{d}) < l^{-}(\mathbf{d})$对任意$\mathbf{d}$成立，故无可行分割，直接BLOCKED等价于$W^{*} = 0$。规则B中若分配$d_i = R$，则$l^{+}(\mathbf{d}) = \min(l_{road}^{+}, u_i, \ldots) = u_i < l_{road}^{-} \leq l^{-}(\mathbf{d})$，通行带宽度非正，故$d_i = L$为唯一最优选择；强制$d_i = L$后，$v_i$参与$\max_{j\in\mathcal{L}}v_j$的聚合，对应全局$V_p$的值已经包含该$v_i$贡献，不改变剩余障碍物间的$g_p$序。规则C对称。因此，三条规则预处理后剩余障碍物全部满足$u_j \geq l_{road}^{-}$且$v_j \leq l_{road}^{+}$，定理\ref{thm:max_gap}的前提条件成立。\hfill$\blacksquare$
+
+图 \ref{fig:max_gap_theorem} 以一维几何图示给出引理 \ref{lem:continuous_partition} 与定理 \ref{thm:max_gap}。上半部分把排序后 $k=4$ 个障碍物投影在 $l$ 轴上，每个障碍物两侧以虚线标出各自的安全边界 $u_i$ 与 $v_i$。障碍物与道路边界之间、以及前缀安全边界 $V_p$ 与后续障碍物之间形成 $k+1=5$ 个候选间隙 $g_0,\ldots,g_4$。粉色加粗的 $g_2^\star$ 即为该算例的最大间隙，对应最优分割点 $p^\star=2$。下半部分给出该分割对应的决策向量 $\mathbf{d}^\star=(R,R,L,L)$，右绕群 $\mathcal{R}$ 与左绕群 $\mathcal{L}$ 在横向排序中形成连续区段，没有任何 RLR 式的交错，与引理 \ref{lem:continuous_partition} 保证的连续性一致。原本 $2^k=16$ 种组合中的最优解必然落在 $k+1=5$ 个连续分割对应的候选解中，算法只需线性扫描比较间隙大小即可定位。
 
 \begin{figure}[htbp]
 \centering
-\resizebox{0.8\textwidth}{!}{\input{../图片/fig_max_gap_theorem}}
+\adjustbox{max width=0.8\textwidth}{\input{../图片/fig_max_gap_theorem}}
 \caption{最优分割连续性与最大间隙最优性的几何图证}
 \label{fig:max_gap_theorem}
 \end{figure}
 
-几个边界情形需单独处理。第一，当某些障碍物在横向上存在重叠即$v_{(p)} > u_{(p+1)}$时，对应的间隙$g_p$为负值，表示该通道不可通行，算法自然跳过。第二，当所有$k+1$个间隙均为负或不足车宽时，$W^{*} \leq 0$，说明本车道确实不存在可通行路径，这是真实的BLOCKED而非算法的局限。第三，引理1的证明仅要求$u$值按排序单调不减，当存在$u_i$相同的障碍物时，可按$v_i$的降序作为二级排序键，不影响引理和定理的成立。
+几个边界情形需单独处理。其一，当某些障碍物在横向上出现重叠或安全包络交错，即 $V_p > u_{(p+1)}$ 时，对应的间隙 $g_p$ 为负，表示通道不可通行，算法自然跳过。其二，当全部 $k+1$ 个间隙都不足车宽，$\max_p g_p < W_{ego}$，说明该截面无可通行路径，这是真实的 BLOCKED 而非算法的局限。其三，引理 \ref{lem:continuous_partition} 的证明仅要求 $u$ 值按排序单调不减；当存在 $u_i$ 相同的障碍物时，可按 $v_i$ 降序作为二级排序键以保证实现中排序结果唯一，该二级键不影响引理和定理的成立。
 
 \section{算法描述与复杂度分析}
-算法\ref{alg:optimal_band}给出了多障碍物统一规划求解的完整流程，将引理1和定理1转化为可执行的计算步骤，依次完成到达时间估计、时变SL投影、扫描线分组、间隙计算与最大间隙选取、避让方向分配、路径边界构建和速度约束输出七个步骤。总体结构如图\ref{fig:algorithm_flow}所示：从参考线与障碍物集合起步，先经威胁度评估与动态安全距离确定每个障碍物的$\delta_i$，再由扫描线完成纵向重叠分组，组内按$u_i$排序查找最大间隙并分配避让方向，最后将所有组的边界合并为全局\texttt{path\_boundary}并投影至ST空间生成走廊。图中每一步骤右侧标注了复杂度，主要开销集中在扫描线分组的$O(n\log n)$，其余步骤均为线性，总体满足$O(n\log n + n N_s)$的实时性目标。
+算法 \ref{alg:optimal_band} 给出多障碍物统一规划求解的完整流程，把引理 \ref{lem:continuous_partition}、定理 \ref{thm:max_gap} 及引理 \ref{lem:boundary_trim} 转化为可执行的计算步骤，依次完成到达时间估计、时变 SL 投影、越界预处理、扫描线分组、间隙计算与最大间隙选取、避让方向分配、路径边界构建和速度约束输出共八步。总体结构如图 \ref{fig:algorithm_flow} 所示，从参考线与障碍物集合起步，先经威胁度评估与动态安全距离确定每个障碍物的 $\delta_i$，按引理 \ref{lem:boundary_trim} 完成越界障碍物的规则 A/B/C 预处理，再由扫描线完成纵向重叠分组，组内按 $u_i$ 排序查找最大间隙并分配避让方向，最后把所有组的边界合并为全局 \texttt{path\_boundary} 并投影至 ST 空间生成走廊。图中每一步右侧标注了复杂度，主要开销集中于扫描线分组的 $O(n\log n)$、动态投影采样的 $O(nN_s)$ 以及路径离散边界构建的 $O(K)$，总体满足 $O(n\log n + nN_s + K)$ 的实时性目标。
 
 \begin{figure}[htbp]
 \centering
-\resizebox{0.8\textwidth}{!}{\input{../图片/fig_algorithm_flow}}
+\adjustbox{max width=0.8\textwidth}{\input{../图片/fig_algorithm_flow}}
 \caption{多障碍物统一规划算法的总体流程与复杂度}
 \label{fig:algorithm_flow}
 \end{figure}
+
+算法 \ref{alg:optimal_band} 的伪代码如下，输入为障碍物、道路边界、自车状态与安全裕度，输出为路径边界和速度约束集合。
 
 \begin{algorithm}[htbp]
 \caption{多障碍物统一规划求解算法}
 \label{alg:optimal_band}
 \KwIn{$n$个障碍物，含预测轨迹，道路边界$[l_{road}^{-}(s), l_{road}^{+}(s)]$、自车状态$(s_{ego}, v_{ego}, a_{ego})$、各障碍物安全裕度$\delta_i$}
 \KwOut{路径边界$\{[l^{-}(s), l^{+}(s)]\}$、速度约束集合$\mathcal{T}$}
-\textcolor{gray!30!black}{\textit{//步骤1：到达时间估计}}\;
+\textcolor{gray!30!black}{\textit{// 到达时间估计}}\;
 \ForEach{离散位置 $s$}{
     \eIf{$|a_{ego}| > \epsilon$}{
         $\tau(s) \leftarrow \left(-v_{ego} + \sqrt{v_{ego}^2 + 2\,a_{ego}\,(s - s_{ego})}\right) / a_{ego}$ \;
@@ -352,7 +377,7 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
         $\tau(s) \leftarrow (s - s_{ego}) / v_{ego}$ \;
     }
 }
-\textcolor{gray!30!black}{\textit{//步骤2：时变SL投影}}\;
+\textcolor{gray!30!black}{\textit{// 时变SL投影}}\;
 \ForEach{障碍物 $O_i$}{
     查询预测轨迹，计算$O_i(\tau(s))$ \;
     \If{$O_i$在$\tau(s)$时刻已移出参考线附近}{
@@ -360,7 +385,7 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
     }
     $u_i(s) \leftarrow l_i^{-}(\tau(s)) - \delta_i$，$v_i(s) \leftarrow l_i^{+}(\tau(s)) + \delta_i$ \;
 }
-\textcolor{gray!30!black}{\textit{//步骤3：按$s_i^{-}$排序，扫描线分组}}\;
+\textcolor{gray!30!black}{\textit{// 按$s_i^{-}$排序，扫描线分组}}\;
 将所有障碍物按$s_i^{-}$升序排序 \;
 $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
 \ForEach{排序后的障碍物 $O_i$}{
@@ -370,32 +395,32 @@ $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
         保存当前分量，开始新分量$\{O_i\}$，$s_{max} \leftarrow s_i^{+}$ \;
     }
 }
-\textcolor{gray!30!black}{\textit{//步骤4：组内按$u_i$排序，计算间隙}}\;
+\textcolor{gray!30!black}{\textit{// 组内按$u_i$排序，计算间隙}}\;
 \ForEach{连通分量 $C_j$，含$k$个障碍物}{
     按$u_i$升序排列为$O_{(1)}, \ldots, O_{(k)}$ \;
     由式\eqref{eq:gap_def}计算$k+1$个间隙$g_0, g_1, \ldots, g_k$ \;
-    \textcolor{gray!30!black}{\textit{//步骤5：选最大间隙，分配避让方向}}\;
+    \textcolor{gray!30!black}{\textit{// 选最大间隙，分配避让方向}}\;
     $p^{*} \leftarrow \arg\max_{p} g_p$ \;
     $d_{(i)} \leftarrow L$，$\forall\, i \leq p^{*}$；$d_{(i)} \leftarrow R$，$\forall\, i > p^{*}$ \;
 }
-\textcolor{gray!30!black}{\textit{//步骤6：构建路径边界}}\;
+\textcolor{gray!30!black}{\textit{// 构建路径边界}}\;
 \ForEach{离散位置 $s$}{
     按分配的避让方向更新$[l^{-}(s), l^{+}(s)]$ \;
 }
-\textcolor{gray!30!black}{\textit{//步骤7：输出速度约束}}\;
+\textcolor{gray!30!black}{\textit{// 输出速度约束}}\;
 \ForEach{依赖动态障碍物移开的位置 $s_k$}{
     $\mathcal{T} \leftarrow \mathcal{T} \cup \{(s_k, \tau(s_k))\}$ \;
 }
 \KwRet $\{[l^{-}(s), l^{+}(s)]\}$，$\mathcal{T}$ \;
 \end{algorithm}
 
-下面分析算法\ref{alg:optimal_band}各步骤的时间和空间复杂度。
+下面分析算法 \ref{alg:optimal_band} 各阶段的时间和空间复杂度。
 
-对单个含$k$个障碍物的连通分量，算法步骤4中按$u_i$排序的时间复杂度为$O(k \log k)$，计算$k+1$个间隙和选取最大值均为$O(k)$，因此单分量的时间复杂度为$O(k \log k)$。空间复杂度为$O(k)$，用于存储排序后的障碍物列表和间隙数组。
+对单个含$k$个障碍物的连通分量，算法\ref{alg:optimal_band}中组内按$u_i$排序的时间复杂度为$O(k \log k)$，计算$k+1$个间隙和选取最大值均为$O(k)$，因此单分量的时间复杂度为$O(k \log k)$。空间复杂度为$O(k)$，用于存储排序后的障碍物列表和间隙数组。
 
-全局来看，步骤1和步骤2对每个障碍物执行常数时间操作，复杂度为$O(n)$。步骤3中按$s_i^{-}$排序的复杂度为$O(n \log n)$，扫描线遍历为$O(n)$。步骤4--5中，所有连通分量的组内排序总复杂度满足$\sum_j O(k_j \log k_j) \leq O(n \log n)$，其中$\sum_j k_j = n$，由$k \log k$的凸性及约束$\sum_j k_j = n$，各分量排序复杂度之和的上界在单一极端分量（$k_1 = n-m+1$，其余$k_j = 1$）时达到$O(n \log n)$。步骤6和步骤7均为$O(K)$，其中$K$为离散位置数。因此，算法的总时间复杂度为$O(n \log n + K)$，其中$O(n \log n)$为障碍物处理，$O(K)$为路径边界构建。在$n \ll K$的典型场景下，$O(K)$项占主导。
+全局来看，到达时间估计在$K$个离散位置上执行，复杂度为$O(K)$。时变SL投影阶段对每个障碍物查询预测轨迹，若每个障碍物使用$N_s$个采样点，则复杂度为$O(nN_s)$；当仅在障碍物关键纵向位置采样时，可视为$N_s=O(1)$。扫描线分组中按$s_i^{-}$排序的复杂度为$O(n \log n)$，扫描线遍历为$O(n)$。组内最大间隙决策阶段中，所有连通分量的组内排序总复杂度满足$\sum_j O(k_j \log k_j) \leq O(n \log n)$，其中$\sum_j k_j = n$，由$k \log k$的凸性及约束$\sum_j k_j = n$，各分量排序复杂度之和的上界在单一极端分量（$k_1 = n-m+1$，其余$k_j = 1$）时达到$O(n \log n)$。路径边界构建和速度约束输出均为$O(K)$。因此，算法的总时间复杂度为$O(n \log n + nN_s + K)$，其中$O(n \log n)$为障碍物排序与分组，$O(nN_s)$为时变投影采样，$O(K)$为路径边界与速度约束构建。在$N_s=O(1)$的关键点采样实现中，该式退化为$O(n \log n + K)$。
 
-表\ref{tab:algo_compare}从多个维度对比了本文算法与Apollo Baseline的差异。
+表 \ref{tab:algo_compare} 从多个维度对比本文算法与 Apollo Baseline 的差异。
 
 \begin{table}[htbp]
 \centering
@@ -407,77 +432,135 @@ $s_{max} \leftarrow -\infty$，$group \leftarrow \emptyset$ \;
 & \textbf{Apollo Baseline} & \textbf{本文方法} \\
 \midrule
 \textbf{决策粒度} & 逐障碍物独立决策 & 组级全局决策 \\
-\textbf{最优性保证} & 贪心策略，无最优性保证 & 定理保证组内最优 \\
+\textbf{最优性保证} & 贪心策略，无最优性保证 & 单截面精确最优，链式分量保守可行 \\
 \textbf{时间信息} & path阶段仅$t=0$快照，speed阶段使用预测轨迹 & 预测轨迹$O_i(\tau(s))$ \\
 \textbf{动态障碍物} & 不参与路径决策 & 通过预测位置参与 \\
 \textbf{BLOCKED处理} & 截断路径$\to$停车 & 时变间隙可能打开$\to$继续通行 \\
 \textbf{速度协调} & 无 & 输出$\tau(s_k)$约束 \\
-\textbf{时间复杂度} & $O(nK)$ & $O(n \log n + K)$\textsuperscript{注} \\
+\textbf{时间复杂度} & $O(nK)$ & $O(n \log n + nN_s + K)$\textsuperscript{注} \\
 \bottomrule
 \end{tabularx}
-\par\noindent{\footnotesize 注：$K$为路径离散点数；典型场景下$n \ll K$，$O(K)$项占主导。}
+\par\noindent{\footnotesize 注：$K$为路径离散点数，$N_s$为单障碍物时变投影采样数；关键点采样时$N_s=O(1)$，退化为$O(n\log n+K)$。}
 \end{table}
 
-Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总复杂度为$O(nK)$；本文算法在排序后只需对$k+1$个候选分割点做线性扫描，复杂度为$O(n\log n + K)$，当$n \ll K$时$O(K)$项占主导。两者在常规多障碍物规模下均可在毫秒级完成，远低于100\,ms规划周期限制。本文算法的核心价值在于保证决策的全局最优性，而非计算效率本身的提升。
+Baseline 在每个离散位置 $s$ 处遍历全部障碍物，共 $K$ 个离散点，总复杂度 $O(nK)$；本文算法在排序后仅需对 $k+1$ 个候选分割点做一次线性扫描，总复杂度 $O(n\log n + nN_s + K)$，关键点采样时退化为 $O(n\log n + K)$。两者在常规多障碍物规模下均可毫秒级完成，远低于 100\,ms 规划周期限制。本文算法的核心价值在于给出单截面或保守包络下的组级一致决策，而非单纯追求计算效率。
 
 \section{组级决策与最大间隙仿真}
 \label{sec:exp_ch6}
 
-本节通过两个对照场景验证扫描线分组与最大间隙策略对Baseline独立决策矛盾的修正效果。场景二为动+静混合的小规模分组，场景三为单车道维修封闭+借道的大规模连通分量，分别检验组内方向冲突的破解与跨车道全局协调的能力。
+本节通过两个对照场景验证扫描线分组与最大间隙策略对 Baseline 独立决策矛盾的修正效果。场景二为动静混合的小规模分组，场景三为单车道维修封闭加借道的大规模连通分量，分别检验组内方向冲突的破解与跨车道全局协调。每个场景均设压力构型与可通过构型两组子场景；压力构型使 Baseline 因独立决策矛盾而不可通行，用以验证组级策略的必要性；可通过构型在同一口径下比较连续指标。
 
-\subsection{场景二动静混合的组内方向协调}
+\subsection{场景二压力构型下独立决策导致的不可通行}
 
-场景二由一名横穿行人加左前方静态停车构成，行人与停车在纵向上存在重叠区，构成同一连通分量。Baseline逐障碍物决策时，行人横向位置触发右推，停车横向位置又强制左推，两者冲突使$l_{\min}>l_{\max}$。MIKU将两者并入同一组，按$u_i$排序计算两个候选间隙，选取最大间隙$g^{*}$对应的统一避让方向。
+压力构型中行人横穿位置与静态停车纵向重叠更深。行人被\texttt{IsStatic()}过滤留给\texttt{SpeedBoundsDecider}处理，静态停车在path层被独立分配右绕，两次独立收缩使得下一个$s$截面的$l^+<l^-$，\texttt{PathBoundsDecider}判定BLOCKED，\texttt{TrimPathBounds}在$s=\MTwoBaselineSEnd$\,m处截断path，\texttt{FallbackPath}生成减速停车轨迹，并由\texttt{SpeedBoundsDecider}对行人叠加时间窗约束压低速度。MIKU将行人与停车归入同一组，按最大间隙策略统一分配避让方向，路径与速度约束一致，自车以$\bar{v}=\MTwoMikuAvgV$\,m/s顺利通过。
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_sl}}
+\input{../图片/fig_exp_02_ped_plus_parked_sl}
+\caption{场景二压力构型SL平面路径与边界对比}
+\label{fig:exp_ch6_pressure_sl_2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_st}
+\caption{场景二压力构型ST平面速度规划对比}
+\label{fig:exp_ch6_pressure_st_2}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_02_ped_plus_parked_va}
+\caption{场景二压力构型$v(t)$、$a(t)$、$j(t)$对比}
+\label{fig:exp_ch6_pressure_va_2}
+\end{figure}
+
+图\ref{fig:exp_ch6_pressure_sl_2}中Baseline路径在$s=\MTwoBaselineSEnd$\,m处被\texttt{TrimPathBounds}截断，MIKU路径完整通过全程。图\ref{fig:exp_ch6_pressure_st_2}显示Baseline进入FallbackPath后速度QP仍在\MTwoBaselineQpSpeed\,ms内正常求解减速停车轨迹，而MIKU以\MTwoMikuQpTotal\,ms完成全链路规划。图\ref{fig:exp_ch6_pressure_va_2}进一步表明，MIKU的速度、加速度和冲击峰值均低于Baseline，说明组级一致约束也改善了纵向平顺性。
+
+\subsection{场景二可通过构型下的组内方向协调}
+
+场景二由一名横穿行人加左前方静态停车构成，行人与停车在纵向上存在重叠区，构成同一连通分量。本节采用可通过子场景，即在原压力场景基础上仅将停车横向中心轻量外移，使Baseline仍会产生更保守的速度约束但可以完成终点停车；MIKU将两者并入同一组，按$u_i$排序计算候选间隙，选取最大间隙$g^{*}$对应的统一避让方向，从而显著降低纵向加减速峰值。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_06_ped_plus_parked_cmp_sl}
 \caption{场景二SL平面路径与边界对比}
 \label{fig:exp_ch6_sl_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_st}}
+\input{../图片/fig_exp_06_ped_plus_parked_cmp_st}
 \caption{场景二ST平面速度规划对比}
 \label{fig:exp_ch6_st_2}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_02_ped_plus_parked_va}}
+\input{../图片/fig_exp_06_ped_plus_parked_cmp_va}
 \caption{场景二$v(t)$、$a(t)$、$j(t)$对比}
 \label{fig:exp_ch6_va_2}
 \end{figure}
 
-\subsection{场景三单车道封闭导流的跨车道全局协调}
+图\ref{fig:exp_ch6_sl_2}、图\ref{fig:exp_ch6_st_2}和图\ref{fig:exp_ch6_va_2}依次给出可通过构型下的SL边界、ST速度走廊和$v(t)$/$a(t)$/$j(t)$曲线，说明MIKU在保持通行能力的同时获得了更宽的横向余量和更平滑的纵向响应。
 
-场景三由18个静态障碍构成，包括入口漏斗5个交通锥、维持段8段水马、出口漏斗5个交通锥，所有障碍属于同一大型连通分量，要求自车借用左侧相邻车道通过。Baseline在入口漏斗段对每锥独立选择左推或右推，与维持段水马跨越车道分界线的几何产生方向矛盾，在维持段入口处$l_{\min}>l_{\max}$，path被截断停车于$s\approx$\,\MFourBaselineSEnd\,m。MIKU将整段导流识别为单一组，组级最大间隙搜索将$p^{*}$分配至所有水马的左侧，路径在入口处即决定借入相邻车道深处，全程平顺通过。
+\subsection{场景三压力构型下贪心方向切换导致的不可通行}
+
+压力构型中18个静态障碍的横向位置使Baseline的贪心nudge在相邻障碍物间产生方向切换，前一个障碍物选择左绕，下一个因左侧空间不足切换为右绕，交替的边界收缩使得某个$s$截面上$l^+<l^-$，\texttt{PathBoundsDecider}在$s=\MFourBaselineSEnd$\,m处标记BLOCKED，\texttt{TrimPathBounds}截断path并触发\texttt{FallbackPath}。MIKU将全部障碍物识别为单一连通分量，最大间隙搜索给出统一的左绕方向，路径QP在一致的边界上求解，自车以$\bar{v}=\MFourMikuAvgV$\,m/s完成全程借道通行。
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_sl}}
+\input{../图片/fig_exp_04_dense_construction_sl}
+\caption{场景三压力构型SL平面路径与边界对比}
+\label{fig:exp_ch6_pressure_sl_4}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_st}
+\caption{场景三压力构型ST平面速度规划对比}
+\label{fig:exp_ch6_pressure_st_4}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_04_dense_construction_va}
+\caption{场景三压力构型$v(t)$、$a(t)$、$j(t)$对比}
+\label{fig:exp_ch6_pressure_va_4}
+\end{figure}
+
+图\ref{fig:exp_ch6_pressure_sl_4}中Baseline路径在第$\MFourBaselineSEnd$\,m处因方向切换矛盾而截断，MIKU路径沿统一左绕方向完整通过$\MFourMikuSEnd$\,m。图\ref{fig:exp_ch6_pressure_st_4}显示MIKU的ST速度走廊在统一左绕边界下保持连续，而Baseline在方向切换前后出现了断裂的速度窗。图\ref{fig:exp_ch6_pressure_va_4}中Baseline速度在截断前已出现减速趋势，MIKU全程维持$v>\MFourMikuMinV$\,m/s。
+
+\subsection{场景三可通过构型下的跨车道全局协调}
+
+场景三由18个静态障碍构成，包括入口漏斗5个交通锥、维持段8段水马、出口漏斗5个交通锥，所有障碍属于同一大型连通分量，要求自车借用左侧相邻车道通过。C4可比场景将维持段水马放置在Baseline贪心方向切换的临界侧，使Baseline与MIKU均能通过。MIKU仍将整段导流识别为单一组，组级最大间隙搜索将$p^{*}$分配至所有水马的左侧，路径QP在更一致的边界上求解，平均路径QP耗时由\MEightBaselineQpPath\,ms降至\MEightMikuQpPath\,ms。
+
+\begin{figure}[H]
+\centering
+\input{../图片/fig_exp_08_dense_construction_cmp_sl}
 \caption{场景三SL平面路径与边界对比}
 \label{fig:exp_ch6_sl_4}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_st}}
+\input{../图片/fig_exp_08_dense_construction_cmp_st}
 \caption{场景三ST平面速度规划对比}
 \label{fig:exp_ch6_st_4}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\resizebox{\textwidth}{!}{\input{../图片/fig_exp_04_dense_construction_va}}
+\input{../图片/fig_exp_08_dense_construction_cmp_va}
 \caption{场景三$v(t)$、$a(t)$、$j(t)$对比}
 \label{fig:exp_ch6_va_4}
 \end{figure}
 
+图\ref{fig:exp_ch6_sl_4}、图\ref{fig:exp_ch6_st_4}和图\ref{fig:exp_ch6_va_4}依次给出跨车道导流场景中的统一左绕边界、连续速度走廊与更平滑的速度/加速度曲线，说明组级最大间隙策略在大规模连通分量上同样有效。
+
 \subsection{指标汇总}
 
-两个场景的关键指标列于表\ref{tab:exp_ch6_metrics}。Baseline在两个场景下均因方向冲突触发BLOCKED，MIKU通过组级最优分配将通行成功率从0翻转为1。
+两个场景的关键指标列于表 \ref{tab:exp_ch6_metrics}。在可通过子场景中，Baseline 与 MIKU 均达到终点，连续指标具备可比性；压力构型下的组件失效则统一放入第 \ref{chap:integration} 章消融实验汇报。
 
 \begin{table}[htbp]
 \centering
@@ -488,17 +571,17 @@ Baseline在每个离散位置$s$处遍历所有障碍物共$K$个离散点，总
 \toprule
 \textbf{场景} & \textbf{模式} & $\bar{v}$\,(m/s) & $|a_x|_{\max}$\,(m/s$^2$) & $s_{end}$\,(m) & $t_{arrive}$\,(s) & 通过 \\
 \midrule
-\multirow{2}{*}{二} & Baseline & \MTwoBaselineAvgV  & \MTwoBaselineMaxAbsA  & \MTwoBaselineSEnd  & \MTwoBaselineTArrive  & $\times$ \\
-                   & MIKU     & \MTwoMikuAvgV      & \MTwoMikuMaxAbsA      & \MTwoMikuSEnd      & \MTwoMikuTArrive      & $\checkmark$ \\
+	\multirow{2}{*}{二} & Baseline & \MSixBaselineAvgV  & \MSixBaselineMaxAbsA  & \MSixBaselineSEnd  & \MSixBaselineTArrive  & $\checkmark$ \\
+                   & MIKU     & \MSixMikuAvgV      & \MSixMikuMaxAbsA      & \MSixMikuSEnd      & \MSixMikuTArrive      & $\checkmark$ \\
 \midrule
-\multirow{2}{*}{三} & Baseline & \MFourBaselineAvgV & \MFourBaselineMaxAbsA & \MFourBaselineSEnd & \MFourBaselineTArrive & $\times$ \\
-                   & MIKU     & \MFourMikuAvgV     & \MFourMikuMaxAbsA     & \MFourMikuSEnd     & \MFourMikuTArrive     & $\checkmark$ \\
+	\multirow{2}{*}{三} & Baseline & \MEightBaselineAvgV & \MEightBaselineMaxAbsA & \MEightBaselineSEnd & \MEightBaselineTArrive & $\checkmark$ \\
+                   & MIKU     & \MEightMikuAvgV     & \MEightMikuMaxAbsA     & \MEightMikuSEnd     & \MEightMikuTArrive     & $\checkmark$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-实验结果与本章理论分析一致。场景二中MIKU的组级方向协调避免了Baseline逐障碍物贪心的方向冲突；场景三中MIKU的最大间隙搜索发现了Baseline贪心策略遗漏的统一借入相邻车道的全局最优解。两个场景表明，定理1所述组级最优对逐障碍物贪心的替代能切实提升通行成功率。
+实验结果与本章理论分析一致。压力构型中Baseline因独立决策矛盾分别在$s=\MTwoBaselineSEnd$\,m和$s=\MFourBaselineSEnd$\,m处不可通行，MIKU的组级策略均顺利通过；可通过构型中MIKU在同等通行能力下改善了求解指标。两组对照表明，定理\ref{thm:max_gap}给出的单截面最优分割和链式分量的保守包络处理，既是极端条件下通行的必要条件，也能在宽松条件下改善轨迹质量。
 
 \section{本章小结}
 
-本章针对Apollo PathBoundsDecider独立决策矛盾导致路径BLOCKED的问题，提出组级最优通行带与最大间隙策略。基于扫描线的纵向重叠检测将相互关联的障碍物聚为连通分量，组内引理证明最优分割在横向排序中的连续性，定理证明每个候选分割的通行带宽度恰好等于对应的横向间隙，将组合搜索复杂度从$O(2^k)$降至$O(k\log k)$。数值仿真表明，组级全局决策能有效修正Baseline逐障碍物贪心的方向冲突，在动静混合与密集施工导流场景中均将通行成功率从0翻转为1。
+本章针对 Apollo \texttt{PathBoundsDecider} 独立决策矛盾触发路径 BLOCKED 的问题，提出组级最优通行带与最大间隙策略。扫描线按 $s_i^{-}$ 升序推进，把相互关联的障碍物聚为连通分量，使不同分量的避让决策彼此独立。对单截面或共同重叠情形，引理证明最优分割在按 $u_i$ 横向排序中连续，定理进一步证明每个候选分割点的通行带宽度恰等于含前缀最大安全边界的对应间隙，把组合搜索复杂度由 $O(2^k)$ 降至 $O(k\log k)$。对一般链式连通分量，采用保守包络把活跃集合扩展为整个分量，给出充分可行条件。数值仿真显示，该策略在压力构型中修正了 Baseline 贪心方向冲突，在可通过构型中保持通行能力并降低部分求解开销。
