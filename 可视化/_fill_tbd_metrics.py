@@ -11,6 +11,7 @@
             stop_dur, qp_solve_ms_path, qp_solve_ms_speed, qp_solve_ms_total,
             pass_count, v_improvement, extra_ms, efficiency}
 """
+
 from __future__ import annotations
 
 import csv
@@ -23,8 +24,14 @@ DATA = ROOT / "图片" / "data"
 CHAPTERS = ROOT / "毕业论文" / "chapters"
 
 SCN_NAMES = [
-    "01_crossing_ped", "02_ped_plus_parked", "03_narrow_cones",
+    "01_crossing_ped",
+    "02_ped_plus_parked",
+    "03_narrow_cones",
     "04_dense_construction",
+    "05_crossing_ped_cmp",
+    "06_ped_plus_parked_cmp",
+    "07_narrow_cones_cmp",
+    "08_dense_construction_cmp",
 ]
 
 
@@ -73,17 +80,17 @@ def collect_metrics():
         for mode in ("baseline", "miku"):
             m = meta["metrics"][mode]
             qp = m["qp_solve_ms"]
-            out[(nn, mode, "avg_v")]      = m["avg_v"]
-            out[(nn, mode, "max_abs_a")]  = m["max_abs_a"]
+            out[(nn, mode, "avg_v")] = m["avg_v"]
+            out[(nn, mode, "max_abs_a")] = m["max_abs_a"]
             out[(nn, mode, "max_abs_jerk")] = m["max_abs_jerk"]
-            out[(nn, mode, "s_end")]      = m["s_end"]
-            out[(nn, mode, "t_arrive")]   = m["t_arrive"]
-            out[(nn, mode, "qp_solve_ms_path")]  = qp["path"]
+            out[(nn, mode, "s_end")] = m["s_end"]
+            out[(nn, mode, "t_arrive")] = m["t_arrive"]
+            out[(nn, mode, "qp_solve_ms_path")] = qp["path"]
             out[(nn, mode, "qp_solve_ms_speed")] = qp["speed"]
             out[(nn, mode, "qp_solve_ms_total")] = qp["total"]
             out[(nn, mode, "efficiency")] = m["efficiency"]
             min_v, stop_dur = derive_min_v_stop_dur(scn, mode)
-            out[(nn, mode, "min_v")]    = min_v
+            out[(nn, mode, "min_v")] = min_v
             out[(nn, mode, "stop_dur")] = stop_dur
 
     # 汇总：N 场景平均 + pass_count
@@ -104,7 +111,7 @@ def collect_metrics():
             path_qps.append(m["qp_solve_ms"]["path"])
         summary_avg[mode] = sum(avg_vs) / len(avg_vs)
         summary_path_qp[mode] = sum(path_qps) / len(path_qps)
-        out[("summary", mode, "avg_v")]      = summary_avg[mode]
+        out[("summary", mode, "avg_v")] = summary_avg[mode]
         out[("summary", mode, "pass_count")] = pass_cnt
         out[("summary", mode, "qp_solve_ms_total")] = total_qp / len(SCN_NAMES)
 
@@ -112,8 +119,8 @@ def collect_metrics():
     base = summary_avg["baseline"]
     if base > 0:
         out[("summary", "summary", "v_improvement")] = (
-            (summary_avg["miku"] - base) / base
-        )
+            summary_avg["miku"] - base
+        ) / base
     out[("summary", "summary", "extra_ms")] = (
         summary_path_qp["miku"] - summary_path_qp["baseline"]
     )
@@ -123,20 +130,20 @@ def collect_metrics():
 
 # 字段 → 格式 + 单位（单位由 LaTeX 文本自带，这里只输出数字）
 FMT = {
-    "avg_v":              "{:.2f}",
-    "min_v":              "{:.2f}",
-    "max_abs_a":          "{:.2f}",
-    "max_abs_jerk":       "{:.2f}",
-    "s_end":              "{:.1f}",
-    "t_arrive":           "{:.2f}",
-    "stop_dur":           "{:.2f}",
-    "qp_solve_ms_path":   "{:.2f}",
-    "qp_solve_ms_speed":  "{:.2f}",
-    "qp_solve_ms_total":  "{:.2f}",
-    "efficiency":         "{:.0%}",
-    "pass_count":         "{:d}",
-    "v_improvement":      "{:.1%}",
-    "extra_ms":           "{:.2f}",
+    "avg_v": "{:.2f}",
+    "min_v": "{:.2f}",
+    "max_abs_a": "{:.2f}",
+    "max_abs_jerk": "{:.2f}",
+    "s_end": "{:.1f}",
+    "t_arrive": "{:.2f}",
+    "stop_dur": "{:.2f}",
+    "qp_solve_ms_path": "{:.2f}",
+    "qp_solve_ms_speed": "{:.2f}",
+    "qp_solve_ms_total": "{:.2f}",
+    "efficiency": "{:.0%}",
+    "pass_count": "{:d}",
+    "v_improvement": "{:.1%}",
+    "extra_ms": "{:.2f}",
 }
 
 
@@ -191,15 +198,15 @@ def main():
 
     # 检查残留
     import subprocess
+
     r = subprocess.run(
-        ["grep", "-rn", "TBD-METRIC", str(CHAPTERS)],
-        capture_output=True, text=True
+        ["grep", "-rn", "TBD-METRIC", str(CHAPTERS)], capture_output=True, text=True
     )
     if r.stdout.strip():
         print("\n⚠ 残留 TBD-METRIC：")
         print(r.stdout)
     else:
-        print("\n✓ 全部 TBD-METRIC 已替换")
+        print("\n[ok] 全部 TBD-METRIC 已替换")
 
 
 if __name__ == "__main__":

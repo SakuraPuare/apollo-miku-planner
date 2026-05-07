@@ -2,6 +2,9 @@
 # requires-python = ">=3.10"
 # dependencies = [
 #     "numpy>=1.26",
+#     "matplotlib>=3.8",
+#     "scipy>=1.11",
+#     "osqp>=0.6.3",
 # ]
 # ///
 """MIKU 消融实验综合评分 — 两层评分（硬门 + 软指标加权几何平均），输出 LaTeX 三件套。
@@ -28,6 +31,7 @@ import os
 from collections import OrderedDict, defaultdict
 from typing import Dict, List, Tuple
 
+import apollo_pipeline as ap
 import numpy as np
 
 
@@ -41,53 +45,76 @@ DIM_WEIGHTS: Dict[str, float] = {
     "efficiency": 0.30,
     "smoothness": 0.30,
     "robustness": 0.25,
-    "compute":    0.15,
+    "compute": 0.15,
 }
 
 # 维度内部子指标定义： (csv 列名, 是否「越小越好」)
 DIM_METRICS: Dict[str, List[Tuple[str, bool]]] = {
     "efficiency": [("v_avg", False), ("t_arrive", True)],
     "smoothness": [("jerk_rms", True), ("a_y_max", True), ("kappa_rms", True)],
-    "robustness": [("l_max_dev", True), ("tau_violation", True),
-                   ("decision_switches", True)],
-    "compute":    [("qp_total_ms", True)],
+    "robustness": [
+        ("l_max_dev", True),
+        ("tau_violation", True),
+        ("decision_switches", True),
+    ],
+    "compute": [("qp_total_ms", True)],
 }
 
-DIM_LABEL_ZH = {"efficiency": "通行效率", "smoothness": "轨迹平顺",
-                 "robustness": "决策鲁棒", "compute": "计算开销"}
+DIM_LABEL_ZH = {
+    "efficiency": "通行效率",
+    "smoothness": "轨迹平顺",
+    "robustness": "决策鲁棒",
+    "compute": "计算开销",
+}
 
 VARIANT_LABEL_ZH = {
     "M0_baseline": "M0 Apollo Baseline",
-    "M1_no_C1":    "M1 MIKU w/o C1 (\\(\\tau\\)-shift)",
-    "M2_no_C2C3":  "M2 MIKU w/o C2-C3 (grouping)",
-    "M3_no_C4":    "M3 MIKU w/o C4 (\\(\\delta_i\\))",
-    "M4_no_C5":    "M4 MIKU w/o C5 (corridor)",
-    "M5_full":     "M5 MIKU Full",
+    "M1_no_C1": "M1 MIKU w/o C1 (\\(\\tau\\)-shift)",
+    "M2_no_C2C3": "M2 MIKU w/o C2-C3 (grouping)",
+    "M3_no_C4": "M3 MIKU w/o C4 (\\(\\delta_i\\))",
+    "M4_no_C5": "M4 MIKU w/o C5 (corridor)",
+    "M5_full": "M5 MIKU Full",
 }
 
 REFERENCE_VARIANT = "M5_full"
 EPS = 1e-3
 
-# 注：以下三参数仅作论文 macro 描述用。运行时实际取值来自 apollo_pipeline.Scenario
-# 默认；本脚本独立运行时为避免拉入完整模块栈，仅复刻常量。
-DELTA_BASELINE = 0.30
-DELTA_MIN = 0.10
-DELTA_MAX = 0.40
-# t_arrive 失败惩罚：来自 run_ablation.py `t_arrive_val = scn.t_max + 5.0`
-FAIL_PENALTY_S = 5
+DELTA_BASELINE = ap.DELTA_BASELINE
+DELTA_MIN = ap.DELTA_MIN
+DELTA_MAX = ap.DELTA_MAX
+FAIL_PENALTY_S = ap.ABLATION_FAIL_PENALTY_S
 
 
 # ============================ 数据加载 ============================
 
+
 def load_rows() -> List[dict]:
     path = os.path.join(DATA_DIR, "ablation.csv")
     rows = []
-    float_cols = ("v_avg", "t_arrive", "s_end", "s_target",
-                  "jerk_rms", "a_y_max", "kappa_rms", "l_max_dev",
-                  "qp_path_ms", "qp_speed_ms", "qp_total_ms")
-    int_cols = ("success", "blocked", "tau_violation",
-                "decision_switches", "C1_tau", "C2_group",
-                "C3_maxgap", "C4_delta", "C5_corridor")
+    float_cols = (
+        "v_avg",
+        "t_arrive",
+        "s_end",
+        "s_target",
+        "jerk_rms",
+        "a_y_max",
+        "kappa_rms",
+        "l_max_dev",
+        "qp_path_ms",
+        "qp_speed_ms",
+        "qp_total_ms",
+    )
+    int_cols = (
+        "success",
+        "blocked",
+        "tau_violation",
+        "decision_switches",
+        "C1_tau",
+        "C2_group",
+        "C3_maxgap",
+        "C4_delta",
+        "C5_corridor",
+    )
     with open(path, newline="", encoding="utf-8") as f:
         for r in csv.DictReader(f):
             for k in float_cols:
@@ -101,6 +128,7 @@ def load_rows() -> List[dict]:
 
 
 # ============================ 评分计算 ============================
+
 
 def hard_gate(row: dict) -> int:
     return int(row["success"] == 1 and row["blocked"] == 0)
@@ -147,6 +175,7 @@ def overall_score(scn_scores: List[float]) -> float:
 
 # ============================ 评分主流程 ============================
 
+
 def compute_all_scores(rows: List[dict]) -> Tuple[List[dict], List[dict]]:
     by_scenario = defaultdict(list)
     for r in rows:
@@ -156,7 +185,9 @@ def compute_all_scores(rows: List[dict]) -> Tuple[List[dict], List[dict]]:
     for scn, scn_rows in by_scenario.items():
         ref = next((r for r in scn_rows if r["variant"] == REFERENCE_VARIANT), None)
         if ref is None:
-            raise RuntimeError(f"reference variant {REFERENCE_VARIANT} missing in {scn}")
+            raise RuntimeError(
+                f"reference variant {REFERENCE_VARIANT} missing in {scn}"
+            )
         refs[scn] = ref
 
     per_scn_rows: List[dict] = []
@@ -172,8 +203,8 @@ def compute_all_scores(rows: List[dict]) -> Tuple[List[dict], List[dict]]:
                 "efficiency": round(dims["efficiency"] * 100, 2),
                 "smoothness": round(dims["smoothness"] * 100, 2),
                 "robustness": round(dims["robustness"] * 100, 2),
-                "compute":    round(dims["compute"] * 100, 2),
-                "hard_gate":  hard_gate(r),
+                "compute": round(dims["compute"] * 100, 2),
+                "hard_gate": hard_gate(r),
             }
             per_scn_rows.append(entry)
             by_variant[r["variant"]][scn] = entry
@@ -189,16 +220,18 @@ def compute_all_scores(rows: List[dict]) -> Tuple[List[dict], List[dict]]:
                 dim_means[d] = float(arr.mean() * 100)
             else:
                 dim_means[d] = float(np.exp(np.mean(np.log(arr))) * 100)
-        overall_rows.append({
-            "variant": variant,
-            "S_overall": round(overall_score(scn_scores), 2),
-            "efficiency_avg": round(dim_means["efficiency"], 2),
-            "smoothness_avg": round(dim_means["smoothness"], 2),
-            "robustness_avg": round(dim_means["robustness"], 2),
-            "compute_avg":    round(dim_means["compute"], 2),
-            "n_pass":         sum(scn_map[s]["hard_gate"] for s in by_scenario),
-            "n_total":        len(by_scenario),
-        })
+        overall_rows.append(
+            {
+                "variant": variant,
+                "S_overall": round(overall_score(scn_scores), 2),
+                "efficiency_avg": round(dim_means["efficiency"], 2),
+                "smoothness_avg": round(dim_means["smoothness"], 2),
+                "robustness_avg": round(dim_means["robustness"], 2),
+                "compute_avg": round(dim_means["compute"], 2),
+                "n_pass": sum(scn_map[s]["hard_gate"] for s in by_scenario),
+                "n_total": len(by_scenario),
+            }
+        )
 
     overall_rows.sort(key=lambda x: -x["S_overall"])
     for rk, row in enumerate(overall_rows, start=1):
@@ -207,6 +240,7 @@ def compute_all_scores(rows: List[dict]) -> Tuple[List[dict], List[dict]]:
 
 
 # ============================ LaTeX 输出 ============================
+
 
 def write_main_table(overall_rows: List[dict], path: str):
     """主表 6 行 × 7 列，按总分降序。"""
@@ -245,7 +279,14 @@ def write_radar(overall_rows: List[dict], path: str):
         "  ]",
     ]
     plot_lines = []
-    color_palette = ["red", "orange", "olive", "blue", "violet", "teal"]
+    color_palette = [
+        "dangerred",
+        "lightorange",
+        "vibrantorange",
+        "deepblue",
+        "deeppink",
+        "vibrantgreen",
+    ]
     for idx, row in enumerate(overall_rows):
         col = color_palette[idx % len(color_palette)]
         # 雷达 4 个角点，顺序与 xticklabels 一致
@@ -269,15 +310,19 @@ def write_heatmap(per_scn_rows: List[dict], path: str):
     """热力图 6 行变体 × 4 列场景，色阶按 S_scn(0-100)。"""
     variants = list(OrderedDict.fromkeys(r["variant"] for r in per_scn_rows))
     # 场景按论文章节出现顺序展示：03→05章, 02→06章, 04→06章, 01→07章
-    scenario_order = ["03_narrow_cones", "02_ped_plus_parked",
-                      "04_dense_construction", "01_crossing_ped"]
+    scenario_order = [
+        "03_narrow_cones",
+        "02_ped_plus_parked",
+        "04_dense_construction",
+        "01_crossing_ped",
+    ]
     csv_scenarios = set(r["scenario"] for r in per_scn_rows)
     scenarios = [s for s in scenario_order if s in csv_scenarios]
     scn_label = {
-        "03_narrow_cones":       "场景一",
-        "02_ped_plus_parked":    "场景二",
+        "03_narrow_cones": "场景一",
+        "02_ped_plus_parked": "场景二",
         "04_dense_construction": "场景三",
-        "01_crossing_ped":       "场景四",
+        "01_crossing_ped": "场景四",
     }
 
     grid: Dict[str, Dict[str, float]] = defaultdict(dict)
@@ -299,8 +344,11 @@ def write_heatmap(per_scn_rows: List[dict], path: str):
         f"    ytick={{{','.join(str(i) for i in range(len(variants)))}}},",
         "    yticklabels={"
         + ",".join(
-            "{" + VARIANT_LABEL_ZH.get(v, v).replace("\\(", "$").replace("\\)", "$") + "}"
-            for v in variants)
+            "{"
+            + VARIANT_LABEL_ZH.get(v, v).replace("\\(", "$").replace("\\)", "$")
+            + "}"
+            for v in variants
+        )
         + "},",
         "    point meta min=0, point meta max=100,",
         "    colormap name=RdYlGnLocal, colorbar,",
@@ -342,19 +390,32 @@ def write_macros(rows: List[dict], overall_rows: List[dict], path: str):
     # 总分（按变体）
     variant_to_macro = {
         "M0_baseline": "Zero",
-        "M1_no_C1":    "One",
-        "M2_no_C2C3":  "Two",
-        "M3_no_C4":    "Three",
-        "M4_no_C5":    "Four",
-        "M5_full":     "Five",
+        "M1_no_C1": "One",
+        "M2_no_C2C3": "Two",
+        "M3_no_C4": "Three",
+        "M4_no_C5": "Four",
+        "M5_full": "Five",
     }
     for variant, suffix in variant_to_macro.items():
         ov = by_variant[variant]
         macros[f"\\AblationScoreM{suffix}"] = fmt(ov["S_overall"])
         macros[f"\\AblationComputeM{suffix}"] = fmt(ov["compute_avg"], 1)
+        macros[f"\\AblationM{suffix}PassCount"] = str(ov["n_pass"])
+        macros[f"\\AblationM{suffix}ScenarioTotal"] = str(ov["n_total"])
+
+    n_totals = {row["n_total"] for row in overall_rows}
+    macros["\\AblationScenarioTotal"] = str(next(iter(n_totals))) if len(n_totals) == 1 else str(max(n_totals))
+    macros["\\AblationVariantTotal"] = str(len(overall_rows))
+    macros["\\AblationComponentTotal"] = str(len(DIM_METRICS) + 1)
+    macros["\\AblationPathComponentTotal"] = str(4)
+    macros["\\AblationSpeedComponentTotal"] = str(1)
+    macros["\\AblationLeaveOneOutVariantTotal"] = str(len(overall_rows) - 2)
+    macros["\\AblationZeroScenarioScale"] = str(50)
 
     # 失败变体得分上限：max(M1,M2,M3) 向上取整，作正文「落到 N 分以下」的精确数
-    failed_scores = [by_variant[v]["S_overall"] for v in ("M1_no_C1", "M2_no_C2C3", "M3_no_C4")]
+    failed_scores = [
+        by_variant[v]["S_overall"] for v in ("M1_no_C1", "M2_no_C2C3", "M3_no_C4")
+    ]
     macros["\\AblationFailedScoreCeil"] = str(int(np.ceil(max(failed_scores))))
 
     # M4 vs M5 微弱超越的差值
@@ -382,6 +443,18 @@ def write_macros(rows: List[dict], overall_rows: List[dict], path: str):
     macros["\\DeltaBaseline"] = fmt(DELTA_BASELINE, 2)
     macros["\\DeltaIntervalLow"] = fmt(DELTA_MIN, 2)
     macros["\\DeltaIntervalHigh"] = fmt(DELTA_MAX, 2)
+    macros["\\ScoreWeightEfficiency"] = fmt(DIM_WEIGHTS["efficiency"], 2)
+    macros["\\ScoreWeightSmoothness"] = fmt(DIM_WEIGHTS["smoothness"], 2)
+    macros["\\ScoreWeightRobustness"] = fmt(DIM_WEIGHTS["robustness"], 2)
+    macros["\\ScoreWeightCompute"] = fmt(DIM_WEIGHTS["compute"], 2)
+    macros["\\ScoreMetricCountEfficiency"] = str(len(DIM_METRICS["efficiency"]))
+    macros["\\ScoreMetricCountSmoothness"] = str(len(DIM_METRICS["smoothness"]))
+    macros["\\ScoreMetricCountRobustness"] = str(len(DIM_METRICS["robustness"]))
+    macros["\\ScoreMetricCountCompute"] = str(len(DIM_METRICS["compute"]))
+    macros["\\ScoreMetricCountTotal"] = str(
+        sum(len(metrics) for metrics in DIM_METRICS.values())
+    )
+    macros["\\ScoreDimensionCount"] = str(len(DIM_METRICS))
 
     lines = [
         "% 自动生成：消融实验数据宏定义。请勿手动编辑。",
@@ -406,29 +479,56 @@ def write_csv(rows: List[dict], path: str, columns: List[str]):
 
 # ============================ 主流程 ============================
 
+
 def main():
     rows = load_rows()
     per_scn_rows, overall_rows = compute_all_scores(rows)
 
     print("\n========== 综合评分排名（按 S_overall 降序）==========\n")
-    print(f"{'排名':<4}{'变体':<32}{'总分':>8}{'通行':>8}{'平顺':>8}"
-          f"{'鲁棒':>8}{'开销':>8}{'通过':>8}")
+    print(
+        f"{'排名':<4}{'变体':<32}{'总分':>8}{'通行':>8}{'平顺':>8}"
+        f"{'鲁棒':>8}{'开销':>8}{'通过':>8}"
+    )
     print("-" * 90)
     for r in overall_rows:
         label = r["variant"]
         marker = " ★" if r["rank"] == 1 else ""
-        print(f"{r['rank']:<4}{label:<32}{r['S_overall']:>8.2f}"
-              f"{r['efficiency_avg']:>8.1f}{r['smoothness_avg']:>8.1f}"
-              f"{r['robustness_avg']:>8.1f}{r['compute_avg']:>8.1f}"
-              f"{r['n_pass']}/{r['n_total']}{marker}")
+        print(
+            f"{r['rank']:<4}{label:<32}{r['S_overall']:>8.2f}"
+            f"{r['efficiency_avg']:>8.1f}{r['smoothness_avg']:>8.1f}"
+            f"{r['robustness_avg']:>8.1f}{r['compute_avg']:>8.1f}"
+            f"{r['n_pass']}/{r['n_total']}{marker}"
+        )
 
-    write_csv(per_scn_rows, os.path.join(DATA_DIR, "score_per_scenario.csv"),
-              columns=["scenario", "variant", "S_scn", "efficiency",
-                       "smoothness", "robustness", "compute", "hard_gate"])
-    write_csv(overall_rows, os.path.join(DATA_DIR, "score_overall.csv"),
-              columns=["rank", "variant", "S_overall", "efficiency_avg",
-                       "smoothness_avg", "robustness_avg", "compute_avg",
-                       "n_pass", "n_total"])
+    write_csv(
+        per_scn_rows,
+        os.path.join(DATA_DIR, "score_per_scenario.csv"),
+        columns=[
+            "scenario",
+            "variant",
+            "S_scn",
+            "efficiency",
+            "smoothness",
+            "robustness",
+            "compute",
+            "hard_gate",
+        ],
+    )
+    write_csv(
+        overall_rows,
+        os.path.join(DATA_DIR, "score_overall.csv"),
+        columns=[
+            "rank",
+            "variant",
+            "S_overall",
+            "efficiency_avg",
+            "smoothness_avg",
+            "robustness_avg",
+            "compute_avg",
+            "n_pass",
+            "n_total",
+        ],
+    )
 
     write_main_table(overall_rows, os.path.join(DATA_DIR, "score_table.tex"))
     write_radar(overall_rows, os.path.join(DATA_DIR, "score_radar.tex"))
