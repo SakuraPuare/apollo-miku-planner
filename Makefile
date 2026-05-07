@@ -1,16 +1,27 @@
 TEX      := xelatex
-TEXFLAGS := -interaction=nonstopmode -halt-on-error
+TEXFLAGS := -interaction=nonstopmode -halt-on-error -shell-escape
 BIBER    := biber
-FC_MATCH := fc-match
 
 # 编译前必须存在于 PATH 的外部命令（缺一则立即失败）
-DEPS     := $(TEX) $(BIBER) pdfcrop pdf2svg latexmk uv $(FC_MATCH)
-MAIN_FONT:= TeX Gyre Termes
+DEPS     := $(TEX) $(BIBER) pdflatex bibtex pdfcrop pdf2svg latexmk uv
+FONT_FILES := \
+	fonts/local-fonts.tex \
+	fonts/tex-gyre/texgyretermes-regular.otf \
+	fonts/tex-gyre/texgyretermes-bold.otf \
+	fonts/tex-gyre/texgyretermes-italic.otf \
+	fonts/tex-gyre/texgyretermes-bolditalic.otf \
+	fonts/fandol/FandolSong-Regular.otf \
+	fonts/fandol/FandolSong-Bold.otf \
+	fonts/fandol/FandolKai-Regular.otf \
+	fonts/fandol/FandolHei-Regular.otf \
+	fonts/fandol/FandolHei-Bold.otf \
+	fonts/fandol/FandolFang-Regular.otf
 
 FIGDIR   := 图片
 THESISDIR:= 毕业论文
 SLIDEDIR := 答辩演示
 KAITIDIR := 开题答辩
+FOREIGNDIR := 外文文献
 
 SVGDIR   := $(FIGDIR)/svg
 BUILDDIR := $(FIGDIR)/build
@@ -27,8 +38,10 @@ FIGS_STAMP    := $(FIGDIR)/.figs_stamp
 METRICS_TEX   := $(THESISDIR)/_experiment_metrics.tex
 ABLATION_CSV  := $(FIGDIR)/data/ablation/ablation.csv
 ABLATION_TEX  := $(THESISDIR)/_ablation_macros.tex
+SENSITIVITY_TEX := $(THESISDIR)/_sensitivity_macros.tex
+CONTEXT_TEX   := $(THESISDIR)/_experiment_context.tex
 
-.PHONY: all check-deps svg svg-clean thesis slides kaiti clean help sim sim-data sim-figs sim-metrics sim-ablation
+.PHONY: all check-deps svg svg-clean thesis slides kaiti foreign foreign-original foreign-translation clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -42,19 +55,19 @@ check-deps:
 	  }; \
 	done
 	@echo "✓ 外部依赖检查通过 ($(words $(DEPS)) 个命令)"
-	@matched_font="$$( $(FC_MATCH) -f '%{family}\n' '$(MAIN_FONT)' | head -n 1 )"; \
-	  printf '%s\n' "$$matched_font" | tr ',' '\n' | sed 's/^ *//;s/ *$$//' | grep -Fx '$(MAIN_FONT)' >/dev/null 2>&1 || { \
-	    printf '%s\n' "错误: 未找到字体 \"$(MAIN_FONT)\"。Arch Linux 可执行：sudo pacman -S tex-gyre-fonts" >&2; \
-	    printf '%s\n' "当前 fontconfig 匹配结果: $$matched_font" >&2; \
+	@for file in $(FONT_FILES); do \
+	  test -f "$$file" || { \
+	    printf '%s\n' "错误: 缺少本地字体文件 \"$$file\"。请确认 fonts/ 目录完整。" >&2; \
 	    exit 1; \
-	  }
-	@echo "✓ 字体依赖检查通过 ($(MAIN_FONT))"
+	  }; \
+	done
+	@echo "✓ 本地字体检查通过 ($(words $(FONT_FILES)) 个文件)"
 
 # ══════════════════════════════════════════════════
 #  默认：并行 SVG + 论文 + 答辩演示
 #  全量推荐：make -j$(nproc)
 # ══════════════════════════════════════════════════
-all: svg thesis slides
+all: svg thesis slides kaiti foreign
 
 # ══════════════════════════════════════════════════
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
@@ -64,10 +77,11 @@ svg: check-deps $(FIGS_STAMP) $(SVGS)
 	@echo "✓ SVG 共 $(words $(SVGS)) 个 → $(SVGDIR)/"
 
 # 1) 生成单图 wrapper（统一 preamble + \input{<name>}）
-$(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex | $(BUILDDIR)
+$(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex Makefile | $(BUILDDIR)
 	@printf '%s\n' \
-	  '\documentclass[UTF8]{ctexart}' \
+	  '\documentclass[UTF8,fontset=none]{ctexart}' \
 	  '\input{_figpreamble}' \
+	  '\input{../../$(CONTEXT_TEX)}' \
 	  '\begin{document}' \
 	  '\begin{figure}[H]\centering' \
 	  '\input{$*}' \
@@ -75,7 +89,7 @@ $(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex | $(BUILDDIR)
 	  '\end{document}' > $@
 
 # 2) 单图编译；TEXINPUTS=.:..: 显式 cwd 优先，再到父目录找源 fig 与 preamble
-$(BUILDDIR)/wrap_%.pdf: $(BUILDDIR)/wrap_%.tex $(PREAMBLE) $(FIGDIR)/%.tex
+$(BUILDDIR)/wrap_%.pdf: $(BUILDDIR)/wrap_%.tex $(PREAMBLE) $(FIGDIR)/%.tex $(CONTEXT_TEX) $(FONT_FILES)
 	@cd $(BUILDDIR) && TEXINPUTS=.:..: $(TEX) $(TEXFLAGS) wrap_$*.tex >/dev/null 2>&1 || { \
 	  echo "✗ $* 编译失败，尾部日志："; \
 	  tail -30 $(BUILDDIR)/wrap_$*.log 2>/dev/null; \
@@ -102,7 +116,7 @@ svg-clean:
 # ══════════════════════════════════════════════════
 #  论文 / 答辩 / 开题
 # ══════════════════════════════════════════════════
-thesis: check-deps $(METRICS_TEX) $(ABLATION_TEX) svg
+thesis: check-deps $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) svg
 	cd $(THESISDIR) && latexmk thesis.tex >/dev/null 2>&1
 	@test -f $(THESISDIR)/thesis.pdf || { echo "错误: thesis.pdf 未生成"; exit 1; }
 	@echo "✓ 论文: $(THESISDIR)/thesis.pdf"
@@ -139,33 +153,74 @@ $(ABLATION_TEX): $(ABLATION_CSV) 可视化/metric_score.py
 	@cd 可视化 && uv run metric_score.py >/dev/null
 	@echo "✓ 消融评分: $(ABLATION_TEX)"
 
+# 6) 灵敏度分析宏：apollo_pipeline.py 或 sensitivity_analysis.py 改了才重写
+$(SENSITIVITY_TEX): 可视化/apollo_pipeline.py 可视化/sensitivity_analysis.py
+	@cd 可视化 && uv run sensitivity_analysis.py >/dev/null
+	@echo "✓ 灵敏度宏: $(SENSITIVITY_TEX)"
+
+# 7) 论文上下文宏：从仿真场景定义与方法常量生成
+$(CONTEXT_TEX): 可视化/apollo_pipeline.py 可视化/_gen_context_tex.py
+	@cd 可视化 && uv run _gen_context_tex.py >/dev/null
+	@echo "✓ 场景参数宏: $(CONTEXT_TEX)"
+
 # 便捷别名
 sim-data:     check-deps $(DATA_STAMP)
 sim-figs:     check-deps $(FIGS_STAMP)
 sim-metrics:  check-deps $(METRICS_TEX)
 sim-ablation: check-deps $(ABLATION_TEX)
-sim:          check-deps sim-figs sim-metrics sim-ablation
+sim-sensitivity: check-deps $(SENSITIVITY_TEX)
+sim-context:  check-deps $(CONTEXT_TEX)
+sim:          check-deps sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 	@echo "✓ 仿真产物已增量更新"
 
 slides: $(SLIDEDIR)/main.pdf
-$(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex | check-deps
+$(SLIDEDIR)/main.pdf: $(SLIDEDIR)/main.tex $(FONT_FILES) | check-deps
 	-cd $(SLIDEDIR) && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1
 	@test -f $(SLIDEDIR)/main.pdf || { echo "错误: slides main.pdf 未生成"; exit 1; }
 	@echo "✓ 答辩演示: $(SLIDEDIR)/main.pdf"
 
 kaiti: $(KAITIDIR)/slides.pdf
-$(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.tex) | check-deps
+$(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.tex) $(FONT_FILES) | check-deps
 	cd $(KAITIDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
 	@echo "✓ 开题答辩: $(KAITIDIR)/slides.pdf"
+
+# ══════════════════════════════════════════════════
+#  外文文献原文及译文
+# ══════════════════════════════════════════════════
+foreign: foreign-original foreign-translation
+
+foreign-original: $(FOREIGNDIR)/original/main.pdf
+$(FOREIGNDIR)/original/main.pdf: $(FOREIGNDIR)/original/main.tex $(FOREIGNDIR)/original/refs.bib | check-deps
+	cd $(FOREIGNDIR)/original && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1 \
+	  && bibtex main >/dev/null 2>&1 \
+	  && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1 \
+	  && pdflatex $(TEXFLAGS) main.tex >/dev/null 2>&1
+	@test -f $(FOREIGNDIR)/original/main.pdf || { echo "错误: 外文文献原文未生成"; exit 1; }
+	@echo "✓ 外文文献原文: $(FOREIGNDIR)/original/main.pdf"
+
+foreign-translation: $(FOREIGNDIR)/translation/main.pdf
+$(FOREIGNDIR)/translation/main.pdf: $(FOREIGNDIR)/translation/main.tex $(FOREIGNDIR)/translation/refs.bib $(FONT_FILES) | check-deps
+	cd $(FOREIGNDIR)/translation && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1 \
+	  && $(BIBER) main >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) main.tex >/dev/null 2>&1
+	@test -f $(FOREIGNDIR)/translation/main.pdf || { echo "错误: 外文文献译文未生成"; exit 1; }
+	@echo "✓ 外文文献译文: $(FOREIGNDIR)/translation/main.pdf"
 
 # ══════════════════════════════════════════════════
 #  清理
 # ══════════════════════════════════════════════════
 clean:
 	rm -rf $(SVGDIR) $(BUILDDIR)
-	rm -f $(THESISDIR)/main.{pdf,aux,log,toc,bbl,blg,out,bcf,run.xml,xdv,fls,fdb_latexmk}
-	rm -f $(SLIDEDIR)/main.{pdf,aux,log,nav,out,snm,toc,vrb}
-	rm -f $(KAITIDIR)/slides.{pdf,aux,bbl,log,nav,out,snm,toc}
+	rm -r $(THESISDIR)/_*.tex
+	rm -f $(THESISDIR)/thesis.{pdf,aux,log,toc,bbl,blg,out,bcf,run.xml,xdv,fls,auxlock}
+	rm -f $(SLIDEDIR)/main.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -f $(KAITIDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -rf $(THESISDIR)/thesis-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
+	rm -rf $(SLIDEDIR)/main-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
+	rm -rf $(KAITIDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
+	rm -f $(FOREIGNDIR)/original/main.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
+	rm -f $(FOREIGNDIR)/translation/main.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
 
 # ══════════════════════════════════════════════════
 #  帮助
@@ -178,4 +233,5 @@ help:
 	@echo "make thesis     编译论文"
 	@echo "make slides     编译答辩演示"
 	@echo "make kaiti      编译开题答辩"
+	@echo "make foreign    编译外文文献原文及译文"
 	@echo "make clean      清理全部生成物"
