@@ -8,6 +8,7 @@
 PEP 723 单文件，uv run _gen_exp_figs.py 即可。
 """
 
+import csv
 import json
 from pathlib import Path
 
@@ -19,51 +20,31 @@ SCENARIOS = [
     "02_ped_plus_parked",
     "03_narrow_cones",
     "04_dense_construction",
+    "05_crossing_ped_cmp",
+    "06_ped_plus_parked_cmp",
+    "07_narrow_cones_cmp",
+    "08_dense_construction_cmp",
 ]
 
-# 各场景障碍物（inline 写死，来自 obstacles.csv + 任务规范）
-# 格式：(name, obs_type, s0, l0, vs, vl, W, L)
-OBSTACLES = {
-    "01_crossing_ped": [
-        ("行人", "ped", 12.0, -0.6, 0, 1.2, 0.5, 0.5),
-    ],
-    "02_ped_plus_parked": [
-        ("行人", "ped", 10.0, -0.5, 0, 1.2, 0.5, 0.5),
-        ("停车", "static", 22.0, 1.3, 0, 0, 1.0, 4.0),
-    ],
-    "03_narrow_cones": [
-        # 双侧交通锥构成窄路，差异化裕度对照（第五章第三节）
-        ("锥L1", "cone", 20.0,  1.20, 0, 0, 0.15, 0.5),
-        ("锥L2", "cone", 30.0,  1.20, 0, 0, 0.15, 0.5),
-        ("锥L3", "cone", 40.0,  1.20, 0, 0, 0.15, 0.5),
-        ("锥R1", "cone", 20.0, -1.20, 0, 0, 0.15, 0.5),
-        ("锥R2", "cone", 30.0, -1.20, 0, 0, 0.15, 0.5),
-        ("锥R3", "cone", 40.0, -1.20, 0, 0, 0.15, 0.5),
-    ],
-    "04_dense_construction": [
-        # 入口漏斗 5 锥
-        ("锥E1", "static", 16.0, -1.50, 0, 0, 0.4, 2.5),
-        ("锥E2", "static", 18.5, -0.85, 0, 0, 0.4, 2.5),
-        ("锥E3", "static", 21.0, -0.20, 0, 0, 0.4, 2.5),
-        ("锥E4", "static", 23.5,  0.50, 0, 0, 0.4, 2.5),
-        ("锥E5", "static", 26.0,  1.20, 0, 0, 0.4, 2.5),
-        # 维持段 8 水马 (横跨车道分界线 l=2.0, W=1.0 占据 l∈[1.5,2.5])
-        ("水马M1", "static", 29.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M2", "static", 33.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M3", "static", 37.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M4", "static", 41.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M5", "static", 45.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M6", "static", 49.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M7", "static", 53.0, 2.00, 0, 0, 1.0, 4.0),
-        ("水马M8", "static", 57.0, 2.00, 0, 0, 1.0, 4.0),
-        # 出口漏斗 5 锥
-        ("锥X1", "static", 60.0,  1.20, 0, 0, 0.4, 2.5),
-        ("锥X2", "static", 62.5,  0.50, 0, 0, 0.4, 2.5),
-        ("锥X3", "static", 65.0, -0.20, 0, 0, 0.4, 2.5),
-        ("锥X4", "static", 67.5, -0.85, 0, 0, 0.4, 2.5),
-        ("锥X5", "static", 70.0, -1.50, 0, 0, 0.4, 2.5),
-    ],
-}
+def load_obstacles(scn: str) -> list[tuple[str, str, float, float, float, float, float, float]]:
+    """Read obstacle geometry from the simulation CSV for a scene."""
+    path = FIGDIR / "data" / scn / "obstacles.csv"
+    rows = []
+    with path.open(newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            rows.append(
+                (
+                    row["name"],
+                    row["obs_type"],
+                    float(row["s0"]),
+                    float(row["l0"]),
+                    float(row["vs"]),
+                    float(row["vl"]),
+                    float(row["W"]),
+                    float(row["L"]),
+                )
+            )
+    return rows
 
 # discard if not style（每个 fig 都要）
 DISCARD_STYLE = r"""\pgfplotsset{
@@ -91,7 +72,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
     for name, otype, s0, l0, vs, vl, W, L in obs_list:
         half_l = L / 2.0
         half_w = W / 2.0
-        is_dynamic = (vs != 0 or vl != 0)
+        is_dynamic = vs != 0 or vl != 0
         lines.append(rf"% 障碍物 {name}")
 
         if otype == "ped" or otype == "bike":
@@ -112,7 +93,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
                 )
                 # 动态标签
                 lines.append(
-                    rf"\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:{s0:.3f},{l0 + r + 0.5:.3f}) {{{name} $v=({(0.0 if abs(vs)<1e-9 else vs):+.1f},{(0.0 if abs(vl)<1e-9 else vl):+.1f})$}};"
+                    rf"\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:{s0:.3f},{l0 + r + 0.5:.3f}) {{{name} $v=({(0.0 if abs(vs) < 1e-9 else vs):+.1f},{(0.0 if abs(vl) < 1e-9 else vl):+.1f})$}};"
                 )
             else:
                 lines.append(
@@ -124,7 +105,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
                 )
         elif otype in ("static", "cone"):
             lines.append(
-                rf"\fill[dangerred!70, draw=dangerred, thick] (axis cs:{s0-half_l:.3f},{l0-half_w:.3f}) rectangle (axis cs:{s0+half_l:.3f},{l0+half_w:.3f});"
+                rf"\fill[dangerred!70, draw=dangerred, thick] (axis cs:{s0 - half_l:.3f},{l0 - half_w:.3f}) rectangle (axis cs:{s0 + half_l:.3f},{l0 + half_w:.3f});"
             )
             lines.append(
                 rf"\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:{s0:.3f},{l0 + half_w + 0.3:.3f}) {{{name}}};"
@@ -136,7 +117,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
                     sx = s0 + vs * t_frame
                     lx = l0 + vl * t_frame
                     lines.append(
-                        rf"\fill[lightorange!90!black, draw=dangerred, opacity={alpha:.2f}] (axis cs:{sx-half_l:.3f},{lx-half_w:.3f}) rectangle (axis cs:{sx+half_l:.3f},{lx+half_w:.3f});"
+                        rf"\fill[lightorange!90!black, draw=dangerred, opacity={alpha:.2f}] (axis cs:{sx - half_l:.3f},{lx - half_w:.3f}) rectangle (axis cs:{sx + half_l:.3f},{lx + half_w:.3f});"
                     )
                 # 速度箭头
                 s_end = s0 + vs * t_show_max
@@ -146,11 +127,11 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
                 )
                 # 动态标签
                 lines.append(
-                    rf"\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:{s0:.3f},{l0 + half_w + 0.5:.3f}) {{{name} $v=({(0.0 if abs(vs)<1e-9 else vs):+.1f},{(0.0 if abs(vl)<1e-9 else vl):+.1f})$}};"
+                    rf"\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:{s0:.3f},{l0 + half_w + 0.5:.3f}) {{{name} $v=({(0.0 if abs(vs) < 1e-9 else vs):+.1f},{(0.0 if abs(vl) < 1e-9 else vl):+.1f})$}};"
                 )
             else:
                 lines.append(
-                    rf"\fill[lightorange, draw=dangerred, thick] (axis cs:{s0-half_l:.3f},{l0-half_w:.3f}) rectangle (axis cs:{s0+half_l:.3f},{l0+half_w:.3f});"
+                    rf"\fill[lightorange, draw=dangerred, thick] (axis cs:{s0 - half_l:.3f},{l0 - half_w:.3f}) rectangle (axis cs:{s0 + half_l:.3f},{l0 + half_w:.3f});"
                 )
                 lines.append(
                     rf"\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:{s0:.3f},{l0 + half_w + 0.3:.3f}) {{{name}}};"
@@ -176,7 +157,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
     if lane_borrow != "none":
         ymin = -3.9
         ymax = 3.9
-        sub_height = "6.6cm"  # 7.8m 范围按 ~9.5 mm/m 出图，与无借道场景颗粒度对齐
+        sub_height = "6.6cm"  # 7.8m 范围按 ~9.5 mm/m 出图，与无借道场景尺度一致
     else:
         ymin = -2.2
         ymax = 2.2
@@ -192,7 +173,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
     tri_base_x = ego_s0 + ego_half_l - min(ego_L * 0.25, 0.6)
     tri_top_y = ego_l0 + ego_W * 0.45
     tri_bot_y = ego_l0 - ego_W * 0.45
-    # ego 用绝对单位的 node，避免 axis 拉伸导致比例失真。L:W = 4:1.8 ≈ 2.2:1
+    # ego 用绝对单位的 node，避免 axis 拉伸导致比例失真。L:W 由 meta.json 写入。
     ego_tikz = (
         rf"\node[rectangle, fill=deepblue!75, draw=deepblue, thick, "
         rf"minimum width=18pt, minimum height=8pt, inner sep=0pt] "
@@ -203,7 +184,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
         rf"([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;"
         "\n"
         rf"\node[anchor=south west, font=\tiny\bfseries, color=deepblue] "
-        rf"at (axis cs:{ego_s0+0.2:.2f},{ego_l0+ego_half_w+0.05:.2f}) {{EGO}};"
+        rf"at (axis cs:{ego_s0 + 0.2:.2f},{ego_l0 + ego_half_w + 0.05:.2f}) {{EGO}};"
     )
 
     # 路面背景
@@ -218,13 +199,13 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
     if lane_borrow == "left":
         borrow_bg = (
             rf"\addplot[fill=vibrantorange!25, draw=none, forget plot, on layer=axis background] coordinates {{"
-            rf"(0,{l_road_max}) ({s_max},{l_road_max}) ({s_max},{l_road_max*2:.3f}) (0,{l_road_max*2:.3f})"
+            rf"(0,{l_road_max}) ({s_max},{l_road_max}) ({s_max},{l_road_max * 2:.3f}) (0,{l_road_max * 2:.3f})"
             rf"}} \closedcycle;"
         )
     elif lane_borrow == "right":
         borrow_bg = (
             rf"\addplot[fill=vibrantorange!25, draw=none, forget plot, on layer=axis background] coordinates {{"
-            rf"(0,{l_road_min*2:.3f}) ({s_max},{l_road_min*2:.3f}) ({s_max},{l_road_min}) (0,{l_road_min})"
+            rf"(0,{l_road_min * 2:.3f}) ({s_max},{l_road_min * 2:.3f}) ({s_max},{l_road_min}) (0,{l_road_min})"
             rf"}} \closedcycle;"
         )
 
@@ -257,6 +238,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
             return path, "", ""
         # 读 sl.csv 抽取 blocked_s 处 l_path 实际值
         import csv as _csv
+
         sl_path = FIGDIR / "data" / scn / "sl.csv"
         l_at_block = 0.0
         if sl_path.exists():
@@ -274,17 +256,21 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
                 l_at_block = last_l
         # 截断 path 线在 blocked_s 处（unbounded coords=jump 才让 pgfplots 真切断线，
         # 默认 discard 会让 last visible point 连到 next visible point 形成虚假水平段）
-        path = (rf"\addplot[__COLOR__, line width=2pt, "
-                rf"unbounded coords=jump, "
-                rf"restrict x to domain=0:{bs:.3f}] {table_clause}")
+        path = (
+            rf"\addplot[__COLOR__, line width=2pt, "
+            rf"unbounded coords=jump, "
+            rf"restrict x to domain=0:{bs:.3f}] {table_clause}"
+        )
         # X 标记 + 垂直虚线
         marker = (
-            rf"\draw[red, thick, dashed] (axis cs:{bs:.3f},{ymin}) -- (axis cs:{bs:.3f},{ymax});"
+            rf"\draw[dangerred, thick, dashed] (axis cs:{bs:.3f},{ymin}) -- (axis cs:{bs:.3f},{ymax});"
             "\n"
-            rf"\node[red, font=\Large\bfseries, inner sep=0pt] at (axis cs:{bs:.3f},{l_at_block:.3f}) {{$\times$}};"
+            rf"\node[dangerred, font=\Large\bfseries, inner sep=0pt] at (axis cs:{bs:.3f},{l_at_block:.3f}) {{$\times$}};"
         )
-        legend = (rf"\addlegendimage{{red, thick, dashed}}"
-                  rf"\addlegendentry{{Trim @ $s$={bs:.1f}\,m}}")
+        legend = (
+            rf"\addlegendimage{{dangerred, thick, dashed}}"
+            rf"\addlegendentry{{Trim @ $s$={bs:.1f}\,m}}"
+        )
         return path, marker, legend
 
     def subfig(mode: str, path_id: str, color: str, label: str) -> str:
@@ -292,13 +278,16 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
         path_plot = path_plot.replace("__COLOR__", color)
         # blocked 时 lmin/lmax 曲线也按 blocked_s 截断（避免冻结区双线重叠拉到 xmax）
         bs = metrics.get(mode, {}).get("blocked_s")
-        bound_restrict = (f"unbounded coords=jump, restrict x to domain=0:{bs:.3f}, "
-                          if bs is not None else "")
+        bound_restrict = (
+            f"unbounded coords=jump, restrict x to domain=0:{bs:.3f}, "
+            if bs is not None
+            else ""
+        )
         return rf"""\begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
-    width=\linewidth, height={sub_height},
+    width=0.9\linewidth, height={sub_height},
     xlabel={{$s$ (m)}}, ylabel={{$l$ (m)}},
     xmin=0, xmax={s_max}, ymin={ymin}, ymax={ymax},
     grid=both, grid style={{gray!25}},
@@ -332,7 +321,8 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
     miku_sub = subfig("miku", "miku", "vibrantgreen", "MIKU")
 
     scn_nn = scn[:2]
-    return rf"""% 场景{scn_nn} SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
+    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景{scn_nn} SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 {baseline_sub}
@@ -388,12 +378,12 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
             hatch_blocks.append(
                 rf"\addplot[pattern=north east lines, pattern color=deeppink!60, draw=deeppink!60, semithick, forget plot]"
                 "\n"
-                rf"    coordinates {{(0,{s_k:.4f}) ({tau_k:.4f},{s_k:.4f}) ({tau_k:.4f},{s_max*1.5:.1f}) (0,{s_max*1.5:.1f})}} \closedcycle;"
+                rf"    coordinates {{(0,{s_k:.4f}) ({tau_k:.4f},{s_k:.4f}) ({tau_k:.4f},{s_max * 1.5:.1f}) (0,{s_max * 1.5:.1f})}} \closedcycle;"
             )
             tau_str = f"{tau_k:.2f}"
             sk_str = f"{s_k:.1f}"
             node_labels.append(
-                rf"\node[deeppink, font=\tiny, fill=white, fill opacity=0.85, text opacity=1, inner sep=1pt] at (axis cs:{tau_k+0.4:.3f},{s_k+2.5:.3f}) {{$\tau_k{{=}}{tau_str},\,s_k{{=}}{sk_str}$}};"
+                rf"\node[deeppink, font=\tiny, fill=white, fill opacity=0.85, text opacity=1, inner sep=1pt] at (axis cs:{tau_k + 0.4:.3f},{s_k + 2.5:.3f}) {{$\tau_k{{=}}{tau_str},\,s_k{{=}}{sk_str}$}};"
             )
         hatch_str = "\n".join(hatch_blocks)
         nodes_str = "\n".join(node_labels)
@@ -405,7 +395,9 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
     table[col sep=comma, x=tau_k, y=s_k] {{\datapath corridor.csv}};
 \addlegendentry{{走廊节点 $\tau_k$}}"""
 
-    def subfig_st(mode: str, path_id: str, path_color: str, label: str, extra: str = "") -> str:
+    def subfig_st(
+        mode: str, path_id: str, path_color: str, label: str, extra: str = ""
+    ) -> str:
         # 按 obs_name 独立画 fill_between，避免 \addplot table 把多个障碍物的边界连成跨障碍物的乱多边形
         if has_bounds[mode]:
             blocks = []
@@ -426,10 +418,10 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
-    width=\linewidth, height=5.5cm,
+    width=0.9\linewidth, height=5.5cm,
     xlabel={{$t$ (s)}}, ylabel={{$s$ (m)}},
-    xmin=0, xmax={t_max}, ymin=0, ymax={s_max*1.5:.1f},
-    restrict y to domain*=0:{s_max*1.5:.1f},
+    xmin=0, xmax={t_max}, ymin=0, ymax={s_max * 1.5:.1f},
+    restrict y to domain*=0:{s_max * 1.5:.1f},
     unbounded coords=jump,
     grid=both, grid style={{gray!25}},
     axis line style={{thick}},
@@ -456,7 +448,8 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
     miku_sub = subfig_st("miku", "miku", "vibrantgreen", "MIKU", corridor_extra)
 
     scn_nn = scn[:2]
-    return rf"""% 场景{scn_nn} ST 平面 Baseline vs MIKU 对比
+    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景{scn_nn} ST 平面 Baseline vs MIKU 对比
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 {baseline_sub}\hfill
@@ -497,14 +490,15 @@ def gen_va(scn: str, meta: dict) -> str:
 
     scn_nn = scn[:2]
 
-    return rf"""% 场景{scn_nn} 速度/加速度 Baseline vs MIKU 对比
+    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景{scn_nn} 速度/加速度 Baseline vs MIKU 对比
 \def\datapath{{data/{scn}/}}
 {DISCARD_STYLE}
 \begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={{$t$ (s)}}, ylabel={{$v$ (m/s)}},
     xmin=0, xmax={t_max}, ymin=0, ymax={v_max_axis:.1f},
     grid=both, grid style={{gray!25}},
@@ -512,7 +506,7 @@ def gen_va(scn: str, meta: dict) -> str:
     tick label style={{font=\tiny}},
     label style={{font=\scriptsize}},
     legend style={{at={{(0.5,-0.34)}}, anchor=north, legend columns=2,
-        font=\fontsize{{6}}{{7}}\selectfont, draw=none, /tikz/every even column/.append style={{column sep=2em}}}},
+        font=\fontsize{{6}}{{7}}\selectfont, draw=none, /tikz/every even column/.append style={{column sep=0.5em}}}},
 ]
 % v_ref 参考线
 \draw[black!50, dashed, thick] (axis cs:0,{v0:.2f}) -- (axis cs:{t_max:.2f},{v0:.2f});
@@ -534,7 +528,7 @@ def gen_va(scn: str, meta: dict) -> str:
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={{$t$ (s)}}, ylabel={{$a$ (m/s$^2$)}},
     xmin=0, xmax={t_max}, ymin=-5, ymax=5,
     restrict y to domain*=-5:5,
@@ -564,7 +558,7 @@ def gen_va(scn: str, meta: dict) -> str:
 \addlegendentry{{MIKU\,$a_y$}}
 \end{{axis}}
 \end{{tikzpicture}}
-\caption{{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 MIKU）}}
+\caption{{纵向/横向加速度对比}}
 \end{{subfigure}}
 
 \vspace{{0.8em}}
@@ -573,7 +567,7 @@ def gen_va(scn: str, meta: dict) -> str:
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={{$t$ (s)}}, ylabel={{$j$ (m/s$^3$)}},
     xmin=0, xmax={t_max},
     grid=both, grid style={{gray!25}},
@@ -581,7 +575,7 @@ def gen_va(scn: str, meta: dict) -> str:
     tick label style={{font=\tiny}},
     label style={{font=\scriptsize}},
     legend style={{at={{(0.5,-0.34)}}, anchor=north, legend columns=2,
-        font=\fontsize{{6}}{{7}}\selectfont, draw=none, /tikz/every even column/.append style={{column sep=2em}}}},
+        font=\fontsize{{6}}{{7}}\selectfont, draw=none, /tikz/every even column/.append style={{column sep=0.5em}}}},
 ]
 \addplot[deepblue, line width=1.6pt]
     table[col sep=comma, x=t, y=j_qp, discard if not={{mode}}{{baseline}}] {{\datapath st_curves.csv}};
@@ -601,7 +595,7 @@ def main():
     for scn in SCENARIOS:
         meta_path = FIGDIR / "data" / scn / "meta.json"
         meta = json.loads(meta_path.read_text())
-        obs_list = OBSTACLES[scn]
+        obs_list = load_obstacles(scn)
 
         for fig_type, gen_fn, args in [
             ("sl", gen_sl, (scn, meta, obs_list)),
