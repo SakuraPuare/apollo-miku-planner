@@ -1,3 +1,4 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
 % 场景03 SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{data/03_narrow_cones/}
 \pgfplotsset{
@@ -17,7 +18,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=50.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -40,30 +41,30 @@
 % 路径（blocked 时按 blocked_s 截断）
 \addplot[deepblue, line width=2pt, unbounded coords=jump, restrict x to domain=0:16.000] table[col sep=comma, x=s, y=l_path, discard if not={mode}{baseline}] {\datapath sl.csv};
 \addlegendentry{Baseline}
-\addlegendimage{red, thick, dashed}\addlegendentry{Trim @ $s$=16.0\,m}
-\draw[red, thick, dashed] (axis cs:16.000,-2.2) -- (axis cs:16.000,2.2);
-\node[red, font=\Large\bfseries, inner sep=0pt] at (axis cs:16.000,0.000) {$\times$};
+\addlegendimage{dangerred, thick, dashed}\addlegendentry{Trim @ $s$=16.0\,m}
+\draw[dangerred, thick, dashed] (axis cs:16.000,-2.2) -- (axis cs:16.000,2.2);
+\node[dangerred, font=\Large\bfseries, inner sep=0pt] at (axis cs:16.000,0.000) {$\times$};
 % 障碍物 锥L1
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,1.125) rectangle (axis cs:20.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,1.575) {锥L1};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,1.275) rectangle (axis cs:20.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,1.725) {锥L1};
 % 障碍物 锥L2
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,1.125) rectangle (axis cs:30.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,1.575) {锥L2};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,1.275) rectangle (axis cs:30.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,1.725) {锥L2};
 % 障碍物 锥L3
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,1.125) rectangle (axis cs:40.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,1.575) {锥L3};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,1.275) rectangle (axis cs:40.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,1.725) {锥L3};
 % 障碍物 锥R1
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,-1.275) rectangle (axis cs:20.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,-0.825) {锥R1};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,-1.425) rectangle (axis cs:20.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,-0.975) {锥R1};
 % 障碍物 锥R2
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,-1.275) rectangle (axis cs:30.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,-0.825) {锥R2};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,-1.425) rectangle (axis cs:30.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,-0.975) {锥R2};
 % 障碍物 锥R3
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,-1.275) rectangle (axis cs:40.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,-0.825) {锥R3};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,-1.425) rectangle (axis cs:40.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,-0.975) {锥R3};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{Baseline}
@@ -75,7 +76,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=50.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -101,26 +102,26 @@
 
 
 % 障碍物 锥L1
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,1.125) rectangle (axis cs:20.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,1.575) {锥L1};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,1.275) rectangle (axis cs:20.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,1.725) {锥L1};
 % 障碍物 锥L2
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,1.125) rectangle (axis cs:30.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,1.575) {锥L2};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,1.275) rectangle (axis cs:30.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,1.725) {锥L2};
 % 障碍物 锥L3
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,1.125) rectangle (axis cs:40.250,1.275);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,1.575) {锥L3};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,1.275) rectangle (axis cs:40.250,1.425);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,1.725) {锥L3};
 % 障碍物 锥R1
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,-1.275) rectangle (axis cs:20.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,-0.825) {锥R1};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:19.750,-1.425) rectangle (axis cs:20.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:20.000,-0.975) {锥R1};
 % 障碍物 锥R2
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,-1.275) rectangle (axis cs:30.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,-0.825) {锥R2};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:29.750,-1.425) rectangle (axis cs:30.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:30.000,-0.975) {锥R2};
 % 障碍物 锥R3
-\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,-1.275) rectangle (axis cs:40.250,-1.125);
-\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,-0.825) {锥R3};
+\fill[dangerred!70, draw=dangerred, thick] (axis cs:39.750,-1.425) rectangle (axis cs:40.250,-1.275);
+\node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:40.000,-0.975) {锥R3};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{MIKU}

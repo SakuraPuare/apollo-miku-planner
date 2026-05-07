@@ -1,3 +1,4 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
 % 场景02 ST 平面 Baseline vs MIKU 对比
 \def\datapath{data/02_ped_plus_parked/}
 \pgfplotsset{
@@ -17,7 +18,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=5.5cm,
+    width=0.9\linewidth, height=5.5cm,
     xlabel={$t$ (s)}, ylabel={$s$ (m)},
     xmin=0, xmax=6.5, ymin=0, ymax=48.0,
     restrict y to domain*=0:48.0,
@@ -34,6 +35,12 @@
 \addplot[name path=sthi_baseline_0, draw=none, forget plot]
     table[col sep=comma, x=t, y=s_hi, discard if not2={mode}{baseline}{obs_name}{行人}] {\datapath st_bounds.csv};
 \addplot[fill=dangerred!40, draw=none, forget plot] fill between[of=stlo_baseline_0 and sthi_baseline_0];
+% obs=停车
+\addplot[name path=stlo_baseline_1, draw=none, forget plot]
+    table[col sep=comma, x=t, y=s_lo, discard if not2={mode}{baseline}{obs_name}{停车}] {\datapath st_bounds.csv};
+\addplot[name path=sthi_baseline_1, draw=none, forget plot]
+    table[col sep=comma, x=t, y=s_hi, discard if not2={mode}{baseline}{obs_name}{停车}] {\datapath st_bounds.csv};
+\addplot[fill=dangerred!40, draw=none, forget plot] fill between[of=stlo_baseline_1 and sthi_baseline_1];
 \addlegendimage{area legend, fill=dangerred!40, draw=none}
 \addlegendentry{障碍物 ST 禁行区}
 % DP 粗解
@@ -53,7 +60,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=5.5cm,
+    width=0.9\linewidth, height=5.5cm,
     xlabel={$t$ (s)}, ylabel={$s$ (m)},
     xmin=0, xmax=6.5, ymin=0, ymax=48.0,
     restrict y to domain*=0:48.0,

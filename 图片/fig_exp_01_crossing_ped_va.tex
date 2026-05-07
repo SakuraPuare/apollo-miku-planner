@@ -1,3 +1,4 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
 % 场景01 速度/加速度 Baseline vs MIKU 对比
 \def\datapath{data/01_crossing_ped/}
 \pgfplotsset{
@@ -17,7 +18,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$t$ (s)}, ylabel={$v$ (m/s)},
     xmin=0, xmax=5.0, ymin=0, ymax=10.4,
     grid=both, grid style={gray!25},
@@ -25,7 +26,7 @@
     tick label style={font=\tiny},
     label style={font=\scriptsize},
     legend style={at={(0.5,-0.34)}, anchor=north, legend columns=2,
-        font=\fontsize{6}{7}\selectfont, draw=none, /tikz/every even column/.append style={column sep=2em}},
+        font=\fontsize{6}{7}\selectfont, draw=none, /tikz/every even column/.append style={column sep=0.5em}},
 ]
 % v_ref 参考线
 \draw[black!50, dashed, thick] (axis cs:0,8.00) -- (axis cs:5.00,8.00);
@@ -35,7 +36,7 @@
 \addlegendentry{Baseline\,(\,$\bar{v}{=}3.90$,\,$|a|_{max}{=}3.10$,\,$|j|_{max}{=}8.19$,\,$s_{end}{=}19.4$\,m\,)}
 \addplot[vibrantgreen, line width=2pt]
     table[col sep=comma, x=t, y=v_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
-\addlegendentry{MIKU\,(\,$\bar{v}{=}8.00$,\,$|a|_{max}{=}0.00$,\,$|j|_{max}{=}0.00$,\,$s_{end}{=}40.0$\,m\,)}
+\addlegendentry{MIKU\,(\,$\bar{v}{=}4.79$,\,$|a|_{max}{=}1.87$,\,$|j|_{max}{=}1.62$,\,$s_{end}{=}24.0$\,m\,)}
 \end{axis}
 \end{tikzpicture}
 \caption{速度对比}
@@ -47,7 +48,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$t$ (s)}, ylabel={$a$ (m/s$^2$)},
     xmin=0, xmax=5.0, ymin=-5, ymax=5,
     restrict y to domain*=-5:5,
@@ -77,7 +78,7 @@
 \addlegendentry{MIKU\,$a_y$}
 \end{axis}
 \end{tikzpicture}
-\caption{纵向/横向加速度对比（$a_x$ 实线、$a_y$ 虚线；蓝 Baseline、绿 MIKU）}
+\caption{纵向/横向加速度对比}
 \end{subfigure}
 
 \vspace{0.8em}
@@ -86,7 +87,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$t$ (s)}, ylabel={$j$ (m/s$^3$)},
     xmin=0, xmax=5.0,
     grid=both, grid style={gray!25},
@@ -94,7 +95,7 @@
     tick label style={font=\tiny},
     label style={font=\scriptsize},
     legend style={at={(0.5,-0.34)}, anchor=north, legend columns=2,
-        font=\fontsize{6}{7}\selectfont, draw=none, /tikz/every even column/.append style={column sep=2em}},
+        font=\fontsize{6}{7}\selectfont, draw=none, /tikz/every even column/.append style={column sep=0.5em}},
 ]
 \addplot[deepblue, line width=1.6pt]
     table[col sep=comma, x=t, y=j_qp, discard if not={mode}{baseline}] {\datapath st_curves.csv};

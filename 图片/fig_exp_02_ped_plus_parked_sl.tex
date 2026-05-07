@@ -1,3 +1,4 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
 % 场景02 SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{data/02_ped_plus_parked/}
 \pgfplotsset{
@@ -17,7 +18,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=32.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -32,29 +33,30 @@
 \draw[black!55, semithick] (axis cs:0,1.875) -- (axis cs:32.0,1.875);
 \draw[black!30, dashed, thin] (axis cs:0,0) -- (axis cs:32.0,0);
 % 可行带阴影（blocked 时按 blocked_s 截断）
-\addplot[name path=lmin_baseline, draw=vibrantorange, thin, dashed, forget plot, ]
+\addplot[name path=lmin_baseline, draw=vibrantorange, thin, dashed, forget plot, unbounded coords=jump, restrict x to domain=0:16.000, ]
     table[col sep=comma, x=s, y=l_min, discard if not={mode}{baseline}] {\datapath sl.csv};
-\addplot[name path=lmax_baseline, draw=vibrantorange, thin, dashed, forget plot, ]
+\addplot[name path=lmax_baseline, draw=vibrantorange, thin, dashed, forget plot, unbounded coords=jump, restrict x to domain=0:16.000, ]
     table[col sep=comma, x=s, y=l_max, discard if not={mode}{baseline}] {\datapath sl.csv};
 \addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_baseline and lmax_baseline];
 % 路径（blocked 时按 blocked_s 截断）
-\addplot[deepblue, line width=2pt, unbounded coords=discard] table[col sep=comma, x=s, y=l_path, discard if not={mode}{baseline}] {\datapath sl.csv};
+\addplot[deepblue, line width=2pt, unbounded coords=jump, restrict x to domain=0:16.000] table[col sep=comma, x=s, y=l_path, discard if not={mode}{baseline}] {\datapath sl.csv};
 \addlegendentry{Baseline}
-
-
+\addlegendimage{dangerred, thick, dashed}\addlegendentry{Trim @ $s$=16.0\,m}
+\draw[dangerred, thick, dashed] (axis cs:16.000,-2.2) -- (axis cs:16.000,2.2);
+\node[dangerred, font=\Large\bfseries, inner sep=0pt] at (axis cs:16.000,0.000) {$\times$};
 % 障碍物 行人
 \fill[dangerred, opacity=0.95] (axis cs:10.000,-0.500) circle [radius=5pt];
-\fill[dangerred, opacity=0.55] (axis cs:10.000,0.292) circle [radius=5pt];
-\fill[dangerred, opacity=0.35] (axis cs:10.000,1.084) circle [radius=5pt];
-\fill[dangerred, opacity=0.20] (axis cs:10.000,1.900) circle [radius=5pt];
-\draw[->, dangerred, very thick, opacity=0.85] (axis cs:10.000,-0.500) -- (axis cs:10.000,1.900);
-\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:10.000,0.250) {行人 $v=(+0.0,+1.2)$};
+\fill[dangerred, opacity=0.55] (axis cs:10.000,0.490) circle [radius=5pt];
+\fill[dangerred, opacity=0.35] (axis cs:10.000,1.480) circle [radius=5pt];
+\fill[dangerred, opacity=0.20] (axis cs:10.000,2.500) circle [radius=5pt];
+\draw[->, dangerred, very thick, opacity=0.85] (axis cs:10.000,-0.500) -- (axis cs:10.000,2.500);
+\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:10.000,0.250) {行人 $v=(+0.0,+1.5)$};
 % 障碍物 停车
 \fill[dangerred!70, draw=dangerred, thick] (axis cs:20.000,0.800) rectangle (axis cs:24.000,1.800);
 \node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:22.000,2.100) {停车};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{Baseline}
@@ -66,7 +68,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=32.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -93,17 +95,17 @@
 
 % 障碍物 行人
 \fill[dangerred, opacity=0.95] (axis cs:10.000,-0.500) circle [radius=5pt];
-\fill[dangerred, opacity=0.55] (axis cs:10.000,0.292) circle [radius=5pt];
-\fill[dangerred, opacity=0.35] (axis cs:10.000,1.084) circle [radius=5pt];
-\fill[dangerred, opacity=0.20] (axis cs:10.000,1.900) circle [radius=5pt];
-\draw[->, dangerred, very thick, opacity=0.85] (axis cs:10.000,-0.500) -- (axis cs:10.000,1.900);
-\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:10.000,0.250) {行人 $v=(+0.0,+1.2)$};
+\fill[dangerred, opacity=0.55] (axis cs:10.000,0.490) circle [radius=5pt];
+\fill[dangerred, opacity=0.35] (axis cs:10.000,1.480) circle [radius=5pt];
+\fill[dangerred, opacity=0.20] (axis cs:10.000,2.500) circle [radius=5pt];
+\draw[->, dangerred, very thick, opacity=0.85] (axis cs:10.000,-0.500) -- (axis cs:10.000,2.500);
+\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:10.000,0.250) {行人 $v=(+0.0,+1.5)$};
 % 障碍物 停车
 \fill[dangerred!70, draw=dangerred, thick] (axis cs:20.000,0.800) rectangle (axis cs:24.000,1.800);
 \node[anchor=south, font=\tiny, color=dangerred!80!black] at (axis cs:22.000,2.100) {停车};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{MIKU}

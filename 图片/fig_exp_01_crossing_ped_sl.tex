@@ -1,3 +1,4 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
 % 场景01 SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
 \def\datapath{data/01_crossing_ped/}
 \pgfplotsset{
@@ -17,7 +18,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=25.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -44,14 +45,14 @@
 
 % 障碍物 行人
 \fill[dangerred, opacity=0.95] (axis cs:12.000,-0.600) circle [radius=5pt];
-\fill[dangerred, opacity=0.55] (axis cs:12.000,0.192) circle [radius=5pt];
-\fill[dangerred, opacity=0.35] (axis cs:12.000,0.984) circle [radius=5pt];
-\fill[dangerred, opacity=0.20] (axis cs:12.000,1.800) circle [radius=5pt];
-\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.800);
+\fill[dangerred, opacity=0.55] (axis cs:12.000,0.225) circle [radius=5pt];
+\fill[dangerred, opacity=0.35] (axis cs:12.000,1.050) circle [radius=5pt];
+\fill[dangerred, opacity=0.20] (axis cs:12.000,1.900) circle [radius=5pt];
+\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.900);
 \node[anchor=south, font=\tiny, color=dangerred] at (axis cs:12.000,0.150) {行人 $v=(+0.0,+1.2)$};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{Baseline}
@@ -63,7 +64,7 @@
 \centering
 \begin{tikzpicture}
 \begin{axis}[
-    width=\linewidth, height=4.2cm,
+    width=0.9\linewidth, height=4.2cm,
     xlabel={$s$ (m)}, ylabel={$l$ (m)},
     xmin=0, xmax=25.0, ymin=-2.2, ymax=2.2,
     grid=both, grid style={gray!25},
@@ -90,14 +91,14 @@
 
 % 障碍物 行人
 \fill[dangerred, opacity=0.95] (axis cs:12.000,-0.600) circle [radius=5pt];
-\fill[dangerred, opacity=0.55] (axis cs:12.000,0.192) circle [radius=5pt];
-\fill[dangerred, opacity=0.35] (axis cs:12.000,0.984) circle [radius=5pt];
-\fill[dangerred, opacity=0.20] (axis cs:12.000,1.800) circle [radius=5pt];
-\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.800);
+\fill[dangerred, opacity=0.55] (axis cs:12.000,0.225) circle [radius=5pt];
+\fill[dangerred, opacity=0.35] (axis cs:12.000,1.050) circle [radius=5pt];
+\fill[dangerred, opacity=0.20] (axis cs:12.000,1.900) circle [radius=5pt];
+\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.900);
 \node[anchor=south, font=\tiny, color=dangerred] at (axis cs:12.000,0.150) {行人 $v=(+0.0,+1.2)$};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
-\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,0.95) {EGO};
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
 \end{axis}
 \end{tikzpicture}
 \caption{MIKU}
