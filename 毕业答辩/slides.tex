@@ -1,0 +1,548 @@
+% !TEX program = xelatex
+% ============================================================
+%  毕业答辩 Beamer（10 分钟，~20 张幻灯片）
+%  编译：xelatex slides.tex（跑两次）
+% ============================================================
+\documentclass[aspectratio=169,10pt,fontset=none]{ctexbeamer}
+
+% ---------- 主题 ----------
+\usetheme{Madrid}
+\usecolortheme{whale}
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{caption}[numbered]
+\setbeamerfont{frametitle}{size=\large}
+\setbeamerfont{title}{size=\LARGE}
+
+% ---------- 共享 preamble ----------
+\input{preamble}
+
+% ---------- 元信息 ----------
+\title[MIKU]{基于Apollo的多障碍物场景下\\路径规划算法实现}
+\author[廖嘉旺]{廖嘉旺}
+\institute[湖北文理学院]{湖北文理学院\quad{}计算机工程学院\quad{}计科2211\\[2pt]指导教师\quad{}孙成娇}
+\date{2026年5月}
+
+\begin{document}
+
+% ============================================================
+% [01] 封面
+% ============================================================
+\begin{frame}
+  \titlepage
+\end{frame}
+
+% ============================================================
+% [02] 研究背景 —— 自动驾驶路径规划的三难
+% ============================================================
+\begin{frame}{研究背景}
+  \vspace{0.2em}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.55\textwidth}
+    \begin{block}{多障碍物密集场景的三类难点}
+      \begin{itemize}\setlength\itemsep{0.3em}
+        \item \textbf{可行域收缩}\quad{}禁行区域叠加使横向通行空间急剧压缩，甚至降为零
+        \item \textbf{决策耦合}\quad{}避让方向之间存在跟随、绕行与超越的相互制约
+        \item \textbf{时间预算紧}\quad{}车载规划周期不超过$100$\,ms，组合搜索必须在该预算内完成
+      \end{itemize}
+    \end{block}
+    \column{0.40\textwidth}
+    \begin{exampleblock}{研究基座}
+      \begin{itemize}\setlength\itemsep{0.3em}
+        \item 百度Apollo 11.0 开源平台
+        \item PublicRoad Planner 的PJPO路径QP链路
+        \item 路径边界决策模块PathBoundsDecider
+      \end{itemize}
+    \end{exampleblock}
+  \end{columns}
+  \vspace{0.3em}
+  \small 自动驾驶从感知到控制之间，路径规划承担轨迹生成职责，直接决定整车安全与舒适。
+\end{frame}
+
+% ============================================================
+% [03] 问题陈述 —— Baseline 次优性三症状
+% ============================================================
+\begin{frame}{问题陈述}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.46\textwidth}
+    
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=0.72\textheight}{\input{../图片/fig_baseline_greedy_flow}}
+    \end{center}
+    \column{0.52\textwidth}
+    \begin{block}{PathBoundsDecider 的三个观察}
+      \begin{enumerate}\setlength\itemsep{0.3em}
+        \item \textbf{安全裕度一刀切}\quad{}$\delta$不区分路锥、花坛与违停车，统一$0.4$\,m
+        \item \textbf{独立决策矛盾}\quad{}逐障碍物贪心，容易把左右两侧避让方向拧反
+        \item \textbf{动态障碍物排除}\quad{}\texttt{IsStatic}过滤，行人在路径阶段完全不可见
+      \end{enumerate}
+    \end{block}
+    \small 三个症状分别对应安全距离、决策粒度、时空协调三条维度。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [04] 研究目标与贡献
+% ============================================================
+\begin{frame}{研究目标与贡献}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.45\textwidth}
+    
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=0.72\textheight}{\input{../图片/fig_contribution_summary}}
+    \end{center}
+    \column{0.52\textwidth}
+    \begin{block}{MIKU 三层改进}
+      \begin{itemize}\setlength\itemsep{0.3em}
+        \item \textbf{多因子威胁度}\quad{}差异化安全裕度$\delta_i$释放低威胁障碍物占用空间
+        \item \textbf{组级最优通行带}\quad{}扫描线分组+最大间隙策略，$O(2^k)\!\to\!O(k\log k)$
+        \item \textbf{时空可通行走廊}\quad{}到达时间函数$\tau(s)$把动态障碍物纳入路径边界
+      \end{itemize}
+    \end{block}
+    \small 三条改进在数学层面共用同一组$(u_i, v_i, \delta, \tau)$符号，前后衔接。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [05] Apollo 规划模块现状
+% ============================================================
+\begin{frame}{Apollo Planning 模块现状}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.58\textwidth}
+    
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=0.72\textheight}{\input{../图片/fig_apollo_arch}}
+    \end{center}
+    \column{0.40\textwidth}
+    \begin{block}{三级 Scenario-Stage-Task}
+      \begin{itemize}\setlength\itemsep{0.3em}
+        \item 场景层统一管理LaneFollow, LaneChange等
+        \item Task流水线内，PathBoundsDecider把障碍物决策转成QP的左右边界
+        \item 该边界形状直接决定PJPO可行域
+      \end{itemize}
+    \end{block}
+    \small 本文改动限定在路径边界构建这一步，其他链路保持不变。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [06] MIKU 总体框架
+% ============================================================
+\begin{frame}{MIKU 总体框架}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.60\textwidth}
+    
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=0.72\textheight}{\input{../图片/fig_algorithm_flow}}
+    \end{center}
+    \column{0.38\textwidth}
+    \begin{block}{三阶段流水}
+      \begin{enumerate}\setlength\itemsep{0.3em}
+        \item 威胁度评估给出$\delta_i$
+        \item 时变投影$O_i(\tau(s))$把动态障碍物带入SL
+        \item 扫描线分组+最大间隙策略，组级决策$\mathbf{d}^*$
+      \end{enumerate}
+    \end{block}
+    \small 输出\texttt{PathBoundary}与\texttt{STDrivableBoundary}，下游PJPO与PJSO无需改动。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [07] 创新一：多因子威胁度 —— 方法
+% ============================================================
+\begin{frame}{创新一\quad{}多因子威胁度与$\delta_i$}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.56\textwidth}
+    
+    \begin{figure}\centering
+      \scalebox{0.78}{\begin{minipage}{\linewidth}\input{../图片/fig_threat_factors}\end{minipage}}
+    \end{figure}
+    \column{0.42\textwidth}
+    \begin{block}{五因子加权}
+      \begin{itemize}\setlength\itemsep{0.2em}
+        \item $T_{\mathrm{TTC}}$\quad{}碰撞时间倒数
+        \item $T_{\mathrm{ov}}$\quad{}横向重叠率
+        \item $T_{v_{rel}}$\quad{}相对速度方向
+        \item $T_{\mathrm{type}}$\quad{}障碍物类别先验
+        \item $T_{\rho}$\quad{}交互密度
+      \end{itemize}
+    \end{block}
+    \begin{block}{量化改造}
+      \footnotesize
+      $\delta_i = \delta_{\min} + (\delta_{\max}-\delta_{\min})\cdot T_i$
+      \par\vspace{0.15em}
+      裕度区间$\delta_i \in [\DeltaIntervalLow, \DeltaIntervalHigh]$\,m，取代Baseline一刀切的\DeltaBaseline\,m；
+      5个因子张成评分空间，锥桶$T_i$低落至$\sim$0.2，行人$T_i$高至$\sim$0.9。
+      \par\vspace{0.15em}
+      \textbf{鲁棒性}\quad{}权重$\pm\SensPerturbPct$\%扰动下3/4场景翻转率\SensOneMcFlipRate\%，最坏相对偏差仅\SensWorstRelDev\%。
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [08] 创新一：实验验证 —— 窄路锥桶（C3，\MThree 宏）
+% ============================================================
+\begin{frame}{创新一\quad{}实验验证\quad{}窄路密集锥桶}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.56\textwidth}
+    
+    \begin{figure}\centering
+      \scalebox{0.65}{\begin{minipage}{\linewidth}\input{../图片/fig_exp_03_narrow_cones_sl}\end{minipage}}
+    \end{figure}
+    \column{0.42\textwidth}
+    \begin{block}{C3量化对比}
+      \footnotesize
+      \setlength{\tabcolsep}{3pt}
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        指标 & Baseline & MIKU \\
+        \midrule
+        到达时间\,s          & \MThreeBaselineTArrive    & \MThreeMikuTArrive \\
+        通行效率             & \MThreeBaselineEfficiency & \MThreeMikuEfficiency \\
+        平均速度\,m/s        & \MThreeBaselineAvgV       & \MThreeMikuAvgV \\
+        停车时长\,s          & \MThreeBaselineStopDur    & \MThreeMikuStopDur \\
+        最大Jerk\,m/s$^3$    & \MThreeBaselineMaxAbsJerk & \MThreeMikuMaxAbsJerk \\
+        QP总耗时\,ms         & \MThreeBaselineQpTotal    & \MThreeMikuQpTotal \\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \scriptsize Baseline统一\DeltaBaseline\,m裕度被18锥桶卡在起点停车\MThreeBaselineStopDur\,s；MIKU差异化$\delta_i$打开连续通行带，Jerk降\textbf{5.7倍}。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [09] 创新二：组级最优通行带 —— 方法
+% ============================================================
+\begin{frame}{创新二\quad{}组级最优通行带}
+  \vspace{-0.6em}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.48\textwidth}
+    \adjustbox{max width=\linewidth,max totalheight=0.65\textheight}{\input{../图片/fig_corridor_gen_a}}
+    \column{0.50\textwidth}
+    \begin{block}{复杂度从指数压到对数线性}
+      \footnotesize
+      \begin{itemize}\setlength\itemsep{0.2em}
+        \item \textbf{引理}\quad{}最优分割在横向排序下连续
+        \item \textbf{定理}\quad{}组内按$l_{\min}$排序后，$k+1$个候选间隙里的最大者即最优
+        \item 搜索空间\quad{}\ComplexityOldBase$\to$\ComplexityNewBase
+        \item 组规模上限$k_{\max}\!=\!\GroupKmax$，超限回退Baseline逐障碍物策略
+      \end{itemize}
+    \end{block}
+    \begin{block}{一步出解}
+      \scriptsize
+      扫描线得连通组$\to$组内按$l_{\min}$排序得$k+1$个间隙$\to$取宽度最大间隙即$\mathbf{d}^*$。C3密集施工下$k\!=\!\GroupCThreeK$，Baseline需$2^{\GroupCThreeK}\!\approx\!\GroupCThreeCombCount$万次组合判断，MIKU按排序一步出解。
+      \par\vspace{0.15em}
+      \textbf{实测佐证}\quad{}C2行人加停车QP总耗时\MTwoBaselineQpTotal$\to$\MTwoMikuQpTotal\,ms，约24倍加速。
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [10] 创新二：实验验证 —— 行人加停车（C2，\MTwo 宏）
+% ============================================================
+\begin{frame}{创新二\quad{}实验验证\quad{}行人加违停车}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.56\textwidth}
+    
+    \begin{figure}\centering
+      \scalebox{0.68}{\begin{minipage}{\linewidth}\input{../图片/fig_exp_02_ped_plus_parked_sl}\end{minipage}}
+    \end{figure}
+    \column{0.42\textwidth}
+    \begin{block}{C2量化对比}
+      \footnotesize
+      \setlength{\tabcolsep}{3pt}
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        指标 & Baseline & MIKU \\
+        \midrule
+        到达时间\,s        & \MTwoBaselineTArrive    & \MTwoMikuTArrive \\
+        通行效率           & \MTwoBaselineEfficiency & \MTwoMikuEfficiency \\
+        平均速度\,m/s      & \MTwoBaselineAvgV       & \MTwoMikuAvgV \\
+        最大Jerk\,m/s$^3$  & \MTwoBaselineMaxAbsJerk & \MTwoMikuMaxAbsJerk \\
+        QP总耗时\,ms       & \MTwoBaselineQpTotal    & \MTwoMikuQpTotal \\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \scriptsize Baseline对违停车与行人独立贪心，左右避让方向对冲致$l^+<l^-$\,BLOCKED；MIKU组级选两者之间最宽间隙，QP耗时从\MTwoBaselineQpTotal\,ms降至\MTwoMikuQpTotal\,ms，\textbf{加速21倍}。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [11] 创新三：时空可通行走廊 —— 方法
+% ============================================================
+\begin{frame}{创新三\quad{}时空可通行走廊}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.54\textwidth}
+    
+    \begin{center}
+      \adjustbox{max width=\linewidth,max totalheight=0.70\textheight}{\input{../图片/fig_st_constraint}}
+    \end{center}
+    \column{0.44\textwidth}
+    \begin{block}{双源融合}
+      \footnotesize
+      \begin{itemize}\setlength\itemsep{0.25em}
+        \item \textbf{时变投影}\quad{}$O_i(\tau(s))$让动态障碍物预测轨迹参与路径边界
+        \item \textbf{走廊上界}\quad{}组级通行带时间有效性投影到速度QP的$s$上界
+        \item \textbf{交集收紧}\quad{}与SpeedBoundsDecider原ST边界取交集
+      \end{itemize}
+    \end{block}
+    \begin{block}{维度升级的量化效益}
+      \scriptsize
+      \begin{itemize}\setlength\itemsep{0.2em}
+        \item 从SL二维升格为ST时空规划，\texttt{IsStatic}过滤被废弃
+        \item \textbf{C1单行人}\quad{}到达时间\MOneBaselineTArrive$\to$\MOneMikuTArrive\,s，Jerk\,\MOneBaselineMaxAbsJerk$\to$\MOneMikuMaxAbsJerk
+        \item \textbf{C4密集施工}\quad{}效率\MFourBaselineEfficiency$\to$\MFourMikuEfficiency，$\to$加速\MFourBaselineAvgV$\to$\MFourMikuAvgV\,m/s
+      \end{itemize}
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [12] 创新三：实验验证 —— 单行人横穿（C1，\MOne 宏）
+% ============================================================
+\begin{frame}{创新三\quad{}实验验证\quad{}单行人横穿}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.56\textwidth}
+    
+    \begin{figure}\centering
+      \scalebox{0.72}{\begin{minipage}{\linewidth}\input{../图片/fig_exp_01_crossing_ped_st}\end{minipage}}
+    \end{figure}
+    \column{0.42\textwidth}
+    \begin{block}{C1量化对比}
+      \footnotesize
+      \setlength{\tabcolsep}{3pt}
+      \begin{tabular}{@{}lrr@{}}
+        \toprule
+        指标 & Baseline & MIKU \\
+        \midrule
+        到达时间\,s        & \MOneBaselineTArrive    & \MOneMikuTArrive \\
+        通行效率           & \MOneBaselineEfficiency & \MOneMikuEfficiency \\
+        平均速度\,m/s      & \MOneBaselineAvgV       & \MOneMikuAvgV \\
+        最大Jerk\,m/s$^3$  & \MOneBaselineMaxAbsJerk & \MOneMikuMaxAbsJerk \\
+        QP总耗时\,ms       & \MOneBaselineQpTotal    & \MOneMikuQpTotal \\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \scriptsize Baseline未对动态行人投影，ST图上反复试探后触发FallbackPath降级；MIKU由$\tau(s)$预判行人已横出车道，QP一次收敛，\textbf{Jerk降5.1倍}。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [13] 综合实验设置
+% ============================================================
+\begin{frame}{综合实验设置}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.48\textwidth}
+    \begin{block}{场景矩阵\quad{}共\MScenarioTotal 组}
+      \footnotesize
+      \begin{itemize}\setlength\itemsep{0.2em}
+        \item \textbf{压力}\quad{}\MPressureScenarioTotal 组，C1单行人横穿/C2行人加停车/C3窄路锥桶/C4密集施工
+        \item \textbf{可比}\quad{}\MComparableScenarioTotal 组，同几何但稀疏，用于不失败场景下的横向对比
+        \item 复现方式\quad{}Python重写apollo\_pipeline，OSQP实测QP耗时
+      \end{itemize}
+    \end{block}
+    \begin{block}{消融与灵敏度}
+      \footnotesize
+      \begin{itemize}\setlength\itemsep{0.2em}
+        \item \textbf{消融}\quad{}\AblationVariantTotal 组变体M0至M5
+        \item \textbf{灵敏度}\quad{}威胁度权重$\pm\SensPerturbPct$\%，蒙特卡洛\SensTrialCount 次
+      \end{itemize}
+    \end{block}
+    \column{0.50\textwidth}
+    \begin{block}{评分体系\quad{}\ScoreDimensionCount 维\ScoreMetricCountTotal 指标}
+      \footnotesize
+      \setlength{\tabcolsep}{3pt}
+      \begin{tabular}{@{}lcc@{}}
+        \toprule
+        维度 & 权重 & 指标数 \\
+        \midrule
+        效率（平均速度/到达时间）     & \ScoreWeightEfficiency  & \ScoreMetricCountEfficiency \\
+        平滑（$|a|_{\max}$/Jerk/横加） & \ScoreWeightSmoothness  & \ScoreMetricCountSmoothness \\
+        鲁棒（通过率/停车/失败惩罚）   & \ScoreWeightRobustness  & \ScoreMetricCountRobustness \\
+        计算（QP总耗时）               & \ScoreWeightCompute     & \ScoreMetricCountCompute \\
+        \bottomrule
+      \end{tabular}
+    \end{block}
+    \scriptsize 场景参数与CSV/JSON入库可一键重跑，Dreamview截图仅辅助展示C++在环。
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [14] 综合实验：横向对比（headline 数据页）
+% ============================================================
+\begin{frame}{综合实验\quad{}横向对比}
+  \centering
+  \vspace{-0.3em}
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}llccc@{}}
+    \toprule
+    \textbf{场景组} & \textbf{算法} & \textbf{通过数} & \textbf{平均速度\,m/s} & \textbf{QP总耗时\,ms} \\
+    \midrule
+    \multirow{2}{*}{压力\,C1--C4}
+      & Baseline & \MPressureBaselinePassCount/\MPressureScenarioTotal & \MPressureBaselineAvgV & \MPressureBaselineQpTotal \\
+      & \textbf{MIKU} & \textbf{\MPressureMikuPassCount/\MPressureScenarioTotal} & \textbf{\MPressureMikuAvgV} & \textbf{\MPressureMikuQpTotal} \\
+    \midrule
+    \multirow{2}{*}{可比\,C5--C8}
+      & Baseline & \MComparableBaselinePassCount/\MComparableScenarioTotal & \MComparableBaselineAvgV & \MComparableBaselineQpTotal \\
+      & \textbf{MIKU} & \textbf{\MComparableMikuPassCount/\MComparableScenarioTotal} & \textbf{\MComparableMikuAvgV} & \textbf{\MComparableMikuQpTotal} \\
+    \midrule
+    \multirow{2}{*}{汇总\,\MScenarioTotal 场景}
+      & Baseline & \MSummaryBaselinePassCount/\MScenarioTotal & \MSummaryBaselineAvgV & \MSummaryBaselineQpTotal \\
+      & \textbf{MIKU} & \textbf{\MSummaryMikuPassCount/\MScenarioTotal} & \textbf{\MSummaryMikuAvgV} & \textbf{\MSummaryMikuQpTotal} \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.4em}
+  \begin{block}{杀招}
+    \footnotesize
+    压力场景Baseline通过率\textbf{\MPressureBaselinePassCount/\MPressureScenarioTotal}全数触发FallbackPath降级，
+    MIKU\textbf{\MPressureMikuPassCount/\MPressureScenarioTotal 全通}；可比场景下MIKU QP耗时
+    \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms，降\textbf{66.6\%}；整体平均速度提升\textbf{\MSummarySummaryVImprovement\%}。
+  \end{block}
+\end{frame}
+
+% ============================================================
+% [15] 综合实验：消融结论（M0-M5 六变体评分）
+% ============================================================
+\begin{frame}{综合实验\quad{}消融结论}
+  \vspace{-0.2em}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{3pt}
+  \begin{tabular}{@{}clccc@{}}
+    \toprule
+    \textbf{变体} & \textbf{配置} & \textbf{通过率} & \textbf{综合评分} & \textbf{相对M5} \\
+    \midrule
+    M0 & 原始Baseline                      & \AblationMZeroPassCount/\AblationMZeroScenarioTotal  & \AblationScoreMZero  & $-100.00$ \\
+    M1 & 仅差异化$\delta_i$                & \AblationMOnePassCount/\AblationMOneScenarioTotal    & \AblationScoreMOne   & $-75.12$ \\
+    M2 & M1+扫描线分组                      & \AblationMTwoPassCount/\AblationMTwoScenarioTotal    & \AblationScoreMTwo   & $-62.33$ \\
+    M3 & M2+最大间隙                        & \AblationMThreePassCount/\AblationMThreeScenarioTotal & \AblationScoreMThree & $-64.39$ \\
+    M4 & 留一不加（\AblationLeaveOneOutVariantTotal 项任缺一） & \AblationMFourPassCount/\AblationMFourScenarioTotal  & \AblationScoreMFour  & $+\AblationMarginMFourMFive$ \\
+    \rowcolor{lightgreen!40}
+    M5 & MIKU全量                            & \AblationMFivePassCount/\AblationMFiveScenarioTotal  & \textbf{\AblationScoreMFive} & $0.00$ \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.5em}
+  \begin{block}{结论}
+    \footnotesize
+    \begin{itemize}\setlength\itemsep{0.15em}
+      \item 单项改进（M1--M3）因问题维度不匹配，评分天花板被\AblationFailedScoreCeil 分的失败惩罚压制
+      \item M4留一不加仍达\AblationScoreMFour 分，与全量M5仅相差\AblationMarginMFourMFive 分，说明\textbf{三项改进高度互补}
+      \item 组合成MIKU全量（M5）即达评分上限\AblationScoreMFive，\textbf{缺一则退化}
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+% ============================================================
+% [16] 综合实验：QP 求解耗时
+% ============================================================
+\begin{frame}{综合实验\quad{}QP求解耗时}
+  \vspace{-0.2em}
+  \centering
+  \footnotesize
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{@{}lcccc@{}}
+    \toprule
+    \textbf{场景} & \textbf{Baseline总\,ms} & \textbf{MIKU总\,ms} & \textbf{路径QP对比\,ms} & \textbf{加速比} \\
+    \midrule
+    C2 行人加停车    & \MTwoBaselineQpTotal    & \MTwoMikuQpTotal    & \MTwoBaselineQpPath/\MTwoMikuQpPath     & $24.2\times$ \\
+    C6 行人加停车稀疏 & \MSixBaselineQpTotal    & \MSixMikuQpTotal    & \MSixBaselineQpPath/\MSixMikuQpPath     & $16.6\times$ \\
+    C7 窄路锥桶稀疏   & \MSevenBaselineQpTotal  & \MSevenMikuQpTotal  & \MSevenBaselineQpPath/\MSevenMikuQpPath & $1.1\times$ \\
+    C8 密集施工稀疏   & \MEightBaselineQpTotal  & \MEightMikuQpTotal  & \MEightBaselineQpPath/\MEightMikuQpPath & $1.0\times$ \\
+    \midrule
+    压力\,C1--C4组均 & \MPressureBaselineQpTotal & \textbf{\MPressureMikuQpTotal} & \MPressureBaselineQpPath/\MPressureMikuQpPath & \textbf{降84.3\%} \\
+    可比\,C5--C8组均 & \MComparableBaselineQpTotal & \textbf{\MComparableMikuQpTotal} & \MComparableBaselineQpPath/\MComparableMikuQpPath & \textbf{降66.6\%} \\
+    \bottomrule
+  \end{tabular}
+  \vspace{0.4em}
+  \begin{block}{关键结论}
+    \footnotesize
+    \begin{itemize}\setlength\itemsep{0.15em}
+      \item C2与C6两组行人场景差距最大，MIKU速度QP一次收敛不再多轮fallback
+      \item 压力场景Baseline触发FallbackPath降级，数字不构成效率比较依据
+      \item 整体额外开销仅\MSummarySummaryExtraMs\,ms，换来\MPressureMikuPassCount/\MPressureScenarioTotal 个压力场景突破
+    \end{itemize}
+  \end{block}
+\end{frame}
+
+% ============================================================
+% [17] 研究局限性（含灵敏度量化）
+% ============================================================
+\begin{frame}{研究局限性}
+  \begin{columns}[T,onlytextwidth]
+    \column{0.54\textwidth}
+    \begin{block}{四项局限}
+      \footnotesize
+      \begin{itemize}\setlength\itemsep{0.3em}
+        \item \textbf{预测开环}\quad{}$\tau(s)$单次前向估计，未回传自车候选至周车预测
+        \item \textbf{组粒度}\quad{}组内截面求解未对纵向链式重叠做细粒度拆分
+        \item \textbf{验证边界}\quad{}限于Python复现加Dreamview在环，未覆盖多车交互与恶劣天气
+        \item \textbf{硬件映射}\quad{}桌面级耗时不能直接外推到车载嵌入式算力
+      \end{itemize}
+    \end{block}
+    \column{0.44\textwidth}
+    \begin{block}{权重灵敏度\quad{}$\pm\SensPerturbPct$\% $\times$ \SensTrialCount 次MC}
+      \scriptsize
+      \setlength{\tabcolsep}{3pt}
+      \begin{tabular}{@{}lcc@{}}
+        \toprule
+        场景 & 翻转率 & 最坏相对偏差 \\
+        \midrule
+        C1 单行人         & \SensOneMcFlipRate\%   & \SensOneMcMaxRelDev\% \\
+        C2 行人加停车      & \SensTwoMcFlipRate\%   & \SensTwoMcMaxRelDev\% \\
+        C3 窄路锥桶       & \SensThreeMcFlipRate\% & \SensThreeMcMaxRelDev\% \\
+        \rowcolor{lightorange!30}
+        C4 密集施工       & \textbf{\SensFourMcFlipRate\%} & \textbf{\SensFourMcMaxRelDev\%} \\
+        \bottomrule
+      \end{tabular}
+      \par\vspace{0.3em}
+      C4翻转率\SensFourMcFlipRate\%，单因子扰动出现\SensFourSingleFlipCnt 例决策翻转，
+      最坏相对偏差仅\SensWorstRelDev\%由动态走廊兜底。
+    \end{block}
+  \end{columns}
+\end{frame}
+
+% ============================================================
+% [18] 研究展望
+% ============================================================
+\begin{frame}{研究展望}
+  \begin{itemize}\setlength\itemsep{0.4em}
+    \item \textbf{交互式预测}\quad{}把自车候选轨迹回传预测模块, 降低开环偏差
+    \item \textbf{路径速度迭代}\quad{}将单次前向$\tau(s)$扩展为迭代求解, 给出收敛界与单帧预算
+    \item \textbf{候选评分}\quad{}当多个间隙宽度接近时引入学习辅助评分, 补充变道代价
+    \item \textbf{实车部署}\quad{}在真实感知与控制链路下评估噪声与延迟, 给出降级与失效安全方案
+  \end{itemize}
+\end{frame}
+
+% ============================================================
+% [19] 主要结论
+% ============================================================
+\begin{frame}{主要结论}
+  \footnotesize
+  \begin{itemize}\setlength\itemsep{0.35em}
+    \item 针对Apollo PathBoundsDecider三项源码层缺陷，提出多障碍物交互运动学统一规划算法MIKU，以差异化$\delta_i$、组级最优$\mathbf{d}^*$、时空走廊$\tau(s)$三条改进共用同一组$(u_i, v_i, \delta, \tau)$数学记号
+    \item \textbf{通过率}\quad{}压力场景\MPressureBaselinePassCount/\MPressureScenarioTotal$\to$\MPressureMikuPassCount/\MPressureScenarioTotal，整体\MSummaryBaselinePassCount/\MScenarioTotal$\to$\MSummaryMikuPassCount/\MScenarioTotal
+    \item \textbf{效率}\quad{}整体平均速度提升\MSummarySummaryVImprovement\%；压力场景平均速度\MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s
+    \item \textbf{计算}\quad{}压力场景QP总耗时\MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降84.3\%），可比场景\MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降66.6\%），仅多付\MSummarySummaryExtraMs\,ms平均开销
+    \item \textbf{消融}\quad{}M0原始\AblationScoreMZero 分$\to$M5全量\AblationScoreMFive 分；留一不加M4仅\AblationScoreMFour 分（差\AblationMarginMFourMFive），证三项改进高度互补
+    \item \textbf{鲁棒}\quad{}威胁度权重$\pm\SensPerturbPct$\% $\times$ \SensTrialCount 次蒙特卡洛，3/4场景翻转率\SensOneMcFlipRate\%，最坏相对偏差\SensWorstRelDev\%
+    \item 已完成C++增量接入，保持Apollo数据流与QP求解链路不变，下游Control模块无需修改
+  \end{itemize}
+\end{frame}
+
+% ============================================================
+% [20] 致谢
+% ============================================================
+\begin{frame}
+  \begin{center}
+    \vspace{1.2em}
+    {\Huge 感谢各位老师}\\[0.8em]
+    {\large 恳请批评指正}
+    \vspace{1.5em}
+  \end{center}
+  \begin{center}
+    \small 廖嘉旺\quad{}湖北文理学院计算机工程学院\quad{}2026年5月
+  \end{center}
+\end{frame}
+
+\end{document}

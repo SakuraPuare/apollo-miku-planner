@@ -1,0 +1,74 @@
+% !TEX program = xelatex
+% ---------- 共享 preamble ----------
+% slides 与 script 共用。仅拉 _figpreamble.tex 的颜色宏 + tikz + pgfplots + subcaption。
+% 不 \input 毕业论文/preamble.tex（避免 ctexbook 与 ctexbeamer/ctexart 冲突）。
+
+% ---------- 字体 ----------
+\def\ProjectFontDir{../fonts}
+\input{../fonts/local-fonts}
+
+% ---------- 宏包 ----------
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usetikzlibrary{external}
+\tikzexternalize
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween}
+\pgfplotsset{table/search path={../图片/, ../图片/data/, ../}}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{adjustbox}
+
+% ---------- 统一调色板（与 图片/_figpreamble.tex 同步） ----------
+\definecolor{deepblue}{RGB}{81, 132, 178}
+\definecolor{lightblue}{RGB}{170, 212, 248}
+\definecolor{skyblue}{RGB}{154, 220, 255}
+\definecolor{inputyellow}{RGB}{255, 248, 154}
+\definecolor{outputpink}{RGB}{255, 178, 166}
+\definecolor{improvedpink}{RGB}{255, 138, 174}
+\definecolor{lightpink}{RGB}{241, 167, 181}
+\definecolor{deeppink}{RGB}{213, 82, 118}
+\definecolor{bglight}{RGB}{242, 245, 250}
+\definecolor{lightgreen}{RGB}{180, 230, 180}
+\definecolor{lightorange}{RGB}{255, 210, 140}
+\definecolor{dangerred}{RGB}{230, 100, 100}
+\definecolor{vibrantgreen}{RGB}{46, 175, 80}
+\definecolor{vibrantorange}{RGB}{240, 130, 30}
+\definecolor{vibrantred}{RGB}{220, 50, 50}
+
+% ---------- 统一 tikz 样式（与 图片/_figpreamble.tex 同步） ----------
+\tikzset{
+  mod/.style            = {rectangle, rounded corners=2pt, draw=deepblue, fill=lightblue, minimum height=0.9cm, align=center, font=\small},
+  modimp/.style         = {rectangle, rounded corners=2pt, draw=deeppink, fill=improvedpink, minimum height=0.9cm, align=center, font=\small},
+  modin/.style          = {rectangle, draw=deepblue, fill=inputyellow, minimum height=0.9cm, align=center, font=\small},
+  modout/.style         = {rectangle, draw=deeppink, fill=outputpink, minimum height=0.9cm, align=center, font=\small},
+  axx/.style            = {->, thick, black!80},
+  flow/.style           = {-Stealth, thick, deepblue},
+  flowimp/.style        = {-Stealth, thick, deeppink},
+  obsstatic/.style      = {fill=dangerred!70, draw=dangerred, thick},
+  obsdyn/.style         = {fill=lightorange, draw=dangerred, thick},
+  obsbuf/.style         = {draw=dangerred!70, dashed, thick},
+  bandok/.style         = {fill=lightgreen, opacity=0.55},
+  bandbad/.style        = {fill=dangerred!30, opacity=0.55},
+  egopt/.style          = {fill=deepblue, draw=deepblue},
+  reflinestyle/.style   = {deepblue, very thick},
+}
+% ---------- 论文实验宏（与 毕业论文/ 同步） ----------
+\InputIfFileExists{../毕业论文/_experiment_metrics.tex}{}{}
+\InputIfFileExists{../毕业论文/_experiment_context.tex}{}{}
+\InputIfFileExists{../毕业论文/_ablation_macros.tex}{}{}
+\InputIfFileExists{../毕业论文/_sensitivity_macros.tex}{}{}
+
+% ---------- 算法常量宏（slides 层级，非自动生成） ----------
+\newcommand{\GroupKmax}{15}
+\newcommand{\GroupCThreeK}{18}
+\newcommand{\GroupCThreeCombCount}{26}
+\newcommand{\ComplexityOldBase}{$O(2^k)$}
+\newcommand{\ComplexityNewBase}{$O(k\log k)$}
