@@ -118,7 +118,7 @@ l^+(s^*) = \min(\GroupExampleRightObsLow - \GroupExampleDelta,\; \GroupExampleLe
 \label{fig:path_conservative}
 \end{figure}
 
-两个障碍物的极端情形之外，随障碍物数量增加，独立决策对可行域的压缩会近似指数恶化。图 \ref{fig:feasible_compress} 给出同一车道内 2 个、4 个和极端密度障碍物场景下的可行域演化。图 \ref{fig:feasible_compress:a} 中 2 个障碍物尚存较宽的通带可供自车选择，但贪心已开始压缩通带宽度；图 \ref{fig:feasible_compress:b} 中 4 个障碍物经过多次独立收缩，可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发 BLOCKED；图 \ref{fig:feasible_compress:c} 的极端密度下可行域进一步碎片化，几乎任何贪心组合都会在某处边界失效。这说明高密度场景下改进决策粒度对恢复可行性的贡献远高于单纯调整安全裕度。
+两个障碍物的极端情形之外，随障碍物数量增加，独立决策对可行域的压缩会近似指数恶化。图 \ref{fig:feasible_compress} 给出同一车道内 2 个、4 个和极端密度障碍物场景下的可行域演化。图 \ref{fig:feasible_compress:a} 中 2 个障碍物尚存较宽的通带可供自车选择，但贪心已开始压缩通带宽度；图 \ref{fig:feasible_compress:b} 中 4 个障碍物经过多次独立收缩，可行域退化为断续的狭窄通带，任一处出现贪心矛盾即触发 BLOCKED；图 \ref{fig:feasible_compress:c} 的极端密度下可行域进一步碎片化，几乎任何贪心组合都会在某处边界失效。高密度场景下，决策粒度的改进对恢复可行性的贡献远高于单纯调整安全裕度。
 
 \begin{figure}[htbp]
 \centering
@@ -523,7 +523,7 @@ MIKU     & \MEightMikuAvgV     & \MEightMikuMaxAbsA     & \MEightMikuSEnd     & 
 \end{tabular}
 \end{table}
 
-实验结果与本章理论分析一致。压力构型中Baseline因贪心方向切换矛盾在$s=\MFourBaselineSEnd$\,m处不可通行，MIKU的组级策略顺利通过；可通过构型中MIKU在同等通行能力下改善了求解指标。对照表明，定理\ref{thm:max_gap}给出的单截面最优分割和链式分量的保守包络处理，既是极端条件下通行的必要条件，也能在宽松条件下改善轨迹质量。
+实验结果与本章理论分析一致。压力构型中Baseline因贪心方向切换矛盾在$s=\MFourBaselineSEnd$\,m处不可通行，MIKU的组级策略顺利通过；可通过构型中MIKU在同等通行能力下改善了求解指标。压力构型验证了定理\ref{thm:max_gap}的单截面最优分割和链式分量保守包络处理在极端条件下的必要性，可通过构型则显示同一策略在宽松条件下仍能改善轨迹质量。
 
 \section{本章小结}
 

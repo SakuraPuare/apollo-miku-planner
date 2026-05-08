@@ -344,14 +344,14 @@ S_{\mathrm{overall}} = \begin{cases}
 
 关于C5走廊注入的架构价值，M4关闭C5后，在压力场景中的通过数为\AblationMFourPassCount{}/\AblationScenarioTotal，综合得分相对M5的差值仅为\AblationMarginMFourMFive 分，计算开销差异近似为零。这一近似持平的原因在于，当前压力场景均为单车道静态或低动态场景，路径阶段已通过C1的时变投影提前规避了所有动态时间冲突，速度阶段仅需保守通过，C5走廊约束未触发活跃边界。C5的架构意义不在于提升简单场景的指标，而在于为Apollo的路径-速度解耦架构补全了此前缺失的约束传递通道，将路径阶段对动态障碍物的时空决策以$(s_k,\tau_k)$形式注入速度QP，使路径规划与速度规划在动态场景下保持一致性。该通道在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中将成为速度规划的必要约束源。当前压力场景的消融结果表明，C5在不被激活时对系统无实质负面影响，相关开销在毫秒量级，满足\PlannerCycleMs\,ms规划周期要求。
 
-综合来看，消融实验定量验证了C1、C2、C3、C4对MIKU算法的作用。C1与C2--C3共同决定动态和大型连通分量场景的通行成功率，C4决定窄路锥列下的可行性。C5在当前压力场景中未被激活，其作用需要在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中进一步验证，本文覆盖的场景不足以对C5给出定量评价。该结果说明，多障碍物路径规划的改进重心在路径阶段的时变与组级建模即C1至C4；C5负责将路径决策向速度约束正向传递，为路径-速度协调提供架构接口，但其定量贡献需要后续实验补充。
+消融实验定量验证了C1、C2、C3、C4对MIKU算法的作用。C1与C2--C3共同决定动态和大型连通分量场景的通行成功率，C4决定窄路锥列下的可行性。C5在当前压力场景中未被激活，其作用需要在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中进一步验证，本文覆盖的场景不足以对C5给出定量评价。从数据看，多障碍物路径规划的改进重心在路径阶段的时变与组级建模即C1至C4；C5负责将路径决策向速度约束正向传递，为路径-速度协调提供架构接口，但其定量贡献需要后续实验补充。
 
 \subsection{威胁度权重灵敏度分析}
 \label{sec:sensitivity_exp}
 
 第\ref{chap:threat}章式\eqref{eq:threat_score}中的五个权重$w_1$至$w_5$由定性排序与典型场景微调确定，有必要检验其对数值扰动的鲁棒性。本节沿用P1--P4压力场景，从单因子扰动与综合随机扰动两个维度设计灵敏度实验。
 
-单因子扰动实验中，逐一将每个权重因子放大或缩小\SensPerturbPct\%并重新归一化，检测障碍物间的威胁度排序是否发生翻转。场景一单行人仅含单障碍物，无需检测排序；场景二行人加停车和场景三\NarrowCmpConeCountPerSide{}$\times$2个交通锥排序完全稳定（\SensTwoSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转）；场景四（\DenseConstructionTotalObstacles 个障碍物）出现\SensFourSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转，但均发生在威胁度极接近的同类交通锥之间（$\Delta\Theta < \SensThetaCloseThreshold$），不影响实际通行决策。
+单因子扰动实验中，逐一将每个权重因子放大或缩小\SensPerturbPct\%并重新归一化，检测障碍物间的威胁度排序是否发生翻转。场景一单行人仅含单障碍物，无需检测排序；场景二行人加停车和场景三\NarrowCmpConeCountPerSide{}个水马加\NarrowCmpConeCountPerSide{}个交通锥排序完全稳定（\SensTwoSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转）；场景四（\DenseConstructionTotalObstacles 个障碍物）出现\SensFourSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转，但均发生在威胁度极接近的同类交通锥之间（$\Delta\Theta < \SensThetaCloseThreshold$），不影响实际通行决策。
 
 综合随机扰动实验中，对五个权重同时施加$\pm\SensPerturbPct\%$的随机扰动并进行\SensTrialCount 次蒙特卡洛实验，统计差异化安全裕度$\delta_i$的波动范围与排序翻转率。各场景中$\delta_i$的最大绝对偏差，场景一为\SensOneMcMaxAbsDev{}\,m，场景二为\SensTwoMcMaxAbsDev{}\,m，场景三为\SensThreeMcMaxAbsDev{}\,m，场景四为\SensFourMcMaxAbsDev{}\,m，全场景最大绝对偏差不超过\SensWorstAbsDev{}\,m。最大相对偏差在场景一为\SensOneMcMaxRelDev{}\%，场景二为\SensTwoMcMaxRelDev{}\%，场景三为\SensThreeMcMaxRelDev{}\%，场景四为\SensFourMcMaxRelDev{}\%，全场景相对偏差均小于\SensWorstRelDev{}\%。$\delta_i$变化超过\SensDeltaExceedThreshold\,m的概率为\SensFourMcExceedProb{}\%，排序翻转率在场景一至场景三中均为\SensOneMcFlipRate{}\%，场景四为\SensFourMcFlipRate{}\%。场景四的翻转集中在$\Theta$差异不足\SensThetaCloseThreshold 的同类交通锥之间，对应的$\Delta\delta_i < \SensDeltaCloseThreshold$\,m，对通行带宽度的影响可以忽略。
 
@@ -503,7 +503,7 @@ S_{\mathrm{overall}} = \begin{cases}
 \end{tabular}
 \end{table}
 
-在C1--C4可比场景中，Baseline与MIKU均完成通行，平均QP求解总耗时分别为\MComparableBaselineQpTotal\,ms与\MComparableMikuQpTotal\,ms。在P1--P4原始压力场景中Baseline进入FallbackPath降级分支，QP求解提前中止于减速停车阶段，记录的耗时反映降级前的不完整计算，不能作为两种算法的效率比较依据。因此本文的求解效率结论仅基于C1--C4，其中MIKU将部分决策判断前移至路径阶段后，速度QP的约束规模下降，路径QP的额外开销保持在毫秒量级。该结果说明，路径阶段与速度阶段的协同设计可以在不牺牲通行能力的前提下改善可比场景下的总体求解效率。
+在C1--C4可比场景中，Baseline与MIKU均完成通行，平均QP求解总耗时分别为\MComparableBaselineQpTotal\,ms与\MComparableMikuQpTotal\,ms。在P1--P4原始压力场景中Baseline进入FallbackPath降级分支，QP求解提前中止于减速停车阶段，记录的耗时反映降级前的不完整计算，不能作为两种算法的效率比较依据。因此本文的求解效率结论仅基于C1--C4，其中MIKU将部分决策判断前移至路径阶段后，速度QP的约束规模下降，路径QP的额外开销保持在毫秒量级，可比场景下的总体求解效率随之改善，通行能力未受影响。
 
 MIKU新增的扫描线分组与时变投影步骤的时间复杂度为$O(n \log n)$，而Baseline的\texttt{PathBoundsDecider}在每个离散位置遍历所有障碍物，时间复杂度为$O(nK)$，其中$K$为路径离散点数，典型配置下$K \approx 200$。在当前\MScenarioTotal{}个场景的障碍物数量范围内，MIKU的分组与投影开销均在毫秒级，对总耗时影响较小。OSQP求解器本身对约束数量的增量不敏感，走廊约束以标准ST上界形式注入，不改变QP的稀疏结构，因此速度QP耗时差异主要来自约束前置后的问题规模变化。整体满足Apollo的\PlannerCycleMs\,ms规划周期要求。
 
