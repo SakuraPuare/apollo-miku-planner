@@ -54,9 +54,9 @@ Apollo对安全距离的处理存在两个层面的粗粒度问题
 
 下面用一个具体场景说明统一安全距离如何引发不必要的通行失败。定义净间距为道路边界到障碍物边缘之间扣除额外缓冲$d_{buf}$后的剩余宽度，自车能从某一侧通过当且仅当该侧净间距不小于自车宽度。按第\ref{chap:framework}章式\eqref{eq:safety_margin}，换算到自车参考点约束时的总安全裕度为$\delta = W_{ego}/2 + d_{buf}$，下文\DeltaBaseline\,m和\NarrowExampleMikuDelta\,m均指额外缓冲而非$\delta$。
 
-\textbf{场景设定}\quad 标准车道宽\NarrowRoadWidth\,m，横向范围$[l_{road}^-,\;l_{road}^+] = [\NarrowExampleRoadLeft,\;\NarrowExampleRoadRight]$\,m，其中$l<0$为道路右侧、$l>0$为道路左侧。车道中偏右位置有一个路锥，横向占据$[\NarrowExampleConeLeft,\; \NarrowExampleConeRight]$\,m，宽度\NarrowExampleConeWidth\,m。自车宽度$W_{ego} = \NarrowExampleEgoWidth$\,m。
+场景设定如下，标准车道宽\NarrowRoadWidth\,m，横向范围$[l_{road}^-,\;l_{road}^+] = [\NarrowExampleRoadLeft,\;\NarrowExampleRoadRight]$\,m，其中$l<0$为道路右侧、$l>0$为道路左侧。车道中偏右位置有一个路锥，横向占据$[\NarrowExampleConeLeft,\; \NarrowExampleConeRight]$\,m，宽度\NarrowExampleConeWidth\,m。自车宽度$W_{ego} = \NarrowExampleEgoWidth$\,m。
 
-\textbf{Apollo统一缓冲}\quad 取$d_{buf} = \DeltaBaseline$\,m。从左侧通过时，净间距为
+Apollo统一缓冲下，取$d_{buf} = \DeltaBaseline$\,m。从左侧通过时，净间距为
 \[
 \NarrowExampleRoadRight - (\NarrowExampleConeRight) - \DeltaBaseline = \NarrowExampleApolloGap\,\text{m} < W_{ego} = \NarrowExampleEgoWidth\,\text{m}
 \]
@@ -66,7 +66,7 @@ Apollo对安全距离的处理存在两个层面的粗粒度问题
 \]
 两侧均不足以容纳自车，路径被判定为BLOCKED，自车停车等待。
 
-\textbf{差异化缓冲}\quad 该路锥处于静止状态且远离车道中心，威胁较低，取$d_{buf} = \NarrowExampleMikuDelta$\,m。从左侧通过时，净间距为
+差异化缓冲下，该路锥处于静止状态且远离车道中心，威胁较低，取$d_{buf} = \NarrowExampleMikuDelta$\,m。从左侧通过时，净间距为
 \[
 \NarrowExampleRoadRight - (\NarrowExampleConeRight) - \NarrowExampleMikuDelta = \NarrowExampleMikuGap\,\text{m} = W_{ego}
 \]
@@ -140,7 +140,7 @@ Apollo对安全距离的处理存在两个层面的粗粒度问题
 其中$v_{rel,i} = \dot{s}_{ego} - \dot{s}_i$为相对纵向速度，正值表示自车接近障碍物，$v_{max}$为道路限速。Sigmoid函数将相对速度平滑映射至$(0, 1)$，快速接近的障碍物即$v_{rel} \gg 0$时趋近1，同向远离的障碍物即$v_{rel} < 0$时趋近0。选择Sigmoid而非线性映射，是因为相对速度为零附近的区分度更重要，即低速接近和低速远离的差异，而极高相对速度间的差异不需要精细区分。
 
 \subsection{障碍物类型因子$f_{type}$}
-\textbf{取值映射}\quad{}不同类型障碍物的运动不确定性与受伤严重度差异显著，按下式取离散值
+取值映射如下，不同类型障碍物的运动不确定性与受伤严重度差异显著，按下式取离散值
 
 \begin{equation}
     f_{type}(i) = \begin{cases}
@@ -153,11 +153,11 @@ Apollo对安全距离的处理存在两个层面的粗粒度问题
     \label{eq:f_type}
 \end{equation}
 
-\textbf{取值依据}\quad{}该映射综合考虑运动不确定性与事故后果。行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲；交通锥等小尺寸标识物体积小且固定在路面，碰撞后果轻微，赋予最低权重\ThreatTypeCone。同时，一般认为弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重\ThreatTypePed。
+取值依据如下，该映射综合考虑运动不确定性与事故后果。行人和自行车的运动方向和速度随时可能突变，如突然横穿或急停回转，轨迹可预测性远低于机动车，需要最大安全裕度；机动车受道路与交通规则约束，轨迹相对可预测；静态障碍物无运动不确定性，仅保留基本缓冲；交通锥等小尺寸标识物体积小且固定在路面，碰撞后果轻微，赋予最低权重\ThreatTypeCone。同时，一般认为弱势道路使用者（Vulnerable Road Users, VRU）在同等碰撞能量下受伤严重度和致死率远高于车内乘员，规划器应对其施加额外保护性裕度，因此赋予行人和自行车最高权重\ThreatTypePed。
 
-\textbf{Apollo感知映射}\quad{}Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入\ThreatTypePed 分支，\texttt{VEHICLE}归入\ThreatTypeVehicle 分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入\ThreatTypeUnknownMovable 分支，\texttt{UNKNOWN\_UNMOVABLE}归入\ThreatTypeStatic 分支，交通锥等已知小尺寸标识物通过几何尺寸判别归入\ThreatTypeCone 分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
+在Apollo感知映射方面，Apollo感知模块在\texttt{PerceptionObstacle}消息中提供枚举字段\texttt{type}，取值覆盖\texttt{UNKNOWN}、\texttt{UNKNOWN\_MOVABLE}、\texttt{UNKNOWN\_UNMOVABLE}、\texttt{PEDESTRIAN}、\texttt{BICYCLE}和\texttt{VEHICLE}六类。规划层直接查表即可完成从感知标签到$f_{type}$的映射，\texttt{PEDESTRIAN}和\texttt{BICYCLE}归入\ThreatTypePed 分支，\texttt{VEHICLE}归入\ThreatTypeVehicle 分支，\texttt{UNKNOWN\_MOVABLE}与\texttt{UNKNOWN}归入\ThreatTypeUnknownMovable 分支，\texttt{UNKNOWN\_UNMOVABLE}归入\ThreatTypeStatic 分支，交通锥等已知小尺寸标识物通过几何尺寸判别归入\ThreatTypeCone 分支。对未知可动目标采用中等偏上的保守权重是因为分类置信度不足时宁可过估威胁也不可低估，避免将潜在行人误判为低威胁物体。
 
-\textbf{合成方式}\quad{}$f_{type}$作为加权求和中的一项进入式\eqref{eq:threat_score}，与碰撞时间、横向重叠率、相对速度三项连续因子加权叠加，合成综合威胁度$\Theta_i$，再经式\eqref{eq:dynamic_delta}映射为差异化安全裕度$\delta_i$，在裕度分配上对VRU给予更多保护。
+合成方式上，$f_{type}$作为加权求和中的一项进入式\eqref{eq:threat_score}，与碰撞时间、横向重叠率、相对速度三项连续因子加权叠加，合成综合威胁度$\Theta_i$，再经式\eqref{eq:dynamic_delta}映射为差异化安全裕度$\delta_i$，在裕度分配上对VRU给予更多保护。
 
 \subsection{交互密度因子$f_{inter}$}
 交互密度因子量化障碍物$i$与周围其他障碍物的聚集程度，是本文威胁度模型中与分组策略直接相关的因子
@@ -255,7 +255,19 @@ MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_
 }
 \end{table}
 
-按式\eqref{eq:threat_score}对最近一个交通锥，即$s=\NarrowThreatProbeS$\,m处的锥，计算综合威胁度。$TTC=\NarrowThreatProbeS/\NarrowEgoSpeed=\NarrowThreatTtcSeconds$\,s，$f_{TTC}=\NarrowThreatTtcFactor$、$f_{overlap}=\NarrowThreatOverlap$，因锥与自车横向投影不重叠、$f_{vel}=\sigma(\NarrowEgoSpeed/\ThreatVelLimit)\approx\NarrowThreatVel$、$f_{type}=\NarrowThreatType$、$f_{inter}\approx\NarrowThreatInter$，因仅同纵向对侧锥落入聚类半径。综合得$\Theta_i\approx\NarrowThreatTheta$，由式\eqref{eq:dynamic_delta}得$d_{buf,i}\approx\DeltaIntervalLow+(\DeltaIntervalHigh-\DeltaIntervalLow)\times\NarrowThreatTheta\approx\NarrowThreatDelta$\,m，对应总安全裕度$\delta_i\approx\NarrowEgoHalfWidth+\NarrowThreatDelta=\NarrowThreatTotalDelta$\,m，低于Baseline的$\delta_{\mathrm{base}}=\NarrowEgoHalfWidth+\DeltaBaseline=\NarrowBaselineTotalDelta$\,m。
+下面以$s=\NarrowThreatProbeS$\,m处最近一个交通锥为例，逐因子分析多因子威胁度评估如何识别其低威胁特征。
+
+碰撞时间因子方面，$TTC=\NarrowThreatProbeS/\NarrowEgoSpeed=\NarrowThreatTtcSeconds$\,s，处于$T_{crit}$与$T_{max}$之间的线性过渡区，$f_{TTC}=\NarrowThreatTtcFactor$。交通锥为静态目标，TTC完全由自车速度和纵向距离决定，不存在障碍物主动接近的额外风险。
+
+横向重叠率因子方面，交通锥位于车道侧方而非自车正前方，其横向占据区间与自车投影不重叠，$f_{overlap}=\NarrowThreatOverlap$。该因子直接反映碰撞的几何可能性，侧方锥桶不构成正面碰撞威胁。
+
+相对速度因子方面，锥桶静止，相对速度等于自车速度，$f_{vel}=\sigma(\NarrowEgoSpeed/\ThreatVelLimit)\approx\NarrowThreatVel$。该值虽不低，但仅反映自车接近速度，不含障碍物主动运动的不确定性。
+
+障碍物类型因子方面，交通锥属于小尺寸标识物，体积小且固定在路面，碰撞后果轻微，$f_{type}=\NarrowThreatType$，为五级分类中的最低档。若同一位置为行人，$f_{type}$将升至\ThreatTypePed，仅此一项即使$\Theta_i$增加$\ThreatWeightType\times(\ThreatTypePed-\NarrowThreatType)=0.085$。
+
+交互密度因子方面，每个锥仅与纵向对侧的一个锥落入聚类半径$d_{cluster}=\ThreatClusterRadius$\,m，$f_{inter}\approx\NarrowThreatInter$。锥列间距较大，不构成密集障碍物群，局部交互压力低。
+
+五项因子加权求和得综合威胁度$\Theta_i=\ThreatWeightTtc\times\NarrowThreatTtcFactor+\ThreatWeightOverlap\times\NarrowThreatOverlap+\ThreatWeightVel\times\NarrowThreatVel+\ThreatWeightType\times\NarrowThreatType+\ThreatWeightInter\times\NarrowThreatInter\approx\NarrowThreatTheta$。五个因子中$f_{overlap}=0$和$f_{type}=\NarrowThreatType$两项贡献最小，正是交通锥"侧方、小尺寸、静态"三重低威胁特征的量化体现。由式\eqref{eq:dynamic_delta}线性插值得$d_{buf,i}=\DeltaIntervalLow+(\DeltaIntervalHigh-\DeltaIntervalLow)\times\NarrowThreatTheta\approx\NarrowThreatDelta$\,m，对应总安全裕度$\delta_i=\NarrowEgoHalfWidth+\NarrowThreatDelta=\NarrowThreatTotalDelta$\,m，较Baseline的$\delta_{\mathrm{base}}=\NarrowEgoHalfWidth+\DeltaBaseline=\NarrowBaselineTotalDelta$\,m缩减$\NarrowBaselineTotalDelta-\NarrowThreatTotalDelta=0.11$\,m。该缩减量来自多因子模型对锥桶低威胁属性的综合判定，而非对单一因子的简单阈值判断。若场景中存在行人或车辆级障碍物，$f_{type}$、$f_{overlap}$和$f_{inter}$均会显著升高，$\Theta_i$将远大于\NarrowThreatTheta，对应的$\delta_i$接近甚至超过Baseline的统一裕度，从而对高威胁目标保持充分保护。
 
 \subsection{Baseline不可通行的压力子场景}
 
@@ -333,7 +345,7 @@ MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_
 \end{tabular}
 \end{table}
 
-实验结果与本章理论分析一致。障碍物为低威胁小尺寸静态目标时，Baseline的统一额外缓冲$d_{buf}=\DeltaBaseline$\,m会压缩可用通行带；MIKU按多因子威胁度评估给出$d_{buf,i}\approx\NarrowThreatDelta$\,m的差异化缓冲，对应$\delta_i\approx\NarrowThreatTotalDelta$\,m的总安全裕度，在同样到达目标的前提下释放更多横向余量。两组构型的对照同时说明，差异化安全裕度在极端条件下是通行的必要条件，在宽松条件下仍可改善轨迹质量。
+实验结果与本章理论分析一致。交通锥的五项因子中$f_{overlap}=0$、$f_{type}=\NarrowThreatType$、$f_{inter}=\NarrowThreatInter$三项均处于低位，多因子模型综合判定$\Theta_i=\NarrowThreatTheta$，将额外缓冲由Baseline的$d_{buf}=\DeltaBaseline$\,m降至$d_{buf,i}=\NarrowThreatDelta$\,m。压力构型中这$\NarrowBaselineTotalDelta-\NarrowThreatTotalDelta=0.11$\,m的裕度释放恰好使通行带从零宽恢复为正宽度，是通行的必要条件；可通过构型中同样的裕度释放改善了横向余量与路径QP约束质量。两组对照表明，差异化安全裕度的核心价值在于多因子模型能精确识别低威胁障碍物并针对性释放空间，而非对所有目标一律缩减缓冲。
 
 \section{本章小结}
 
