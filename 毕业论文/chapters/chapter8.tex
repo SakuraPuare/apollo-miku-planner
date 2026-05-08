@@ -58,11 +58,11 @@ Apollo已有的LaneBorrowPath机制用于处理长期阻塞场景。当\texttt{I
 
 MIKU与LaneBorrowPath为互补关系。
 \begin{enumerate}
-\item \textbf{本文方法在LaneBorrowPath之前介入}\quad{}通过全局最优的避让方向分配，在本车道内找到最宽的通行带，减少BLOCKED判定的发生频率。Baseline下被判定为BLOCKED的许多场景，本文方法可以找到可行的本车道通行带，无需触发LaneBorrowPath。
+\item 本文方法在LaneBorrowPath之前介入，通过全局最优的避让方向分配在本车道内找到最宽的通行带，减少BLOCKED判定的发生频率。Baseline下被判定为BLOCKED的许多场景，本文方法可以找到可行的本车道通行带，无需触发LaneBorrowPath。
 
-\item \textbf{LaneBorrowPath处理真正的本车道不可通行场景}\quad{}当所有间隙均不足以容纳自车，即$W^{*} < 0$或$W^{*}$极小时，确实需要借道，此时LaneBorrowPath机制仍然发挥作用。
+\item 当所有间隙均不足以容纳自车，即$W^{*} < 0$或$W^{*}$极小时，确实需要借道，此时LaneBorrowPath机制仍然发挥作用。
 
-\item \textbf{两者的协作方式}\quad{}本文方法先尝试本车道最优通行带，若不可行则触发LaneBorrowPath，LaneBorrowPath在借道车道上同样可以应用本文方法寻找最优通行带。
+\item 本文方法先尝试本车道最优通行带，若不可行则触发LaneBorrowPath，LaneBorrowPath在借道车道上同样可以应用本文方法寻找最优通行带。
 \end{enumerate}
 
 工程实践中，本文方法对LaneBorrowPath的减负效果较为明显。Baseline中贪心策略产生的虚假BLOCKED频繁触发LaneBorrowPath的计时器\texttt{cycle\_counter}，自车因此频繁执行不必要的借道操作，增加了变道风险和对邻道交通的干扰。本文方法在本车道内找到全局最优解后，将LaneBorrowPath的触发限定在真正需要借道的场景，整体行驶稳定性随之提升。
@@ -70,11 +70,11 @@ MIKU与LaneBorrowPath为互补关系。
 \subsection{降级机制}
 自动驾驶系统对安全性和鲁棒性要求严格，改进算法须具备降级机制以保证异常情况下不劣于原始系统。为此本文设计三级降级策略。
 \begin{enumerate}
-\item \textbf{所有间隙均不足车宽}\quad{}即$W^{*} \leq 0$，表明在当前障碍物配置下本车道确实不存在可通行空间。此时回退到Apollo原始流程，执行\texttt{TrimPathBounds}截断路径，触发FallbackPath停车决策。这是合理的降级行为，因为BLOCKED判定是真实的而非贪心策略造成的虚假阻塞。
+\item 当所有间隙均不足车宽，即$W^{*} \leq 0$时，表明在当前障碍物配置下本车道确实不存在可通行空间，此时回退到Apollo原始流程，执行\texttt{TrimPathBounds}截断路径，触发FallbackPath停车决策。这是合理的降级行为，因为BLOCKED判定是真实的而非贪心策略造成的虚假阻塞。
 
-\item \textbf{预测轨迹不可用}\quad{}当Prediction模块未提供某些障碍物的预测轨迹，或预测轨迹的时间范围不足以覆盖$\tau(s)$时，该障碍物退化为静态处理，使用$t = 0$时刻的位置快照。这保证了算法在信息不完整时仍能正常运行，且不劣于Baseline。
+\item 当Prediction模块未提供某些障碍物的预测轨迹，或预测轨迹的时间范围不足以覆盖$\tau(s)$时，该障碍物退化为静态处理，使用$t = 0$时刻的位置快照。这保证了算法在信息不完整时仍能正常运行，且不劣于Baseline。
 
-\item \textbf{分组异常}\quad{}若单个连通分量内的障碍物数量超过预设阈值$k_{max}$，默认取15，对该分量内部采用Baseline的逐障碍物策略作为保底。算法本身在$k = 15$时仍可正确运行，设置阈值的目的是在异常输入下提供确定性的行为保证。
+\item 若单个连通分量内的障碍物数量超过预设阈值$k_{max}$，默认取15，对该分量内部采用Baseline的逐障碍物策略作为保底。算法本身在$k = 15$时仍可正确运行，设置阈值的目的是在异常输入下提供确定性的行为保证。
 \end{enumerate}
 
 以上三种降级策略遵循``不劣于Baseline''原则。在本文测试的\MScenarioTotal{}个场景下，MIKU的输出至少与Apollo原始方案持平。降级触发时会在Debug日志中记录降级原因和上下文信息，便于后续分析和优化。
@@ -173,13 +173,13 @@ MIKU的关键参数配置如表\ref{tab:algo_params}所示。
 测试场景共\MScenarioTotal{}个，由\MPressureScenarioTotal{}个原始压力场景与\MComparableScenarioTotal{}个配对可比场景构成。P1--P4保留原始临界构型，用于暴露Baseline在动态障碍物、统一安全裕度与逐障碍物贪心决策下的失效边界；C1--C4逐一复制对应压力场景，仅轻量调整时间窗或障碍物横向位置，使Baseline与MIKU均可完成通过，用于在同一可达前提下比较轨迹质量与求解开销。如此既保留了原场景对算法必要性的验证，也避免把通过与失败的离散对照直接解读为连续指标优势。
 
 \begin{enumerate}
-\item \textbf{P1/C1 单行人横穿}\quad{}C1在P1基础上延长规划时间窗，用于比较动态障碍物提前投影后的纵向平顺性。
-\item \textbf{P2/C2 行人加停车}\quad{}C2在P2基础上轻量外移停车横向中心，使Baseline恢复可达，用于比较动静混合障碍物分组后的速度QP开销。
-\item \textbf{P3/C3 窄路加双侧交通锥}\quad{}C3在P3基础上将对称锥列改为轻微非对称锥列，使Baseline可通过，同时保留差异化安全裕度释放通行空间的效果。
-\item \textbf{P4/C4 单车道维修封闭加借道}\quad{}C4在P4基础上将维持段水马横向中心调至Baseline贪心切换临界侧，使双方均可导流通过，用于比较组级边界组织带来的求解开销差异。
+\item P1/C1 单行人横穿。C1在P1基础上延长规划时间窗，用于比较动态障碍物提前投影后的纵向平顺性。
+\item P2/C2 行人加停车。C2在P2基础上轻量外移停车横向中心，使Baseline恢复可达，用于比较动静混合障碍物分组后的速度QP开销。
+\item P3/C3 窄路加双侧交通锥。C3在P3基础上将对称锥列改为轻微非对称锥列，使Baseline可通过，同时保留差异化安全裕度释放通行空间的效果。
+\item P4/C4 单车道维修封闭加借道。C4在P4基础上将维持段水马横向中心调至Baseline贪心切换临界侧，使双方均可导流通过，用于比较组级边界组织带来的求解开销差异。
 \end{enumerate}
 
-\textbf{Baseline设定说明}\quad{}Apollo原生\texttt{PathBoundsDecider}通过\texttt{IsWithinPathDeciderScopeObstacle}将动态障碍物排除在路径阶段之外，交由\texttt{SpeedBoundsDecider}在ST阶段通过时间窗约束兜底；MIKU则通过时变SL投影将动态障碍物显式纳入路径边界构建。因此P1--P4压力构型中Baseline的失败并不必然等于Apollo整套流水线的失败，而是特指“路径阶段单独处理动态障碍物的能力”这一比较口径。C1--C4可比构型在同一口径下调整时间窗或障碍物位置，使Baseline在ST阶段兜底可通行，以便在可达前提下对比MIKU与Apollo原生方案的轨迹质量与求解开销。本文所引用的效率结论仅基于C1--C4；P1--P4保留原始构型，用于说明两种策略在路径阶段对动态障碍物的敏感性差异。
+Baseline设定说明如下，Apollo原生\texttt{PathBoundsDecider}通过\texttt{IsWithinPathDeciderScopeObstacle}将动态障碍物排除在路径阶段之外，交由\texttt{SpeedBoundsDecider}在ST阶段通过时间窗约束兜底；MIKU则通过时变SL投影将动态障碍物显式纳入路径边界构建。因此P1--P4压力构型中Baseline的失败并不必然等于Apollo整套流水线的失败，而是特指“路径阶段单独处理动态障碍物的能力”这一比较口径。C1--C4可比构型在同一口径下调整时间窗或障碍物位置，使Baseline在ST阶段兜底可通行，以便在可达前提下对比MIKU与Apollo原生方案的轨迹质量与求解开销。本文所引用的效率结论仅基于C1--C4；P1--P4保留原始构型，用于说明两种策略在路径阶段对动态障碍物的敏感性差异。
 
 每个场景计算如表\ref{tab:metrics}所示的七项指标，数据来自仿真程序的输出。横向加速度$a_y$由路径曲率$\kappa$诱导，等价于向心加速度$a_c$，即$a_y = a_c = v^2 \kappa$；直道前提下参考线曲率为零，$\kappa$退化为路径横向偏移的二阶导$l''(s)$。
 
@@ -336,26 +336,26 @@ S_{\mathrm{overall}} = \begin{cases}
 
 综合排名已给出变体间的总分差异，本节结合热力图与雷达图，按组件逐一给出失效场景与数值退化幅度，以界定每个组件的必要条件与适用范围。
 
-\textbf{C1 时变 SL 投影}\quad{}M1关闭C1后，在P1单行人横穿与P2行人加停车两个动态压力场景中失败，平均到达时间$T_{\mathrm{arrive}}$退化至$t_{\max}+\AblationFailPenalty$\,s的惩罚上限。此处结果需要与Baseline对照理解。Apollo原生的\texttt{IsStatic()}过滤会直接将动态行人移出路径阶段交给ST兜底，MIKU主干保留该动态障碍物但依赖C1的时变投影处理；一旦关闭C1，动态行人退化为$t=0$快照占据车道，路径阶段被错误约束至当前位置而强制减速等待。因此M1在P1/P2的失败反映的是MIKU选择“纳入路径阶段”后若缺失时变投影配合则会产生副作用，而不是Baseline中“完全不纳入”口径下的同等问题。C1单独存在但缺失时变机制时需要Apollo式的过滤兜底，这也印证了C1与C2/C3组级决策的协同必要性。
+关于C1时变SL投影，M1关闭C1后，在P1单行人横穿与P2行人加停车两个动态压力场景中失败，平均到达时间$T_{\mathrm{arrive}}$退化至$t_{\max}+\AblationFailPenalty$\,s的惩罚上限。此处结果需要与Baseline对照理解。Apollo原生的\texttt{IsStatic()}过滤会直接将动态行人移出路径阶段交给ST兜底，MIKU主干保留该动态障碍物但依赖C1的时变投影处理；一旦关闭C1，动态行人退化为$t=0$快照占据车道，路径阶段被错误约束至当前位置而强制减速等待。因此M1在P1/P2的失败反映的是MIKU选择“纳入路径阶段”后若缺失时变投影配合则会产生副作用，而不是Baseline中“完全不纳入”口径下的同等问题。C1单独存在但缺失时变机制时需要Apollo式的过滤兜底，这也印证了C1与C2/C3组级决策的协同必要性。
 
-\textbf{C2--C3 组级决策的关键作用}\quad{}M2关闭C2与C3后，在P4单车道封闭导流压力场景失败，$\bar v$ 仅 \AblationMTwoScFourVAvg\,m/s，$s_{end}$ 为 \AblationMTwoScFourSEnd\,m，仅占目标距离的 \AblationMTwoScFourSEndPct\%。原因在于该场景的\DenseConstructionTotalObstacles{}个静态障碍物构成单一大型连通分量，逐障碍物贪心决策时入口漏斗的\DenseConstructionEntranceCones{}锥每个独立选择左推，与维持段水马的右推产生$l_{\min} > l_{\max}$冲突，触发blocked-then-trim降级停车。组级最大间隙搜索将整个连通分量识别为单一组并赋予一致的左/右分配，消解了贪心决策互斥。
+关于C2--C3组级决策的关键作用，M2关闭C2与C3后，在P4单车道封闭导流压力场景失败，$\bar v$ 仅 \AblationMTwoScFourVAvg\,m/s，$s_{end}$ 为 \AblationMTwoScFourSEnd\,m，仅占目标距离的 \AblationMTwoScFourSEndPct\%。原因在于该场景的\DenseConstructionTotalObstacles{}个静态障碍物构成单一大型连通分量，逐障碍物贪心决策时入口漏斗的\DenseConstructionEntranceCones{}锥每个独立选择左推，与维持段水马的右推产生$l_{\min} > l_{\max}$冲突，触发blocked-then-trim降级停车。组级最大间隙搜索将整个连通分量识别为单一组并赋予一致的左/右分配，消解了贪心决策互斥。
 
-\textbf{C4 差异化裕度的关键作用}\quad{}M3关闭C4后，在P3窄路交通锥压力场景失败，$\bar v$ 仅 \AblationMThreeScThreeVAvg\,m/s。该场景的双侧交通锥间隙宽度仅略大于车身宽度，统一额外缓冲$d_{buf}=\DeltaBaseline$\,m对小尺寸锥桶过度保守，将通行带压缩至$l_{\min} > l_{\max}$。多因子威胁度模型按障碍物类型与TTC动态调整额外缓冲$d_{buf,i}$至$[\DeltaIntervalLow, \DeltaIntervalHigh]$\,m区间，并由此得到差异化总安全裕度$\delta_i$，对低威胁锥桶下调缓冲，使本不可行的窄路通过变为可行。
+关于C4差异化裕度的关键作用，M3关闭C4后，在P3窄路交通锥压力场景失败，$\bar v$ 仅 \AblationMThreeScThreeVAvg\,m/s。该场景的双侧交通锥间隙宽度仅略大于车身宽度，统一额外缓冲$d_{buf}=\DeltaBaseline$\,m对小尺寸锥桶过度保守，将通行带压缩至$l_{\min} > l_{\max}$。多因子威胁度模型按障碍物类型与TTC动态调整额外缓冲$d_{buf,i}$至$[\DeltaIntervalLow, \DeltaIntervalHigh]$\,m区间，并由此得到差异化总安全裕度$\delta_i$，对低威胁锥桶下调缓冲，使本不可行的窄路通过变为可行。
 
-\textbf{C5 走廊注入的架构价值}\quad{}M4关闭C5后，在压力场景中的通过数为\AblationMFourPassCount{}/\AblationScenarioTotal，综合得分相对M5的差值仅为\AblationMarginMFourMFive 分，计算开销差异近似为零。这一近似持平的原因在于，当前压力场景均为单车道静态或低动态场景，路径阶段已通过C1的时变投影提前规避了所有动态时间冲突，速度阶段仅需保守通过，C5走廊约束未触发活跃边界。C5的架构意义不在于提升简单场景的指标，而在于为Apollo的路径-速度解耦架构补全了此前缺失的约束传递通道，将路径阶段对动态障碍物的时空决策以$(s_k,\tau_k)$形式注入速度QP，使路径规划与速度规划在动态场景下保持一致性。该通道在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中将成为速度规划的必要约束源。当前压力场景的消融结果表明，C5在不被激活时对系统无实质负面影响，相关开销在毫秒量级，满足\PlannerCycleMs\,ms规划周期要求。
+关于C5走廊注入的架构价值，M4关闭C5后，在压力场景中的通过数为\AblationMFourPassCount{}/\AblationScenarioTotal，综合得分相对M5的差值仅为\AblationMarginMFourMFive 分，计算开销差异近似为零。这一近似持平的原因在于，当前压力场景均为单车道静态或低动态场景，路径阶段已通过C1的时变投影提前规避了所有动态时间冲突，速度阶段仅需保守通过，C5走廊约束未触发活跃边界。C5的架构意义不在于提升简单场景的指标，而在于为Apollo的路径-速度解耦架构补全了此前缺失的约束传递通道，将路径阶段对动态障碍物的时空决策以$(s_k,\tau_k)$形式注入速度QP，使路径规划与速度规划在动态场景下保持一致性。该通道在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中将成为速度规划的必要约束源。当前压力场景的消融结果表明，C5在不被激活时对系统无实质负面影响，相关开销在毫秒量级，满足\PlannerCycleMs\,ms规划周期要求。
 
-\textbf{综合结论}\quad{}消融实验定量验证了C1、C2、C3、C4对MIKU算法的作用。C1与C2--C3共同决定动态和大型连通分量场景的通行成功率，C4决定窄路锥列下的可行性。C5在当前压力场景中未被激活，其作用需要在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中进一步验证，本文覆盖的场景不足以对C5给出定量评价。该结果说明，多障碍物路径规划的改进重心在路径阶段的时变与组级建模即C1至C4；C5负责将路径决策向速度约束正向传递，为路径-速度协调提供架构接口，但其定量贡献需要后续实验补充。
+综合来看，消融实验定量验证了C1、C2、C3、C4对MIKU算法的作用。C1与C2--C3共同决定动态和大型连通分量场景的通行成功率，C4决定窄路锥列下的可行性。C5在当前压力场景中未被激活，其作用需要在多动态障碍物时间窗交织或交叉路口冲突点决策等场景中进一步验证，本文覆盖的场景不足以对C5给出定量评价。该结果说明，多障碍物路径规划的改进重心在路径阶段的时变与组级建模即C1至C4；C5负责将路径决策向速度约束正向传递，为路径-速度协调提供架构接口，但其定量贡献需要后续实验补充。
 
 \subsection{威胁度权重灵敏度分析}
 \label{sec:sensitivity_exp}
 
 第\ref{chap:threat}章式\eqref{eq:threat_score}中的五个权重$w_1$至$w_5$由定性排序与典型场景微调确定，有必要检验其对数值扰动的鲁棒性。本节沿用P1--P4压力场景，从单因子扰动与综合随机扰动两个维度设计灵敏度实验。
 
-\textbf{单因子扰动实验}\quad{}逐一将每个权重因子放大或缩小\SensPerturbPct\%并重新归一化，检测障碍物间的威胁度排序是否发生翻转。场景一单行人仅含单障碍物，无需检测排序；场景二行人加停车和场景三\NarrowCmpConeCountPerSide{}$\times$2个交通锥排序完全稳定（\SensTwoSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转）；场景四（\DenseConstructionTotalObstacles 个障碍物）出现\SensFourSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转，但均发生在威胁度极接近的同类交通锥之间（$\Delta\Theta < \SensThetaCloseThreshold$），不影响实际通行决策。
+单因子扰动实验中，逐一将每个权重因子放大或缩小\SensPerturbPct\%并重新归一化，检测障碍物间的威胁度排序是否发生翻转。场景一单行人仅含单障碍物，无需检测排序；场景二行人加停车和场景三\NarrowCmpConeCountPerSide{}$\times$2个交通锥排序完全稳定（\SensTwoSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转）；场景四（\DenseConstructionTotalObstacles 个障碍物）出现\SensFourSingleFlipCnt{}/\SensSingleFactorTrialCount 次翻转，但均发生在威胁度极接近的同类交通锥之间（$\Delta\Theta < \SensThetaCloseThreshold$），不影响实际通行决策。
 
-\textbf{综合随机扰动实验}\quad{}对五个权重同时施加$\pm\SensPerturbPct\%$的随机扰动并进行\SensTrialCount 次蒙特卡洛实验，统计差异化安全裕度$\delta_i$的波动范围与排序翻转率。各场景中$\delta_i$的最大绝对偏差，场景一为\SensOneMcMaxAbsDev{}\,m，场景二为\SensTwoMcMaxAbsDev{}\,m，场景三为\SensThreeMcMaxAbsDev{}\,m，场景四为\SensFourMcMaxAbsDev{}\,m，全场景最大绝对偏差不超过\SensWorstAbsDev{}\,m。最大相对偏差在场景一为\SensOneMcMaxRelDev{}\%，场景二为\SensTwoMcMaxRelDev{}\%，场景三为\SensThreeMcMaxRelDev{}\%，场景四为\SensFourMcMaxRelDev{}\%，全场景相对偏差均小于\SensWorstRelDev{}\%。$\delta_i$变化超过\SensDeltaExceedThreshold\,m的概率为\SensFourMcExceedProb{}\%，排序翻转率在场景一至场景三中均为\SensOneMcFlipRate{}\%，场景四为\SensFourMcFlipRate{}\%。场景四的翻转集中在$\Theta$差异不足\SensThetaCloseThreshold 的同类交通锥之间，对应的$\Delta\delta_i < \SensDeltaCloseThreshold$\,m，对通行带宽度的影响可以忽略。
+综合随机扰动实验中，对五个权重同时施加$\pm\SensPerturbPct\%$的随机扰动并进行\SensTrialCount 次蒙特卡洛实验，统计差异化安全裕度$\delta_i$的波动范围与排序翻转率。各场景中$\delta_i$的最大绝对偏差，场景一为\SensOneMcMaxAbsDev{}\,m，场景二为\SensTwoMcMaxAbsDev{}\,m，场景三为\SensThreeMcMaxAbsDev{}\,m，场景四为\SensFourMcMaxAbsDev{}\,m，全场景最大绝对偏差不超过\SensWorstAbsDev{}\,m。最大相对偏差在场景一为\SensOneMcMaxRelDev{}\%，场景二为\SensTwoMcMaxRelDev{}\%，场景三为\SensThreeMcMaxRelDev{}\%，场景四为\SensFourMcMaxRelDev{}\%，全场景相对偏差均小于\SensWorstRelDev{}\%。$\delta_i$变化超过\SensDeltaExceedThreshold\,m的概率为\SensFourMcExceedProb{}\%，排序翻转率在场景一至场景三中均为\SensOneMcFlipRate{}\%，场景四为\SensFourMcFlipRate{}\%。场景四的翻转集中在$\Theta$差异不足\SensThetaCloseThreshold 的同类交通锥之间，对应的$\Delta\delta_i < \SensDeltaCloseThreshold$\,m，对通行带宽度的影响可以忽略。
 
-\textbf{结论}\quad{}上述实验表明，权重的合理扰动不改变障碍物间的相对威胁等级，对通行带宽度的影响在工程容忍范围内。需注意的是，本文权重参数面向城市道路30--50\,km/h工况标定，在高速公路大速度差场景下需重新评估。
+上述实验表明，权重的合理扰动不改变障碍物间的相对威胁等级，对通行带宽度的影响在工程容忍范围内。需注意的是，本文权重参数面向城市道路30--50\,km/h工况标定，在高速公路大速度差场景下需重新评估。
 
 \section{Dreamview在环实验展示}
 \label{sec:dreamview_demo}
@@ -457,11 +457,11 @@ S_{\mathrm{overall}} = \begin{cases}
 
 将表\ref{tab:full_comparison}按指标拆分，可以分别从通行成功率、平均速度与轨迹平顺性三条线索理解MIKU相对Baseline的改进幅度。
 
-\textbf{通行成功率}\quad{}在P1--P4压力场景中，Baseline通过\MPressureBaselinePassCount{}/\MPressureScenarioTotal{}，MIKU通过\MPressureMikuPassCount{}/\MPressureScenarioTotal{}，说明原始临界构型确实暴露了Baseline路径边界构建的失效边界。在C1--C4可比场景中，Baseline与MIKU均完成\MComparableBaselinePassCount{}/\MComparableScenarioTotal{}与\MComparableMikuPassCount{}/\MComparableScenarioTotal{}通过，因此可比组不再把通过率作为主结论，而用于比较同一可达前提下的轨迹质量、求解开销以及约束组织方式。
+在通行成功率方面，P1--P4压力场景中，Baseline通过\MPressureBaselinePassCount{}/\MPressureScenarioTotal{}，MIKU通过\MPressureMikuPassCount{}/\MPressureScenarioTotal{}，说明原始临界构型确实暴露了Baseline路径边界构建的失效边界。在C1--C4可比场景中，Baseline与MIKU均完成\MComparableBaselinePassCount{}/\MComparableScenarioTotal{}与\MComparableMikuPassCount{}/\MComparableScenarioTotal{}通过，因此可比组不再把通过率作为主结论，而用于比较同一可达前提下的轨迹质量、求解开销以及约束组织方式。
 
-\textbf{平均速度}\quad{}在C1--C4可比场景中，Baseline平均巡航速度为\MComparableBaselineAvgV\,m/s，MIKU为\MComparableMikuAvgV\,m/s，两者处于同一量级。此时速度本身不再是主要论点，更有意义的是动态场景中的减速度与jerk控制，以及约束前置是否降低整体求解开销。
+在平均速度方面，C1--C4可比场景中，Baseline平均巡航速度为\MComparableBaselineAvgV\,m/s，MIKU为\MComparableMikuAvgV\,m/s，两者处于同一量级。此时速度本身不再是主要论点，更有意义的是动态场景中的减速度与jerk控制，以及约束前置是否降低整体求解开销。
 
-\textbf{轨迹平顺性}\quad{}C1中Baseline与MIKU均能通过，但MIKU将纵向加速度峰值由\MFiveBaselineMaxAbsA\,m/s$^2$降至\MFiveMikuMaxAbsA\,m/s$^2$，jerk峰值由\MFiveBaselineMaxAbsJerk\,m/s$^3$降至\MFiveMikuMaxAbsJerk\,m/s$^3$；C2中对应峰值由\MSixBaselineMaxAbsA\,m/s$^2$与\MSixBaselineMaxAbsJerk\,m/s$^3$降至\MSixMikuMaxAbsA\,m/s$^2$与\MSixMikuMaxAbsJerk\,m/s$^3$。C3中MIKU的横向加速度峰值由\MSevenBaselineMaxAbsALat\,m/s$^2$降至\MSevenMikuMaxAbsALat\,m/s$^2$。这些结果说明复制场景不止用于记录通过与失败的对照，而是在双方可达时比较约束组织带来的轨迹质量差异。
+在轨迹平顺性方面，C1中Baseline与MIKU均能通过，但MIKU将纵向加速度峰值由\MFiveBaselineMaxAbsA\,m/s$^2$降至\MFiveMikuMaxAbsA\,m/s$^2$，jerk峰值由\MFiveBaselineMaxAbsJerk\,m/s$^3$降至\MFiveMikuMaxAbsJerk\,m/s$^3$；C2中对应峰值由\MSixBaselineMaxAbsA\,m/s$^2$与\MSixBaselineMaxAbsJerk\,m/s$^3$降至\MSixMikuMaxAbsA\,m/s$^2$与\MSixMikuMaxAbsJerk\,m/s$^3$。C3中MIKU的横向加速度峰值由\MSevenBaselineMaxAbsALat\,m/s$^2$降至\MSevenMikuMaxAbsALat\,m/s$^2$。这些结果说明复制场景不止用于记录通过与失败的对照，而是在双方可达时比较约束组织带来的轨迹质量差异。
 
 \subsection{QP耗时分析}
 

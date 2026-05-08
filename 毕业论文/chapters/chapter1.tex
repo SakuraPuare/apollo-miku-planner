@@ -29,13 +29,13 @@
 本文选择优化方法分支作为技术路线。Apollo平台在该范式上已有成熟的工程基础，改进成果可以直接复用已有的求解器与数据结构。本文识别的路径边界构建缺陷可以视为凸化前全局信息在路径边界构建阶段丢失的表现，因此改造方案同样落在优化范式内部，不额外引入采样或学习模块。
 
 \begin{enumerate}
-\item \textbf{图搜索方法}\quad{}图搜索方法将连续规划空间离散化为图结构，A*\cite{hart1968astar}及其变体Hybrid A*\cite{dolgov2008hybrid,dolgov2010}通过引入启发式函数与车辆运动学约束生成可行路径，在Apollo OpenSpace的泊车与低速场景中得到应用，与本文聚焦的结构化道路多障碍物避让任务在适用场景上彼此互补。
+\item 图搜索方法将连续规划空间离散化为图结构，A*\cite{hart1968astar}及其变体Hybrid A*\cite{dolgov2008hybrid,dolgov2010}通过引入启发式函数与车辆运动学约束生成可行路径，在Apollo OpenSpace的泊车与低速场景中得到应用，与本文聚焦的结构化道路多障碍物避让任务在适用场景上彼此互补。
 
-\item \textbf{采样规划方法}\quad{}采样规划方法通过在状态空间中随机采样构建搜索树或路线图。快速探索随机树（Rapidly-exploring Random Tree, RRT）族\cite{lavalle1998rrt,karaman2011sampling,kuffner2000rrtconnect,kuwata2009rrt,urmson2008boss}与基于Frenet坐标系的轨迹采样\cite{werling2010,li2022frenet,mcnaughton2011lattice}是该类方法的代表，被Apollo Lattice Planner采用，与本文所属的优化方法在求解范式上属并行路线。
+\item 采样规划方法通过在状态空间中随机采样构建搜索树或路线图。快速探索随机树（Rapidly-exploring Random Tree, RRT）族\cite{lavalle1998rrt,karaman2011sampling,kuffner2000rrtconnect,kuwata2009rrt,urmson2008boss}与基于Frenet坐标系的轨迹采样\cite{werling2010,li2022frenet,mcnaughton2011lattice}是该类方法的代表，被Apollo Lattice Planner采用，与本文所属的优化方法在求解范式上属并行路线。
 
-\item \textbf{优化规划方法}\quad{}基于优化的方法将路径规划建模为带约束的数学优化问题，本文所属的技术路线即在该范式之下。二次规划方法将轨迹表示为分段多项式，以平滑度、偏离参考线程度等为目标函数，以障碍物约束、动力学约束等为约束条件，利用算子分裂二次规划求解器（Operator Splitting Quadratic Program, OSQP）\cite{stellato2020osqp}等高效求解器求解，非线性场景则可借助内点优化器（Interior Point OPTimizer, IPOPT）\cite{wachter2006ipopt}等内点法求解器。该路线的早期代表是\citet{borrelli2005mpc}提出的基于模型预测控制（Model Predictive Control, MPC）的主动转向方法、\citet{xu2012realtime}提出的面向自动驾驶的实时轨迹优化器，以及\citet{ziegler2014}在Bertha Benz自动驾驶车上首次将连续局部优化部署到公开城市道路的工作。\citet{fan2018baidu}详细描述了Apollo 期望最大化（Expectation-Maximization, EM）Motion Planner，采用路径QP和速度QP的两阶段优化方法，\citet{zhou2021pathqp,zhou2021dliaps}进一步给出了Apollo路径QP的分段Jerk形式化表达与双环迭代锚点平滑（Dual-Loop Iterative Anchoring Path Smoothing, DL-IAPS）和分段Jerk速度优化（Piecewise Jerk Speed Optimizer, PJSO）算法。\citet{chen2019em}提出了迭代EM规划框架，进一步增强了优化方法的灵活性；\citet{sun2022robust}则专门针对大曲率道路给出了鲁棒路径优化器。受无人机轨迹生成中最小Snap方法\cite{mellinger2011minsnap}与安全飞行走廊（Safe Flight Corridor, SFC）\cite{liu2017sfc}的启发，地面自动驾驶也逐步引入了类似的走廊凸分解思想。优化方法在凸优化框架下能保证全局最优性与实时性，是Apollo、Waymo等工业级L4平台的主流选择。
+\item 优化规划方法将路径规划建模为带约束的数学优化问题，本文所属的技术路线即在该范式之下。二次规划方法将轨迹表示为分段多项式，以平滑度、偏离参考线程度等为目标函数，以障碍物约束、动力学约束等为约束条件，利用算子分裂二次规划求解器（Operator Splitting Quadratic Program, OSQP）\cite{stellato2020osqp}等高效求解器求解，非线性场景则可借助内点优化器（Interior Point OPTimizer, IPOPT）\cite{wachter2006ipopt}等内点法求解器。该路线的早期代表是\citet{borrelli2005mpc}提出的基于模型预测控制（Model Predictive Control, MPC）的主动转向方法、\citet{xu2012realtime}提出的面向自动驾驶的实时轨迹优化器，以及\citet{ziegler2014}在Bertha Benz自动驾驶车上首次将连续局部优化部署到公开城市道路的工作。\citet{fan2018baidu}详细描述了Apollo 期望最大化（Expectation-Maximization, EM）Motion Planner，采用路径QP和速度QP的两阶段优化方法，\citet{zhou2021pathqp,zhou2021dliaps}进一步给出了Apollo路径QP的分段Jerk形式化表达与双环迭代锚点平滑（Dual-Loop Iterative Anchoring Path Smoothing, DL-IAPS）和分段Jerk速度优化（Piecewise Jerk Speed Optimizer, PJSO）算法。\citet{chen2019em}提出了迭代EM规划框架，进一步增强了优化方法的灵活性；\citet{sun2022robust}则专门针对大曲率道路给出了鲁棒路径优化器。受无人机轨迹生成中最小Snap方法\cite{mellinger2011minsnap}与安全飞行走廊（Safe Flight Corridor, SFC）\cite{liu2017sfc}的启发，地面自动驾驶也逐步引入了类似的走廊凸分解思想。优化方法在凸优化框架下能保证全局最优性与实时性，是Apollo、Waymo等工业级L4平台的主流选择。
 
-\item \textbf{学习型方法}\quad{}近年来基于深度学习与强化学习的端到端规划方法\cite{zhang2021autonomous,alahi2016social,li2024decision,shalevshwartz2017rss}发展迅速，在感知、决策、控制一体化与场景泛化方面有一定进展，目前在工业级自动驾驶系统中主要作为传统方法的补充。
+\item 学习型方法近年来发展迅速，基于深度学习与强化学习的端到端规划方法\cite{zhang2021autonomous,alahi2016social,li2024decision,shalevshwartz2017rss}在感知、决策、控制一体化与场景泛化方面有一定进展，目前在工业级自动驾驶系统中主要作为传统方法的补充。
 \end{enumerate}
 
 \begin{table}[H]
@@ -63,11 +63,11 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad PJPO & 辅助模块 \\
 
 百度Apollo自2017年开源以来，其Planning模块先后经历了EM Planner、PublicRoad Planner与OpenSpacePlanner三个阶段的演化。\texttt{PathBoundsDecider}及其当前的\texttt{PathBoundsDeciderUtil}实现只有放在这一脉络下才能准确理解其定位。
 
-\textbf{EM Planner时期，2017至2019年}\quad{}该阶段采用期望最大化思想在Frenet坐标系下交替求解路径与速度子问题\cite{fan2018baidu}。路径阶段以动态规划搜索粗解、以QP平滑精解，速度阶段在ST图上重复同一套DP粗解加QP精解的模式。EM Planner首次将路径-速度解耦的两阶段优化完整部署到工业级L4栈，也是后续所有Apollo Planner沿用的基本框架。
+EM Planner时期（2017至2019年），该阶段采用期望最大化思想在Frenet坐标系下交替求解路径与速度子问题\cite{fan2018baidu}。路径阶段以动态规划搜索粗解、以QP平滑精解，速度阶段在ST图上重复同一套DP粗解加QP精解的模式。EM Planner首次将路径-速度解耦的两阶段优化完整部署到工业级L4栈，也是后续所有Apollo Planner沿用的基本框架。
 
-\textbf{PublicRoad Planner时期，2019年至今}\quad{}该阶段引入Scenario-Stage-Task三级管理架构，对LaneFollow、LaneChange、ParkAndGo等场景进行显式建模。路径层由\citet{zhou2021pathqp}的PJPO接管，速度层对应为PJSO\cite{zhou2021dliaps}。其中，历史版本中的\texttt{PathBoundsDecider}作为PJPO的前置Task，负责将障碍物决策转化为路径QP的左右边界约束；在Apollo 11.0中，该功能主要由\texttt{PathBoundsDeciderUtil}工具类承载，并由\texttt{LaneFollowPath}等路径生成Task调用。该边界构建逻辑直接决定优化空间的形状，也是本文改进的核心切入点。
+PublicRoad Planner时期（2019年至今），该阶段引入Scenario-Stage-Task三级管理架构，对LaneFollow、LaneChange、ParkAndGo等场景进行显式建模。路径层由\citet{zhou2021pathqp}的PJPO接管，速度层对应为PJSO\cite{zhou2021dliaps}。其中，历史版本中的\texttt{PathBoundsDecider}作为PJPO的前置Task，负责将障碍物决策转化为路径QP的左右边界约束；在Apollo 11.0中，该功能主要由\texttt{PathBoundsDeciderUtil}工具类承载，并由\texttt{LaneFollowPath}等路径生成Task调用。该边界构建逻辑直接决定优化空间的形状，也是本文改进的核心切入点。
 
-\textbf{OpenSpacePlanner补充时期，2020年至今}\quad{}为支持泊车、OpenSpace等结构化先验失效的场景，Apollo引入Hybrid A\*\cite{dolgov2008hybrid}与DL-IAPS\cite{zhou2021dliaps}的自由空间规划链路，与PublicRoad Planner并行。
+OpenSpacePlanner补充时期（2020年至今），为支持泊车、OpenSpace等结构化先验失效的场景，Apollo引入Hybrid A\*\cite{dolgov2008hybrid}与DL-IAPS\cite{zhou2021dliaps}的自由空间规划链路，与PublicRoad Planner并行。
 
 \subsection{Apollo平台相关研究}
 
@@ -77,11 +77,11 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad PJPO & 辅助模块 \\
 
 静态多障碍物同时出现在自车前方时，主要难点在于把多约束非凸可行域转化为可解的数学结构。
 
-\textbf{走廊凸分解}\quad{}\citet{yang2025stcorridor}在三维时空走廊内以分段贝塞尔曲线求解最优轨迹，在安全性与灵活性上相较时间弹性带算法取得了明显提升；\citet{qiao2025stjoint}则在结构化道路下引入时间-纵向-横向三维时空决策并与时空安全走廊的二次规划相结合；\citet{xu2025interaction}在城市交互场景中将部分可观测马尔可夫决策过程（Partially Observable Markov Decision Process, POMDP）行为决策与基于约束迭代线性二次调节器（Constrained Iterative Linear Quadratic Regulator, CILQR）的时空安全走廊求解进行耦合。\citet{yoon2024stcorridor}面向多车交通中的换道场景提出基于时空走廊的运动规划方法；\citet{lijun2024corridor}基于深度优先搜索快速构建安全走廊并结合分段Jerk与曲率约束的二次规划进行轨迹优化；\citet{frenetcorridor2025}在Frenet空间内构建了通用的走廊规划框架；\citet{narrowcorridor2022}面向窄走廊场景提出基于空间离散化的最优轨迹规划方法。上述工作的共同点是将多障碍物约束统一抽象为走廊边界，进而将非凸问题转化为凸问题。
+在走廊凸分解方面，\citet{yang2025stcorridor}在三维时空走廊内以分段贝塞尔曲线求解最优轨迹，在安全性与灵活性上相较时间弹性带算法取得了明显提升；\citet{qiao2025stjoint}则在结构化道路下引入时间-纵向-横向三维时空决策并与时空安全走廊的二次规划相结合；\citet{xu2025interaction}在城市交互场景中将部分可观测马尔可夫决策过程（Partially Observable Markov Decision Process, POMDP）行为决策与基于约束迭代线性二次调节器（Constrained Iterative Linear Quadratic Regulator, CILQR）的时空安全走廊求解进行耦合。\citet{yoon2024stcorridor}面向多车交通中的换道场景提出基于时空走廊的运动规划方法；\citet{lijun2024corridor}基于深度优先搜索快速构建安全走廊并结合分段Jerk与曲率约束的二次规划进行轨迹优化；\citet{frenetcorridor2025}在Frenet空间内构建了通用的走廊规划框架；\citet{narrowcorridor2022}面向窄走廊场景提出基于空间离散化的最优轨迹规划方法。上述工作的共同点是将多障碍物约束统一抽象为走廊边界，进而将非凸问题转化为凸问题。
 
-\textbf{组级决策与最大间隙}\quad{}\citet{separationmax2013}提出基于分离最大化的多层次半自动驾驶决策框架，将通行带宽度作为分离度量量化多障碍物决策，是本文最大间隙策略的早期相关工作。\citet{stchangegaps2022}在高速公路场景下基于时空换道间隙做决策与路径规划，与本文SL层最优间隙的核心思路互补。\citet{sweepingregion2025}面向全尺寸客车的城市换道场景提出基于扫描区域的换道路径规划方法。\citet{zhaofuzhou2024}在复杂交通设置下提出针对网联自动车辆的分层轨迹精化框架。
+在组级决策与最大间隙方面，\citet{separationmax2013}提出基于分离最大化的多层次半自动驾驶决策框架，将通行带宽度作为分离度量量化多障碍物决策，是本文最大间隙策略的早期相关工作。\citet{stchangegaps2022}在高速公路场景下基于时空换道间隙做决策与路径规划，与本文SL层最优间隙的核心思路互补。\citet{sweepingregion2025}面向全尺寸客车的城市换道场景提出基于扫描区域的换道路径规划方法。\citet{zhaofuzhou2024}在复杂交通设置下提出针对网联自动车辆的分层轨迹精化框架。
 
-\textbf{多障碍物交互建模}\quad{}\citet{chen2024avoid}研究了复杂道路环境下智能车辆的横纵向避障问题，提出了考虑障碍物交互关系的综合避障策略；\citet{guo2024survey}对自动驾驶场景和场景数据库进行了综述，为多障碍物场景的构建和评估提供了参考框架。
+在多障碍物交互建模方面，\citet{chen2024avoid}研究了复杂道路环境下智能车辆的横纵向避障问题，提出了考虑障碍物交互关系的综合避障策略；\citet{guo2024survey}对自动驾驶场景和场景数据库进行了综述，为多障碍物场景的构建和评估提供了参考框架。
 
 这些方法多以已经构建出的走廊或分离间隙为基础，在此之上求解轨迹优化问题。本文则聚焦于走廊构建之前的避让方向选择问题，即面对多个障碍物时，规划器需要为每个障碍物确定左绕或右绕，使最终通行带宽度最大化。在本文给定的Frenet~SL形式化下，本文对该问题的最优分割连续性与最大间隙最优性给出了理论证明。路径边界构建逻辑中的逐障碍物独立决策可视为该前置步骤的一种工程实现，也是本文的直接研究对象。将通行带宽度最大化作为避让目标的思想在走廊规划领域已有先例，例如安全飞行走廊（Safe Flight Corridor, SFC）\cite{liu2017sfc}等工作已在走廊凸分解框架下将可行域宽度作为凸区域构建的优化目标。本文的增量贡献体现在三方面。(a)~在Frenet~SL坐标系下证明了最优分割的连续性（引理\ref{lem:continuous_partition}），将搜索空间从$O(2^k)$压缩至$k+1$个候选；(b)~证明了最大间隙策略在该特定形式化下的最优性（定理\ref{thm:max_gap}），给出了精确的通行带宽度代价函数而非启发式近似；(c)~给出了$O(k \log k)$的精确算法而非指数枚举搜索。
 
@@ -89,23 +89,23 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad PJPO & 辅助模块 \\
 
 与静态场景相比，动态障碍物引入了时间维度，相关处理方式的演进大致分为以下阶段。
 
-\textbf{路径-速度解耦阶段}\quad{}\citet{kant1986pvd}于1986年提出的路径-速度解耦（Path-Velocity Decomposition, PVD）是整个领域的理论起点，先在笛卡尔空间规划路径绕开静态障碍物，再在路径-时间（Path-Time, PT）空间上规划速度规避动态障碍物。这一范式的优点是将高维时空规划降维到两个二维子问题，在Apollo EM Planner\cite{fan2018baidu}和PublicRoad Planner中均有体现，ST图本质上就是Kant-Zucker PT空间的直接继承。
+在路径-速度解耦阶段，\citet{kant1986pvd}于1986年提出的路径-速度解耦（Path-Velocity Decomposition, PVD）是整个领域的理论起点，先在笛卡尔空间规划路径绕开静态障碍物，再在路径-时间（Path-Time, PT）空间上规划速度规避动态障碍物。这一范式的优点是将高维时空规划降维到两个二维子问题，在Apollo EM Planner\cite{fan2018baidu}和PublicRoad Planner中均有体现，ST图本质上就是Kant-Zucker PT空间的直接继承。
 
-\textbf{ST图与局部时间优化阶段}\quad{}在PVD基础上，ST图被广泛用于速度规划。\citet{liu2017speed}进一步提出基于时间优化的速度剖面规划方法，将时间维度显式纳入优化变量；\citet{vandenberg2008rvo}提出的互惠速度障碍（Reciprocal Velocity Obstacle, RVO）为多智能体动态避让提供了速度层的几何刻画；\citet{ziegler2014}在Bertha项目中将动态障碍物作为时变约束集成进局部连续优化器。
+在ST图与局部时间优化阶段，ST图在PVD基础上被广泛用于速度规划。\citet{liu2017speed}进一步提出基于时间优化的速度剖面规划方法，将时间维度显式纳入优化变量；\citet{vandenberg2008rvo}提出的互惠速度障碍（Reciprocal Velocity Obstacle, RVO）为多智能体动态避让提供了速度层的几何刻画；\citet{ziegler2014}在Bertha项目中将动态障碍物作为时变约束集成进局部连续优化器。
 
-\textbf{基于预测的轨迹规划}\quad{}近年来基于预测的路径规划成为动态场景下的主流路线。\citet{yangbo2023ped}面向自车与横穿行人在共享空间的安全交互提出了基于预测的轨迹规划方法；\citet{jeong2021ml}提出融合学习驱动轨迹预测的运动规划框架；\citet{crossingped2019}针对支路场景下的横穿行人提出动态路径规划方法，与本文典型横穿行人案例的场景设定一致。\citet{humanlikepred2022}基于概率轨迹预测构建类人运动规划，\citet{survrisk2020}基于周围车辆运动预测做风险评估与运动规划，\citet{adjpred2025}进一步将相邻车辆轨迹预测集成到路径规划中。
+在基于预测的轨迹规划方面，近年来基于预测的路径规划成为动态场景下的主流路线。\citet{yangbo2023ped}面向自车与横穿行人在共享空间的安全交互提出了基于预测的轨迹规划方法；\citet{jeong2021ml}提出融合学习驱动轨迹预测的运动规划框架；\citet{crossingped2019}针对支路场景下的横穿行人提出动态路径规划方法，与本文典型横穿行人案例的场景设定一致。\citet{humanlikepred2022}基于概率轨迹预测构建类人运动规划，\citet{survrisk2020}基于周围车辆运动预测做风险评估与运动规划，\citet{adjpred2025}进一步将相邻车辆轨迹预测集成到路径规划中。
 
-\textbf{时间弹性带与时空联合阶段}\quad{}\citet{rosmann2012teb,rosmann2013sparse}提出的时间弹性带（Timed Elastic Band, TEB）将时间显式作为优化变量，在局部轨迹层面整合时间维度，是对PVD范式的一次显著扩展。近年的研究进一步将速度规划层的时序信息引入路径规划，\citet{yang2025stcorridor}、\citet{qiao2025stjoint}的时空走廊工作已隐含路径-速度耦合的思想；\citet{pathspeedstructured2024}在结构化道路场景下提出动态路径-速度联合规划算法，与本文路径-速度协调机制最直接对照；\citet{li2025perturbation}则在此基础上引入了障碍物扰动鲁棒性。
+在时间弹性带与时空联合阶段，\citet{rosmann2012teb,rosmann2013sparse}提出的时间弹性带（Timed Elastic Band, TEB）将时间显式作为优化变量，在局部轨迹层面整合时间维度，是对PVD范式的一次显著扩展。近年的研究进一步将速度规划层的时序信息引入路径规划，\citet{yang2025stcorridor}、\citet{qiao2025stjoint}的时空走廊工作已隐含路径-速度耦合的思想；\citet{pathspeedstructured2024}在结构化道路场景下提出动态路径-速度联合规划算法，与本文路径-速度协调机制最直接对照；\citet{li2025perturbation}则在此基础上引入了障碍物扰动鲁棒性。
 
 \subsection{威胁度评估与差异化安全距离}
 
 对所有障碍物使用统一安全距离存在明显局限，威胁度评估与差异化安全距离机制因而发展为路径规划领域中的一个独立研究方向。
 
-\textbf{行车安全场与风险场建模}\quad{}\citet{lvzhuangzhuang2024}建立了由势能场、动能场和行为场共同组成的标定行车安全场，分别表征静止物体、运动物体与驾驶员所形成的行车风险，并通过蒙特卡洛仿真标定模型系数；\citet{lifangqi2025}构建了包含车道风险场与障碍车辆风险场的交互式行车风险场模型；\citet{riskfield2024}面向多车冲突场景提出基于风险场的运动规划方法；\citet{drivingsafetyfield2023}进一步将行车安全场用于动态路径规划；\citet{riskfieldmodel2022}面向智能网联车辆建立驾驶风险场模型用于自主避障；\citet{coevorisk2023}则基于瞬时风险识别提出协同进化的换道轨迹规划方法。
+在行车安全场与风险场建模方面，\citet{lvzhuangzhuang2024}建立了由势能场、动能场和行为场共同组成的标定行车安全场，分别表征静止物体、运动物体与驾驶员所形成的行车风险，并通过蒙特卡洛仿真标定模型系数；\citet{lifangqi2025}构建了包含车道风险场与障碍车辆风险场的交互式行车风险场模型；\citet{riskfield2024}面向多车冲突场景提出基于风险场的运动规划方法；\citet{drivingsafetyfield2023}进一步将行车安全场用于动态路径规划；\citet{riskfieldmodel2022}面向智能网联车辆建立驾驶风险场模型用于自主避障；\citet{coevorisk2023}则基于瞬时风险识别提出协同进化的换道轨迹规划方法。
 
-\textbf{动态安全距离与时变裕度}\quad{}\citet{zhaohongzhuan2025}提出基于横纵向椭圆动态安全距离模型的改进人工势场法，将速度与跟踪误差关联性引入横向虚拟安全空间；\citet{renhongzheng2025}基于车头时距与碰撞时间（Time-to-Collision, TTC）定义变道危险区域和缓冲区域，为评估变道可行性提供量化依据；\citet{timevariantmargin2020}针对换道场景提出时变安全裕度的概念，将安全距离随时间动态调整，与本文差异化$\delta_i$的思想最为接近。
+在动态安全距离与时变裕度方面，\citet{zhaohongzhuan2025}提出基于横纵向椭圆动态安全距离模型的改进人工势场法，将速度与跟踪误差关联性引入横向虚拟安全空间；\citet{renhongzheng2025}基于车头时距与碰撞时间（Time-to-Collision, TTC）定义变道危险区域和缓冲区域，为评估变道可行性提供量化依据；\citet{timevariantmargin2020}针对换道场景提出时变安全裕度的概念，将安全距离随时间动态调整，与本文差异化$\delta_i$的思想最为接近。
 
-\textbf{多因子赋权方法}\quad{}\citet{linjiarui2021}针对蜂窝车联网（Cellular Vehicle-to-Everything, C-V2X）车载消息预处理场景提出基于层次分析法（Analytic Hierarchy Process, AHP）、Delphi与熵的混合赋权法，解决传统主观赋权法的赋权趋同与片面性问题，为多因子综合威胁度的权重确定提供了方法论参考。
+在多因子赋权方面，\citet{linjiarui2021}针对蜂窝车联网（Cellular Vehicle-to-Everything, C-V2X）车载消息预处理场景提出基于层次分析法（Analytic Hierarchy Process, AHP）、Delphi与熵的混合赋权法，解决传统主观赋权法的赋权趋同与片面性问题，为多因子综合威胁度的权重确定提供了方法论参考。
 
 \subsection{研究空间与本文切入点}
 
@@ -118,15 +118,15 @@ Apollo对应 & OpenSpace & Lattice Planner & PublicRoad PJPO & 辅助模块 \\
 本文的研究内容主要包括以下五个方面。
 
 \begin{enumerate}
-\item \textbf{Apollo Planning模块分析}\quad{}对Apollo 11.0版本的Planning模块进行源码级分析，理解其Scenario-Stage-Task三级管理架构、ReferenceLine平滑机制、\texttt{PublicRoadPlanner}中源自早期EM Planner思想的路径-速度解耦两阶段优化流程、路径边界构建逻辑及其\texttt{PathBoundsDeciderUtil}实现，以及\texttt{SpeedBoundsDecider}的ST边界构建机制。
+\item 对Apollo 11.0版本的Planning模块进行源码级分析，理解其Scenario-Stage-Task三级管理架构、ReferenceLine平滑机制、\texttt{PublicRoadPlanner}中源自早期EM Planner思想的路径-速度解耦两阶段优化流程、路径边界构建逻辑及其\texttt{PathBoundsDeciderUtil}实现，以及\texttt{SpeedBoundsDecider}的ST边界构建机制。
 
-\item \textbf{多障碍物场景问题识别}\quad{}通过源码分析与数学建模，识别Apollo现有算法在多障碍物场景下的三项局限，即安全裕度一刀切压缩通行空间、路径边界构建逻辑逐障碍物独立决策导致矛盾避让方向、动态障碍物未在路径边界构建中被显式利用进而造成路径-速度协调缺失。这三项局限分别对应安全距离、决策粒度与时空协调三个维度，也划定了后续章节的改进切入点。
+\item 通过源码分析与数学建模，识别Apollo现有算法在多障碍物场景下的三项局限，即安全裕度一刀切压缩通行空间、路径边界构建逻辑逐障碍物独立决策导致矛盾避让方向、动态障碍物未在路径边界构建中被显式利用进而造成路径-速度协调缺失。这三项局限分别对应安全距离、决策粒度与时空协调三个维度，也划定了后续章节的改进切入点。
 
-\item \textbf{多障碍物统一规划问题建模}\quad{}将多障碍物场景下的避让方向选择建模为组合优化问题，引入到达时间函数将动态障碍物的预测轨迹纳入路径决策，建立统一的多障碍物统一规划数学框架。将时变通行带投影至ST空间解读为时空可通行走廊，建立路径决策与速度规划之间的约束传递机制。
+\item 将多障碍物场景下的避让方向选择建模为组合优化问题，引入到达时间函数将动态障碍物的预测轨迹纳入路径决策，建立统一的多障碍物统一规划数学框架。将时变通行带投影至ST空间解读为时空可通行走廊，建立路径决策与速度规划之间的约束传递机制。
 
-\item \textbf{MIKU算法的设计与实现}\quad{}基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入。
+\item 基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入。
 
-\item \textbf{仿真验证与对比分析}\quad{}三项改进各自配套章内数值仿真，用以单独验证威胁度评估、组级分组决策与时空走廊的算法正确性。系统层面则在Apollo Planning的C++实现上完成集成实验，含6变体消融、3场景Dreamview在环展示与8场景全场景对比，其中8场景由4个压力场景和4个可比场景构成。对比维度覆盖规划成功率、通行效率、加减速峰值与QP求解耗时等，用以评估MIKU与Apollo Baseline的整体性能差异。
+\item 三项改进各自配套章内数值仿真，用以单独验证威胁度评估、组级分组决策与时空走廊的算法正确性。系统层面则在Apollo Planning的C++实现上完成集成实验，含6变体消融、3场景Dreamview在环展示与8场景全场景对比，其中8场景由4个压力场景和4个可比场景构成。对比维度覆盖规划成功率、通行效率、加减速峰值与QP求解耗时等，用以评估MIKU与Apollo Baseline的整体性能差异。
 \end{enumerate}
 
 \subsection{技术路线}
