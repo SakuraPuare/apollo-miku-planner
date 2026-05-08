@@ -1,0 +1,24 @@
+syntax = "proto2";
+
+import "modules/planning/planning_base/proto/piecewise_jerk_path_config.proto";
+
+package apollo.planning;
+
+message LaneFollowPathConfig {
+  //whether to extend path bound including adc bound
+  optional bool is_extend_lane_bounds_to_include_adc = 1;
+  //whether to extend adc bound buffer
+  optional double extend_buffer = 2;
+  optional PiecewiseJerkPathConfig path_optimizer_config = 3;
+  optional bool enable_miku_path_bounds = 4 [default = true];
+  optional bool enable_miku_dynamic_projection = 5 [default = true];
+  optional bool enable_miku_threat_buffer = 6 [default = true];
+  optional bool enable_miku_grouping = 7 [default = true];
+  optional bool enable_miku_max_gap = 8 [default = true];
+  optional double miku_threat_buffer_min = 9 [default = 0.10];
+  optional double miku_threat_buffer_max = 10 [default = 0.40];
+  optional double miku_ttc_critical = 11 [default = 2.0];
+  optional double miku_ttc_max = 12 [default = 7.0];
+  optional double miku_interaction_distance = 13 [default = 10.0];
+  optional double miku_velocity_limit = 14 [default = 12.0];
+}

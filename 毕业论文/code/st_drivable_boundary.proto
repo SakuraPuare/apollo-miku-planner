@@ -1,0 +1,35 @@
+syntax = "proto2";
+
+package apollo.planning;
+
+// STDrivableBoundary: ST（空间-时间）可行驶边界
+// 定义在 ST 图中车辆可行驶的安全区域边界
+// ST 图的横轴为时间，纵轴为位置（沿参考线方向）
+
+// STDrivableBoundaryInstance: 单个时刻的 ST 边界实例
+// 描述某一时刻可行驶区域的上下边界
+message STDrivableBoundaryInstance {
+  // t: 时刻 [s]
+  // 相对于规划起始点的时间
+  optional double t = 1;
+  // s_lower: 位置下边界 [m]
+  // 该时刻允许的最小纵向位置
+  optional double s_lower = 2;
+  // s_upper: 位置上边界 [m]
+  // 该时刻允许的最大纵向位置
+  optional double s_upper = 3;
+  // v_obs_lower: 障碍物下边界速度 [m/s]
+  // 障碍物占据区域的速度下限
+  optional double v_obs_lower = 4;
+  // v_obs_upper: 障碍物上边界速度 [m/s]
+  // 障碍物占据区域的速度上限
+  optional double v_obs_upper = 5;
+}
+
+// STDrivableBoundary: ST 可行驶边界
+// 包含一系列时间点上的边界信息，构成完整的 ST 可行驶区域
+message STDrivableBoundary {
+  // st_boundary: ST 边界实例序列
+  // 按时间顺序排列的边界点序列
+  repeated STDrivableBoundaryInstance st_boundary = 1;
+}

@@ -10,8 +10,7 @@
 \zihao{-4}\songti
 本附录列出第\ref{chap:integration}章数值仿真所用程序的完整源码。该程序按 Apollo \texttt{lane\_follow} 流水线顺序复现路径与速度规划的七个核心阶段，Baseline 与 MIKU 两种算法在同一文件内并列实现，所需依赖通过 PEP~723 内联元数据声明。
 
-% 附录代码 basicstyle 走 DejaVu Sans Mono，原生覆盖 τ/δ/→/× 等 Unicode 数学符号
-\newfontfamily\codefont{DejaVu Sans Mono}[Scale=0.95]
+\newfontfamily\codefont{Hack}[Scale=0.95]
 \lstinputlisting[
   language=Python,
   basicstyle=\linespread{0.95}\selectfont\zihao{6}\codefont,
@@ -31,3 +30,99 @@
   aboveskip=4pt,
   belowskip=4pt,
 ]{../可视化/apollo_pipeline.py}
+
+\chapter{MIKU 路径边界决策器 C++ 实现}
+\label{appendix:path-bounds}
+
+\zihao{-4}\songti
+本附录列出 MIKU 算法在 Apollo 框架中的核心 C++ 实现。\texttt{PathBoundsDeciderUtil} 类承载了扫描线分组、交互密度威胁度计算、max-gap 最优通行间隙选择等全部路径边界决策逻辑。
+
+\vspace{6pt}
+\noindent\textbf{path\_bounds\_decider\_util.h}
+
+\lstinputlisting[
+  language=C++,
+  basicstyle=\linespread{0.95}\selectfont\zihao{6}\codefont,
+  keywordstyle=\color{deepblue},
+  commentstyle=\color{lightgreen!60!black},
+  stringstyle=\color{dangerred!60!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=flexible,
+  showstringspaces=false,
+  tabsize=4,
+  aboveskip=4pt,
+  belowskip=4pt,
+]{code/path_bounds_decider_util.h}
+
+\vspace{6pt}
+\noindent\textbf{path\_bounds\_decider\_util.cc}
+
+\lstinputlisting[
+  language=C++,
+  basicstyle=\linespread{0.95}\selectfont\zihao{6}\codefont,
+  keywordstyle=\color{deepblue},
+  commentstyle=\color{lightgreen!60!black},
+  stringstyle=\color{dangerred!60!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=flexible,
+  showstringspaces=false,
+  tabsize=4,
+  aboveskip=4pt,
+  belowskip=4pt,
+]{code/path_bounds_decider_util.cc}
+
+\chapter{MIKU 车道跟随路径任务与速度优化器实现}
+\label{appendix:lane-speed}
+
+\zihao{-4}\songti
+本附录列出 MIKU 改动涉及的车道跟随路径任务（集成 MIKU 边界决策）与分段加加速度速度优化器（ST 走廊裁剪与 QP 求解）的完整实现。
+
+\vspace{6pt}
+\noindent\textbf{lane\_follow\_path.cc}
+
+\lstinputlisting[
+  language=C++,
+  basicstyle=\linespread{0.95}\selectfont\zihao{6}\codefont,
+  keywordstyle=\color{deepblue},
+  commentstyle=\color{lightgreen!60!black},
+  stringstyle=\color{dangerred!60!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=flexible,
+  showstringspaces=false,
+  tabsize=4,
+  aboveskip=4pt,
+  belowskip=4pt,
+]{code/lane_follow_path.cc}
+
+\vspace{6pt}
+\noindent\textbf{piecewise\_jerk\_speed\_optimizer.cc}
+
+\lstinputlisting[
+  language=C++,
+  basicstyle=\linespread{0.95}\selectfont\zihao{6}\codefont,
+  keywordstyle=\color{deepblue},
+  commentstyle=\color{lightgreen!60!black},
+  stringstyle=\color{dangerred!60!black},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  frame=single,
+  breaklines=true,
+  breakatwhitespace=false,
+  columns=flexible,
+  showstringspaces=false,
+  tabsize=4,
+  aboveskip=4pt,
+  belowskip=4pt,
+]{code/piecewise_jerk_speed_optimizer.cc}

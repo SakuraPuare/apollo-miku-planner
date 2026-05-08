@@ -1,0 +1,45 @@
+syntax = "proto2";
+
+package apollo.planning;
+
+// PiecewiseJerkPathConfig: 分段加加速度路径优化配置
+// 分段加加速度（Piecewise Jerk）方法用于生成平滑的横向轨迹
+// 通过最小化加加速度的积分来实现曲率平滑的路径
+
+message PiecewiseJerkPathConfig {
+  // ===== 代价函数权重 =====
+  // l_weight: 横向位移权重
+  // 基础横向跟踪误差的权重系数
+  optional double l_weight = 1 [default = 1.0];
+  // dl_weight: 横向速度权重
+  // 横向变化率的权重系数，影响路径的光滑性
+  optional double dl_weight = 2 [default = 100.0];
+  // ddl_weight: 横向加速度权重
+  // 横向加速度的权重系数，影响曲率平滑度
+  optional double ddl_weight = 3 [default = 1000.0];
+  // dddl_weight: 横向加加速度权重
+  // 横向加加速度的权重系数，是平滑性的主要控制量
+  optional double dddl_weight = 4 [default = 10000.0];
+  // path_reference_l_weight: 路径参考横向权重
+  // 跟踪参考路径的权重
+  optional double path_reference_l_weight = 5 [default = 0.0];
+
+  // ===== 终端状态权重 =====
+  // weight_end_state_l: 终端横向位移权重
+  // 终点横向位置的权重，影响终点精确性
+  optional double weight_end_state_l = 6 [default = 1000.0];
+  // weight_end_state_dl: 终端横向速度权重
+  // 终点横向速度的权重
+  optional double weight_end_state_dl = 7 [default = 0.0];
+  // weight_end_state_ddl: 终端横向加速度权重
+  // 终点横向加速度的权重，影响终点曲率
+  optional double weight_end_state_ddl = 8 [default = 0.0];
+
+  // ===== 优化参数 =====
+  // lateral_derivative_bound_default: 横向导数默认边界
+  // 横向速度的安全限制 [m/s]
+  optional double lateral_derivative_bound_default = 9 [default = 2.0];
+  // max_iteration: 最大迭代次数
+  // QP 求解器的最大迭代次数限制
+  optional int64 max_iteration = 10 [default = 4000];
+}
