@@ -309,45 +309,47 @@ PRESSURE_SCENARIOS = {
         t_max=6.5,
     ),
     "03_narrow_cones": Scenario(
-        # 双侧交通锥构成窄路 — 第5章差异化裕度对照。
-        # 原压力构型使用对称锥列，统一安全裕度会把通行带压缩到不可行。
+        # 混合障碍物窄路 — 第5章差异化裕度对照。
+        # 左侧水马（static，高威胁）+ 右侧交通锥（cone，低威胁），
+        # 多因子模型对两类障碍物给出不同 Θ_i → 不同 δ_i，
+        # 统一裕度下通行带为零，差异化裕度释放锥侧空间使路径可行。
         ego=Ego(s0=0.0, l0=0.0, v0=4.0, a0=0.0),
         obstacles=[
-            # 左侧锥列（l=+1.35, W=0.15）三个，纵向 s=20/30/40
+            # 左侧水马（static, W=0.4, l=+1.55）三个
             Obstacle(
                 s0=20.0,
-                l0=1.35,
+                l0=1.55,
                 vs=0.0,
                 vl=0.0,
-                W=0.15,
-                L=0.5,
+                W=0.4,
+                L=0.8,
                 is_static=True,
-                name="锥L1",
-                obs_type="cone",
+                name="水马L1",
+                obs_type="static",
             ),
             Obstacle(
                 s0=30.0,
-                l0=1.35,
+                l0=1.55,
                 vs=0.0,
                 vl=0.0,
-                W=0.15,
-                L=0.5,
+                W=0.4,
+                L=0.8,
                 is_static=True,
-                name="锥L2",
-                obs_type="cone",
+                name="水马L2",
+                obs_type="static",
             ),
             Obstacle(
                 s0=40.0,
-                l0=1.35,
+                l0=1.55,
                 vs=0.0,
                 vl=0.0,
-                W=0.15,
-                L=0.5,
+                W=0.4,
+                L=0.8,
                 is_static=True,
-                name="锥L3",
-                obs_type="cone",
+                name="水马L3",
+                obs_type="static",
             ),
-            # 右侧锥列（l=-1.35, W=0.15）三个，与左列对称
+            # 右侧交通锥（cone, W=0.15, l=-1.35）三个
             Obstacle(
                 s0=20.0,
                 l0=-1.35,
@@ -620,7 +622,9 @@ COMPARABLE_SCENARIOS["07_narrow_cones_cmp"] = COMPARABLE_SCENARIOS.pop(
     "03_narrow_cones"
 )
 for _obs in COMPARABLE_SCENARIOS["07_narrow_cones_cmp"].obstacles:
-    _obs.l0 = 1.55 if _obs.l0 > 0 else -1.35
+    if _obs.obs_type == "static":
+        _obs.l0 = 1.75  # 水马外移，Baseline 统一裕度下仍可通过
+    # 锥侧保持 l=-1.35 不变
 
 COMPARABLE_SCENARIOS["08_dense_construction_cmp"] = COMPARABLE_SCENARIOS.pop(
     "04_dense_construction"
