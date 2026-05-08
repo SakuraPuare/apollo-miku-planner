@@ -1815,11 +1815,11 @@ def plot_compare_a(ax, r_b, r_g, scn: Scenario):
 SCENARIO_META = {
     "01_crossing_ped": "P1：单行人横穿（压力参数）",
     "02_ped_plus_parked": "P2：行人横穿 + 左侧停车（压力参数）",
-    "03_narrow_cones": "P3：窄路通行 + 双侧交通锥（压力参数）",
+    "03_narrow_cones": "P3：窄路通行 + 水马/交通锥混合（压力参数）",
     "04_dense_construction": "P4：单车道维修封闭 + 导流借道（压力参数）",
     "05_crossing_ped_cmp": "C1：单行人横穿（可比参数）",
     "06_ped_plus_parked_cmp": "C2：行人横穿 + 左侧停车（可比参数）",
-    "07_narrow_cones_cmp": "C3：窄路通行 + 双侧交通锥（可比参数）",
+    "07_narrow_cones_cmp": "C3：窄路通行 + 水马/交通锥混合（可比参数）",
     "08_dense_construction_cmp": "C4：单车道维修封闭 + 导流借道（可比参数）",
 }
 

@@ -227,15 +227,15 @@ Apollo统一缓冲下，取$d_{buf} = \DeltaBaseline$\,m。从左侧通过时，
 \section{差异化安全裕度仿真}
 \label{sec:exp_ch4}
 
-本节在双侧交通锥构成的窄路对照场景上验证差异化安全裕度对横向通行空间的释放效果。仿真运行于Python复现的Apollo Planning流水线，覆盖\texttt{PathBoundsDecider}至\texttt{PiecewiseJerkSpeedOptimizer}的完整阶段。Baseline模式下所有障碍物共用统一额外缓冲$d_{buf}=\DeltaBaseline$\,m，总安全裕度$\delta_{\mathrm{base}}=W_{ego}/2+\DeltaBaseline$\,m；MIKU模式按式\eqref{eq:dynamic_delta}对每个障碍物独立计算$d_{buf,i}$与$\delta_i$。本节设置两组子场景，压力构型将锥列内收至Baseline不可通行的临界位置，用于验证差异化缓冲的必要性；可通过构型将锥列轻量外移使两种方法都能通过，在同一口径下比较连续指标。
+本节在水马与交通锥混合构成的窄路对照场景上验证差异化安全裕度对横向通行空间的释放效果。左侧为static类水马，右侧为cone类交通锥，两类障碍物的尺寸与类型差异使多因子模型输出不同的$\Theta_i$与$\delta_i$。仿真运行于Python复现的Apollo Planning流水线，覆盖\texttt{PathBoundsDecider}至\texttt{PiecewiseJerkSpeedOptimizer}的完整阶段。Baseline模式下所有障碍物共用统一额外缓冲$d_{buf}=\DeltaBaseline$\,m，总安全裕度$\delta_{\mathrm{base}}=W_{ego}/2+\DeltaBaseline$\,m；MIKU模式按式\eqref{eq:dynamic_delta}对每个障碍物独立计算$d_{buf,i}$与$\delta_i$。本节设置两组子场景，压力构型将障碍物内收至Baseline不可通行的临界位置，用于验证差异化缓冲的必要性；可通过构型将左侧水马轻量外移使两种方法都能通过，在同一口径下比较连续指标。
 
 \subsection{场景设置与威胁度计算}
 
-场景参数列于表\ref{tab:exp_ch5_scn}。窄路由两列轻微非对称交通锥构成，左右各\NarrowCmpConeCountPerSide 个，纵向间距\NarrowCmpLongitudinalSpacing\,m。按左正右负约定，左侧锥列位于$l=\NarrowCmpLeftConeL$\,m，右侧锥列位于$l=\NarrowCmpRightConeL$\,m，锥本体宽$W=\NarrowCmpConeWidth$\,m，自车以$v_{ego}=\NarrowEgoSpeed$\,m/s、车宽$W_{ego}=\NarrowEgoWidth$\,m接近窄路。该子场景经几何放宽后Baseline与MIKU均能通过，用于比较可通过条件下的横向余量和轨迹质量。
+场景参数列于表\ref{tab:exp_ch5_scn}。窄路由左侧水马与右侧交通锥构成，各\NarrowCmpObsCountPerSide 个，纵向间距\NarrowCmpLongitudinalSpacing\,m。左侧水马位于$l=\NarrowCmpLeftBarrierL$\,m，宽$W=\NarrowCmpLeftBarrierWidth$\,m，属static类；右侧锥列位于$l=\NarrowCmpRightConeL$\,m，宽$W=\NarrowCmpConeWidth$\,m，属cone类。自车以$v_{ego}=\NarrowEgoSpeed$\,m/s、车宽$W_{ego}=\NarrowEgoWidth$\,m接近窄路。两类障碍物的尺寸与类型差异使多因子模型对其给出不同的威胁度$\Theta_i$与安全裕度$\delta_i$，而Baseline对两侧施加相同的统一缓冲$d_{buf}=\DeltaBaseline$\,m。
 
 \begin{table}[htbp]
 \centering
-\caption{场景一窄路+双侧交通锥参数配置}
+\caption{场景一混合障碍物窄路参数配置}
 \label{tab:exp_ch5_scn}
 \small
 \resizebox{\textwidth}{!}{%
@@ -245,9 +245,10 @@ Apollo统一缓冲下，取$d_{buf} = \DeltaBaseline$\,m。从左侧通过时，
 \midrule
 道路 & 车道边界 & $l_{road}\in[\NarrowRoadLeft,\,\NarrowRoadRight]$\,m \\
 自车 & 初始状态 & $s_{ego}=0$, $v_{ego}=\NarrowEgoSpeed$\,m/s, $W_{ego}=\NarrowEgoWidth$\,m \\
-左侧锥列 & 中心位置 & $(s,l)\in\{(\NarrowCmpLeftConeSOne,\NarrowCmpLeftConeLOne),(\NarrowCmpLeftConeSTwo,\NarrowCmpLeftConeLTwo),(\NarrowCmpLeftConeSThree,\NarrowCmpLeftConeLThree)\}$\,m \\
+左侧水马 & 中心位置 & $(s,l)\in\{(20,\NarrowCmpLeftBarrierL),(30,\NarrowCmpLeftBarrierL),(40,\NarrowCmpLeftBarrierL)\}$\,m \\
+左侧水马 & 几何与类型 & $W=\NarrowCmpLeftBarrierWidth$\,m，$L=\NarrowCmpLeftBarrierLength$\,m，$f_{type}=\NarrowBarrierThreatType$（static类） \\
 右侧锥列 & 中心位置 & $(s,l)\in\{(\NarrowCmpRightConeSOne,\NarrowCmpRightConeLOne),(\NarrowCmpRightConeSTwo,\NarrowCmpRightConeLTwo),(\NarrowCmpRightConeSThree,\NarrowCmpRightConeLThree)\}$\,m \\
-锥几何 & $W\times L$ & $\NarrowCmpConeWidth\times\NarrowCmpConeLength$\,m，$f_{type}{=}\NarrowThreatType$，即cone类 \\
+右侧锥列 & 几何与类型 & $W=\NarrowCmpConeWidth$\,m，$L=\NarrowCmpConeLength$\,m，$f_{type}=\NarrowThreatType$（cone类） \\
 Baseline & 统一额外缓冲 & $d_{buf}=\DeltaBaseline$\,m \\
 MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_{buf,max}=\DeltaIntervalHigh$\,m \\
 \bottomrule
@@ -255,23 +256,17 @@ MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_
 }
 \end{table}
 
-下面以$s=\NarrowThreatProbeS$\,m处最近一个交通锥为例，逐因子分析多因子威胁度评估如何识别其低威胁特征。
+下面以$s=\NarrowThreatProbeS$\,m处最近的一对障碍物为例，对比多因子威胁度评估对两类障碍物的区分效果。两者共享相同的$f_{TTC}=\NarrowThreatTtcFactor$（$TTC=\NarrowThreatTtcSeconds$\,s）、$f_{overlap}=\NarrowThreatOverlap$（均在自车横向投影之外）、$f_{vel}=\NarrowThreatVel$（均为静态）和$f_{inter}\approx\NarrowThreatInter$（互为对侧邻居），差异集中在障碍物类型因子$f_{type}$。
 
-碰撞时间因子方面，$TTC=\NarrowThreatProbeS/\NarrowEgoSpeed=\NarrowThreatTtcSeconds$\,s，处于$T_{crit}$与$T_{max}$之间的线性过渡区，$f_{TTC}=\NarrowThreatTtcFactor$。交通锥为静态目标，TTC完全由自车速度和纵向距离决定，不存在障碍物主动接近的额外风险。
+对右侧交通锥，$f_{type}=\NarrowThreatType$，属五级分类最低档，反映其小尺寸、固定在路面、碰撞后果轻微的物理特征。综合威胁度$\Theta_{cone}\approx\NarrowThreatTheta$，由式\eqref{eq:dynamic_delta}得$d_{buf,cone}\approx\NarrowThreatDelta$\,m，总安全裕度$\delta_{cone}\approx\NarrowThreatTotalDelta$\,m。
 
-横向重叠率因子方面，交通锥位于车道侧方而非自车正前方，其横向占据区间与自车投影不重叠，$f_{overlap}=\NarrowThreatOverlap$。该因子直接反映碰撞的几何可能性，侧方锥桶不构成正面碰撞威胁。
+对左侧水马，$f_{type}=\NarrowBarrierThreatType$，属static类，体积与质量均大于交通锥，碰撞后果更严重。综合威胁度$\Theta_{barrier}\approx\NarrowBarrierThreatTheta$，对应$d_{buf,barrier}\approx\NarrowBarrierThreatDelta$\,m，总安全裕度$\delta_{barrier}\approx\NarrowBarrierThreatTotalDelta$\,m。
 
-相对速度因子方面，锥桶静止，相对速度等于自车速度，$f_{vel}=\sigma(\NarrowEgoSpeed/\ThreatVelLimit)\approx\NarrowThreatVel$。该值虽不低，但仅反映自车接近速度，不含障碍物主动运动的不确定性。
-
-障碍物类型因子方面，交通锥属于小尺寸标识物，体积小且固定在路面，碰撞后果轻微，$f_{type}=\NarrowThreatType$，为五级分类中的最低档。若同一位置为行人，$f_{type}$将升至\ThreatTypePed，仅此一项即使$\Theta_i$增加$\ThreatWeightType\times(\ThreatTypePed-\NarrowThreatType)=0.085$。
-
-交互密度因子方面，每个锥仅与纵向对侧的一个锥落入聚类半径$d_{cluster}=\ThreatClusterRadius$\,m，$f_{inter}\approx\NarrowThreatInter$。锥列间距较大，不构成密集障碍物群，局部交互压力低。
-
-五项因子加权求和得综合威胁度$\Theta_i=\ThreatWeightTtc\times\NarrowThreatTtcFactor+\ThreatWeightOverlap\times\NarrowThreatOverlap+\ThreatWeightVel\times\NarrowThreatVel+\ThreatWeightType\times\NarrowThreatType+\ThreatWeightInter\times\NarrowThreatInter\approx\NarrowThreatTheta$。五个因子中$f_{overlap}=0$和$f_{type}=\NarrowThreatType$两项贡献最小，正是交通锥"侧方、小尺寸、静态"三重低威胁特征的量化体现。由式\eqref{eq:dynamic_delta}线性插值得$d_{buf,i}=\DeltaIntervalLow+(\DeltaIntervalHigh-\DeltaIntervalLow)\times\NarrowThreatTheta\approx\NarrowThreatDelta$\,m，对应总安全裕度$\delta_i=\NarrowEgoHalfWidth+\NarrowThreatDelta=\NarrowThreatTotalDelta$\,m，较Baseline的$\delta_{\mathrm{base}}=\NarrowEgoHalfWidth+\DeltaBaseline=\NarrowBaselineTotalDelta$\,m缩减$\NarrowBaselineTotalDelta-\NarrowThreatTotalDelta=0.11$\,m。该缩减量来自多因子模型对锥桶低威胁属性的综合判定，而非对单一因子的简单阈值判断。若场景中存在行人或车辆级障碍物，$f_{type}$、$f_{overlap}$和$f_{inter}$均会显著升高，$\Theta_i$将远大于\NarrowThreatTheta，对应的$\delta_i$接近甚至超过Baseline的统一裕度，从而对高威胁目标保持充分保护。
+两类障碍物的$\Theta$差异$\NarrowBarrierThreatTheta-\NarrowThreatTheta=0.01$虽小，但在通行带已处于临界宽度的几何条件下，$\delta$的任何缩减都直接转化为可用横向空间。更关键的是，两者的$\delta$均显著低于Baseline的$\delta_{\mathrm{base}}=\NarrowBaselineTotalDelta$\,m，这一整体缩减来自多因子模型对"静态、侧方、无横向重叠"三重低威胁特征的综合判定。若场景中存在行人（$f_{type}=\ThreatTypePed$）或横向重叠的车辆（$f_{overlap}\gg 0$），$\Theta_i$将远大于当前值，$\delta_i$接近甚至超过Baseline的统一裕度，从而对高威胁目标保持充分保护。
 
 \subsection{Baseline不可通行的压力子场景}
 
-为验证差异化安全裕度的必要性，本小节先给出压力构型的对照结果。该构型将双侧交通锥横向位置内收，使Baseline的统一额外缓冲$d_{buf}=\DeltaBaseline$\,m导致左右边界重叠，\texttt{PathBoundsDecider}在$s=\MThreeBaselineSEnd$\,m处输出零宽通行带，路径QP不可行，自车被迫停车。MIKU按差异化缓冲$d_{buf,i}$释放横向余量，路径QP可行，自车以$\bar{v}=\MThreeMikuAvgV$\,m/s匀速通过全程。
+为验证差异化安全裕度的必要性，本小节先给出压力构型的对照结果。该构型中左侧水马与右侧交通锥的横向位置使Baseline的统一额外缓冲$d_{buf}=\DeltaBaseline$\,m导致左右边界重叠，\texttt{PathBoundsDecider}在$s=\MThreeBaselineSEnd$\,m处输出零宽通行带，路径QP不可行，自车被迫停车。MIKU对水马给出$\delta_{barrier}=\NarrowBarrierThreatTotalDelta$\,m、对交通锥给出$\delta_{cone}=\NarrowThreatTotalDelta$\,m的差异化裕度，两侧边界均向外退让，通行带恢复正宽度，路径QP可行，自车以$\bar{v}=\MThreeMikuAvgV$\,m/s匀速通过全程。
 
 \begin{figure}[H]
 \centering
@@ -294,11 +289,11 @@ MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_
 \label{fig:exp_ch5_pressure_va}
 \end{figure}
 
-图\ref{fig:exp_ch5_pressure_sl}显示Baseline在$s=\MThreeBaselineSEnd$\,m处通行带收窄至零，路径截断；MIKU的差异化缓冲使通行带始终保持正宽度，路径QP正常求解。图\ref{fig:exp_ch5_pressure_st}中Baseline因路径截断而在截断点前被迫减速停车，MIKU则以近匀速通过。图\ref{fig:exp_ch5_pressure_va}的$v(t)$曲线进一步印证，Baseline在$t\approx\MThreeBaselineStopDur$\,s后速度趋零，MIKU全程维持$v>\MThreeMikuMinV$\,m/s。
+图\ref{fig:exp_ch5_pressure_sl}显示Baseline在$s=\MThreeBaselineSEnd$\,m处通行带收窄至零，路径截断；MIKU的差异化缓冲使通行带始终保持正宽度，路径QP正常求解。图\ref{fig:exp_ch5_pressure_st}中Baseline因路径截断而在截断点前被迫减速停车，MIKU则以近匀速通过。图\ref{fig:exp_ch5_pressure_va}的$v(t)$曲线同样反映了这一差异，Baseline在$t\approx\MThreeBaselineStopDur$\,s后速度趋零，MIKU全程维持$v>\MThreeMikuMinV$\,m/s。
 
 \subsection{可通过子场景对比}
 
-图\ref{fig:exp_ch5_sl}给出SL平面的对照。Baseline使用统一额外缓冲$d_{buf}=\DeltaBaseline$\,m后仍能通过，但通行带被压缩，路径出现轻微横向偏移；MIKU将差异化额外缓冲$d_{buf,i}\approx\NarrowThreatDelta$\,m，即总安全裕度$\delta_i\approx\NarrowThreatTotalDelta$\,m，代入后，低威胁交通锥占用的安全缓冲减小，通行带更接近道路中心，横向加速度峰值由\MSevenBaselineMaxAbsALat\,m/s$^2$降至\MSevenMikuMaxAbsALat\,m/s$^2$。
+图\ref{fig:exp_ch5_sl}给出SL平面的对照。Baseline使用统一额外缓冲$d_{buf}=\DeltaBaseline$\,m后仍能通过，但通行带被压缩，路径出现轻微横向偏移；MIKU对水马施加$\delta_{barrier}=\NarrowBarrierThreatTotalDelta$\,m、对交通锥施加$\delta_{cone}=\NarrowThreatTotalDelta$\,m的差异化裕度，低威胁锥侧释放更多横向空间，通行带更宽且更接近道路中心，横向加速度峰值由\MSevenBaselineMaxAbsALat\,m/s$^2$降至\MSevenMikuMaxAbsALat\,m/s$^2$。
 
 \begin{figure}[H]
 \centering
@@ -345,8 +340,8 @@ MIKU & 差异化额外缓冲上下界 & $d_{buf,min}=\DeltaIntervalLow$\,m，$d_
 \end{tabular}
 \end{table}
 
-实验结果与本章理论分析一致。交通锥的五项因子中$f_{overlap}=0$、$f_{type}=\NarrowThreatType$、$f_{inter}=\NarrowThreatInter$三项均处于低位，多因子模型综合判定$\Theta_i=\NarrowThreatTheta$，将额外缓冲由Baseline的$d_{buf}=\DeltaBaseline$\,m降至$d_{buf,i}=\NarrowThreatDelta$\,m。压力构型中这$\NarrowBaselineTotalDelta-\NarrowThreatTotalDelta=0.11$\,m的裕度释放恰好使通行带从零宽恢复为正宽度，是通行的必要条件；可通过构型中同样的裕度释放改善了横向余量与路径QP约束质量。两组对照表明，差异化安全裕度的核心价值在于多因子模型能精确识别低威胁障碍物并针对性释放空间，而非对所有目标一律缩减缓冲。
+实验结果与本章理论分析一致。多因子模型对水马给出$\Theta_{barrier}=\NarrowBarrierThreatTheta$、对交通锥给出$\Theta_{cone}=\NarrowThreatTheta$，两者均显著低于使$\delta_i$接近Baseline统一裕度的高威胁阈值，从而将额外缓冲由$d_{buf}=\DeltaBaseline$\,m分别降至$\NarrowBarrierThreatDelta$\,m和$\NarrowThreatDelta$\,m。压力构型中这一裕度释放恰好使通行带从零宽恢复为正宽度，是通行的必要条件；可通过构型中同样的裕度释放改善了横向余量与路径QP约束质量。两组对照的差异来源清晰：多因子模型对水马和交通锥输出了不同的$\Theta_i$，低威胁障碍物附近的横向空间因此被释放，而高威胁目标的裕度并未削减。
 
 \section{本章小结}
 
-本章针对Apollo \texttt{PathBoundsDecider}安全裕度一刀切的设计缺陷，给出多因子威胁度评估与差异化安全距离机制。源码层面定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源；几何层面量化了统一缓冲对通行带宽度的不必要压缩。算法层面构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度五项因子的威胁度模型，将归一化威胁度先映射为差异化额外缓冲$d_{buf,i}$，再合成为总安全裕度$\delta_i$，低威胁障碍物释放横向空间，高威胁障碍物保持甚至增大裕度。章内数值仿真表明，压力子场景下Baseline因零宽通行带不可通过，MIKU按差异化裕度完成通行；在可通过子场景两者均到达终点，MIKU保持更宽的通行带与更小的横向加速度峰值。
+本章针对Apollo \texttt{PathBoundsDecider}安全裕度一刀切的设计缺陷，给出多因子威胁度评估与差异化安全距离机制。源码层面定位了\texttt{GetBuffer\-Between\-ADCCenter\-AndEdge}函数对所有障碍物返回相同安全距离的根源；几何层面量化了统一缓冲对通行带宽度的不必要压缩。算法层面构建了融合TTC、横向重叠率、相对速度、障碍物类型与交互密度五项因子的威胁度模型，将归一化威胁度先映射为差异化额外缓冲$d_{buf,i}$，再合成为总安全裕度$\delta_i$，低威胁障碍物释放横向空间，高威胁障碍物保持甚至增大裕度。章内数值仿真以水马与交通锥混合窄路为对照场景，多因子模型对两类障碍物输出不同的$\Theta_i$与$\delta_i$，压力子场景下Baseline因零宽通行带不可通过，MIKU按差异化裕度完成通行；在可通过子场景两者均到达终点，MIKU保持更宽的通行带与更小的横向加速度峰值。

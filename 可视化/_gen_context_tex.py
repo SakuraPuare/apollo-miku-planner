@@ -66,29 +66,31 @@ def main() -> None:
     # Narrow cones pressure/comparable scenes
     narrow_p = ap.PRESSURE_SCENARIOS["03_narrow_cones"]
     narrow_c = ap.COMPARABLE_SCENARIOS["07_narrow_cones_cmp"]
-    left_cones = narrow_c.obstacles[: len(narrow_c.obstacles) // 2]
-    right_cones = narrow_c.obstacles[len(narrow_c.obstacles) // 2 :]
+    left_obs = narrow_c.obstacles[: len(narrow_c.obstacles) // 2]
+    right_obs = narrow_c.obstacles[len(narrow_c.obstacles) // 2 :]
     add(lines, "NarrowRoadLeft", narrow_p.l_road_min, 3)
     add(lines, "NarrowRoadRight", narrow_p.l_road_max, 3)
     add(lines, "NarrowRoadWidth", narrow_p.l_road_max - narrow_p.l_road_min, 2)
     add(lines, "NarrowEgoWidth", narrow_p.ego.W, 2)
     add(lines, "NarrowEgoHalfWidth", narrow_p.ego.W / 2, 3)
     add(lines, "NarrowEgoSpeed", narrow_p.ego.v0, 1)
-    add(lines, "NarrowConeWidth", narrow_p.obstacles[0].W, 2)
-    add(lines, "NarrowConeLength", narrow_p.obstacles[0].L, 1)
-    add(lines, "NarrowCmpConeCountPerSide", len(left_cones), 0)
-    add(lines, "NarrowCmpLongitudinalSpacing", left_cones[1].s0 - left_cones[0].s0, 1)
-    add(lines, "NarrowCmpLeftConeL", left_cones[0].l0, 2)
-    add(lines, "NarrowCmpRightConeL", right_cones[0].l0, 2)
+    add(lines, "NarrowConeWidth", right_obs[0].W, 2)
+    add(lines, "NarrowConeLength", right_obs[0].L, 1)
+    add(lines, "NarrowCmpObsCountPerSide", len(left_obs), 0)
+    add(lines, "NarrowCmpConeCountPerSide", len(left_obs), 0)  # ch8 compat
+    add(lines, "NarrowCmpLongitudinalSpacing", left_obs[1].s0 - left_obs[0].s0, 1)
+    # Left side: water barriers (static type)
+    add(lines, "NarrowCmpLeftBarrierL", left_obs[0].l0, 2)
+    add(lines, "NarrowCmpLeftBarrierWidth", left_obs[0].W, 1)
+    add(lines, "NarrowCmpLeftBarrierLength", left_obs[0].L, 1)
+    # Right side: cones
+    add(lines, "NarrowCmpRightConeL", right_obs[0].l0, 2)
     words = ["One", "Two", "Three"]
-    for word, obs in zip(words, left_cones):
-        add(lines, f"NarrowCmpLeftConeS{word}", obs.s0, 1)
-        add(lines, f"NarrowCmpLeftConeL{word}", obs.l0, 2)
-    for word, obs in zip(words, right_cones):
+    for word, obs in zip(words, right_obs):
         add(lines, f"NarrowCmpRightConeS{word}", obs.s0, 1)
         add(lines, f"NarrowCmpRightConeL{word}", obs.l0, 2)
-    add(lines, "NarrowCmpConeWidth", narrow_c.obstacles[0].W, 2)
-    add(lines, "NarrowCmpConeLength", narrow_c.obstacles[0].L, 1)
+    add(lines, "NarrowCmpConeWidth", right_obs[0].W, 2)
+    add(lines, "NarrowCmpConeLength", right_obs[0].L, 1)
 
     # Dense construction scene counts
     dense_p = ap.PRESSURE_SCENARIOS["04_dense_construction"]
@@ -271,20 +273,27 @@ def main() -> None:
         2,
     )
 
-    threat_obs = left_cones[0]
-    rel_v = narrow_c.ego.v0 - threat_obs.vs
-    ttc_seconds = (threat_obs.s0 - narrow_c.ego.s0) / rel_v
-    add(lines, "NarrowThreatProbeS", threat_obs.s0, 1)
+    # Threat factors for the right-side cone (low threat)
+    threat_cone = right_obs[0]
+    rel_v = narrow_c.ego.v0 - threat_cone.vs
+    ttc_seconds = (threat_cone.s0 - narrow_c.ego.s0) / rel_v
+    add(lines, "NarrowThreatProbeS", threat_cone.s0, 1)
     add(lines, "NarrowThreatTtcSeconds", ttc_seconds, 1)
-    add(lines, "NarrowThreatTtc", ap.f_ttc(threat_obs, narrow_c.ego), 2)
-    add(lines, "NarrowThreatTtcFactor", ap.f_ttc(threat_obs, narrow_c.ego), 2)
-    add(lines, "NarrowThreatOverlap", ap.f_overlap(threat_obs, narrow_c.ego), 0)
-    add(lines, "NarrowThreatVel", ap.f_vel(threat_obs, narrow_c.ego), 2)
-    add(lines, "NarrowThreatType", ap.f_type(threat_obs), 2)
-    add(lines, "NarrowThreatInter", ap.f_inter(threat_obs, narrow_c.obstacles), 2)
-    add(lines, "NarrowThreatTheta", ap.compute_threat(threat_obs, narrow_c), 2)
-    add(lines, "NarrowThreatDelta", ap.compute_delta(threat_obs, narrow_c), 2)
-    add(lines, "NarrowThreatTotalDelta", narrow_p.ego.W / 2 + ap.compute_delta(threat_obs, narrow_c), 2)
+    add(lines, "NarrowThreatTtc", ap.f_ttc(threat_cone, narrow_c.ego), 2)
+    add(lines, "NarrowThreatTtcFactor", ap.f_ttc(threat_cone, narrow_c.ego), 2)
+    add(lines, "NarrowThreatOverlap", ap.f_overlap(threat_cone, narrow_c.ego), 0)
+    add(lines, "NarrowThreatVel", ap.f_vel(threat_cone, narrow_c.ego), 2)
+    add(lines, "NarrowThreatType", ap.f_type(threat_cone), 2)
+    add(lines, "NarrowThreatInter", ap.f_inter(threat_cone, narrow_c.obstacles), 2)
+    add(lines, "NarrowThreatTheta", ap.compute_threat(threat_cone, narrow_c), 2)
+    add(lines, "NarrowThreatDelta", ap.compute_delta(threat_cone, narrow_c), 2)
+    add(lines, "NarrowThreatTotalDelta", narrow_p.ego.W / 2 + ap.compute_delta(threat_cone, narrow_c), 2)
+    # Threat factors for the left-side barrier (higher threat)
+    threat_barrier = left_obs[0]
+    add(lines, "NarrowBarrierThreatType", ap.f_type(threat_barrier), 2)
+    add(lines, "NarrowBarrierThreatTheta", ap.compute_threat(threat_barrier, narrow_c), 2)
+    add(lines, "NarrowBarrierThreatDelta", ap.compute_delta(threat_barrier, narrow_c), 2)
+    add(lines, "NarrowBarrierThreatTotalDelta", narrow_p.ego.W / 2 + ap.compute_delta(threat_barrier, narrow_c), 2)
     add(lines, "NarrowBaselineTotalDelta", narrow_p.ego.W / 2 + narrow_c.delta_baseline, 2)
 
     # Chapter 8 configuration values
