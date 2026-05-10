@@ -258,7 +258,7 @@
 \textbf{时间}\quad{}缓冲段\\
 \textbf{要点}
 \begin{itemize}
-  \item 针对 Apollo PathBoundsDecider 三项源码层缺陷，提出 MIKU，差异化 $\delta_i$、组级最优 $\mathbf{d}^*$、时空走廊 $\tau(s)$ 三条改进共用同一组数学记号。
+  \item 针对 Apollo PathBoundsDecider 三项源码层局限，提出 MIKU，差异化 $\delta_i$、组级最优 $\mathbf{d}^*$、时空走廊 $\tau(s)$ 三条改进共用同一组数学记号。
   \item 通过率\quad{}压力 \MPressureBaselinePassCount/\MPressureScenarioTotal$\to$\MPressureMikuPassCount/\MPressureScenarioTotal，整体 \MSummaryBaselinePassCount/\MScenarioTotal$\to$\MSummaryMikuPassCount/\MScenarioTotal。
   \item 效率\quad{}整体平均速度提升 \MSummarySummaryVImprovement\%，压力平均速度 \MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s。
   \item 计算\quad{}压力 QP 耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降 84.3\%），可比 \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降 66.6\%），整体仅多付 \MSummarySummaryExtraMs\,ms。

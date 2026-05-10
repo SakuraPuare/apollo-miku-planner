@@ -520,7 +520,7 @@
 \begin{frame}{主要结论}
   \footnotesize
   \begin{itemize}\setlength\itemsep{0.35em}
-    \item 针对Apollo PathBoundsDecider三项源码层缺陷，提出多障碍物交互运动学统一规划算法MIKU，以差异化$\delta_i$、组级最优$\mathbf{d}^*$、时空走廊$\tau(s)$三条改进共用同一组$(u_i, v_i, \delta, \tau)$数学记号
+    \item 针对Apollo PathBoundsDecider三项源码层局限，提出多障碍物交互运动学统一规划算法MIKU，以差异化$\delta_i$、组级最优$\mathbf{d}^*$、时空走廊$\tau(s)$三条改进共用同一组$(u_i, v_i, \delta, \tau)$数学记号
     \item \textbf{通过率}\quad{}压力场景\MPressureBaselinePassCount/\MPressureScenarioTotal$\to$\MPressureMikuPassCount/\MPressureScenarioTotal，整体\MSummaryBaselinePassCount/\MScenarioTotal$\to$\MSummaryMikuPassCount/\MScenarioTotal
     \item \textbf{效率}\quad{}整体平均速度提升\MSummarySummaryVImprovement\%；压力场景平均速度\MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s
     \item \textbf{计算}\quad{}压力场景QP总耗时\MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降84.3\%），可比场景\MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降66.6\%），仅多付\MSummarySummaryExtraMs\,ms平均开销

@@ -3,7 +3,7 @@
 
 Apollo \texttt{PathBoundsDecider} 对每个障碍物独立决定避让方向，在两侧障碍物同时活跃时容易形成相互矛盾的方向分配，使路径边界出现上下交叉而被判为 BLOCKED。本章以扫描线纵向重叠检测把相互关联的障碍物聚为连通分量，再在组内求解最大间隙分割，把 $2^k$ 组合搜索降为 $O(k\log k)$ 的线性扫描，并给出链式分量的保守包络处理与章内数值仿真。
 
-\section{Apollo 逐障碍物决策的源码缺陷与失败模式}
+\section{Apollo 逐障碍物决策的源码局限与失败模式}
 \label{sec:problem_sl}
 
 \subsection{源码逻辑与决策入口}
