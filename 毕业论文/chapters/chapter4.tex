@@ -1,11 +1,11 @@
 \chapter{MIKU 总体框架与问题概览}
 \label{chap:framework}
 
-本章建立多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）所依赖的数学语言。首先梳理多障碍物场景下暴露的三类核心局限，随后在Frenet坐标系下给出障碍物投影、安全裕度与通行带宽度的定义，将多障碍物避让方向选择写成$2^n$规模的组合优化问题。基于该模型分析Apollo Baseline逐障碍物贪心决策在空间、时间和安全裕度三个维度上的次优性根源，最后给出MIKU沿差异化安全距离、全局协调决策与时变投影展开的三项改进，分别对应后续第\ref{chap:threat}、\ref{chap:group}、\ref{chap:st_corridor}章。
+本章建立多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）所依赖的数学语言。首先梳理多障碍物场景下的三类核心局限，随后在Frenet坐标系下给出障碍物投影、安全裕度与通行带宽度的定义，将多障碍物避让方向选择写成$2^n$规模的组合优化问题。基于该模型分析Apollo Baseline逐障碍物贪心决策在空间、时间和安全裕度三个维度上的次优性根源，最后给出MIKU沿差异化安全距离、全局协调决策与时变投影展开的三项改进，分别对应后续第\ref{chap:threat}、\ref{chap:group}、\ref{chap:st_corridor}章。
 
 \section{多障碍物场景下的三个核心局限}
 
-多障碍物密集场景常见于路口多车交汇、高速多车道变道、施工区域多路障等工况，自车前方同时存在多个障碍物。Apollo现有Planning模块在若干设计权衡之下暴露出三类局限，图\ref{fig:problem_overview}给出其几何示意与级联后果。图\ref{fig:problem_overview:a}对应安全裕度一刀切造成的通行带压缩，窄小的路锥被过大的统一缓冲包裹，挤占了本应富余的横向空间；图\ref{fig:problem_overview:b}对应独立决策下的路径BLOCKED，左右两侧障碍物被贪心分配了相反方向的避让决策，$l^+(s)$与$l^-(s)$在中间区域相遇乃至翻转，可行带宽不足以容纳自车宽度；图\ref{fig:problem_overview:c}对应动态障碍物被排除于路径阶段，行人预测轨迹在Path阶段不可见，规划出的路径与速度阶段检测到的实际碰撞窗口相互矛盾。三类局限在多障碍物密集场景中沿空间、安全、时间三条维度叠加，最终表现为不必要的FallbackPath停车与通行效率下降，因此后续改进方案同时从分组决策、差异化安全裕度与时变投影三个方向展开。
+多障碍物密集场景常见于路口多车交汇、高速多车道变道、施工区域多路障等工况，自车前方同时存在多个障碍物。Apollo现有Planning模块在若干设计权衡之下出现三类局限，图\ref{fig:problem_overview}给出其几何示意与级联后果。图\ref{fig:problem_overview:a}对应安全裕度一刀切造成的通行带压缩，窄小的路锥被过大的统一缓冲包裹，挤占了本应富余的横向空间；图\ref{fig:problem_overview:b}对应独立决策下的路径BLOCKED，左右两侧障碍物被贪心分配了相反方向的避让决策，$l^+(s)$与$l^-(s)$在中间区域相遇乃至翻转，可行带宽不足以容纳自车宽度；图\ref{fig:problem_overview:c}对应动态障碍物被排除于路径阶段，行人预测轨迹在Path阶段不可见，规划出的路径与速度阶段检测到的实际碰撞窗口相互矛盾。三类局限在多障碍物密集场景中沿空间、安全、时间三条维度叠加，最终表现为不必要的FallbackPath停车与通行效率下降，因此后续改进方案同时从分组决策、差异化安全裕度与时变投影三个方向展开。
 
 \begin{figure}[htbp]
 \centering
