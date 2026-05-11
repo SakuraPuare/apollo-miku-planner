@@ -159,6 +159,7 @@
 
 % ==================== 代码列表样式 ====================
 \renewcommand{\lstlistingname}{代码}
+\AtBeginDocument{\renewcommand{\thelstlisting}{\thechapter-\arabic{lstlisting}}}
 \lstset{
     basicstyle=\linespread{0.85}\selectfont\zihao{-5}\ttfamily,
     keywordstyle=\color{deepblue},
