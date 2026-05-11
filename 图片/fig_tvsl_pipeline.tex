@@ -1,8 +1,8 @@
 % 动态障碍物时变SL投影 pipeline
 \begin{tikzpicture}[scale=0.92, transform shape,
-    stage/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink, minimum width=3.3cm, minimum height=1.35cm, font=\small, align=center},
-    data/.style={rectangle, draw=deepblue, fill=inputyellow, minimum width=3.0cm, minimum height=0.9cm, font=\footnotesize, align=center},
-    outbox/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=outputpink, minimum width=3.2cm, minimum height=1.1cm, font=\small\bfseries, align=center},
+    stage/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink, minimum width=2.9cm, minimum height=1.35cm, font=\small, align=center},
+    data/.style={rectangle, draw=deepblue, fill=inputyellow, minimum width=2.7cm, minimum height=0.9cm, font=\footnotesize, align=center},
+    outbox/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=outputpink, minimum width=2.8cm, minimum height=1.1cm, font=\small\bfseries, align=center},
     arr/.style={-Stealth, thick, deepblue},
     tauarr/.style={-Stealth, thick, dashed, deeppink},
     midlab/.style={font=\scriptsize, deepblue, inner sep=1pt},
@@ -10,9 +10,9 @@
 
 % 主流水线：水平四步
 \node[stage] (s1) at (0,0) {\textbf{Step 1}\\轨迹查询\\(线性插值)};
-\node[stage] (s2) at (4.1,0) {\textbf{Step 2}\\Cartesian 到\\ Frenet 投影};
-\node[stage] (s3) at (8.2,0) {\textbf{Step 3}\\时变 SL 边界\\$[l_i^-(\tau),l_i^+(\tau)]$};
-\node[stage] (s4) at (12.3,0) {\textbf{Step 4}\\活跃性过滤\\(距离阈值)};
+\node[stage] (s2) at (3.4,0) {\textbf{Step 2}\\Cartesian 到\\ Frenet 投影};
+\node[stage] (s3) at (6.8,0) {\textbf{Step 3}\\时变 SL 边界\\$[l_i^-(\tau),l_i^+(\tau)]$};
+\node[stage] (s4) at (10.2,0) {\textbf{Step 4}\\活跃性过滤\\(距离阈值)};
 
 % 主流水线箭头 + 中间态标签（贴在箭头上方，白底）
 \draw[arr] (s1) -- node[midlab, above=1pt] {$(x_i(\tau),y_i(\tau))$} (s2);
@@ -20,15 +20,15 @@
 \draw[arr] (s3) -- node[midlab, above=1pt] {$u_i(\tau),v_i(\tau)$} (s4);
 
 % 输入：从左侧水平流入 Step 1
-\node[data] (in) at (-4.2,0) {Prediction 轨迹\\$\{(x_i(t_j),y_i(t_j))\}$};
+\node[data] (in) at (-3.5,0) {Prediction 轨迹\\$\{(x_i(t_j),y_i(t_j))\}$};
 \draw[arr] (in) -- (s1);
 
 % 输出：从 Step 4 水平流出
-\node[outbox] (out) at (16.3,0) {活跃障碍物集\\ $+$ 时变 $u_i,v_i$};
+\node[outbox] (out) at (13.6,0) {活跃障碍物集\\ $+$ 时变 $u_i,v_i$};
 \draw[arr] (s4) -- (out);
 
 % 自车到达时间 tau(s)：上方横向总线，正交注入 Step1/2/3 顶部
-\node[data, fill=improvedpink, draw=deeppink] (tau) at (-4.2,2.4) {自车到达时间 $\tau(s)$};
+\node[data, fill=improvedpink, draw=deeppink] (tau) at (-3.5,2.4) {自车到达时间 $\tau(s)$};
 
 % 横向总线：从 tau 延伸到 s3 上方
 \coordinate (busL) at (tau.east);
