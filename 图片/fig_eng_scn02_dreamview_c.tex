@@ -1,14 +1,14 @@
-% 场景①Dreamview 三帧 ROI 序列（fragment, 走 wrap_*.tex SVG 管线）
+% 场景02Dreamview 末帧 ROI（子图 c；独立 fragment，走 wrap_*.tex SVG 管线）
 % PNG 在 图片/dreamview/ 下，graphicspath 兜底 wrapper / 论文两种 cwd
 \begingroup
 \graphicspath{{../dreamview/}{dreamview/}{../图片/dreamview/}}
 
 % ROI 参数（像素，原图 5120×2444，左上为原点）
 \def\imgW{5120}\def\imgH{2444}%
-\def\roiL{0}\def\roiT{700}\def\roiR{5120}\def\roiB{1530}%
+\def\roiL{1000}\def\roiT{700}\def\roiR{3800}\def\roiB{1230}%
 
-\newcommand{\dvroiclip}[1]{%
-  % 无量纲比例先算（避免 dimen × 大数 溢出）
+% \def 而非 \newcommand：允许同一 chapter 多次 \input 子图 tex 时重复定义而不冲突
+\def\dvroiclip#1{%
   \pgfmathsetmacro{\dvRoiW}{\roiR-\roiL}%
   \pgfmathsetmacro{\dvRoiH}{\roiB-\roiT}%
   \pgfmathsetmacro{\dvHFac}{\dvRoiH/\dvRoiW}%
@@ -30,17 +30,5 @@
   \end{tikzpicture}%
 }
 
-\centering
-\begin{subfigure}[b]{\textwidth}
-  \centering\dvroiclip{scn01_before.png}
-  \subcaption{借道决策}
-\end{subfigure}\\[6pt]
-\begin{subfigure}[b]{\textwidth}
-  \centering\dvroiclip{scn01_during.png}
-  \subcaption{并排超越\;4\,m}
-\end{subfigure}\\[6pt]
-\begin{subfigure}[b]{\textwidth}
-  \centering\dvroiclip{scn01_after.png}
-  \subcaption{切回原车道\;13\,m}
-\end{subfigure}
+\dvroiclip{scn02_after.png}
 \endgroup
