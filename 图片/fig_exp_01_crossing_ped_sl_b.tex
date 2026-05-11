@@ -1,0 +1,55 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景01 SL — 子图 b：MIKU
+\def\datapath{data/01_crossing_ped/}
+\pgfplotsset{
+    discard if not/.style 2 args={x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \ifx\tempa\tempb\else\def\pgfmathresult{nan}\fi
+    }},
+    discard if not2/.style n args={4}{x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \edef\tempc{\thisrow{#3}}\edef\tempd{#4}
+        \ifx\tempa\tempb
+            \ifx\tempc\tempd\else\def\pgfmathresult{nan}\fi
+        \else\def\pgfmathresult{nan}\fi
+    }}
+}
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\linewidth, height=4.2cm,
+    xlabel={$s$ (m)}, ylabel={$l$ (m)},
+    xmin=0, xmax=25.0, ymin=-2.2, ymax=2.2,
+    grid=both, grid style={gray!25},
+    axis line style={thick},
+    tick label style={font=\scriptsize},
+    label style={font=\footnotesize},
+    legend style={at={(0.98,0.02)}, anchor=south east, font=\scriptsize, draw=none, fill=white, fill opacity=0.85},
+]
+\addplot[fill=bglight, draw=none, forget plot, on layer=axis background] coordinates {(0,-1.875) (25.0,-1.875) (25.0,1.875) (0,1.875)} \closedcycle;
+
+\draw[black!55, semithick] (axis cs:0,-1.875) -- (axis cs:25.0,-1.875);
+\draw[black!55, semithick] (axis cs:0,1.875) -- (axis cs:25.0,1.875);
+\draw[black!30, dashed, thin] (axis cs:0,0) -- (axis cs:25.0,0);
+% 可行带阴影（blocked 时按 blocked_s 截断）
+\addplot[name path=lmin_miku, draw=vibrantorange, thin, dashed, forget plot, ]
+    table[col sep=comma, x=s, y=l_min, discard if not={mode}{miku}] {\datapath sl.csv};
+\addplot[name path=lmax_miku, draw=vibrantorange, thin, dashed, forget plot, ]
+    table[col sep=comma, x=s, y=l_max, discard if not={mode}{miku}] {\datapath sl.csv};
+\addplot[fill=lightgreen!35, draw=none, forget plot] fill between[of=lmin_miku and lmax_miku];
+% 路径（blocked 时按 blocked_s 截断）
+\addplot[vibrantgreen, line width=2pt, unbounded coords=discard] table[col sep=comma, x=s, y=l_path, discard if not={mode}{miku}] {\datapath sl.csv};
+\addlegendentry{MIKU}
+
+
+% 障碍物 行人
+\fill[dangerred, opacity=0.95] (axis cs:12.000,-0.600) circle [radius=5pt];
+\fill[dangerred, opacity=0.55] (axis cs:12.000,0.225) circle [radius=5pt];
+\fill[dangerred, opacity=0.35] (axis cs:12.000,1.050) circle [radius=5pt];
+\fill[dangerred, opacity=0.20] (axis cs:12.000,1.900) circle [radius=5pt];
+\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.900);
+\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:12.000,0.150) {行人 $v=(+0.0,+1.2)$};
+\node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
+\fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
+\node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};
+\end{axis}
+\end{tikzpicture}

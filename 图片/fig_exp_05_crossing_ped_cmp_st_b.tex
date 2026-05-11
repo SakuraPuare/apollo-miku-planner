@@ -1,0 +1,55 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景05 ST — 子图 b：MIKU
+\def\datapath{data/05_crossing_ped_cmp/}
+\pgfplotsset{
+    discard if not/.style 2 args={x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \ifx\tempa\tempb\else\def\pgfmathresult{nan}\fi
+    }},
+    discard if not2/.style n args={4}{x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \edef\tempc{\thisrow{#3}}\edef\tempd{#4}
+        \ifx\tempa\tempb
+            \ifx\tempc\tempd\else\def\pgfmathresult{nan}\fi
+        \else\def\pgfmathresult{nan}\fi
+    }}
+}
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\linewidth, height=5.5cm,
+    xlabel={$t$ (s)}, ylabel={$s$ (m)},
+    xmin=0, xmax=6.0, ymin=0, ymax=37.5,
+    restrict y to domain*=0:37.5,
+    unbounded coords=jump,
+    grid=both, grid style={gray!25},
+    axis line style={thick},
+    tick label style={font=\scriptsize},
+    label style={font=\footnotesize},
+    legend style={at={(0.02,0.98)}, anchor=north west, font=\scriptsize, draw=none, fill=white, fill opacity=0.9},
+]
+% obs=行人
+\addplot[name path=stlo_miku_0, draw=none, forget plot]
+    table[col sep=comma, x=t, y=s_lo, discard if not2={mode}{miku}{obs_name}{行人}] {\datapath st_bounds.csv};
+\addplot[name path=sthi_miku_0, draw=none, forget plot]
+    table[col sep=comma, x=t, y=s_hi, discard if not2={mode}{miku}{obs_name}{行人}] {\datapath st_bounds.csv};
+\addplot[fill=dangerred!40, draw=none, forget plot] fill between[of=stlo_miku_0 and sthi_miku_0];
+\addlegendimage{area legend, fill=dangerred!40, draw=none}
+\addlegendentry{障碍物 ST 禁行区}
+% DP 粗解
+\addplot[improvedpink, thick, dashed]
+    table[col sep=comma, x=t, y=s_dp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{$s_{dp}$}
+% QP 精解
+\addplot[vibrantgreen, line width=2pt]
+    table[col sep=comma, x=t, y=s_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{$s_{qp}$ (MIKU)}
+% MIKU 走廊禁行区 hatch
+\addplot[pattern=north east lines, pattern color=deeppink!60, draw=deeppink!60, semithick, forget plot]
+    coordinates {(0,9.7500) (1.2188,9.7500) (1.2188,37.5) (0,37.5)} \closedcycle;
+\node[deeppink, font=\tiny, fill=white, fill opacity=0.85, text opacity=1, inner sep=1pt] at (axis cs:1.619,12.250) {$\tau_k{=}1.22,\,s_k{=}9.8$};
+% MIKU 走廊关键点（tau_k 标注）
+\addplot[deeppink, very thick, dashed, mark=diamond*, mark size=4pt, mark options={fill=deeppink, draw=black, line width=0.6pt}]
+    table[col sep=comma, x=tau_k, y=s_k] {\datapath corridor.csv};
+\addlegendentry{走廊节点 $\tau_k$}
+\end{axis}
+\end{tikzpicture}

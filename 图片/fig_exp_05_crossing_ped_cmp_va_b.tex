@@ -1,0 +1,48 @@
+% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景05 VA — 子图 b：纵向/横向加速度对比
+\def\datapath{data/05_crossing_ped_cmp/}
+\pgfplotsset{
+    discard if not/.style 2 args={x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \ifx\tempa\tempb\else\def\pgfmathresult{nan}\fi
+    }},
+    discard if not2/.style n args={4}{x filter/.code={
+        \edef\tempa{\thisrow{#1}}\edef\tempb{#2}
+        \edef\tempc{\thisrow{#3}}\edef\tempd{#4}
+        \ifx\tempa\tempb
+            \ifx\tempc\tempd\else\def\pgfmathresult{nan}\fi
+        \else\def\pgfmathresult{nan}\fi
+    }}
+}
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.9\linewidth, height=4.2cm,
+    xlabel={$t$ (s)}, ylabel={$a$ (m/s$^2$)},
+    xmin=0, xmax=6.0, ymin=-5, ymax=5,
+    restrict y to domain*=-5:5,
+    unbounded coords=jump,
+    grid=both, grid style={gray!25},
+    axis line style={thick},
+    tick label style={font=\tiny},
+    label style={font=\scriptsize},
+    legend style={at={(0.5,-0.34)}, anchor=north, legend columns=4,
+        font=\fontsize{6}{7}\selectfont, draw=none, /tikz/every even column/.append style={column sep=1em}},
+]
+% Baseline a_x 实线
+\addplot[deepblue, line width=1.8pt]
+    table[col sep=comma, x=t, y=a_qp, discard if not={mode}{baseline}] {\datapath st_curves.csv};
+\addlegendentry{Baseline\,$a_x$}
+% MIKU a_x 实线
+\addplot[vibrantgreen, line width=1.8pt]
+    table[col sep=comma, x=t, y=a_qp, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,$a_x$}
+% Baseline a_y dashed
+\addplot[deepblue, line width=1.4pt, dashed]
+    table[col sep=comma, x=t, y=a_y, discard if not={mode}{baseline}] {\datapath st_curves.csv};
+\addlegendentry{Baseline\,$a_y$}
+% MIKU a_y dashed
+\addplot[vibrantgreen, line width=1.4pt, dashed]
+    table[col sep=comma, x=t, y=a_y, discard if not={mode}{miku}] {\datapath st_curves.csv};
+\addlegendentry{MIKU\,$a_y$}
+\end{axis}
+\end{tikzpicture}
