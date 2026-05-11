@@ -29,6 +29,9 @@ BUILDDIR := $(FIGDIR)/build
 
 # 单图源（每个 fig_*.tex 一图）
 FIGSRC   := $(wildcard $(FIGDIR)/fig_*.tex)
+# 数据驱动图（metric_score.py 自动生成，位于 data/ablation/）也纳入 svg 流水线
+ABLATION_FIG_SRC := $(FIGDIR)/data/ablation/score_radar.tex $(FIGDIR)/data/ablation/score_heatmap.tex
+FIGSRC   += $(ABLATION_FIG_SRC)
 FIGNAMES := $(notdir $(FIGSRC:.tex=))
 PREAMBLE := $(FIGDIR)/_figpreamble.tex
 SVGS     := $(addprefix $(SVGDIR)/,$(addsuffix .svg,$(FIGNAMES)))
@@ -97,11 +100,30 @@ $(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex Makefile | $(BUILDDIR)
 	  '\end{figure}' \
 	  '\end{document}' > $@
 
+# 1b) data/ablation/score_*.tex 的 wrapper（因源文件不在 FIGDIR 根目录）
+$(BUILDDIR)/wrap_score_%.tex: $(FIGDIR)/data/ablation/score_%.tex Makefile | $(BUILDDIR)
+	@printf '%s\n' \
+	  '\documentclass[UTF8,fontset=none]{ctexart}' \
+	  '\input{_figpreamble}' \
+	  '\input{../../$(CONTEXT_TEX)}' \
+	  '\begin{document}' \
+	  '\begin{figure}[H]\centering' \
+	  '\input{score_$*}' \
+	  '\end{figure}' \
+	  '\end{document}' > $@
+
 # 2) 单图编译；TEXINPUTS=.:..: 显式 cwd 优先，再到父目录找源 fig 与 preamble
 $(BUILDDIR)/wrap_%.pdf: $(BUILDDIR)/wrap_%.tex $(PREAMBLE) $(FIGDIR)/%.tex $(CONTEXT_TEX) $(FONT_FILES)
-	@cd $(BUILDDIR) && TEXINPUTS=.:..: $(TEX) $(TEXFLAGS) wrap_$*.tex >/dev/null 2>&1 || { \
+	@cd $(BUILDDIR) && TEXINPUTS=.:..:../data/ablation: $(TEX) $(TEXFLAGS) wrap_$*.tex >/dev/null 2>&1 || { \
 	  echo "✗ $* 编译失败，尾部日志："; \
 	  tail -30 $(BUILDDIR)/wrap_$*.log 2>/dev/null; \
+	  exit 1; }
+
+# 2b) data/ablation/score_* 图编译（依赖指向 data/ablation/ 下的源）
+$(BUILDDIR)/wrap_score_%.pdf: $(BUILDDIR)/wrap_score_%.tex $(PREAMBLE) $(FIGDIR)/data/ablation/score_%.tex $(CONTEXT_TEX) $(FONT_FILES)
+	@cd $(BUILDDIR) && TEXINPUTS=.:..:../data/ablation: $(TEX) $(TEXFLAGS) wrap_score_$*.tex >/dev/null 2>&1 || { \
+	  echo "✗ score_$* 编译失败，尾部日志："; \
+	  tail -30 $(BUILDDIR)/wrap_score_$*.log 2>/dev/null; \
 	  exit 1; }
 
 # 3) 裁白边
