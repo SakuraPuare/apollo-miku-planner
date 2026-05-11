@@ -324,6 +324,17 @@ def normalize_paragraph_spacing(doc) -> None:
             _set_spacing(pPr, before=0, after=0)
             continue
 
+        # 参考文献条目（pandoc citeproc 样式 Bibliography / References）：
+        # 不加首行缩进；清掉可能残留的 firstLine / firstLineChars
+        if style_val.lower().startswith(("bibliograph", "reference")):
+            ind = pPr.find(qn("w:ind"))
+            if ind is not None:
+                for attr in ("firstLine", "firstLineChars"):
+                    k = qn(f"w:{attr}")
+                    if k in ind.attrib:
+                        del ind.attrib[k]
+            continue
+
         # 跳过封面区、含 sectPr 的段
         if i <= cover_end:
             continue
@@ -530,8 +541,8 @@ def normalize_text_punctuation(doc) -> None:
                 run.text = _replace_quotes(run.text)
 
 
-def _ensure_toc2_not_bold(doc) -> None:
-    """把 TOC 1/2 样式显式关掉加粗 + TOC 2 缩进 2 字符。
+def _ensure_toc_styles(doc) -> None:
+    """把 TOC 1 设为黑体加粗、TOC 2 设为宋体不加粗，并给 TOC 2 缩进 2 字符。
     Word/WPS 更新目录域时，按这两个样式渲染一级/二级目录项。
     若模板没有对应样式则新建基于 Normal 的条目。"""
     styles_el = doc.styles.element
@@ -562,21 +573,26 @@ def _ensure_toc2_not_bold(doc) -> None:
         styles_el.append(new)
         return new
 
-    def _force_not_bold(target) -> None:
-        """切断父链继承：显式写 b=0/bCs=0，顺带锁宋体小四，防止 basedOn 带入 Heading 的加粗。"""
+    def _force_toc_style(target, *, bold: bool, cjk_font: str) -> None:
+        """切断父链继承：显式写 bold 标志，顺带锁 cjk_font + 小四。
+        ``cjk_font`` 用于 eastAsia 字体：TOC1 规范为黑体，TOC2 规范为宋体。"""
         rPr = target.find(qn("w:rPr"))
         if rPr is None:
             rPr = OxmlElement("w:rPr")
             target.append(rPr)
-        # rFonts：宋体（中文）+ Times New Roman（西文）
+        # rFonts：cjk_font（中文）+ Times New Roman（西文）
         rFonts = rPr.find(qn("w:rFonts"))
         if rFonts is None:
             rFonts = OxmlElement("w:rFonts")
             rPr.insert(0, rFonts)
-        rFonts.set(qn("w:eastAsia"), "宋体")
+        rFonts.set(qn("w:eastAsia"), cjk_font)
         rFonts.set(qn("w:ascii"), "Times New Roman")
         rFonts.set(qn("w:hAnsi"), "Times New Roman")
         rFonts.set(qn("w:cs"), "Times New Roman")
+        # 清除 theme-based font 属性，防止 theme 覆盖具体值
+        for attr in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            if rFonts.get(qn(attr)) is not None:
+                del rFonts.attrib[qn(attr)]
         # 小四 (12pt = sz 24)
         for tag, val in (("w:sz", "24"), ("w:szCs", "24")):
             el = rPr.find(qn(tag))
@@ -584,21 +600,34 @@ def _ensure_toc2_not_bold(doc) -> None:
                 el = OxmlElement(tag)
                 rPr.append(el)
             el.set(qn("w:val"), val)
-        # 关加粗 + 关斜体
+        # 显式设置加粗状态，同时关斜体，避免 basedOn 或模板残留影响
         for tag_name in ("w:b", "w:bCs", "w:i", "w:iCs"):
             for old in rPr.findall(qn(tag_name)):
                 rPr.remove(old)
             neg = OxmlElement(tag_name)
-            neg.set(qn("w:val"), "0")
+            if tag_name in ("w:b", "w:bCs"):
+                if not bold:
+                    neg.set(qn("w:val"), "0")
+            else:
+                neg.set(qn("w:val"), "0")
             rPr.append(neg)
+        # color 强制黑色，覆盖 basedOn 链里可能继承的 themeColor
+        color = rPr.find(qn("w:color"))
+        if color is None:
+            color = OxmlElement("w:color")
+            rPr.append(color)
+        color.set(qn("w:val"), "000000")
+        for attr in ("w:themeColor", "w:themeShade", "w:themeTint"):
+            if color.get(qn(attr)) is not None:
+                del color.attrib[qn(attr)]
 
-    # TOC 1（一级目录项）：关加粗、锁字体；不设缩进
+    # TOC 1（一级目录项）：黑体加粗；不设缩进
     toc1 = _find_or_create(("TOC1", "toc1"), "toc 1")
-    _force_not_bold(toc1)
+    _force_toc_style(toc1, bold=True, cjk_font="黑体")
 
-    # TOC 2（二级目录项）：关加粗、锁字体 + 缩进 2 字符
+    # TOC 2（二级目录项）：宋体不加粗 + 缩进 2 字符
     toc2 = _find_or_create(("TOC2", "toc2"), "toc 2")
-    _force_not_bold(toc2)
+    _force_toc_style(toc2, bold=False, cjk_font="宋体")
 
     pPr = toc2.find(qn("w:pPr"))
     if pPr is None:
@@ -619,13 +648,18 @@ def _ensure_toc2_not_bold(doc) -> None:
     ind.set(qn("w:firstLine"), "0")
 
 
+def _ensure_toc2_not_bold(doc) -> None:
+    """兼容旧名字的封装。"""
+    _ensure_toc_styles(doc)
+
+
 def normalize_toc_entries(doc) -> None:
     """目录项按检测报告口径清缩进、清段后；目录标题保留 1.5/0.5 行。
 
     Word/WPS 更新目录域后会生成 TOC1/TOC2/TOC3 样式段。当前脚本生成阶段只有
     目录域占位，不能用“目录标题之后到 1 绪论之前”这种范围判断，否则会误伤摘要页。
     """
-    _ensure_toc2_not_bold(doc)
+    _ensure_toc_styles(doc)
     for p in doc.paragraphs:
         text = (p.text or "").strip()
         if text in ("目  录", "目录"):

@@ -10,21 +10,224 @@ from docx.shared import Pt, RGBColor
 from .config import FONT_SIZE
 from .docx_common import _set_rfonts
 
+# 见 flatten._mark_vertical_subfigures：整幅宽度 subfigure 的 caption 里注入此 marker，
+# 提示下面的 split_vertical_subfigure_tables 把对应 1×N 布局表拆成 N×1 竖排。
+VERT_SUBFIG_MARKER = "⁣VERT⁣"
+
 
 def _is_subfigure_layout_table(tbl) -> bool:
-    """子图排版表格判定：pandoc 把并排的 subfigure 渲染成单行多列表格，cell 内含图片。
-    特征：只有 1 行 且 列数 >= 2，且至少一个 cell 含 drawing (w:drawing)。"""
+    """子图排版表格判定。涵盖两种形态：
+    1. 横排（pandoc 默认）：1 行 N 列，至少一个 cell 含 drawing。
+    2. 竖排（split_vertical_subfigure_tables 产物）：N 行 1 列，至少一个 cell 含 drawing。
+    """
     rows = tbl._element.findall(qn("w:tr"))
-    if len(rows) != 1:
+    if len(rows) < 1:
         return False
-    tcs = rows[0].findall(qn("w:tc"))
-    if len(tcs) < 2:
+    # 横排：1 行 >=2 列
+    if len(rows) == 1:
+        tcs = rows[0].findall(qn("w:tc"))
+        if len(tcs) < 2:
+            return False
+        for tc in tcs:
+            if tc.findall(".//" + qn("w:drawing")):
+                return True
         return False
-    # 任一 cell 含 drawing
-    for tc in tcs:
-        if tc.findall(".//" + qn("w:drawing")):
+    # 竖排：>=2 行，每行都是 1 列
+    for tr in rows:
+        tcs = tr.findall(qn("w:tc"))
+        if len(tcs) != 1:
+            return False
+    for tr in rows:
+        for tc in tr.findall(qn("w:tc")):
+            if tc.findall(".//" + qn("w:drawing")):
+                return True
+    return False
+
+
+def _cell_has_vert_marker(tc) -> bool:
+    for t in tc.findall(".//" + qn("w:t")):
+        if t.text and VERT_SUBFIG_MARKER in t.text:
             return True
     return False
+
+
+def _strip_vert_markers_in_tree(root) -> None:
+    for t in root.findall(".//" + qn("w:t")):
+        if t.text and VERT_SUBFIG_MARKER in t.text:
+            t.text = t.text.replace(VERT_SUBFIG_MARKER, "")
+
+
+def split_vertical_subfigure_tables(doc) -> None:
+    """把带竖排 marker 的 1×N subfigure 布局表重排成 N×1，并把表格拉满页宽。
+
+    LaTeX 源里 `\\begin{subfigure}[b]{\\textwidth}` 意味"每图独占一行"，
+    但 pandoc 不看宽度，一律塞成单行多列表格。flatten 阶段已在这类子图的 caption 里
+    注入 VERT_SUBFIG_MARKER；这里检测到 marker 就把 tr 拆成 N 行（每行一 cell），
+    并清掉 marker 文本。
+
+    竖排时每个子图本应占满文本宽度，所以把 tblW / tcW 显式改成 pct=5000（100%），
+    避免继承 pandoc 默认的 auto / w=0，在 Word 里表格宽度塌到内容自然宽。
+    """
+    for tbl in doc.tables:
+        if not _is_subfigure_layout_table(tbl):
+            continue
+        t_el = tbl._element
+        rows = t_el.findall(qn("w:tr"))
+        if len(rows) != 1:
+            continue
+        tr = rows[0]
+        tcs = tr.findall(qn("w:tc"))
+        if not any(_cell_has_vert_marker(tc) for tc in tcs):
+            continue
+
+        # 1. tblW 改成 pct=5000（铺满页宽）
+        tblPr = t_el.find(qn("w:tblPr"))
+        if tblPr is not None:
+            old_tblW = tblPr.find(qn("w:tblW"))
+            if old_tblW is not None:
+                tblPr.remove(old_tblW)
+            tblW = OxmlElement("w:tblW")
+            tblW.set(qn("w:type"), "pct")
+            tblW.set(qn("w:w"), "5000")
+            # tblW 在 OOXML 里的位置：tblStyle, tblpPr, tblOverlap, bidiVisual,
+            # tblStyleRowBandSize, tblStyleColBandSize, tblW, jc, ...
+            # 简化：append 到 tblPr 末尾即可，Word 容忍顺序轻微偏差
+            tblPr.append(tblW)
+
+        # 2. tblGrid 改单列（宽度求和，虽然 pct 生效时 grid 只是 hint，但补全避免校验警告）
+        grid = t_el.find(qn("w:tblGrid"))
+        if grid is not None:
+            total_w = 0
+            for col in grid.findall(qn("w:gridCol")):
+                w = col.get(qn("w:w"))
+                if w and w.isdigit():
+                    total_w += int(w)
+            for col in list(grid.findall(qn("w:gridCol"))):
+                grid.remove(col)
+            new_col = OxmlElement("w:gridCol")
+            if total_w > 0:
+                new_col.set(qn("w:w"), str(total_w))
+            grid.append(new_col)
+
+        # 3. 每个 tc 单独包成新 tr，并把 tcW 也设 pct=5000
+        tr_pr = tr.find(qn("w:trPr"))
+        for tc in tcs:
+            tcPr = tc.find(qn("w:tcPr"))
+            if tcPr is None:
+                tcPr = OxmlElement("w:tcPr")
+                tc.insert(0, tcPr)
+            old_tcW = tcPr.find(qn("w:tcW"))
+            if old_tcW is not None:
+                tcPr.remove(old_tcW)
+            tcW = OxmlElement("w:tcW")
+            tcW.set(qn("w:type"), "pct")
+            tcW.set(qn("w:w"), "5000")
+            # tcW 应位于 tcPr 最前部（cnfStyle/tcW/gridSpan/... 顺序），insert(0) 最稳
+            tcPr.insert(0, tcW)
+
+            new_tr = OxmlElement("w:tr")
+            if tr_pr is not None:
+                import copy
+                new_tr.append(copy.deepcopy(tr_pr))
+            tr.remove(tc)
+            new_tr.append(tc)
+            tr.addprevious(new_tr)
+        t_el.remove(tr)
+
+        # 4. 清 marker
+        _strip_vert_markers_in_tree(t_el)
+
+
+# 竖排 subfigure drawing 等比缩放：wp:extent / a:ext 同步改；单位全是 EMU
+_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+# 页面留白系数：0.98 保留一点点 cell 内边距，避免贴着页边
+_VERT_FILL_RATIO = 0.98
+# 1 twip = 1/20 pt = 1/1440 in；1 EMU = 1/914400 in → 1 twip = 635 EMU
+_TWIP_TO_EMU = 635
+
+
+def _compute_text_width_emu(doc) -> int | None:
+    """从 sectPr 读 pgSz.w / pgMar.left / pgMar.right，算正文可用宽度（EMU）。"""
+    sect_pr = None
+    for sp in doc.element.body.iter(qn("w:sectPr")):
+        # 只取能同时提供 pgSz + pgMar 的
+        if sp.find(qn("w:pgSz")) is not None and sp.find(qn("w:pgMar")) is not None:
+            sect_pr = sp
+            break
+    if sect_pr is None:
+        # A4 (210mm × 297mm) 纵向 + 默认左右 30mm 边距的兜底值
+        # 210mm = 11906 twip；30mm = 1701 twip
+        # text = 11906 - 2*1701 = 8504 twip → 8504 * 635 = 5400040 EMU
+        return 5400040
+    pg_sz = sect_pr.find(qn("w:pgSz"))
+    pg_mar = sect_pr.find(qn("w:pgMar"))
+    try:
+        w = int(pg_sz.get(qn("w:w")))
+        left = int(pg_mar.get(qn("w:left")))
+        right = int(pg_mar.get(qn("w:right")))
+    except (TypeError, ValueError):
+        return 5400040
+    text_w_twip = w - left - right
+    if text_w_twip <= 0:
+        return 5400040
+    return text_w_twip * _TWIP_TO_EMU
+
+
+def resize_vertical_subfigure_drawings(doc) -> None:
+    """把竖排 subfigure 表里每张图的 drawing 尺寸等比拉到"文本宽 × 0.98"。
+
+    pandoc 输出的 wp:inline/wp:extent 是绝对 EMU（来自 \\includegraphics 宽度计算），
+    拆成竖排后 tc 已经铺满页宽，但 drawing 还停留在原小尺寸——视觉上图片没跟上表格。
+    这里按原纵横比，把 cx 拉到文本宽 × 0.98，cy 同比缩放。wp:extent 与 a:ext 同步更新。
+    """
+    target_cx = _compute_text_width_emu(doc)
+    if target_cx is None:
+        print("[resize_vert] text_width_emu 未取到，跳过")
+        return
+    target_cx = int(target_cx * _VERT_FILL_RATIO)
+
+    from docx.oxml.ns import qn as _qn  # 局部别名避免遮蔽
+
+    touched = 0
+    vert_tables = 0
+    for tbl in doc.tables:
+        if not _is_subfigure_layout_table(tbl):
+            continue
+        t_el = tbl._element
+        rows = t_el.findall(_qn("w:tr"))
+        # 只处理竖排 N×1 形态；横排保留 pandoc 原 cell 内图尺寸
+        if len(rows) < 2 or not all(
+            len(tr.findall(_qn("w:tc"))) == 1 for tr in rows
+        ):
+            continue
+        vert_tables += 1
+        for inline in t_el.iter(f"{{{_WP_NS}}}inline"):
+            wp_extent = inline.find(f"{{{_WP_NS}}}extent")
+            if wp_extent is None:
+                continue
+            try:
+                old_cx = int(wp_extent.get("cx"))
+                old_cy = int(wp_extent.get("cy"))
+            except (TypeError, ValueError):
+                continue
+            if old_cx <= 0 or old_cy <= 0:
+                continue
+            # 已经比目标还宽（原图本就很大）就不动，避免不合理放大
+            if old_cx >= target_cx:
+                continue
+            scale = target_cx / old_cx
+            new_cx = target_cx
+            new_cy = int(round(old_cy * scale))
+            wp_extent.set("cx", str(new_cx))
+            wp_extent.set("cy", str(new_cy))
+            # 同步 a:xfrm/a:ext（pic 内部）；有些 drawing 也有 effectExtent，不动它（边距）
+            for a_ext in inline.iter(f"{{{_A_NS}}}ext"):
+                # a:ext 可能出现在 a:xfrm 里；属性同样是 cx/cy
+                a_ext.set("cx", str(new_cx))
+                a_ext.set("cy", str(new_cy))
+            touched += 1
+    print(f"[resize_vert] target_cx={target_cx} vertical tables={vert_tables} drawings touched={touched}")
 
 
 def style_subfigure_captions(doc) -> None:
@@ -41,7 +244,10 @@ def style_subfigure_captions(doc) -> None:
         rows = tbl._element.findall(qn("w:tr"))
         if not rows:
             continue
-        tcs = rows[0].findall(qn("w:tc"))
+        # 横排：一行多列 tcs；竖排：多行单列 tcs 按行展平。两种形态都按出现顺序编 a) b) c)
+        tcs: list = []
+        for tr in rows:
+            tcs.extend(tr.findall(qn("w:tc")))
         for idx, tc in enumerate(tcs):
             caption_p = None
             for p_el in tc.findall(qn("w:p")):
@@ -638,31 +844,59 @@ def wrap_listings_and_algorithms(doc) -> None:
     if cur:
         groups.append(cur)
 
-    # ---------- 2. 找 algorithm 伪代码段（BodyText + 伪代码文本特征） ----------
+    # ---------- 2. 找 algorithm 伪代码段 ----------
+    # flatten.rewrite_algorithms 现在把算法体写成 \begin{quote}...\end{quote}，
+    # pandoc 落 Block Text 样式，每行独立段落，行内 $...$ 渲染为 OMML 公式。
+    # 识别模式：一个 "算法 X.Y ..." 粗体 caption 段（Body Text）之后，
+    # 紧跟若干 Block Text 段——整段连续区间归为一组，wrap 成单格全框表格。
+    _ALGO_CAP_RE = _re.compile(r"^算法\s*\d+[\.-]\d+\s")
+
+    def _pstyle(el) -> str | None:
+        pPr = el.find(qn("w:pPr"))
+        if pPr is None:
+            return None
+        ps = pPr.find(qn("w:pStyle"))
+        return ps.get(qn("w:val")) if ps is not None else None
+
+    def _all_runs_bold(el) -> bool:
+        runs = el.findall(qn("w:r"))
+        has_text_run = False
+        for r in runs:
+            t = "".join((tt.text or "") for tt in r.findall(qn("w:t")))
+            if not t.strip():
+                continue
+            has_text_run = True
+            rPr = r.find(qn("w:rPr"))
+            if rPr is None or rPr.find(qn("w:b")) is None:
+                return False
+        return has_text_run
+
     algo_groups = []
-    for child in list(body):
+    children_list = list(body)
+    i = 0
+    while i < len(children_list):
+        child = children_list[i]
         if child.tag != qn("w:p"):
+            i += 1
             continue
-        pPr = child.find(qn("w:pPr"))
-        sid = None
-        if pPr is not None:
-            ps = pPr.find(qn("w:pStyle"))
-            if ps is not None:
-                sid = ps.get(qn("w:val"))
-        if sid != "BodyText":
+        txt = "".join(t.text or "" for t in child.iter(qn("w:t"))).lstrip()
+        if not _ALGO_CAP_RE.match(txt) or not _all_runs_bold(child):
+            i += 1
             continue
-        txt = "".join(t.text or "" for t in child.iter(qn("w:t")))
-        features = 0
-        if txt.count("//") >= 2:
-            features += 1
-        if _re.search(r"ForEach|foreach|Algorithm|KwIn|KwOut", txt):
-            features += 1
-        if _re.search(r"←|←|\\leftarrow", txt):
-            features += 1
-        if "排序" in txt and ("间隙" in txt or "分量" in txt):
-            features += 1
-        if features >= 2 and len(txt) > 40:
-            algo_groups.append([child])
+        # caption 命中：收集紧随其后的 Block Text 段
+        group: list = []
+        j = i + 1
+        while j < len(children_list):
+            nxt = children_list[j]
+            if nxt.tag != qn("w:p"):
+                break
+            if _pstyle(nxt) not in ("BlockText", "Block Text"):
+                break
+            group.append(nxt)
+            j += 1
+        if group:
+            algo_groups.append(group)
+        i = j
 
     # ---------- 3. 每组段用单格全外框表格替换 ----------
     for group in groups + algo_groups:

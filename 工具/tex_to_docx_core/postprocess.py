@@ -42,6 +42,8 @@ from .tables import (
     center_all_images,
     center_all_table_cells,
     flatten_list_indent,
+    resize_vertical_subfigure_drawings,
+    split_vertical_subfigure_tables,
     style_code_block_tables,
     style_subfigure_captions,
     wrap_listings_and_algorithms,
@@ -53,6 +55,85 @@ from .tables import (
 
 
 _CODE_ALGO_CAPTION_RE = re.compile(r"^(?:代码|算法)\s*\d+[\.-]\d+\s")
+
+
+def _migrate_heading_bold_to_style(doc) -> None:
+    """把 Heading1/Heading2 的 "bold + 黑体" 从 run-level 迁移到 style-level。
+
+    动机：Word 更新 TOC 域时，按不同实现版本，可能会把源 heading paragraph
+    里的 run-level 格式（<w:b/>、<w:rFonts eastAsia="黑体"/>）拷贝到 TOC 项里，
+    覆盖 TOC 样式自身的粗体定义。现在的规范是 TOC1 保持加粗黑体，TOC2 保持宋体
+    不加粗，所以这里要把 heading 的粗体收回到 style-level，避免二级目录被污染。
+
+    修复路径：
+    1. 在 Heading1 / Heading2 style 的 rPr 上补 <w:b/> 和 eastAsia="黑体"，
+       保证正文 H1/H2 视觉仍为黑体加粗（靠段落样式继承）。
+    2. 遍历所有 H1/H2 paragraph runs，移除 run-level <w:b/>、<w:bCs/> 以及
+       rFonts 的 eastAsia="黑体" 属性；让 run 不再携带 bold 格式 override，
+       这样 TOC2 不会被 heading 的直设格式带成加粗。
+
+    这样 Word/WPS 在"更新目录域"时拷 run-level 属性也拷不到 bold。"""
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.oxml.ns import qn as _qn
+
+    styles_el = doc.styles.element
+    for style_id in ("Heading1", "Heading2", "Heading3", "Heading4", "Heading5", "Heading6"):
+        style = None
+        for s in styles_el.findall(_qn("w:style")):
+            if s.get(_qn("w:styleId")) == style_id:
+                style = s
+                break
+        if style is None:
+            continue
+        rPr = style.find(_qn("w:rPr"))
+        if rPr is None:
+            rPr = _OxmlElement("w:rPr")
+            style.append(rPr)
+        # 确保 rFonts 上 eastAsia=黑体（中文），ascii/hAnsi 继承 Times New Roman
+        rFonts = rPr.find(_qn("w:rFonts"))
+        if rFonts is None:
+            rFonts = _OxmlElement("w:rFonts")
+            rPr.insert(0, rFonts)
+        # H1/H2 用黑体加粗，H3+ 用宋体加粗（与 _apply_para 保持一致）
+        rFonts.set(_qn("w:eastAsia"), "黑体" if style_id in ("Heading1", "Heading2") else "宋体")
+        rFonts.set(_qn("w:ascii"), "Times New Roman")
+        rFonts.set(_qn("w:hAnsi"), "Times New Roman")
+        rFonts.set(_qn("w:cs"), "Times New Roman")
+        # 清除 theme-based font 属性，防止 theme 覆盖具体值
+        for attr in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            if rFonts.get(_qn(attr)) is not None:
+                del rFonts.attrib[_qn(attr)]
+        # 确保 <w:b/> 和 <w:bCs/> 存在
+        for tag in ("w:b", "w:bCs"):
+            if rPr.find(_qn(tag)) is None:
+                rPr.append(_OxmlElement(tag))
+        # 颜色强制黑色（覆盖模板 themeColor accent1 的深蓝；也让 heading 里嵌入的公式为黑）
+        color = rPr.find(_qn("w:color"))
+        if color is None:
+            color = _OxmlElement("w:color")
+            rPr.append(color)
+        color.set(_qn("w:val"), "000000")
+        for attr in ("w:themeColor", "w:themeShade", "w:themeTint"):
+            if color.get(_qn(attr)) is not None:
+                del color.attrib[_qn(attr)]
+
+    # 遍历所有 Heading N paragraph runs，剥除 run-level bold 和 eastAsia=黑体
+    for p in doc.paragraphs:
+        sname = p.style.name
+        if not sname.startswith("Heading "):
+            continue
+        for r in p.runs:
+            rPr = r._element.find(_qn("w:rPr"))
+            if rPr is None:
+                continue
+            for tag in ("w:b", "w:bCs"):
+                for old in rPr.findall(_qn(tag)):
+                    rPr.remove(old)
+            rFonts = rPr.find(_qn("w:rFonts"))
+            if rFonts is not None:
+                # 让 eastAsia 由 style 接管；ascii/hAnsi 保持 Times New Roman
+                if rFonts.get(_qn("w:eastAsia")) in ("黑体", "宋体"):
+                    del rFonts.attrib[_qn("w:eastAsia")]
 
 
 def _style_code_algorithm_captions(doc) -> None:
@@ -82,6 +163,117 @@ def _style_code_algorithm_captions(doc) -> None:
         )
 
 
+def _unmono_code_styles(doc) -> None:
+    """去掉 pandoc 给 inline code / code block 施加的等宽字体。
+
+    pandoc 转 LaTeX `\\texttt{...}` 和 `\\begin{lstlisting}...` 时分别产出
+    ``VerbatimChar`` 字符样式（Consolas）和 ``SourceCode`` 段落样式（link 到
+    VerbatimChar）。用户规范要求全文统一宋体正文 + Times New Roman 西文，
+    驼峰词 ``PathBoundsDecider`` 等 inline code 不要以 Consolas 等宽显示，
+    代码块段落也统一回正文字形。
+
+    做法：覆盖两个样式的 rFonts（ascii/hAnsi/cs = Times New Roman，eastAsia =
+    宋体），清空 sz 让它继承段落大小。"""
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.oxml.ns import qn as _qn
+
+    styles_el = doc.styles.element
+    targets = {"VerbatimChar", "SourceCode", "Verbatim"}
+    for s in styles_el.findall(_qn("w:style")):
+        sid = s.get(_qn("w:styleId"))
+        if sid not in targets:
+            continue
+        rPr = s.find(_qn("w:rPr"))
+        if rPr is None:
+            rPr = _OxmlElement("w:rPr")
+            s.append(rPr)
+        rFonts = rPr.find(_qn("w:rFonts"))
+        if rFonts is None:
+            rFonts = _OxmlElement("w:rFonts")
+            rPr.insert(0, rFonts)
+        rFonts.set(_qn("w:ascii"), "Times New Roman")
+        rFonts.set(_qn("w:hAnsi"), "Times New Roman")
+        rFonts.set(_qn("w:cs"), "Times New Roman")
+        rFonts.set(_qn("w:eastAsia"), "宋体")
+        for attr in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            if rFonts.get(_qn(attr)) is not None:
+                del rFonts.attrib[_qn(attr)]
+        # 清掉 sz，让段落/上下文决定字号
+        for tag in ("w:sz", "w:szCs"):
+            for old in rPr.findall(_qn(tag)):
+                rPr.remove(old)
+
+    # run-level 清洗：正文里若直接给 run 设了 Consolas/Courier（docx 有时写死），改为 Times New Roman
+    mono_names = {"Consolas", "Courier New", "Courier", "DejaVu Sans Mono", "Monaco", "Menlo"}
+    for p in doc.paragraphs:
+        for r in p.runs:
+            rPr = r._element.find(_qn("w:rPr"))
+            if rPr is None:
+                continue
+            rFonts = rPr.find(_qn("w:rFonts"))
+            if rFonts is None:
+                continue
+            changed = False
+            for attr in ("w:ascii", "w:hAnsi", "w:cs"):
+                val = rFonts.get(_qn(attr))
+                if val in mono_names:
+                    rFonts.set(_qn(attr), "Times New Roman")
+                    changed = True
+            if rFonts.get(_qn("w:eastAsia")) in mono_names:
+                rFonts.set(_qn("w:eastAsia"), "宋体")
+                changed = True
+            _ = changed  # 显式标记一下方便调试
+
+    # 表格 cell 里的 runs 同样处理（代码块被包进单格表）
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    for r in p.runs:
+                        rPr = r._element.find(_qn("w:rPr"))
+                        if rPr is None:
+                            continue
+                        rFonts = rPr.find(_qn("w:rFonts"))
+                        if rFonts is None:
+                            continue
+                        for attr in ("w:ascii", "w:hAnsi", "w:cs"):
+                            val = rFonts.get(_qn(attr))
+                            if val in mono_names:
+                                rFonts.set(_qn(attr), "Times New Roman")
+                        if rFonts.get(_qn("w:eastAsia")) in mono_names:
+                            rFonts.set(_qn("w:eastAsia"), "宋体")
+
+
+def _force_hyperlinks_black(doc) -> None:
+    """论文规范要求全文黑色，包括参考文献里的 DOI/URL 超链接。
+    pandoc 默认超链接是 Word 的 Hyperlink 字符样式（蓝+下划线）；
+    这里对所有 ``<w:hyperlink>`` 内部 run 的 ``<w:color>`` 强制设为 000000，
+    同时把字符样式从 Hyperlink 解绑，避免 Word 重置颜色。"""
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.oxml.ns import qn as _qn
+
+    hyps = doc.element.body.findall('.//' + _qn('w:hyperlink'))
+    for h in hyps:
+        for r in h.findall('.//' + _qn('w:r')):
+            rPr = r.find(_qn('w:rPr'))
+            if rPr is None:
+                rPr = _OxmlElement('w:rPr')
+                r.insert(0, rPr)
+            # 解绑 Hyperlink 字符样式，让颜色设定不被样式重置
+            for rStyle in list(rPr.findall(_qn('w:rStyle'))):
+                if rStyle.get(_qn('w:val')) in ('Hyperlink', 'FootnoteReference'):
+                    rPr.remove(rStyle)
+            # 强制 color=000000
+            color = rPr.find(_qn('w:color'))
+            if color is None:
+                color = _OxmlElement('w:color')
+                rPr.append(color)
+            color.set(_qn('w:val'), '000000')
+            # 去掉下划线（themeColor 可能也带蓝），保留纯黑文本
+            for u in list(rPr.findall(_qn('w:u'))):
+                rPr.remove(u)
+
+
 def post_process(docx_path: Path) -> None:
     doc = Document(str(docx_path))
 
@@ -100,7 +292,7 @@ def post_process(docx_path: Path) -> None:
     # 5. 所有 Heading 1 前插分页符（首个除外）
     insert_page_breaks_before_headings(doc)
 
-    # 5.5 Abstract 段前插一个空行（规范要求：中英文摘要之间留一空行过渡）
+    # 5.5 摘要/Abstract 段前各插一个空行（题目与正文之间留一行过渡）
     _insert_blank_before_abstract(doc)
 
     for p in doc.paragraphs:
@@ -225,6 +417,9 @@ def post_process(docx_path: Path) -> None:
 
     # 6.5. 子图图注刷成图题规格（黑体小四加粗，前缀 a)/b)/c)）
     #      必须在通用 cell 样式循环之后，否则会被刷回宋体不加粗
+    #      先把带竖排 marker 的 1×N 表转 N×1，再把竖排图放大到文本宽，再打样式
+    split_vertical_subfigure_tables(doc)
+    resize_vertical_subfigure_drawings(doc)
     style_subfigure_captions(doc)
 
     # 7. 主样式循环完成后：插入中英文论文题目页（避免被 Normal 样式覆盖字号）
@@ -300,26 +495,42 @@ def post_process(docx_path: Path) -> None:
     # 22. 目录项缩进/段后按检测报告口径收口
     normalize_toc_entries(doc)
 
+    # 23. 超链接（DOI/URL 等）强制黑色，满足"全文黑色"规范
+    _force_hyperlinks_black(doc)
+
+    # 24. H1/H2 的 bold+黑体 从 run-level 迁移到 style-level
+    #     防止 Word 更新 TOC 域时把直设格式拷到 TOC2
+    _migrate_heading_bold_to_style(doc)
+
+    # 25. 去掉 pandoc 给 inline code (\texttt) 和代码块的 Consolas 等宽字体
+    #     用户要求代码展示不用等宽，统一回正文字形
+    _unmono_code_styles(doc)
+
     doc.save(str(docx_path))
 
 
 def _insert_blank_before_abstract(doc) -> None:
-    """在 "Abstract:"/"Abstract：" 所在段之前插入一个空段，形成中英文摘要之间的过渡空行。
+    """在"摘要："/"Abstract:"所在段之前各插入一个空段，让论文题目与摘要正文之间留一空行过渡。
     幂等：若紧前一段已经是空段则跳过。"""
     from docx.oxml.ns import qn as _qn
     from docx.oxml import OxmlElement as _OxmlElement
 
+    prefixes = ("摘要：", "摘要:", "Abstract:", "Abstract：")
     body = doc.element.body
     children = list(body)
+    inserted = set()
     for idx, child in enumerate(children):
         if child.tag != _qn("w:p"):
             continue
         txt = "".join(
             (t.text or "") for t in child.findall(".//" + _qn("w:t"))
         ).lstrip()
-        if not (txt.startswith("Abstract:") or txt.startswith("Abstract：")):
+        matched = next((pfx for pfx in prefixes if txt.startswith(pfx)), None)
+        if matched is None:
             continue
-        # 幂等检查：上一段如果已经是空段（无 w:t 或全空）则跳过
+        kind = "zh" if matched.startswith("摘要") else "en"
+        if kind in inserted:
+            continue
         if idx > 0:
             prev = children[idx - 1]
             if prev.tag == _qn("w:p"):
@@ -327,7 +538,8 @@ def _insert_blank_before_abstract(doc) -> None:
                     (t.text or "") for t in prev.findall(".//" + _qn("w:t"))
                 )
                 if not prev_txt.strip():
-                    return
+                    inserted.add(kind)
+                    continue
         blank = _OxmlElement("w:p")
         child.addprevious(blank)
-        return
+        inserted.add(kind)

@@ -136,13 +136,47 @@ def _strip_wrapper_keep_inner(text: str, cmd_regex: str, num_size_args: int) -> 
 def rewrite_figure_inputs(text: str, missing: list[str]) -> str:
     """把 figure 里的 \\input{../图片/fig_NAME} 替换为 \\includegraphics{绝对路径.svg}。
     没有对应 svg 的图名写入 missing 列表，原 \\input 留占位注释。
+
+    例外颗粒度：如果 \\input 目标的 .tex 文件以 \\begin{tabular}（或其它非图环境）开头，
+    说明这是纯表格数据片段（如 ../图片/data/ablation/score_table.tex 在 table 环境里被
+    \\input 当表体），不是图——把 \\input 的相对路径改写成绝对路径，让 pandoc 在临时目录
+    里也能 resolve 到并原样展开 tabular，避免误判成"图缺失"。
     """
+
+    def _target_tex(raw_path: str):
+        """把 \\input 的 LaTeX 路径解析成磁盘上的 .tex 文件路径（相对基准为 THESIS_DIR）。"""
+        from pathlib import Path as _P
+
+        if raw_path.endswith(".tex"):
+            rel = _P(raw_path)
+        else:
+            rel = _P(raw_path + ".tex")
+        if rel.is_absolute():
+            return rel
+        return (THESIS_DIR / rel).resolve()
+
+    def _is_tabular_data(raw_path: str) -> bool:
+        try:
+            p = _target_tex(raw_path)
+            if not p.exists():
+                return False
+            # 读前 512 字节找 \begin{tabular}，足够覆盖一行注释 + 开始环境
+            head = p.read_text(encoding="utf-8", errors="ignore")[:512]
+        except OSError:
+            return False
+        return bool(re.search(r"\\begin\{tabular\}", head))
 
     def _replace(m: re.Match[str]) -> str:
         raw_path = m.group(1).strip()
-        # 只处理 ../图片/fig_xxx 这种图片 input；_experiment_metrics 等宏 input 让它保持原样
+        # 非图、非宏（例如 _experiment_metrics.tex）保持原样
         if "图片" not in raw_path and "fig_" not in raw_path:
             return m.group(0)
+        # 数据表 tabular：改写成绝对路径让 pandoc 自己 resolve，别走 SVG 替换
+        if _is_tabular_data(raw_path):
+            abs_path = _target_tex(raw_path)
+            # 去掉 .tex 后缀符合 LaTeX \input 惯例
+            abs_str = str(abs_path.with_suffix(""))
+            return f"\\input{{{abs_str}}}"
         name = raw_path.split("/")[-1]
         svg = SVG_DIR / f"{name}.svg"
         if not svg.exists():
@@ -190,6 +224,55 @@ def _extract_first_caption_star(block: str) -> tuple[str, str | None]:
                 return new_block, content
         i += 1
     return block, None
+
+
+# pandoc 把 figure 环境里所有 subfigure 一律塞成 1 行 N 列表格（不看 \\textwidth 宽度），
+# 导致本该竖排（每行一个）的 \\textwidth 子图被横向挤在一起。
+# 办法：在 flatten 阶段给"整宽"subfigure 的 \\caption{...} 里注入这个零宽 marker，
+# 后处理阶段扫到 cell 里含 marker 就把 1×N 表转 N×1 并清掉 marker。
+_VERT_SUBFIG_MARKER = "⁣VERT⁣"
+
+
+def _mark_vertical_subfigures(block: str) -> str:
+    """给 `\\begin{subfigure}[pos]{宽度}` 中宽度为整幅（\\textwidth 或 >=0.9\\textwidth）的子图
+    在其内部 \\caption{...} 文字首注入 _VERT_SUBFIG_MARKER。"""
+
+    def _is_full_width(width_expr: str) -> bool:
+        s = width_expr.replace(" ", "")
+        if s == r"\textwidth" or s == r"1\textwidth" or s == r"1.0\textwidth":
+            return True
+        m = re.match(r"^(0?\.\d+)\\textwidth$", s)
+        if m:
+            try:
+                return float(m.group(1)) >= 0.9
+            except ValueError:
+                return False
+        return False
+
+    def _inject(m: re.Match[str]) -> str:
+        width = m.group("w")
+        inner = m.group("inner")
+        if not _is_full_width(width):
+            return m.group(0)
+        # 在第一个 \caption{...} 内容首插入 marker（只标这一次，主 figure caption 不会被动到，
+        # 因为 subfigure 作用域由 \begin{subfigure}...\end{subfigure} 限定）。
+        def _cap(cm: re.Match[str]) -> str:
+            return f"\\caption{{{_VERT_SUBFIG_MARKER}{cm.group(1)}}}"
+
+        new_inner = re.sub(
+            r"\\caption\{((?:[^{}]|\{[^{}]*\})*)\}",
+            _cap,
+            inner,
+            count=1,
+        )
+        return f"\\begin{{subfigure}}[{m.group('pos')}]{{{width}}}{new_inner}\\end{{subfigure}}"
+
+    return re.sub(
+        r"\\begin\{subfigure\}\[(?P<pos>[^\]]*)\]\{(?P<w>[^}]*)\}(?P<inner>.*?)\\end\{subfigure\}",
+        _inject,
+        block,
+        flags=re.DOTALL,
+    )
 
 
 def _prefix_outermost_caption(block: str, prefix: str) -> str:
@@ -324,6 +407,8 @@ def number_figures_and_tables(body: str) -> tuple[str, dict[str, str]]:
             if cap_tmpl:
                 g, star_note = _extract_first_caption_star(g)
                 g = _prefix_outermost_caption(g, cap_tmpl.format(num=num))
+                if env == "figure":
+                    g = _mark_vertical_subfigures(g)
                 if star_note is not None:
                     star_note = re.sub(
                         r"\\(?:scriptsize|footnotesize|small|tiny|normalsize)\s*",
@@ -455,7 +540,7 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
                     _flush_stmt("".join(buf))
                     buf = []
                 kw = "输入：" if m.group(1) == "KwIn" else "输出："
-                lines.append(pad + kw + inner.strip())
+                lines.append(pad + f"\\textbf{{{kw}}}" + inner.strip())
                 i = j2
                 continue
 
@@ -474,7 +559,7 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
             if buf:
                 _flush_stmt("".join(buf))
                 buf = []
-            lines.append(pad + "返回 " + payload.strip())
+            lines.append(pad + "\\textbf{返回} " + payload.strip())
             i = j2
             continue
 
@@ -493,9 +578,9 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
                         m.group(1)
                     ]
                     head_clean = re.sub(r"\s+", " ", head.strip())
-                    lines.append(pad + f"{kw} {head_clean} do")
+                    lines.append(pad + f"\\textbf{{{kw}}} {head_clean} \\textbf{{do}}")
                     lines.extend(_render_algo_body(inner, indent + 1))
-                    lines.append(pad + "end")
+                    lines.append(pad + "\\textbf{end}")
                     i = j2
                     continue
 
@@ -513,11 +598,11 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
                             _flush_stmt("".join(buf))
                             buf = []
                         cond_clean = re.sub(r"\s+", " ", cond.strip())
-                        lines.append(pad + f"if {cond_clean} then")
+                        lines.append(pad + f"\\textbf{{if}} {cond_clean} \\textbf{{then}}")
                         lines.extend(_render_algo_body(tbr, indent + 1))
-                        lines.append(pad + "else")
+                        lines.append(pad + "\\textbf{else}")
                         lines.extend(_render_algo_body(ebr, indent + 1))
-                        lines.append(pad + "end")
+                        lines.append(pad + "\\textbf{end}")
                         i = j2
                         continue
 
@@ -533,9 +618,9 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
                         _flush_stmt("".join(buf))
                         buf = []
                     cond_clean = re.sub(r"\s+", " ", cond.strip())
-                    lines.append(pad + f"if {cond_clean} then")
+                    lines.append(pad + f"\\textbf{{if}} {cond_clean} \\textbf{{then}}")
                     lines.extend(_render_algo_body(tbr, indent + 1))
-                    lines.append(pad + "end")
+                    lines.append(pad + "\\textbf{end}")
                     i = j2
                     continue
 
@@ -557,8 +642,9 @@ def _render_algo_body(body: str, indent: int = 0) -> list[str]:
 
 def rewrite_algorithms(body: str) -> str:
     """把 \\begin{algorithm} ... \\end{algorithm} 展开成
-    "\\noindent\\textbf{算法 X.Y ...}" 标题段 + lstlisting 伪代码块，
-    以便 pandoc 正确渲染为 Word 单格表格（复用 wrap_listings_and_algorithms 管道）。
+    "\\noindent\\textbf{算法 X.Y ...}" 标题段 + 每行一段（quote 环境包裹）的伪代码，
+    让 pandoc 把行内 ``$...$`` 识别为 inline math 渲染成 OMML 公式。
+    缩进用全角空格（U+3000）保留（pandoc 对半角 leading spaces 会吞掉）。
 
     注意：此函数必须在 number_figures_and_tables 之后调用（此时 caption 已被改写
     为 "算法 X.Y ..." 形式），否则拿不到编号。
@@ -579,11 +665,17 @@ def rewrite_algorithms(body: str) -> str:
         except Exception:
             # 解析失败兜底：保留原样
             return block
-        code = "\n".join(lines)
-        # 替换成 caption 段 + lstlisting
+        # 半角缩进 → 全角空格（每 2 个半角空格 ≈ 1 个全角），让 pandoc 不吞空白
+        def _indent_to_cjk(line: str) -> str:
+            stripped = line.lstrip(" ")
+            nspace = len(line) - len(stripped)
+            return "　" * (nspace // 2) + stripped
+        body_paragraphs = "\n\n".join(_indent_to_cjk(ln) for ln in lines if ln.strip() or True)
+        # 用 quote 环境给算法体一点左缩进样式；内部每行独立段落，
+        # pandoc 识别 ``$...$`` 为 inline math → OMML
         return (
             f"\n\n\\noindent\\textbf{{{caption}}}\n\n"
-            f"\\begin{{lstlisting}}\n{code}\n\\end{{lstlisting}}\n\n"
+            f"\\begin{{quote}}\n{body_paragraphs}\n\\end{{quote}}\n\n"
         )
 
     return re.sub(
