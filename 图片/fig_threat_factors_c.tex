@@ -1,0 +1,20 @@
+% 威胁度因子 c：相对速度因子（Sigmoid）
+\adjustbox{max width=\textwidth}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  % 内容居中: sigmoid 画在 [0.4, 2.8] 范围, 对称轴在 1.6
+  \draw[->, thick] (0.2,0) -- (3.0,0) node[right,font=\scriptsize] {$v_{rel}/v_{max}$};
+  \draw[->, thick] (0.2,0) -- (0.2,2.8) node[above,font=\scriptsize] {$f_{vel}$};
+  \node[font=\scriptsize, left] at (0.2,2.4) {1.0};
+  \draw[gray, thin] (0.12,2.4) -- (0.28,2.4);
+  \node[font=\scriptsize, left] at (0.2,1.2) {0.5};
+  \draw[gray, thin] (0.12,1.2) -- (0.28,1.2);
+  % v_rel/v_max: -1 → x=0.4, 0 → x=1.6, 1 → x=2.8
+  \draw[deeppink, very thick]
+    plot[smooth, domain=0.4:2.8, samples=50] (\x, {2.4/(1+exp(-5*(\x-1.6)/1.2))});
+  \node[font=\scriptsize, below] at (0.4,0) {$-1$};
+  \node[font=\scriptsize, below] at (1.6,0) {$0$};
+  \node[font=\scriptsize, below] at (2.8,0) {$1$};
+  \draw[gray, dashed, thin] (1.6,0) -- (1.6,1.2);
+\end{tikzpicture}%
+}

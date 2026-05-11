@@ -1,0 +1,13 @@
+% 威胁度因子 b：横向重叠率因子
+\adjustbox{max width=\textwidth}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0) node[right,font=\scriptsize] {重叠率};
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {$f_{\text{ov}}$};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, below] at (2.4,0) {1.0};
+  \node[font=\scriptsize, below] at (0,0) {0};
+  \draw[deeppink, very thick] (0,0) -- (2.4,2.4);
+\end{tikzpicture}%
+}

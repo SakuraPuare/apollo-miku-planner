@@ -1,0 +1,20 @@
+% 威胁度因子 d：障碍物类型因子
+\adjustbox{max width=\textwidth}{%
+\begin{tikzpicture}
+  \useasboundingbox (-0.5,-0.8) rectangle (3.2,3.0);
+  \draw[->, thick] (0,0) -- (2.8,0);
+  \draw[->, thick] (0,0) -- (0,2.8) node[above,font=\scriptsize] {$f_{\text{type}}$};
+  \node[font=\scriptsize, left] at (0,2.4) {1.0};
+  \draw[gray, thin] (-0.08,2.4) -- (0.08,2.4);
+  \node[font=\scriptsize, left] at (0,1.68) {0.7};
+  \draw[gray, thin] (-0.08,1.68) -- (0.08,1.68);
+  \node[font=\scriptsize, left] at (0,0.72) {0.3};
+  \draw[gray, thin] (-0.08,0.72) -- (0.08,0.72);
+  \fill[dangerred!60] (0.2,0) rectangle (0.7,2.4);
+  \fill[lightorange!80] (0.9,0) rectangle (1.4,1.68);
+  \fill[deepblue!40] (1.6,0) rectangle (2.1,0.72);
+  \node[font=\scriptsize] at (0.45,-0.35) {行人};
+  \node[font=\scriptsize] at (1.15,-0.35) {车辆};
+  \node[font=\scriptsize] at (1.85,-0.35) {静态};
+\end{tikzpicture}%
+}
