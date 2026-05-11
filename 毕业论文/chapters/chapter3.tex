@@ -205,14 +205,19 @@ C_{total} = C_{obstacle} + C_{spatial} + C_{speed} + C_{accel} + C_{jerk}
 障碍物代价为
 \begin{equation}
 C_{obstacle} = \begin{cases}
-+\infty & \text{栅格点落在障碍物边界内} \\
-w_{obs} \cdot c_{default} \cdot (d_{follow} - d_{actual})^2 & \text{栅格点靠近障碍物边界}
++\infty, & \rho < 0, \\
+w_{obs} \cdot c_{default} \cdot (d_{follow} - d_{actual})^2, & 0 \le \rho \le \varepsilon,
 \end{cases}
 \end{equation}
 
+其中$\rho$为至障碍物边界的符号横向间距（障碍物内部$\rho<0$），$\varepsilon$为近边界阈值。
+
 速度代价为
 \begin{equation}
-C_{speed} = w_{exceed}(v - v_{limit})^2 + w_{low}|v - v_{cruise}| + w_{ref}|v - v_{ref}|
+\begin{aligned}
+C_{speed} = {}& w_{exceed}(v - v_{limit})^2 \\
+&+ w_{low}|v - v_{cruise}| + w_{ref}|v - v_{ref}|
+\end{aligned}
 \end{equation}
 
 加加速度代价为
@@ -224,7 +229,10 @@ DP通过递推计算每个栅格点的最小累积代价，并记录前驱节点
 
 精优化阶段采用PiecewiseJerk QP，以DP结果为参考轨迹建立QP问题进行精细化优化
 \begin{equation}
-\min \sum_{k=0}^{K-1} \left[ w_s(s_k - s_{ref,k})^2 + w_v(v_k - v_{ref,k})^2 + w_a a_k^2 + w_j \left(\frac{a_{k+1} - a_k}{\Delta t}\right)^2 \right]
+\begin{aligned}
+\min \sum_{k=0}^{K-1} \Big[ &w_s(s_k - s_{ref,k})^2 + w_v(v_k - v_{ref,k})^2 \\
+&+ w_a a_k^2 + w_j \left(\frac{a_{k+1} - a_k}{\Delta t}\right)^2 \Big]
+\end{aligned}
 \label{eq:piecewise_jerk}
 \end{equation}
 
@@ -240,16 +248,16 @@ stage {
   name: "LANE_FOLLOW_STAGE"
   type: "LaneFollowStage"
   task { name: "LANE_CHANGE_PATH"            type: "LaneChangePath" }
-  task { name: "LANE_FOLLOW_PATH"            type: "\texttt{LaneFollowPath}" }
+  task { name: "LANE_FOLLOW_PATH"            type: "LaneFollowPath" }
   task { name: "LANE_BORROW_PATH"            type: "LaneBorrowPath" }
   task { name: "FALLBACK_PATH"               type: "FallbackPath" }
-  task { name: "PATH_DECIDER"                type: "\texttt{PathDecider}" }
+  task { name: "PATH_DECIDER"                type: "PathDecider" }
   task { name: "RULE_BASED_STOP_DECIDER"     type: "RuleBasedStopDecider" }
-  task { name: "SPEED_BOUNDS_PRIORI_DECIDER" type: "\texttt{SpeedBoundsDecider}" }
-  task { name: "SPEED_HEURISTIC_OPTIMIZER"   type: "\texttt{PathTimeHeuristicOptimizer}" }
-  task { name: "SPEED_DECIDER"               type: "\texttt{SpeedDecider}" }
-  task { name: "SPEED_BOUNDS_FINAL_DECIDER"  type: "\texttt{SpeedBoundsDecider}" }
-  task { name: "PIECEWISE_JERK_SPEED"        type: "\texttt{PiecewiseJerkSpeedOptimizer}" }
+  task { name: "SPEED_BOUNDS_PRIORI_DECIDER" type: "SpeedBoundsDecider" }
+  task { name: "SPEED_HEURISTIC_OPTIMIZER"   type: "PathTimeHeuristicOptimizer" }
+  task { name: "SPEED_DECIDER"               type: "SpeedDecider" }
+  task { name: "SPEED_BOUNDS_FINAL_DECIDER"  type: "SpeedBoundsDecider" }
+  task { name: "PIECEWISE_JERK_SPEED"        type: "PiecewiseJerkSpeedOptimizer" }
 }
 \end{lstlisting}
 
