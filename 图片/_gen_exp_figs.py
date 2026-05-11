@@ -4,12 +4,20 @@
 # dependencies = []
 # ///
 """
-生成 24 个 fig_exp_<scn>_{sl,st,va}.tex 实验对比图文件。
+生成实验对比图：每个（场景 × 视图）拆成 N 个独立子图 .tex（每个只含纯 tikzpicture，
+无 subfigure 包裹），以便 pandoc 在 Word 端把多个子图渲染为并排表格 + a)/b)/c) 子图注。
+
+输出产物：
+- fig_exp_<scn>_<view>_<suffix>.tex  （子图 inner tex，供 chapter 外层 \\input）
+  view ∈ {sl, st, va}；suffix ∈ {a, b, c}
+- _figure_blocks_exp.tex             （外层 figure 块清单，辅助手工改写 chapter tex）
+
 PEP 723 单文件，uv run _gen_exp_figs.py 即可。
 """
 
 import csv
 import json
+import re
 from pathlib import Path
 
 FIGDIR = Path(__file__).parent
@@ -140,7 +148,7 @@ def obs_sl_tikz(obs_list: list, t_max: float) -> str:
     return "\n".join(lines)
 
 
-def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
+def gen_sl(scn: str, meta: dict, obs_list: list) -> list[tuple[str, str]]:
     params = meta["scn_params"]
     s_max = params["s_max"]
     l_road_min = params["l_road_min"]
@@ -320,20 +328,10 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> str:
     baseline_sub = subfig("baseline", "baseline", "deepblue", "Baseline")
     miku_sub = subfig("miku", "miku", "vibrantgreen", "MIKU")
 
-    scn_nn = scn[:2]
-    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
-% 场景{scn_nn} SL 平面 Baseline vs MIKU 对比（上下排，每子图占满 \textwidth）
-\def\datapath{{data/{scn}/}}
-{DISCARD_STYLE}
-{baseline_sub}
-
-\vspace{{0.6em}}
-
-{miku_sub}
-"""
+    return [("a", baseline_sub), ("b", miku_sub)]
 
 
-def gen_st(scn: str, meta: dict, obs_list: list) -> str:
+def gen_st(scn: str, meta: dict, obs_list: list) -> list[tuple[str, str]]:
     params = meta["scn_params"]
     s_max = params["s_max"]
     t_max = params["t_max"]
@@ -447,14 +445,7 @@ def gen_st(scn: str, meta: dict, obs_list: list) -> str:
     baseline_sub = subfig_st("baseline", "baseline", "deepblue", "Baseline")
     miku_sub = subfig_st("miku", "miku", "vibrantgreen", "MIKU", corridor_extra)
 
-    scn_nn = scn[:2]
-    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
-% 场景{scn_nn} ST 平面 Baseline vs MIKU 对比
-\def\datapath{{data/{scn}/}}
-{DISCARD_STYLE}
-{baseline_sub}\hfill
-{miku_sub}
-"""
+    return [("a", baseline_sub), ("b", miku_sub)]
 
 
 def _fmt_metric(val, fmt=".2f"):
@@ -466,7 +457,7 @@ def _fmt_metric(val, fmt=".2f"):
         return "INF"
 
 
-def gen_va(scn: str, meta: dict) -> str:
+def gen_va(scn: str, meta: dict) -> list[tuple[str, str]]:
     params = meta["scn_params"]
     t_max = params["t_max"]
     v0 = meta["ego"]["v0"]
@@ -490,11 +481,7 @@ def gen_va(scn: str, meta: dict) -> str:
 
     scn_nn = scn[:2]
 
-    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
-% 场景{scn_nn} 速度/加速度 Baseline vs MIKU 对比
-\def\datapath{{data/{scn}/}}
-{DISCARD_STYLE}
-\begin{{subfigure}}[b]{{\textwidth}}
+    v_sub = rf"""\begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
@@ -520,11 +507,9 @@ def gen_va(scn: str, meta: dict) -> str:
 \end{{axis}}
 \end{{tikzpicture}}
 \caption{{速度对比}}
-\end{{subfigure}}
+\end{{subfigure}}"""
 
-\vspace{{0.8em}}
-
-\begin{{subfigure}}[b]{{\textwidth}}
+    a_sub = rf"""\begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
@@ -559,11 +544,9 @@ def gen_va(scn: str, meta: dict) -> str:
 \end{{axis}}
 \end{{tikzpicture}}
 \caption{{纵向/横向加速度对比}}
-\end{{subfigure}}
+\end{{subfigure}}"""
 
-\vspace{{0.8em}}
-
-\begin{{subfigure}}[b]{{\textwidth}}
+    j_sub = rf"""\begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}
 \begin{{axis}}[
@@ -586,29 +569,134 @@ def gen_va(scn: str, meta: dict) -> str:
 \end{{axis}}
 \end{{tikzpicture}}
 \caption{{jerk 对比}}
-\end{{subfigure}}
+\end{{subfigure}}"""
+
+    return [("a", v_sub), ("b", a_sub), ("c", j_sub)]
+
+
+_SUBFIGURE_RE = re.compile(
+    r"\s*\\begin\{subfigure\}\[b\]\{([^}]+)\}\s*\\centering\s*(.*?)\s*"
+    r"\\caption\{([^{}]*)\}\s*\\end\{subfigure\}\s*$",
+    re.DOTALL,
+)
+
+
+def split_subfigure(raw: str) -> tuple[str, str, str]:
+    """把 `\\begin{subfigure}[b]{WIDTH}...\\caption{CAP}\\end{subfigure}` 拆成 (width, caption, body)。"""
+    m = _SUBFIGURE_RE.match(raw)
+    if not m:
+        raise ValueError(f"无法解析 subfigure 外壳：{raw[:200]}...")
+    return m.group(1), m.group(3), m.group(2)
+
+
+def build_inner_tex(scn: str, view: str, suffix: str, sub_caption: str, tikz_body: str) -> str:
+    """生成独立子图 .tex：`\\def\\datapath` + DISCARD_STYLE + 纯 tikzpicture。
+    外层 subfigure 包裹由 chapter tex 负责，此处只产 body，pandoc/SVG 管线按单图处理。"""
+    scn_nn = scn[:2]
+    return rf"""% 自动生成：请勿手动编辑。来源：图片/_gen_exp_figs.py
+% 场景{scn_nn} {view.upper()} — 子图 {suffix}：{sub_caption}
+\def\datapath{{data/{scn}/}}
+{DISCARD_STYLE}
+{tikz_body}
 """
 
 
+# 每个 view 的外层 subfigure 排版：(subfig_width, 并排方式)
+# sl、va：每子图占满 \textwidth，上下排（空行分隔）
+# st：0.48\textwidth 左右排（\hfill 分隔）
+VIEW_LAYOUT = {
+    "sl": ("\\textwidth", "stack"),
+    "st": ("0.48\\textwidth", "side"),
+    "va": ("\\textwidth", "stack"),
+}
+
+
+def build_outer_figure_block(
+    scn: str,
+    view: str,
+    items: list[tuple[str, str]],
+    main_caption: str,
+    main_label: str,
+) -> str:
+    """生成 chapter tex 外层 figure 块，供手工粘贴替换。"""
+    width, mode = VIEW_LAYOUT[view]
+    sep = "\n\n" if mode == "stack" else "\\hfill\n"
+    sub_blocks = []
+    for suffix, sub_caption in items:
+        sub_blocks.append(
+            rf"""\begin{{subfigure}}[b]{{{width}}}
+  \centering
+  \input{{../图片/fig_exp_{scn}_{view}_{suffix}}}
+  \caption{{{sub_caption}}}
+  \label{{{main_label}:{suffix}}}
+\end{{subfigure}}"""
+        )
+    joined = sep.join(sub_blocks)
+    return rf"""\begin{{figure}}[H]
+\centering
+{joined}
+\caption{{{main_caption}}}
+\label{{{main_label}}}
+\end{{figure}}"""
+
+
 def main():
-    generated = []
+    written_inner: list[str] = []
+    removed_legacy: list[str] = []
+    outer_blocks: list[str] = []
+
     for scn in SCENARIOS:
         meta_path = FIGDIR / "data" / scn / "meta.json"
         meta = json.loads(meta_path.read_text())
         obs_list = load_obstacles(scn)
 
-        for fig_type, gen_fn, args in [
+        for view, gen_fn, args in [
             ("sl", gen_sl, (scn, meta, obs_list)),
             ("st", gen_st, (scn, meta, obs_list)),
             ("va", gen_va, (scn, meta)),
         ]:
-            content = gen_fn(*args)
-            fname = FIGDIR / f"fig_exp_{scn}_{fig_type}.tex"
-            fname.write_text(content, encoding="utf-8")
-            generated.append(fname.name)
-            print(f"  wrote  {fname.name}")
+            sub_entries = gen_fn(*args)
+            items: list[tuple[str, str]] = []
+            for suffix, raw in sub_entries:
+                _width, sub_caption, body = split_subfigure(raw)
+                inner = build_inner_tex(scn, view, suffix, sub_caption, body)
+                fname = FIGDIR / f"fig_exp_{scn}_{view}_{suffix}.tex"
+                fname.write_text(inner, encoding="utf-8")
+                written_inner.append(fname.name)
+                items.append((suffix, sub_caption))
+                print(f"  wrote  {fname.name}  ({sub_caption})")
 
-    print(f"\n共生成 {len(generated)} 个文件。")
+            # 生成外层 chapter figure 块（提示用：main_caption/label 真实值需人工在 chapter 里对齐）
+            placeholder_caption = f"<场景 {scn[:2]} {view.upper()} 图题>"
+            placeholder_label = f"fig:exp_{scn}_{view}"
+            outer_blocks.append(
+                f"% ==== scn={scn}, view={view} ==== 供手工替换 chapter tex 中的对应 figure 块\n"
+                + build_outer_figure_block(
+                    scn, view, items, placeholder_caption, placeholder_label
+                )
+            )
+
+            # 删旧的聚合版 fig_exp_<scn>_<view>.tex（若存在），避免 Makefile FIGSRC 重复渲染成大 svg
+            legacy = FIGDIR / f"fig_exp_{scn}_{view}.tex"
+            if legacy.exists():
+                legacy.unlink()
+                removed_legacy.append(legacy.name)
+
+    # 外层 figure 块清单：辅助手工改 chapter tex
+    blocks_path = FIGDIR / "_figure_blocks_exp.tex"
+    blocks_path.write_text(
+        "% 本文件由 _gen_exp_figs.py 产出，仅作参考 —— 手工把每段 figure 块粘到 chapters/chapter*.tex\n"
+        "% 对应位置，并替换其中的 <场景 NN VIEW 图题> 占位符为原 caption。\n\n"
+        + "\n\n".join(outer_blocks)
+        + "\n",
+        encoding="utf-8",
+    )
+
+    print()
+    print(f"共生成 {len(written_inner)} 个子图 inner tex。")
+    if removed_legacy:
+        print(f"清理旧聚合 tex {len(removed_legacy)} 个：{', '.join(removed_legacy)}")
+    print(f"外层 figure 块清单：{blocks_path.name}")
 
 
 if __name__ == "__main__":
