@@ -3,7 +3,7 @@ TEXFLAGS := -interaction=nonstopmode -halt-on-error -shell-escape
 BIBER    := biber
 
 # 编译前必须存在于 PATH 的外部命令（缺一则立即失败）
-DEPS     := $(TEX) $(BIBER) pdflatex bibtex pdfcrop pdf2svg latexmk uv
+DEPS     := $(TEX) $(BIBER) pdflatex bibtex pdfcrop pdf2svg latexmk uv pandoc
 FONT_FILES := \
 	fonts/local-fonts.tex \
 	fonts/tex-gyre/texgyretermes-regular.otf \
@@ -42,7 +42,15 @@ ABLATION_TEX  := $(THESISDIR)/_ablation_macros.tex
 SENSITIVITY_TEX := $(THESISDIR)/_sensitivity_macros.tex
 CONTEXT_TEX   := $(THESISDIR)/_experiment_context.tex
 
-.PHONY: all check-deps svg svg-clean thesis slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
+# docx 转换：工具/tex_to_docx.py 把 chapters 扁平化后经 pandoc → python-docx 后处理
+OUTPUTDIR     := outputs
+DOCX          := $(OUTPUTDIR)/thesis.docx
+DOCX_TOOL     := 工具/tex_to_docx.py
+DOCX_CORE     := $(wildcard 工具/tex_to_docx_core/*.py)
+CHAPTERS_SRC  := $(wildcard $(THESISDIR)/chapters/*.tex)
+BIB_SRC       := $(THESISDIR)/references.bib
+
+.PHONY: all check-deps svg svg-clean thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -68,7 +76,7 @@ check-deps:
 #  默认：并行 SVG + 论文 + 答辩演示
 #  全量推荐：make -j$(nproc)
 # ══════════════════════════════════════════════════
-all: svg thesis slides kaiti foreign defense
+all: svg thesis docx slides kaiti foreign defense
 
 # ══════════════════════════════════════════════════
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
@@ -121,6 +129,17 @@ thesis: check-deps $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_T
 	cd $(THESISDIR) && latexmk thesis.tex >/dev/null 2>&1
 	@test -f $(THESISDIR)/thesis.pdf || { echo "错误: thesis.pdf 未生成"; exit 1; }
 	@echo "✓ 论文: $(THESISDIR)/thesis.pdf"
+
+# ══════════════════════════════════════════════════
+#  DOCX 转换（pandoc + python-docx 后处理）
+#  与 thesis 同源：依赖 chapters + 仿真宏 + bib + svg + 转换脚本本身
+# ══════════════════════════════════════════════════
+docx: $(DOCX)
+$(DOCX): $(DOCX_TOOL) $(DOCX_CORE) $(CHAPTERS_SRC) $(BIB_SRC) $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) | check-deps svg
+	@mkdir -p $(OUTPUTDIR)
+	uv run $(DOCX_TOOL) -o $(DOCX)
+	@test -f $(DOCX) || { echo "错误: $(DOCX) 未生成"; exit 1; }
+	@echo "✓ 论文 docx: $(DOCX)"
 
 # ══════════════════════════════════════════════════
 #  仿真链路（增量构建：源码改了才重生，chapter 不被修改）
@@ -246,16 +265,18 @@ clean:
 	rm -f $(DEFENSEDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -f $(DEFENSEDIR)/script.{pdf,aux,log,out,toc}
 	rm -rf $(DEFENSEDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
+	rm -f $(DOCX)
 
 # ══════════════════════════════════════════════════
 #  帮助
 # ══════════════════════════════════════════════════
 help:
-	@echo "make check-deps 检查 TeX / pdfcrop / pdf2svg / latexmk / uv / 字体是否可用"
-	@echo "make            并行 SVG + 论文 + 答辩"
+	@echo "make check-deps 检查 TeX / pdfcrop / pdf2svg / latexmk / uv / pandoc / 字体是否可用"
+	@echo "make            并行 SVG + 论文 + docx + 答辩"
 	@echo "make -jN svg    并行编译全部单图 SVG（推荐 N=$$(nproc)）"
 	@echo "make svg-clean  清空 svg/ 与 build/ 目录"
 	@echo "make thesis     编译论文"
+	@echo "make docx       转换论文为 Word docx ($(DOCX))"
 	@echo "make slides     编译答辩演示"
 	@echo "make kaiti      编译开题答辩"
 	@echo "make foreign    编译外文文献原文及译文"
