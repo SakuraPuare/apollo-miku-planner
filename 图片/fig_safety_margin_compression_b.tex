@@ -1,0 +1,53 @@
+% 路锥场景：Apollo d_buf=0.3m，BLOCKED（子图 b）
+\begin{tikzpicture}[scale=1.0, transform shape]
+  \useasboundingbox (-0.3,-2.4) rectangle (8.1,2.4);
+  % 隐形占位点：强制两个子图 pdfcrop 裁剪后宽度一致
+  \draw[opacity=0] (-0.3,-2.4) rectangle (8.1,2.4);
+
+  % 背景
+  \fill[bglight] (0,-2.3) rectangle (7.0,2.3);
+
+  % 道路边界 ±1.875m
+  \draw[deepblue, very thick] (0,-1.875) -- (7.0,-1.875);
+  \draw[deepblue, very thick] (0, 1.875) -- (7.0, 1.875);
+  \draw[deepblue, dashed, thin] (0,0) -- (7.0,0);
+
+  % 车道宽度标注
+  \draw[{Stealth}-{Stealth}, thin, deepblue] (0.3,-1.875) -- (0.3,1.875);
+  \node[font=\scriptsize, deepblue, rotate=90] at (0.6,0) {车道 3.75m};
+
+  % 路锥
+  \fill[dangerred!70, draw=dangerred, thick] (3.1,-0.375) rectangle (3.4,-0.075);
+  \node[white, font=\tiny\bfseries] at (3.25,-0.225) {锥};
+
+  % 缓冲区 d_buf=0.3m
+  \draw[dangerred!70, dashed, thick] (2.8,-0.675) rectangle (3.7,0.225);
+  \node[dangerred!70!black, font=\scriptsize, anchor=west] at (3.85,-0.225)
+    {$\delta{=}0.3$m};
+
+  % 膨胀距离标注
+  \draw[{Stealth}-{Stealth}, dangerred!60, thin] (2.6,-0.375) -- (2.6,-0.675);
+  \node[dangerred!60, font=\tiny, left] at (2.55,-0.525) {0.3};
+  \draw[{Stealth}-{Stealth}, dangerred!60, thin] (2.6,-0.075) -- (2.6,0.225);
+  \node[dangerred!60, font=\tiny, left] at (2.55,0.075) {0.3};
+
+  % 上方不足区域 1.65m
+  \fill[dangerred, opacity=0.12] (1.0,0.225) rectangle (5.5,1.875);
+  % 下方不足区域 1.2m
+  \fill[dangerred, opacity=0.12] (1.0,-1.875) rectangle (5.5,-0.675);
+
+  % 上方净间距
+  \draw[{Stealth}-{Stealth}, thick, dangerred] (5.7,0.225) -- (5.7,1.875);
+  \node[font=\scriptsize, dangerred, anchor=west] at (5.8,1.05) {1.65m};
+  \node[font=\scriptsize, dangerred, anchor=west] at (5.8,0.65) {$< W_{\mathrm{ego}}$};
+
+  % 下方净间距
+  \draw[{Stealth}-{Stealth}, thick, dangerred] (5.7,-1.875) -- (5.7,-0.675);
+  \node[font=\scriptsize, dangerred, anchor=west] at (5.8,-1.275) {1.20m};
+  \node[font=\scriptsize, dangerred, anchor=west] at (5.8,-1.6) {$< W_{\mathrm{ego}}$};
+
+  % BLOCKED
+  \draw[dangerred, ultra thick] (2.5,1.0) -- (4.0,-1.0);
+  \draw[dangerred, ultra thick] (2.5,-1.0) -- (4.0,1.0);
+  \node[dangerred, font=\small\bfseries] at (3.25,-2.1) {BLOCKED};
+\end{tikzpicture}

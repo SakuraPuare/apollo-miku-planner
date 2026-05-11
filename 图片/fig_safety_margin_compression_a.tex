@@ -1,0 +1,48 @@
+% 路锥场景：差异化 d_buf=0.15m，恰好可通行（子图 a）
+\begin{tikzpicture}[scale=1.0, transform shape]
+  \useasboundingbox (-0.3,-2.4) rectangle (8.1,2.4);
+  % 隐形占位点：强制两个子图 pdfcrop 裁剪后宽度一致
+  \draw[opacity=0] (-0.3,-2.4) rectangle (8.1,2.4);
+
+  % 背景
+  \fill[bglight] (0,-2.3) rectangle (7.0,2.3);
+
+  % 道路边界 ±1.875m
+  \draw[deepblue, very thick] (0,-1.875) -- (7.0,-1.875);
+  \draw[deepblue, very thick] (0, 1.875) -- (7.0, 1.875);
+  \draw[deepblue, dashed, thin] (0,0) -- (7.0,0);
+
+  % 车道宽度标注
+  \draw[{Stealth}-{Stealth}, thin, deepblue] (0.3,-1.875) -- (0.3,1.875);
+  \node[font=\scriptsize, deepblue, rotate=90] at (0.6,0) {车道 3.75m};
+
+  % 路锥（宽0.3m，高0.3m，中心在 (3.25, -0.225)）
+  \fill[dangerred!70, draw=dangerred, thick] (3.1,-0.375) rectangle (3.4,-0.075);
+  \node[white, font=\tiny\bfseries] at (3.25,-0.225) {锥};
+
+  % 缓冲区 d_buf=0.15m
+  \draw[dangerred!70, dashed, thick] (2.95,-0.525) rectangle (3.55,0.075);
+  \node[dangerred!70!black, font=\scriptsize, anchor=west] at (3.7,-0.225)
+    {$\delta{=}0.15$m};
+
+  % 膨胀距离标注
+  \draw[{Stealth}-{Stealth}, dangerred!60, thin] (2.8,-0.375) -- (2.8,-0.525);
+  \node[dangerred!60, font=\tiny, left] at (2.75,-0.45) {0.15};
+  \draw[{Stealth}-{Stealth}, dangerred!60, thin] (2.8,-0.075) -- (2.8,0.075);
+  \node[dangerred!60, font=\tiny, left] at (2.75,0.0) {0.15};
+
+  % 通行区域 [0.075, 1.875]
+  \fill[lightgreen, opacity=0.25] (1.0,0.075) rectangle (5.5,1.875);
+
+  % 自车
+  \fill[deepblue, opacity=0.3] (1.0,0.075) rectangle (5.5,1.875);
+  \draw[deepblue, thick, rounded corners=2pt] (1.0,0.075) rectangle (5.5,1.875);
+  \node[deepblue, font=\scriptsize\bfseries] at (3.25,0.975) {自车};
+
+  % 净间距标注
+  \draw[{Stealth}-{Stealth}, thick, lightgreen!60!black] (6.2,0.075) -- (6.2,1.875);
+  \node[font=\scriptsize, lightgreen!60!black, anchor=west] at (6.3,0.975) {1.80m};
+  \node[font=\scriptsize, lightgreen!60!black, anchor=west] at (6.3,0.55) {$= W_{\mathrm{ego}}$};
+
+  \node[lightgreen!60!black, font=\normalsize\bfseries] at (1.5,-2.1) {$\checkmark$};
+\end{tikzpicture}
