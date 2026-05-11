@@ -301,7 +301,7 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
     \label{eq:max_gap_opt}
 \end{equation}
 \end{theorem}
-\textbf{证明}\quad{}对各分割点$p$直接代入验证。
+\textbf{证明}：对各分割点$p$直接代入验证。
 
 当$p = 0$即所有障碍物均为右绕时，$\mathcal{L}_0 = \emptyset$，$\mathcal{R}_0 = \{(1), \ldots, (k)\}$
 
@@ -327,7 +327,7 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
 
 故$W(k) = l_{road}^{+} - V_k = g_k$。
 
-以上化简仅使用了定理前提$u_i \geq l_{road}^{-}$、$v_i \leq l_{road}^{+}$以及安全扩展区间的基本关系$u_i\leq v_i$。因此，选取最大$g_p$对应的分割点$p^{*}$即为最大化$W(p)$的分割点，$W^{*} = \max_p g_p$严格成立。\hfill$\blacksquare$
+以上化简仅使用了定理前提$u_i \geq l_{road}^{-}$、$v_i \leq l_{road}^{+}$以及安全扩展区间的基本关系$u_i\leq v_i$。因此，选取最大$g_p$对应的分割点$p^{*}$即为最大化$W(p)$的分割点，$W^{*} = \max_p g_p$严格成立。\hfill$\Box$
 
 \begin{lemma}[越界障碍物的预处理规则]
 \label{lem:boundary_trim}
@@ -341,7 +341,7 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
 \end{itemize}
 \end{lemma}
 
-\textbf{证明}： 规则A下$l^{+}(\mathbf{d}) < l^{-}(\mathbf{d})$对任意$\mathbf{d}$成立，故无可行分割，直接BLOCKED等价于$W^{*} = 0$。规则B中若分配$d_i = R$，则$l^{+}(\mathbf{d}) = \min(l_{road}^{+}, u_i, \ldots) = u_i < l_{road}^{-} \leq l^{-}(\mathbf{d})$，通行带宽度非正，故$d_i = L$为唯一最优选择；强制$d_i = L$后，$v_i$参与$\max_{j\in\mathcal{L}}v_j$的聚合，对应全局$V_p$的值已经包含该$v_i$贡献，不改变剩余障碍物间的$g_p$序。规则C对称。因此，三条规则预处理后剩余障碍物全部满足$u_j \geq l_{road}^{-}$且$v_j \leq l_{road}^{+}$，定理\ref{thm:max_gap}的前提条件成立。\hfill$\blacksquare$
+\textbf{证明}：规则A下$l^{+}(\mathbf{d}) < l^{-}(\mathbf{d})$对任意$\mathbf{d}$成立，故无可行分割，直接BLOCKED等价于$W^{*} = 0$。规则B中若分配$d_i = R$，则$l^{+}(\mathbf{d}) = \min(l_{road}^{+}, u_i, \ldots) = u_i < l_{road}^{-} \leq l^{-}(\mathbf{d})$，通行带宽度非正，故$d_i = L$为唯一最优选择；强制$d_i = L$后，$v_i$参与$\max_{j\in\mathcal{L}}v_j$的聚合，对应全局$V_p$的值已经包含该$v_i$贡献，不改变剩余障碍物间的$g_p$序。规则C对称。因此，三条规则预处理后剩余障碍物全部满足$u_j \geq l_{road}^{-}$且$v_j \leq l_{road}^{+}$，定理\ref{thm:max_gap}的前提条件成立。\hfill$\Box$
 
 图 \ref{fig:max_gap_theorem} 以一维几何图示给出引理 \ref{lem:continuous_partition} 与定理 \ref{thm:max_gap}。上半部分把排序后 $k=4$ 个障碍物投影在 $l$ 轴上，每个障碍物两侧以虚线标出各自的安全边界 $u_i$ 与 $v_i$。障碍物与道路边界之间、以及前缀安全边界 $V_p$ 与后续障碍物之间形成 $k+1=5$ 个候选间隙 $g_0,\ldots,g_4$。粉色加粗的 $g_2^\star$ 即为该算例的最大间隙，对应最优分割点 $p^\star=2$。下半部分给出该分割对应的决策向量 $\mathbf{d}^\star=(R,R,L,L)$，右绕群 $\mathcal{R}$ 与左绕群 $\mathcal{L}$ 在横向排序中形成连续区段，没有任何 RLR 式的交错，与引理 \ref{lem:continuous_partition} 保证的连续性一致。原本 $2^k=16$ 种组合中的最优解必然落在 $k+1=5$ 个连续分割对应的候选解中，算法只需线性扫描比较间隙大小即可定位。
 
