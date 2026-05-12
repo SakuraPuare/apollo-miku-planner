@@ -273,26 +273,30 @@ def _force_hyperlinks_black(doc) -> None:
 
 
 def post_process(docx_path: Path) -> None:
+    """docx 后处理总入口，按 6 个 Stage 顺序执行。
+
+    Stage A：章节元信息（anchor 迁移 / Heading 降级 / 章节编号 / 分页 / 摘要空行）
+    Stage B：主样式循环（按 Heading/Caption 落 cjk_font / ascii_font / bold / spacing）
+    Stage C：前置页 + 版面（封面/声明/授权/目录 + 页边距页码 + 三线表 + 图片 + 公式 + 代码块）
+    Stage D：文本 + 字符级（列表编号 / 签名页 tab / 半角引号 / 参考文献细节）
+    Stage E：全局规格化（字体 / 对齐 / 行距 / 超链接 / Heading bold 迁移）
+    Stage F：规则驱动闭环（_normalize_for_inspector 兜底层 + _apply_format_rules 规则层）
+    """
     doc = Document(str(docx_path))
 
-    # 1. 先把参考文献条目搬到 anchor 标题之后
-    _relocate_bibliography(doc)
+    # ---------------------------------------------------------------
+    # Stage A：章节元信息
+    # ---------------------------------------------------------------
+    _relocate_bibliography(doc)                 # A1 参考文献条目搬到 anchor 标题之后
+    demote_heading4_to_heading3(doc)            # A2 Heading 4 → Heading 3（规范"最多三级标题"）
+    normalize_special_h1_text(doc)              # A3 致谢 → 致 谢（规范文字要求）
+    add_heading_numbers(doc)                    # A4 给 Heading 1/2/3 加章节编号前缀
+    insert_page_breaks_before_headings(doc)     # A5 所有 Heading 1 前插分页符（首个除外）
+    _insert_blank_before_abstract(doc)          # A6 摘要/Abstract 段前空行
 
-    # 2. Heading 4 → Heading 3（规范"最多三级标题"）
-    demote_heading4_to_heading3(doc)
-
-    # 3. 致谢 → 致 谢（规范文字要求）
-    normalize_special_h1_text(doc)
-
-    # 4. 给 Heading 1/2/3 加章节编号前缀（"1 绪论" / "1.1 xxx"）
-    add_heading_numbers(doc)
-
-    # 5. 所有 Heading 1 前插分页符（首个除外）
-    insert_page_breaks_before_headings(doc)
-
-    # 5.5 摘要/Abstract 段前各插一个空行（题目与正文之间留一行过渡）
-    _insert_blank_before_abstract(doc)
-
+    # ---------------------------------------------------------------
+    # Stage B：主样式循环（按段类型落字体/字号/加粗/spacing）
+    # ---------------------------------------------------------------
     for p in doc.paragraphs:
         style = p.style.name if p.style else ""
         text = p.text.strip()
@@ -413,96 +417,52 @@ def post_process(docx_path: Path) -> None:
                         line_spacing=1.0,
                     )
 
-    # 7. 主样式循环完成后：插入中英文论文题目页（避免被 Normal 样式覆盖字号）
-    insert_thesis_title_pages(doc)
+    # ---------------------------------------------------------------
+    # Stage C：前置页 + 版面（封面 / 声明 / 授权 / 目录 / 页码 / 图表 / 代码）
+    # ---------------------------------------------------------------
+    insert_thesis_title_pages(doc)              # C1 中英文论文题目页（避开 Normal 覆盖字号）
+    prepend_front_matter(doc)                   # C2 模板封面+声明+授权+目录搬到正文前
+    fill_cover_info(doc)                        # C3 封面信息填充（题目/学院/姓名/...）
+    _set_page_margins_a4(doc)                   # C4 A4 页边距
+    setup_page_numbers_and_sections(doc)        #    + 分节 / 页码 / 页脚
+    apply_three_line_tables(doc)                # C5 表格三线化 + 整表居中
+    center_all_images(doc)                      #    + 图片段居中
+    resize_all_images_to_width(doc, width_cm=14.7, max_height_cm=9.9)  # + 图片等比缩放
+    add_equation_numbers(doc)                   # C6 独立公式右对齐 "（N-M）"
+    wrap_listings_and_algorithms(doc)           # C7 代码清单+算法伪代码 → 单格全外框表（必须在三线表后）
+    style_code_block_tables(doc)                #    + 代码块表格：五号/不缩进/左对齐
+    center_all_table_cells(doc)                 #    + 表格 cell 居中（代码块只垂直居中）
+    apply_table_body_font_size(doc)             #    + 数据型表格 cell 字号五号
+    _style_code_algorithm_captions(doc)         # C8 代码/算法题标题段刷成表题规格
 
-    # 8. 最后搬模板封面+声明+授权+目录到正文之前（模板段直接带自己的样式，不被循环覆盖）
-    prepend_front_matter(doc)
+    # ---------------------------------------------------------------
+    # Stage D：文本 + 字符级
+    # ---------------------------------------------------------------
+    flatten_list_indent(doc)                    # D1 列表自动编号顶格
+    compress_declaration_and_authorization(doc) # D2 压缩声明+授权同页
+    tab_align_cover_and_signature_rows(doc)     # D3 封面/签名页"左标签+右字段"tab 对齐
+    fold_abstract_heading_into_body(doc)        # D4 折叠 H1 "摘要"/"Abstract" 标题段
+    bolden_abstract_prefixes(doc)               # D5 摘要/关键词前缀黑体加粗（必须在主循环后）
+    normalize_text_punctuation(doc)             # D6 半角引号→全角（避开代码块）
+    normalize_bibliography_text(doc)            # D7 参考文献英文小圆点后补空格
 
-    # 8.5. 封面信息填充（题目、学院、专业、班级、学号、姓名、指导教师、日期）
-    fill_cover_info(doc)
+    # ---------------------------------------------------------------
+    # Stage E：全局规格化
+    # ---------------------------------------------------------------
+    normalize_all_fonts(doc)                    # E1 字体正则化（宋体+TNR，CJK_SAFE 含黑体不覆盖前缀）
+    justify_body_paragraphs(doc)                # E2 正文段两端对齐（所有段已定型后）
+    normalize_paragraph_spacing(doc)            # E3 段间距/首行缩进/snapToGrid
+    enable_latin_word_break(doc)                # E4 允许长驼峰词（PathBoundsDecider）中间拆行
+    normalize_toc_entries(doc)                  # E5 目录项缩进/段后收口
+    _force_hyperlinks_black(doc)                # E6 超链接（DOI/URL）强制黑色
+    _migrate_heading_bold_to_style(doc)         # E7 H1/H2 bold+黑体 run→style（防 TOC 域污染）
+    _unmono_code_styles(doc)                    # E8 去 pandoc 给 \texttt/代码块的 Consolas
 
-    # 9. 页面尺寸 / 页边距 / 分节 / 页码页脚
-    _set_page_margins_a4(doc)
-    setup_page_numbers_and_sections(doc)
-
-    # 10. 表格三线化 + 整表居中；图片段居中；图片等比缩放：宽 ≤14.7cm 且 高 ≤9.9cm(A4 页高 1/3)
-    apply_three_line_tables(doc)
-    center_all_images(doc)
-    resize_all_images_to_width(doc, width_cm=14.7, max_height_cm=9.9)
-
-    # 11. 公式编号：独立公式右对齐 "（N-M）"
-    add_equation_numbers(doc)
-
-    # 12. 代码清单 + 算法伪代码 → 单格全外框表（必须在三线表 pass 之后）
-    wrap_listings_and_algorithms(doc)
-
-    # 12.5 代码块表格：五号字、不首行缩进、左对齐（必须在 wrap_listings 之后）
-    style_code_block_tables(doc)
-
-    # 12.6 所有表格 cell 水平 + 垂直居中（代码块只设垂直居中，水平保持 left）
-    center_all_table_cells(doc)
-
-    # 12.7 数据型表格 cell 字号统一五号（10.5pt）；子图布局表/代码块表/封面表跳过
-    apply_table_body_font_size(doc)
-
-    # 12.8 代码题/算法题标题段刷成表题规格（小四黑体加粗居中 + 段前6pt段后0）
-    _style_code_algorithm_captions(doc)
-
-    # 13. 列表自动编号顶格（清 numbering.xml 所有 lvl 的 ind left/hanging）
-    flatten_list_indent(doc)
-
-    # 14. 压缩声明+授权同页
-    compress_declaration_and_authorization(doc)
-
-    # 15. 封面/签名页"左标签 + 右字段"用 tab 左右对齐
-    tab_align_cover_and_signature_rows(doc)
-
-    # 16. 折叠 H1 "摘要" / "Abstract" 独立标题段（锚点已消费完，版面保留段首粗体前缀形式）
-    fold_abstract_heading_into_body(doc)
-
-    # 16.5. 摘要/Abstract/关键词段首前缀加粗 + eastAsia 改黑体
-    #       必须放在所有 _apply_para 遍历（主循环）之后，否则黑体会被宋体覆盖
-    bolden_abstract_prefixes(doc)
-
-    # 17. 中文正文里的半角单双引号修成全角，避开代码块
-    normalize_text_punctuation(doc)
-
-    # 18. 参考文献英文小圆点后补空格
-    normalize_bibliography_text(doc)
-
-    # 19. 最后一道闸：全文档字体正则化（宋体 + Times New Roman）
-    #     CJK_SAFE 含"黑体"，不会覆盖刚设好的前缀黑体
-    normalize_all_fonts(doc)
-
-    # 20. 正文段两端对齐（jc=both），放在最后保证所有段都已定型
-    justify_body_paragraphs(doc)
-
-    # 21. 段间距/首行缩进/snapToGrid 全局规格化（最后执行，覆盖所有段）
-    normalize_paragraph_spacing(doc)
-
-    # 21.5 允许 PathBoundsDecider 这类长驼峰词从中间拆行
-    enable_latin_word_break(doc)
-
-    # 22. 目录项缩进/段后按检测报告口径收口
-    normalize_toc_entries(doc)
-
-    # 23. 超链接（DOI/URL 等）强制黑色，满足"全文黑色"规范
-    _force_hyperlinks_black(doc)
-
-    # 24. H1/H2 的 bold+黑体 从 run-level 迁移到 style-level
-    #     防止 Word 更新 TOC 域时把直设格式拷到 TOC2
-    _migrate_heading_bold_to_style(doc)
-
-    # 25. 去掉 pandoc 给 inline code (\texttt) 和代码块的 Consolas 等宽字体
-    #     用户要求代码展示不用等宽，统一回正文字形
-    _unmono_code_styles(doc)
-
-    # 26. 兜底：按学校《规范化要求》格式检测口径统一收尾，闭环
-    _normalize_for_inspector(doc)
-
-    # 27. 最终闭环：针对 0045robot 格式检测报告 error.txt 明细的精修
-    _close_inspector_issues(doc)
+    # ---------------------------------------------------------------
+    # Stage F：规则驱动闭环（FORMAT_RULES.md）
+    # ---------------------------------------------------------------
+    _normalize_for_inspector(doc)               # F1 兜底层：caption 前缀补回、数学对象字号、TOC tab leader
+    _close_inspector_issues(doc)                # F2 规则层：_apply_format_rules 按 7 块规则链
 
     doc.save(str(docx_path))
 
@@ -982,397 +942,525 @@ def _insert_blank_before_abstract(doc) -> None:
         inserted.add(kind)
 
 
+
+
 # =============================================================================
-# Stage 4 — 0045robot error.txt 明细修复（最终闭环）
+# Stage 4 — 按 FORMAT_RULES.md 规则驱动的统一格式处理器
+# =============================================================================
+#
+# 设计原则：
+#   1. 先按文档章节（封面/目录/摘要/正文/参考文献/致谢/成果）切块
+#   2. 每一块有自己的规则集（FORMAT_RULES.md §2）
+#   3. 跨块的字符级规则（字体、半角逗号、caption 前缀空格等）最后统一跑
+#   4. 不再按"检测器新错误"叠加补丁；新规则加到 FORMAT_RULES.md 对应章节即可
 # =============================================================================
 
-_CAP_LEAD_FIG_RE = re.compile(r"^(图)([\s   　]+)(\d)")
-_CAP_LEAD_TAB_RE = re.compile(r"^(表)([\s   　]+)(\d)")
-_CAP_LEAD_CODE_RE = re.compile(r"^(代码|算法)([\s   　]+)(\d)")
-_INSPECT_ANY_CAP_RE = re.compile(r"^(图|表|代码|算法)\s*\d+[\.\-]\d+")
+_CAP_LEAD_FIG_RE = re.compile(r"^(图)([\s  　]+)(\d)")
+_CAP_LEAD_TAB_RE = re.compile(r"^(表)([\s  　]+)(\d)")
+_CAP_LEAD_CODE_RE = re.compile(r"^(代码|算法)([\s  　]+)(\d)")
+_CAP_ANY_RE = re.compile(r"^(图|表|代码|算法)\s*\d+[\.\-]\d+")
+_CODE_ALGO_SHORT_CAP_RE = re.compile(r"^(代码|算法)\s*\d+[\.-]\d+\s+\S")
+_EQN_NUMBER_RE = re.compile(r"^\s*[（(]\s*\d+[\.\-]\d+\s*[）)]\s*$")
+_CJK_COMMA_RE = re.compile(r"([一-鿿])\s*,\s*([一-鿿])")
+_BRACKET_REF_RE = re.compile(r"^\s*\[\d+\]\s")
+_ABSTRACT_ZH_PFX = ("摘要：", "摘要:")
+_ABSTRACT_EN_PFX = ("Abstract:", "Abstract：")
 
 
-def _close_inspector_issues(doc) -> None:
-    """按 0045robot error.txt 明细做最后修复，闭环所有"严重"/"错误"级问题。
+# ---------- 共用工具（从 docx_common 导入，本地只留 shortcut） ----------
 
-    共 10 类：caption 前缀空格、正文 run-level 误加粗、Heading3 字号、
-    首行缩进、Bibliography 行距、摘要段前段后、TOC 前导符、半角逗号、
-    算法说明段对齐、代码caption \\xa0 清理。
-    """
-    from docx.oxml import OxmlElement as _OxmlElement
+
+def _qn_(tag):  # shortcut
     from docx.oxml.ns import qn as _qn
+    return _qn(tag)
 
-    body = doc.element.body
-    styles_el = doc.styles.element
 
-    def _para_style(p_el):
-        pPr = p_el.find(_qn("w:pPr"))
-        if pPr is None:
-            return ""
-        pStyle = pPr.find(_qn("w:pStyle"))
-        if pStyle is None:
-            return ""
-        return pStyle.get(_qn("w:val")) or ""
+def _el_(tag):  # shortcut
+    from docx.oxml import OxmlElement as _OxmlElement
+    return _OxmlElement(tag)
 
-    def _para_text(p_el):
-        return "".join((t.text or "") for t in p_el.findall(".//" + _qn("w:t")))
 
-    def _ensure_child(parent, tag):
-        el = parent.find(_qn(tag))
-        if el is None:
-            el = _OxmlElement(tag)
-            parent.append(el)
-        return el
+# 以下通用工具统一从 docx_common 提供，postprocess 只做 re-export 以保持旧调用兼容
+from .docx_common import (  # noqa: E402
+    _all_runs_bold,
+    _ensure_child,
+    _ensure_pPr,
+    _pstyle,
+    _ptext,
+    _run_clear_bold,
+    _run_is_bold,
+    _run_set_bold,
+    _set_indent,
+    _set_jc,
+    _set_spacing,
+)
 
-    def _ensure_pPr(p_el):
-        pPr = p_el.find(_qn("w:pPr"))
-        if pPr is None:
-            pPr = _OxmlElement("w:pPr")
-            p_el.insert(0, pPr)
-        return pPr
 
-    # ========== 1. Heading3 样式 sz 改 24（12pt 小四） ==========
-    # 检测器读样式级字号：Heading3 原 sz=28（14pt 四号），违规；改 24 + 12
-    for s in styles_el.findall(_qn("w:style")):
-        sid = s.get(_qn("w:styleId"))
-        if sid not in ("Heading3", "Heading3Char"):
-            continue
-        rPr = s.find(_qn("w:rPr"))
-        if rPr is None:
-            rPr = _OxmlElement("w:rPr")
-            s.append(rPr)
-        for tag in ("w:sz", "w:szCs"):
-            for old in list(rPr.findall(_qn(tag))):
-                rPr.remove(old)
-            el = _OxmlElement(tag)
-            el.set(_qn("w:val"), "24")
-            rPr.append(el)
+# ---------- §1 块划分 ----------
 
-    # ========== 2. caption 段前缀"图 N"→"图N"（去掉所有空白、\xa0、全角空格） ==========
-    def _strip_caption_prefix_space(p_el):
-        ts = p_el.findall(".//" + _qn("w:t"))
-        if not ts:
-            return False
-        full = "".join((t.text or "") for t in ts)
-        m = _CAP_LEAD_FIG_RE.match(full) or _CAP_LEAD_TAB_RE.match(full) or _CAP_LEAD_CODE_RE.match(full)
-        if not m:
-            return False
-        del_start, del_end = m.start(2), m.end(2)
-        if del_start >= del_end:
-            return False
-        pos = 0
-        for t in ts:
-            tt = t.text or ""
-            if not tt:
-                continue
-            t_len = len(tt)
-            t_end = pos + t_len
-            lo = max(pos, del_start)
-            hi = min(t_end, del_end)
-            if lo < hi:
-                rel_lo = lo - pos
-                rel_hi = hi - pos
-                t.text = tt[:rel_lo] + tt[rel_hi:]
-            pos = t_end
-        return True
 
-    for child in list(body):
-        if child.tag != _qn("w:p"):
-            continue
-        style_val = _para_style(child)
-        txt = _para_text(child).strip()
-        if not txt:
-            continue
-        is_caption_style = style_val in ("ImageCaption", "TableCaption", "Caption")
-        is_caption_by_text = (
-            _INSPECT_ANY_CAP_RE.match(txt) is not None and len(txt) < 120
-        )
-        if is_caption_style or is_caption_by_text:
-            _strip_caption_prefix_space(child)
+def _identify_blocks(p_children):
+    """按顺序扫描 p_children，识别章节块的起止索引。
 
-    # ========== 3. 正文段 run-level bold 清除 ==========
-    # 只针对：样式为 Body Text / First Paragraph / Normal（且不是 caption 段）
-    # Image/Table Caption 样式段保留加粗；Heading 不碰；代码块不碰。
-    # 代码/算法 caption（Body Text 样式里的短标题段）需要保留加粗。
-    BODY_STYLES = {"BodyText", "FirstParagraph", "Normal"}
-    code_cap_re = re.compile(r"^(代码|算法)\s*\d+[\.-]\d+\s+\S")
-    for child in list(body):
-        if child.tag != _qn("w:p"):
-            continue
-        style_val = _para_style(child)
-        if style_val not in BODY_STYLES and style_val != "":
-            continue
-        txt = _para_text(child).strip()
-        if not txt:
-            continue
-        # 跳过摘要前缀段（摘要：/关键词：/Abstract:/Key words）
-        if txt.lstrip().startswith(("摘要", "关键词", "Abstract", "Key words", "Keywords")):
-            continue
-        # 跳过代码/算法 caption 短标题段（<40 字 且开头是"代码X-Y "或"算法X-Y "标题名）
-        # 但"算法X-Y 的伪代码..."是正文段不是 caption，不跳过
-        if code_cap_re.match(txt) and len(txt) < 40 and "的伪代码" not in txt:
-            continue
-        # 跳过论文题目段（居中 16pt + 段文本是中文题目或英文题目整段）
-        pPr_chk = child.find(_qn("w:pPr"))
-        if pPr_chk is not None:
-            jc_chk = pPr_chk.find(_qn("w:jc"))
-            if jc_chk is not None and jc_chk.get(_qn("w:val")) == "center":
-                # 居中段里包含 16pt 的认为是论文题目段，保留 bold
-                has_16pt = False
-                for r_el in child.findall(_qn("w:r")):
-                    rPr = r_el.find(_qn("w:rPr"))
-                    if rPr is None:
+    返回 dict: {block_name: (start, end)}  end 是 exclusive。
+    规则来源：FORMAT_RULES.md §1。
+    """
+    blocks = {}
+    n = len(p_children)
+    # 先找关键锚点索引
+    idx_toc_title = None          # "目  录" 段
+    idx_zh_title = None            # 中文论文题目段（摘要页首行，居中 16pt）
+    idx_en_title = None            # 英文论文题目段
+    idx_zh_abs_body = None         # "摘要：" 段
+    idx_en_abs_body = None         # "Abstract:" 段
+    idx_h1_first = None            # 正文第一个 H1（"1 绪论"）
+    idx_biblio_h1 = None
+    idx_ack_h1 = None
+    idx_achieve_h1 = None
+
+    for i, p in enumerate(p_children):
+        txt = _ptext(p).strip()
+        style = _pstyle(p)
+        is_h1 = style == "Heading1"
+        is_center_16 = False
+        pPr_c = p.find(_qn_("w:pPr"))
+        if pPr_c is not None:
+            jc_c = pPr_c.find(_qn_("w:jc"))
+            if jc_c is not None and jc_c.get(_qn_("w:val")) == "center":
+                for r_el in p.findall(_qn_("w:r")):
+                    rPr_r = r_el.find(_qn_("w:rPr"))
+                    if rPr_r is None:
                         continue
-                    sz = rPr.find(_qn("w:sz"))
-                    if sz is not None and sz.get(_qn("w:val")) == "32":
-                        has_16pt = True
+                    sz = rPr_r.find(_qn_("w:sz"))
+                    if sz is not None and sz.get(_qn_("w:val")) == "32":
+                        is_center_16 = True
                         break
-                if has_16pt:
-                    continue
-        for r_el in child.findall(_qn("w:r")):
-            rPr = r_el.find(_qn("w:rPr"))
-            if rPr is None:
-                continue
-            # 直接清所有 b/bCs（run-level bold）
-            for tag in ("w:b", "w:bCs"):
-                for old in list(rPr.findall(_qn(tag))):
-                    rPr.remove(old)
-
-    # ========== 4. 图/表 开头正文段补首行缩进 2 字符；代码/算法 caption 去首行缩进 ==========
-    # error.txt 规则：
-    #   - "图X.X 展示..." / "表X.X 对比..." 正文段 → 首行缩进 2 字符
-    #   - "代码X-Y 标题"  / "算法X-Y 标题" caption 段 → 无首行缩进
-    #   - "算法X-Y 的伪代码..." 长正文段 → 首行缩进 2 字符
-    for child in list(body):
-        if child.tag != _qn("w:p"):
-            continue
-        style_val = _para_style(child)
-        if style_val in ("ImageCaption", "TableCaption", "Caption"):
-            continue
-        if style_val.startswith("Heading"):
-            continue
-        txt = _para_text(child).strip()
-        if not _INSPECT_ANY_CAP_RE.match(txt):
-            continue
-        pPr = _ensure_pPr(child)
-        ind = pPr.find(_qn("w:ind"))
-        if ind is None:
-            ind = _OxmlElement("w:ind")
-            pPr.append(ind)
-        # 判定是代码/算法 caption 还是正文段
-        is_code_algo_cap = (
-            code_cap_re.match(txt) and len(txt) < 40 and "的伪代码" not in txt
-        )
-        # 清掉现有 firstLine/firstLineChars
-        for attr in ("w:firstLine", "w:firstLineChars"):
-            if ind.get(_qn(attr)) is not None:
-                del ind.attrib[_qn(attr)]
-        if is_code_algo_cap:
-            # 代码/算法 caption 段：首行缩进 0
-            ind.set(_qn("w:firstLineChars"), "0")
-            ind.set(_qn("w:firstLine"), "0")
-        else:
-            # 正文段（图X.X 展示... / 算法X-Y 的伪代码...）：首行缩进 2 字符
-            ind.set(_qn("w:firstLineChars"), "200")
-            ind.set(_qn("w:firstLine"), "480")
-
-    # ========== 5. Bibliography 段行距 line=400 lineRule=exact（固定 20 磅） ==========
-    # 覆盖 Bibliography 样式 + 所有 [N] 开头的实际段
-    for s in styles_el.findall(_qn("w:style")):
-        sid = s.get(_qn("w:styleId"))
-        if sid != "Bibliography":
-            continue
-        pPr = s.find(_qn("w:pPr"))
-        if pPr is None:
-            pPr = _OxmlElement("w:pPr")
-            s.append(pPr)
-        sp = _ensure_child(pPr, "w:spacing")
-        sp.set(_qn("w:line"), "400")
-        sp.set(_qn("w:lineRule"), "exact")
-
-    bracket_re = re.compile(r"^\s*\[\d+\]\s")
-    for p in doc.paragraphs:
-        style_name = p.style.name if p.style else ""
-        txt = p.text or ""
-        is_bib_style = style_name.lower().startswith(("bibliograph", "reference"))
-        is_bib_by_text = bracket_re.match(txt) is not None
-        if not (is_bib_style or is_bib_by_text):
-            continue
-        pPr = _ensure_pPr(p._element)
-        sp = _ensure_child(pPr, "w:spacing")
-        sp.set(_qn("w:line"), "400")
-        sp.set(_qn("w:lineRule"), "exact")
-
-    # ========== 6. 摘要页/Abstract 页论文题目段 spacing before=120(6磅) after=31(1.54磅) ==========
-    # error.txt 第17/19条："第4页第1段(基于Apollo...路径规划算法实现)" 段前要6磅段后1.54磅
-    # 摘要页第1段是**论文题目段**（居中 16pt Normal），不是"摘要："段。
-    # 定位：在"摘要："/"Abstract:"段前紧邻的居中非空段。
-    zh_abs_idx = None
-    en_abs_idx = None
-    body_children = list(body)
-    p_children = [c for c in body_children if c.tag == _qn("w:p")]
-    for idx, child in enumerate(p_children):
-        txt = _para_text(child).lstrip()
-        if zh_abs_idx is None and txt.startswith(("摘要：", "摘要:")):
-            zh_abs_idx = idx
-        elif en_abs_idx is None and txt.startswith(("Abstract:", "Abstract：")) or (
-            txt.startswith("Abstract") and len(txt) > 8 and txt[8] in (" ", ":", "：")
+        if idx_toc_title is None and txt in ("目录", "目 录", "目  录"):
+            idx_toc_title = i
+        if idx_zh_abs_body is None and txt.startswith(_ABSTRACT_ZH_PFX):
+            idx_zh_abs_body = i
+        if idx_en_abs_body is None and (
+            txt.startswith(_ABSTRACT_EN_PFX)
+            or (txt.startswith("Abstract") and len(txt) > 8 and txt[8] in " :：")
         ):
-            if en_abs_idx is None:
-                en_abs_idx = idx
+            idx_en_abs_body = i
+        if idx_h1_first is None and is_h1 and (txt.startswith("1 ") or txt.startswith("1绪论")):
+            idx_h1_first = i
+        if idx_biblio_h1 is None and is_h1 and "参考文献" in txt:
+            idx_biblio_h1 = i
+        if idx_ack_h1 is None and is_h1 and ("致谢" in txt or "致 谢" in txt):
+            idx_ack_h1 = i
+        if idx_achieve_h1 is None and is_h1 and "本科期间的学习与科研成果" in txt:
+            idx_achieve_h1 = i
 
-    for abs_idx in (zh_abs_idx, en_abs_idx):
-        if abs_idx is None:
-            continue
-        # 向前回溯，找首个非空段（即论文题目段）
-        for back in range(abs_idx - 1, max(-1, abs_idx - 6), -1):
-            prev = p_children[back]
-            prev_txt = _para_text(prev).strip()
-            if not prev_txt:
+    # 中文题目 = zh_abs_body 前紧邻的居中 16pt 段；英文题目 = en_abs_body 前紧邻的居中 16pt 段
+    if idx_zh_abs_body is not None:
+        for back in range(idx_zh_abs_body - 1, max(-1, idx_zh_abs_body - 8), -1):
+            p = p_children[back]
+            if not _ptext(p).strip():
                 continue
-            pPr = _ensure_pPr(prev)
-            sp = _ensure_child(pPr, "w:spacing")
-            sp.set(_qn("w:before"), "120")
-            sp.set(_qn("w:after"), "31")
-            for tag in ("w:beforeLines", "w:afterLines", "w:beforeAutospacing", "w:afterAutospacing"):
-                if sp.get(_qn(tag)) is not None:
-                    sp.set(_qn(tag), "0")
+            pPr_c = p.find(_qn_("w:pPr"))
+            if pPr_c is None:
+                break
+            jc_c = pPr_c.find(_qn_("w:jc"))
+            if jc_c is not None and jc_c.get(_qn_("w:val")) == "center":
+                idx_zh_title = back
+            break
+    if idx_en_abs_body is not None:
+        for back in range(idx_en_abs_body - 1, max(-1, idx_en_abs_body - 8), -1):
+            p = p_children[back]
+            if not _ptext(p).strip():
+                continue
+            pPr_c = p.find(_qn_("w:pPr"))
+            if pPr_c is None:
+                break
+            jc_c = pPr_c.find(_qn_("w:jc"))
+            if jc_c is not None and jc_c.get(_qn_("w:val")) == "center":
+                idx_en_title = back
             break
 
-    # ========== 7. 中文半角逗号替换为全角（中文紧邻半角逗号场景） ==========
-    # error.txt 报 10 处。匹配：CJK+","+(CJK|数字|字母)、包括前后是英文但紧接中文的边界
-    cjk_comma_re = re.compile(r"([一-鿿]),(?=[一-鿿])")
-    # 还包括 CJK 前有 ASCII 字母/数字结尾的中文字面
-    cjk_comma_re2 = re.compile(r"([一-鿿])\s*,\s*([一-鿿])")
+    # 拼块区间
+    if idx_toc_title is not None:
+        end = idx_zh_title if idx_zh_title is not None else idx_h1_first or n
+        blocks["toc"] = (idx_toc_title, end)
+    if idx_zh_title is not None:
+        end = idx_en_title if idx_en_title is not None else idx_h1_first or n
+        blocks["zh_abstract"] = (idx_zh_title, end)
+    if idx_en_title is not None:
+        end = idx_h1_first or n
+        blocks["en_abstract"] = (idx_en_title, end)
+    if idx_h1_first is not None:
+        end = idx_biblio_h1 if idx_biblio_h1 is not None else n
+        blocks["body"] = (idx_h1_first, end)
+    if idx_biblio_h1 is not None:
+        end = idx_ack_h1 if idx_ack_h1 is not None else n
+        blocks["bibliography"] = (idx_biblio_h1, end)
+    if idx_ack_h1 is not None:
+        end = idx_achieve_h1 if idx_achieve_h1 is not None else n
+        blocks["acknowledge"] = (idx_ack_h1, end)
+    if idx_achieve_h1 is not None:
+        blocks["achievement"] = (idx_achieve_h1, n)
+    return blocks
+
+
+# ---------- §4 样式级规则 ----------
+
+
+def _rule_styles(styles_el):
+    """FORMAT_RULES.md §4 样式级规则。"""
+    # Heading3: sz=24 (12pt 小四)
+    for s in styles_el.findall(_qn_("w:style")):
+        sid = s.get(_qn_("w:styleId"))
+        if sid not in ("Heading3", "Heading3Char"):
+            continue
+        rPr = s.find(_qn_("w:rPr"))
+        if rPr is None:
+            rPr = _el_("w:rPr")
+            s.append(rPr)
+        for tag in ("w:sz", "w:szCs"):
+            for old in list(rPr.findall(_qn_(tag))):
+                rPr.remove(old)
+            el = _el_(tag)
+            el.set(_qn_("w:val"), "24")
+            rPr.append(el)
+    # TOC1/TOC2/TOC3: spacing after=0 line=360 auto + tabs right dot
+    # 底层逻辑：检测器要求"目录项无首行缩进"（error.txt #1,7,15,23,31,39,47,55,57,59,61）
+    # 所有 TOC 级别 firstLine=0；层级视觉由 left 整段缩进体现（TOC2/3 在 left 上加缩进）
+    for s in styles_el.findall(_qn_("w:style")):
+        sid = s.get(_qn_("w:styleId"))
+        if sid not in ("TOC1", "TOC2", "TOC3"):
+            continue
+        pPr = s.find(_qn_("w:pPr"))
+        if pPr is None:
+            pPr = _el_("w:pPr")
+            s.append(pPr)
+        _set_spacing(pPr, before=0, after=0, line=360, lineRule="auto")
+        ind = _ensure_child(pPr, "w:ind")
+        # 清所有缩进属性，从干净状态开始
+        for attr in ("leftChars", "left", "firstLineChars", "firstLine",
+                     "rightChars", "right", "hanging", "hangingChars"):
+            k = _qn_(f"w:{attr}")
+            if k in ind.attrib:
+                del ind.attrib[k]
+        # firstLine=0：所有级别无首行缩进（硬指标）
+        ind.set(_qn_("w:firstLineChars"), "0")
+        ind.set(_qn_("w:firstLine"), "0")
+        # 层级缩进：TOC2/TOC3 用 left（整段缩进，非首行）
+        if sid == "TOC2":
+            ind.set(_qn_("w:leftChars"), "200")
+            ind.set(_qn_("w:left"), "480")
+        elif sid == "TOC3":
+            ind.set(_qn_("w:leftChars"), "400")
+            ind.set(_qn_("w:left"), "960")
+        # tab right dot
+        tabs = _ensure_child(pPr, "w:tabs")
+        has_right_dot = False
+        for tab in tabs.findall(_qn_("w:tab")):
+            if tab.get(_qn_("w:val")) == "right":
+                tab.set(_qn_("w:leader"), "dot")
+                if not tab.get(_qn_("w:pos")):
+                    tab.set(_qn_("w:pos"), "8306")
+                has_right_dot = True
+        if not has_right_dot:
+            tab_el = _el_("w:tab")
+            tab_el.set(_qn_("w:val"), "right")
+            tab_el.set(_qn_("w:leader"), "dot")
+            tab_el.set(_qn_("w:pos"), "8306")
+            tabs.append(tab_el)
+    # Bibliography: spacing line=400 lineRule=exact
+    for s in styles_el.findall(_qn_("w:style")):
+        sid = s.get(_qn_("w:styleId"))
+        if sid != "Bibliography":
+            continue
+        pPr = s.find(_qn_("w:pPr"))
+        if pPr is None:
+            pPr = _el_("w:pPr")
+            s.append(pPr)
+        _set_spacing(pPr, line=400, lineRule="exact")
+
+
+# ---------- §2.1 toc 块 ----------
+
+
+def _rule_toc(p_children, block):
+    """FORMAT_RULES.md §2.1。
+    - 目录标题"目  录"段：加粗 run
+    - TOC1/TOC2 段的样式层属性由 _rule_styles 负责；段级不另设
+    """
+    if block is None:
+        return
+    start, end = block
+    # 目录标题段（首段）
+    p_title = p_children[start]
+    for r_el in p_title.findall(_qn_("w:r")):
+        _run_set_bold(r_el)
+
+
+# ---------- §2.2 abstract 块 ----------
+
+
+def _rule_abstract_page(p_children, block, lang):
+    """FORMAT_RULES.md §2.2。论文题目段 spacing before=120 after=31 + 加粗。"""
+    if block is None:
+        return
+    start, end = block
+    # 第一段是论文题目段（居中 16pt）
+    p_title = p_children[start]
+    pPr = _ensure_pPr(p_title)
+    _set_spacing(pPr, before=120, after=31, line=360, lineRule="auto")
+    for r_el in p_title.findall(_qn_("w:r")):
+        _run_set_bold(r_el)
+
+
+# ---------- §2.3 body 块 ----------
+
+
+def _rule_body(p_children, block):
+    """FORMAT_RULES.md §2.3 正文。
+
+    按段类型分派：H1/H2/H3 不动（样式控制），正文/caption/公式/代码 caption 分别处理。
+    """
+    if block is None:
+        return
+    start, end = block
+    for i in range(start, end):
+        p = p_children[i]
+        style = _pstyle(p)
+        if style.startswith("Heading"):
+            continue
+        txt = _ptext(p).strip()
+        if not txt:
+            continue
+        pPr = _ensure_pPr(p)
+        # 公式编号纯段 → 右对齐
+        if _EQN_NUMBER_RE.match(txt):
+            _set_jc(pPr, "right")
+            continue
+        # Image/Table Caption 样式段：样式已经居中无缩进，跳过（检测器对 caption 无首行缩进无异议）
+        if style in ("ImageCaption", "TableCaption", "Caption"):
+            _set_indent(pPr, firstLineChars=0, firstLine=0)
+            continue
+        # 代码/算法 caption 判定（根因级）：
+        #   pandoc 把 \noindent\textbf{代码X-Y ...} 输出为整段所有 run 加粗。
+        #   正文段 "算法5-1 给出..." 虽以"算法N-M"开头但 run 不加粗。
+        #   所以真正的区分条件是"段内所有非空 run 都加粗" — 无需长度阈值。
+        if (_CODE_ALGO_SHORT_CAP_RE.match(txt)
+                and "的伪代码" not in txt
+                and _all_runs_bold(p)):
+            _set_indent(pPr, firstLineChars=0, firstLine=0)
+            _set_jc(pPr, "center")
+            continue
+        # 其他以"图X.X/表X.X/代码X-Y/算法X-Y"开头的正文段 → 首行缩进 2 字符
+        if _CAP_ANY_RE.match(txt):
+            _set_indent(pPr, firstLineChars=200, firstLine=480)
+            # "算法X-Y 的伪代码..." 等属于正文描述段：两端对齐（因 caption 处理流水可能误刷成居中）
+            if "的伪代码" in txt:
+                _set_jc(pPr, "both")
+            continue
+
+
+# ---------- §2.4 bibliography 块 ----------
+
+
+def _rule_bibliography(p_children, block):
+    """FORMAT_RULES.md §2.4。行距固定 20 磅 exact。"""
+    if block is None:
+        return
+    start, end = block
+    for i in range(start, end):
+        p = p_children[i]
+        txt = _ptext(p)
+        style = _pstyle(p)
+        if style == "Heading1":
+            continue  # "参考文献" 标题由 Heading1 样式控制
+        # Bibliography 样式段 + [N] 开头段
+        if not (style.lower().startswith(("bibliograph", "reference")) or _BRACKET_REF_RE.match(txt)):
+            continue
+        pPr = _ensure_pPr(p)
+        _set_spacing(pPr, line=400, lineRule="exact")
+
+
+# ---------- §2.5 acknowledge 块 ----------
+
+
+def _rule_acknowledge(p_children, block):
+    """FORMAT_RULES.md §2.5。H1 样式控制 "致 谢" 标题，内容段 1.5 倍行距已由主处理链保证。"""
+    # 无须额外处理
+    return
+
+
+# ---------- §2.6 achievement 块 ----------
+
+
+def _rule_achievement(p_children, block):
+    """FORMAT_RULES.md §2.6。成果页标题居中 + 正文按正文规则。"""
+    if block is None:
+        return
+    start, end = block
+    p_title = p_children[start]
+    style = _pstyle(p_title)
+    if style != "Heading1":
+        pPr = _ensure_pPr(p_title)
+        _set_jc(pPr, "center")
+
+
+# ---------- §3 跨块字符级规则 ----------
+
+
+def _strip_caption_prefix_space(p_el):
+    """caption 段"图 N.M" / "表 N.M" / "代码 N-M" → "图N.M"（去所有前置空白）。"""
+    ts = p_el.findall(".//" + _qn_("w:t"))
+    if not ts:
+        return False
+    full = "".join((t.text or "") for t in ts)
+    m = _CAP_LEAD_FIG_RE.match(full) or _CAP_LEAD_TAB_RE.match(full) or _CAP_LEAD_CODE_RE.match(full)
+    if not m:
+        return False
+    del_start, del_end = m.start(2), m.end(2)
+    if del_start >= del_end:
+        return False
+    pos = 0
+    for t in ts:
+        tt = t.text or ""
+        if not tt:
+            continue
+        t_len = len(tt)
+        t_end = pos + t_len
+        lo = max(pos, del_start)
+        hi = min(t_end, del_end)
+        if lo < hi:
+            rel_lo = lo - pos
+            rel_hi = hi - pos
+            t.text = tt[:rel_lo] + tt[rel_hi:]
+        pos = t_end
+    return True
+
+
+def _rule_caption_prefix_space(body):
+    """FORMAT_RULES.md §3.9 + §5.1-5.2：图/表/代码/算法 caption 前缀与数字之间无空格。"""
+    for child in list(body):
+        if child.tag != _qn_("w:p"):
+            continue
+        style_val = _pstyle(child)
+        txt = _ptext(child).strip()
+        if not txt:
+            continue
+        is_cap_style = style_val in ("ImageCaption", "TableCaption", "Caption")
+        is_cap_by_text = _CAP_ANY_RE.match(txt) is not None and len(txt) < 120
+        if is_cap_style or is_cap_by_text:
+            _strip_caption_prefix_space(child)
+
+
+def _rule_cjk_half_comma(doc):
+    """FORMAT_RULES.md §3.5：中文段里半角 "," → 全角"，"。参考文献段跳过。"""
     for p in doc.paragraphs:
         style_name = p.style.name if p.style else ""
         if style_name.lower().startswith(("bibliograph", "reference")):
-            continue  # 参考文献英文半角逗号保留
-        # 代码块不动
+            continue
         if style_name in ("SourceCode", "Verbatim"):
             continue
         for r in p.runs:
             if not r.text:
                 continue
-            new_text = cjk_comma_re2.sub(r"\1，\2", r.text)
+            new_text = _CJK_COMMA_RE.sub(r"\1，\2", r.text)
             if new_text != r.text:
                 r.text = new_text
 
-    # ========== 8. "算法 N-M 的伪代码..." 说明段对齐改 both ==========
-    algo_desc_re = re.compile(r"^算法\s*\d+[\.-]\d+\s*的伪代码")
-    for child in list(body):
-        if child.tag != _qn("w:p"):
-            continue
-        txt = _para_text(child).strip()
-        if not algo_desc_re.match(txt):
-            continue
-        pPr = _ensure_pPr(child)
-        jc = _ensure_child(pPr, "w:jc")
-        jc.set(_qn("w:val"), "both")
 
-    # ========== 9. TOC1/TOC2 样式：tab leader + spacing + ind + bold ==========
-    # error.txt 新版报：
-    #   - 目录段后要 0（当前继承 Normal 10）
-    #   - 目录行距要 1.5 倍（当前单倍）
-    #   - 目录首行缩进要 2 字符（TOC1/TOC2 均要求）
-    for s in styles_el.findall(_qn("w:style")):
-        sid = s.get(_qn("w:styleId"))
-        if sid not in ("TOC1", "TOC2", "TOC3"):
-            continue
-        pPr = s.find(_qn("w:pPr"))
-        if pPr is None:
-            pPr = _OxmlElement("w:pPr")
-            s.append(pPr)
-        # (a) spacing: after=0, line=360, lineRule=auto (1.5倍)
-        sp = _ensure_child(pPr, "w:spacing")
-        sp.set(_qn("w:before"), "0")
-        sp.set(_qn("w:after"), "0")
-        sp.set(_qn("w:line"), "360")
-        sp.set(_qn("w:lineRule"), "auto")
-        for tag in ("w:beforeLines", "w:afterLines", "w:beforeAutospacing", "w:afterAutospacing"):
-            if sp.get(_qn(tag)) is not None:
-                sp.set(_qn(tag), "0")
-        # (b) ind: firstLineChars=200, firstLine=480 （2字符首行缩进）；清 left / leftChars
-        ind = pPr.find(_qn("w:ind"))
-        if ind is None:
-            ind = _OxmlElement("w:ind")
-            pPr.append(ind)
-        # 清所有现有 ind 属性
-        for attr in ("leftChars", "left", "firstLineChars", "firstLine", "rightChars", "right"):
-            k = _qn(f"w:{attr}")
-            if k in ind.attrib:
-                del ind.attrib[k]
-        ind.set(_qn("w:firstLineChars"), "200")
-        ind.set(_qn("w:firstLine"), "480")
-        # (c) tab leader dot
-        tabs = pPr.find(_qn("w:tabs"))
-        if tabs is None:
-            tabs = _OxmlElement("w:tabs")
-            pPr.append(tabs)
-        has_right_dot = False
-        for tab in tabs.findall(_qn("w:tab")):
-            if tab.get(_qn("w:val")) == "right":
-                tab.set(_qn("w:leader"), "dot")
-                if not tab.get(_qn("w:pos")):
-                    tab.set(_qn("w:pos"), "8306")
-                has_right_dot = True
-        if not has_right_dot:
-            tab_el = _OxmlElement("w:tab")
-            tab_el.set(_qn("w:val"), "right")
-            tab_el.set(_qn("w:leader"), "dot")
-            tab_el.set(_qn("w:pos"), "8306")
-            tabs.append(tab_el)
+def _rule_body_runlevel_bold(p_children, blocks):
+    """FORMAT_RULES.md §3.6：正文段 run-level bold 清除。
 
-    # ========== 10. "目  录" 标题段 + 论文题目段 run-level 加 bold ==========
-    # error.txt 新版第1、104-106 条：字形要求加粗实际部分常规
-    def _set_run_bold(r_el):
-        rPr = r_el.find(_qn("w:rPr"))
-        if rPr is None:
-            rPr = _OxmlElement("w:rPr")
-            r_el.insert(0, rPr)
-        for tag in ("w:b", "w:bCs"):
-            for old in list(rPr.findall(_qn(tag))):
-                rPr.remove(old)
-            el = _OxmlElement(tag)
-            rPr.append(el)
+    保留加粗的段：
+      - Image/Table Caption 样式段（caption）
+      - Heading 系列段
+      - 代码/算法 caption 段（源自 \\noindent\\textbf{代码X-Y ...}，整段所有 run 加粗）
+      - 摘要/Abstract/关键词/Key words 前缀段
+      - 目录标题段、论文题目段（居中 16pt）
+      - 参考文献标题段（H1）
 
-    p_children = [c for c in list(body) if c.tag == _qn("w:p")]
-    for child in p_children:
-        txt = _para_text(child).strip()
-        # 目录标题段："目 录" / "目  录" / "目录"（居中 Normal 样式）
-        is_toc_title = txt in ("目录", "目 录", "目  录")
-        # 论文题目段：居中 Normal 非空且字号 16pt（sz=32）的段
-        pPr_c = child.find(_qn("w:pPr"))
-        jc_c = pPr_c.find(_qn("w:jc")) if pPr_c is not None else None
-        is_center = jc_c is not None and jc_c.get(_qn("w:val")) == "center"
-        is_title_like = False
-        if is_center and txt and not _INSPECT_ANY_CAP_RE.match(txt) and txt not in ("目录", "目 录", "目  录"):
-            for r_el in child.findall(_qn("w:r")):
-                rPr = r_el.find(_qn("w:rPr"))
-                if rPr is None:
-                    continue
-                sz = rPr.find(_qn("w:sz"))
-                if sz is not None and sz.get(_qn("w:val")) == "32":
-                    is_title_like = True
-                    break
-        if not (is_toc_title or is_title_like):
-            continue
-        for r_el in child.findall(_qn("w:r")):
-            if (r_el.find(_qn("w:t")) is None or
-                    not (r_el.find(_qn("w:t")).text or "").strip()):
-                # 空 run 也加 bold，避免 "部分常规"
-                _set_run_bold(r_el)
+    作用范围：body 块 + acknowledge 块 + achievement 块（需要清除 run 级 bold）
+    """
+    ranges = []
+    for k in ("body", "acknowledge", "achievement", "bibliography"):
+        if k in blocks:
+            ranges.append(blocks[k])
+    if not ranges:
+        return
+    for start, end in ranges:
+        for i in range(start, end):
+            p = p_children[i]
+            style = _pstyle(p)
+            if style.startswith("Heading"):
                 continue
-            _set_run_bold(r_el)
+            if style in ("ImageCaption", "TableCaption", "Caption"):
+                continue
+            txt = _ptext(p).strip()
+            if not txt:
+                continue
+            if txt.lstrip().startswith(("摘要", "关键词", "Abstract", "Key words", "Keywords")):
+                continue
+            # 代码/算法 caption 保留加粗（判定条件与 _rule_body 完全一致）
+            if (_CODE_ALGO_SHORT_CAP_RE.match(txt)
+                    and "的伪代码" not in txt
+                    and _all_runs_bold(p)):
+                continue
+            # 纯参考文献条目（[N] 开头）不清 bold（通常无 bold 无所谓，清了也无害）
+            for r_el in p.findall(_qn_("w:r")):
+                _run_clear_bold(r_el)
 
-    # ========== 11. 公式编号段"(N-M)"/"（N-M）" 纯编号段 右对齐 ==========
-    # error.txt 新版第123、127条：公式编号应右对齐
-    eqn_re = re.compile(r"^\s*[（(]\s*\d+[\.-]\d+\s*[）)]\s*$")
-    for child in p_children:
-        txt = _para_text(child).strip()
-        if not eqn_re.match(txt):
+
+def _rule_abstract_runlevel_bold(p_children, blocks):
+    """摘要/Abstract 块内：论文题目段保留加粗；前缀段保留加粗；内容段清除 run-level bold。"""
+    for k in ("zh_abstract", "en_abstract"):
+        if k not in blocks:
             continue
-        pPr = _ensure_pPr(child)
-        jc = _ensure_child(pPr, "w:jc")
-        jc.set(_qn("w:val"), "right")
+        start, end = blocks[k]
+        # 跳过第一段（论文题目段）
+        for i in range(start + 1, end):
+            p = p_children[i]
+            txt = _ptext(p).strip()
+            if not txt:
+                continue
+            # 摘要/关键词前缀段本身需要加粗，但只保留前缀 run 的 bold 已由 bolden_abstract_prefixes 处理
+            # 这里不额外清除以免破坏前缀
+            if txt.lstrip().startswith(("摘要", "关键词", "Abstract", "Key words", "Keywords")):
+                continue
+            for r_el in p.findall(_qn_("w:r")):
+                _run_clear_bold(r_el)
 
+
+# ---------- 主入口 ----------
+
+
+def _apply_format_rules(doc):
+    """FORMAT_RULES.md 规则驱动的统一格式处理器入口。"""
+    from docx.oxml.ns import qn as _qn
+    body = doc.element.body
+    styles_el = doc.styles.element
+
+    # 1. 样式级规则（Heading3 / TOC1/2 / Bibliography）
+    _rule_styles(styles_el)
+
+    # 2. 识别章节块
+    p_children = [c for c in list(body) if c.tag == _qn("w:p")]
+    blocks = _identify_blocks(p_children)
+
+    # 3. 按块应用规则
+    _rule_toc(p_children, blocks.get("toc"))
+    _rule_abstract_page(p_children, blocks.get("zh_abstract"), "zh")
+    _rule_abstract_page(p_children, blocks.get("en_abstract"), "en")
+    _rule_body(p_children, blocks.get("body"))
+    _rule_bibliography(p_children, blocks.get("bibliography"))
+    _rule_acknowledge(p_children, blocks.get("acknowledge"))
+    _rule_achievement(p_children, blocks.get("achievement"))
+
+    # 4. 跨块字符级规则
+    _rule_caption_prefix_space(body)
+    _rule_cjk_half_comma(doc)
+    _rule_body_runlevel_bold(p_children, blocks)
+    _rule_abstract_runlevel_bold(p_children, blocks)
+
+
+# 向后兼容：旧入口名继续暴露，实际跑新规则链
+def _close_inspector_issues(doc) -> None:
+    _apply_format_rules(doc)
