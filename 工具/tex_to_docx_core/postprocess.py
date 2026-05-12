@@ -1092,8 +1092,10 @@ def _close_inspector_issues(doc) -> None:
 
     # ========== 3. 正文段 run-level bold 清除 ==========
     # 只针对：样式为 Body Text / First Paragraph / Normal（且不是 caption 段）
-    # 图/表/算法 caption 要保留加粗；Heading 不碰；代码块不碰
+    # Image/Table Caption 样式段保留加粗；Heading 不碰；代码块不碰。
+    # 代码/算法 caption（Body Text 样式里的短标题段）需要保留加粗。
     BODY_STYLES = {"BodyText", "FirstParagraph", "Normal"}
+    code_cap_re = re.compile(r"^(代码|算法)\s*\d+[\.-]\d+\s+\S")
     for child in list(body):
         if child.tag != _qn("w:p"):
             continue
@@ -1103,23 +1105,44 @@ def _close_inspector_issues(doc) -> None:
         txt = _para_text(child).strip()
         if not txt:
             continue
-        # 跳过 caption 段（图/表/代码/算法 短标题段）
-        if _INSPECT_ANY_CAP_RE.match(txt) and len(txt) < 50:
-            continue
-        # 跳过摘要前缀（摘要：/关键词：/Abstract: 整段首 run 需保留加粗）
+        # 跳过摘要前缀段（摘要：/关键词：/Abstract:/Key words）
         if txt.lstrip().startswith(("摘要", "关键词", "Abstract", "Key words", "Keywords")):
             continue
+        # 跳过代码/算法 caption 短标题段（<40 字 且开头是"代码X-Y "或"算法X-Y "标题名）
+        # 但"算法X-Y 的伪代码..."是正文段不是 caption，不跳过
+        if code_cap_re.match(txt) and len(txt) < 40 and "的伪代码" not in txt:
+            continue
+        # 跳过论文题目段（居中 16pt + 段文本是中文题目或英文题目整段）
+        pPr_chk = child.find(_qn("w:pPr"))
+        if pPr_chk is not None:
+            jc_chk = pPr_chk.find(_qn("w:jc"))
+            if jc_chk is not None and jc_chk.get(_qn("w:val")) == "center":
+                # 居中段里包含 16pt 的认为是论文题目段，保留 bold
+                has_16pt = False
+                for r_el in child.findall(_qn("w:r")):
+                    rPr = r_el.find(_qn("w:rPr"))
+                    if rPr is None:
+                        continue
+                    sz = rPr.find(_qn("w:sz"))
+                    if sz is not None and sz.get(_qn("w:val")) == "32":
+                        has_16pt = True
+                        break
+                if has_16pt:
+                    continue
         for r_el in child.findall(_qn("w:r")):
             rPr = r_el.find(_qn("w:rPr"))
             if rPr is None:
                 continue
-            # 跳过本 run 明显是"缩写/符号/数学"独立强调：不做；直接清所有 b/bCs
+            # 直接清所有 b/bCs（run-level bold）
             for tag in ("w:b", "w:bCs"):
                 for old in list(rPr.findall(_qn(tag))):
                     rPr.remove(old)
 
-    # ========== 4. 图/表/代码/算法开头正文段补首行缩进 2 字符 ==========
-    # error.txt 报的"首行缩进 0 实际"：图X.X/表X.X 开头但非 caption 的正文段
+    # ========== 4. 图/表 开头正文段补首行缩进 2 字符；代码/算法 caption 去首行缩进 ==========
+    # error.txt 规则：
+    #   - "图X.X 展示..." / "表X.X 对比..." 正文段 → 首行缩进 2 字符
+    #   - "代码X-Y 标题"  / "算法X-Y 标题" caption 段 → 无首行缩进
+    #   - "算法X-Y 的伪代码..." 长正文段 → 首行缩进 2 字符
     for child in list(body):
         if child.tag != _qn("w:p"):
             continue
@@ -1136,12 +1159,22 @@ def _close_inspector_issues(doc) -> None:
         if ind is None:
             ind = _OxmlElement("w:ind")
             pPr.append(ind)
-        # 清掉可能的 firstLine=0
+        # 判定是代码/算法 caption 还是正文段
+        is_code_algo_cap = (
+            code_cap_re.match(txt) and len(txt) < 40 and "的伪代码" not in txt
+        )
+        # 清掉现有 firstLine/firstLineChars
         for attr in ("w:firstLine", "w:firstLineChars"):
             if ind.get(_qn(attr)) is not None:
                 del ind.attrib[_qn(attr)]
-        ind.set(_qn("w:firstLineChars"), "200")
-        ind.set(_qn("w:firstLine"), "480")
+        if is_code_algo_cap:
+            # 代码/算法 caption 段：首行缩进 0
+            ind.set(_qn("w:firstLineChars"), "0")
+            ind.set(_qn("w:firstLine"), "0")
+        else:
+            # 正文段（图X.X 展示... / 算法X-Y 的伪代码...）：首行缩进 2 字符
+            ind.set(_qn("w:firstLineChars"), "200")
+            ind.set(_qn("w:firstLine"), "480")
 
     # ========== 5. Bibliography 段行距 line=400 lineRule=exact（固定 20 磅） ==========
     # 覆盖 Bibliography 样式 + 所有 [N] 开头的实际段
@@ -1237,7 +1270,11 @@ def _close_inspector_issues(doc) -> None:
         jc = _ensure_child(pPr, "w:jc")
         jc.set(_qn("w:val"), "both")
 
-    # ========== 9. TOC1/TOC2 样式 tab leader 再次确认（样式级已有，这里保险） ==========
+    # ========== 9. TOC1/TOC2 样式：tab leader + spacing + ind + bold ==========
+    # error.txt 新版报：
+    #   - 目录段后要 0（当前继承 Normal 10）
+    #   - 目录行距要 1.5 倍（当前单倍）
+    #   - 目录首行缩进要 2 字符（TOC1/TOC2 均要求）
     for s in styles_el.findall(_qn("w:style")):
         sid = s.get(_qn("w:styleId"))
         if sid not in ("TOC1", "TOC2", "TOC3"):
@@ -1246,6 +1283,28 @@ def _close_inspector_issues(doc) -> None:
         if pPr is None:
             pPr = _OxmlElement("w:pPr")
             s.append(pPr)
+        # (a) spacing: after=0, line=360, lineRule=auto (1.5倍)
+        sp = _ensure_child(pPr, "w:spacing")
+        sp.set(_qn("w:before"), "0")
+        sp.set(_qn("w:after"), "0")
+        sp.set(_qn("w:line"), "360")
+        sp.set(_qn("w:lineRule"), "auto")
+        for tag in ("w:beforeLines", "w:afterLines", "w:beforeAutospacing", "w:afterAutospacing"):
+            if sp.get(_qn(tag)) is not None:
+                sp.set(_qn(tag), "0")
+        # (b) ind: firstLineChars=200, firstLine=480 （2字符首行缩进）；清 left / leftChars
+        ind = pPr.find(_qn("w:ind"))
+        if ind is None:
+            ind = _OxmlElement("w:ind")
+            pPr.append(ind)
+        # 清所有现有 ind 属性
+        for attr in ("leftChars", "left", "firstLineChars", "firstLine", "rightChars", "right"):
+            k = _qn(f"w:{attr}")
+            if k in ind.attrib:
+                del ind.attrib[k]
+        ind.set(_qn("w:firstLineChars"), "200")
+        ind.set(_qn("w:firstLine"), "480")
+        # (c) tab leader dot
         tabs = pPr.find(_qn("w:tabs"))
         if tabs is None:
             tabs = _OxmlElement("w:tabs")
@@ -1263,4 +1322,57 @@ def _close_inspector_issues(doc) -> None:
             tab_el.set(_qn("w:leader"), "dot")
             tab_el.set(_qn("w:pos"), "8306")
             tabs.append(tab_el)
+
+    # ========== 10. "目  录" 标题段 + 论文题目段 run-level 加 bold ==========
+    # error.txt 新版第1、104-106 条：字形要求加粗实际部分常规
+    def _set_run_bold(r_el):
+        rPr = r_el.find(_qn("w:rPr"))
+        if rPr is None:
+            rPr = _OxmlElement("w:rPr")
+            r_el.insert(0, rPr)
+        for tag in ("w:b", "w:bCs"):
+            for old in list(rPr.findall(_qn(tag))):
+                rPr.remove(old)
+            el = _OxmlElement(tag)
+            rPr.append(el)
+
+    p_children = [c for c in list(body) if c.tag == _qn("w:p")]
+    for child in p_children:
+        txt = _para_text(child).strip()
+        # 目录标题段："目 录" / "目  录" / "目录"（居中 Normal 样式）
+        is_toc_title = txt in ("目录", "目 录", "目  录")
+        # 论文题目段：居中 Normal 非空且字号 16pt（sz=32）的段
+        pPr_c = child.find(_qn("w:pPr"))
+        jc_c = pPr_c.find(_qn("w:jc")) if pPr_c is not None else None
+        is_center = jc_c is not None and jc_c.get(_qn("w:val")) == "center"
+        is_title_like = False
+        if is_center and txt and not _INSPECT_ANY_CAP_RE.match(txt) and txt not in ("目录", "目 录", "目  录"):
+            for r_el in child.findall(_qn("w:r")):
+                rPr = r_el.find(_qn("w:rPr"))
+                if rPr is None:
+                    continue
+                sz = rPr.find(_qn("w:sz"))
+                if sz is not None and sz.get(_qn("w:val")) == "32":
+                    is_title_like = True
+                    break
+        if not (is_toc_title or is_title_like):
+            continue
+        for r_el in child.findall(_qn("w:r")):
+            if (r_el.find(_qn("w:t")) is None or
+                    not (r_el.find(_qn("w:t")).text or "").strip()):
+                # 空 run 也加 bold，避免 "部分常规"
+                _set_run_bold(r_el)
+                continue
+            _set_run_bold(r_el)
+
+    # ========== 11. 公式编号段"(N-M)"/"（N-M）" 纯编号段 右对齐 ==========
+    # error.txt 新版第123、127条：公式编号应右对齐
+    eqn_re = re.compile(r"^\s*[（(]\s*\d+[\.-]\d+\s*[）)]\s*$")
+    for child in p_children:
+        txt = _para_text(child).strip()
+        if not eqn_re.match(txt):
+            continue
+        pPr = _ensure_pPr(child)
+        jc = _ensure_child(pPr, "w:jc")
+        jc.set(_qn("w:val"), "right")
 
