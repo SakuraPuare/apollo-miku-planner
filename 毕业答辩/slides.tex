@@ -72,7 +72,7 @@
     \column{0.52\textwidth}
     \begin{block}{PathBoundsDecider 的三个观察}
       \begin{enumerate}\setlength\itemsep{0.3em}
-        \item \textbf{安全裕度一刀切}\quad{}$\delta$不区分路锥、花坛与违停车，统一$0.4$\,m
+        \item \textbf{安全裕度一刀切}\quad{}额外缓冲$d_{buf}$对所有障碍物统一$0.4$\,m，总安全裕度$\delta=W_{ego}/2+d_{buf}$随之固定
         \item \textbf{独立决策矛盾}\quad{}逐障碍物贪心，容易把左右两侧避让方向拧反
         \item \textbf{动态障碍物排除}\quad{}\texttt{IsStatic}过滤，行人在路径阶段完全不可见
       \end{enumerate}
@@ -99,34 +99,12 @@
         \item \textbf{时空可通行走廊}\quad{}到达时间函数$\tau(s)$把动态障碍物纳入路径边界
       \end{itemize}
     \end{block}
-    \small 三条改进在数学层面共用同一组$(u_i, v_i, \delta, \tau)$符号，前后衔接。
+    \small 三条改进在数学层面共用同一组$(u_i, v_i, \delta, \tau)$符号，落位于Apollo Task流水线的PathBoundsDecider一步，上下游PJPO/PJSO与控制模块零改动。
   \end{columns}
 \end{frame}
 
 % ============================================================
-% [05] Apollo 规划模块现状
-% ============================================================
-\begin{frame}{Apollo Planning 模块现状}
-  \begin{columns}[T,onlytextwidth]
-    \column{0.58\textwidth}
-    
-    \begin{center}
-      \adjustbox{max width=\linewidth,max totalheight=0.72\textheight}{\input{../图片/fig_apollo_arch}}
-    \end{center}
-    \column{0.40\textwidth}
-    \begin{block}{三级 Scenario-Stage-Task}
-      \begin{itemize}\setlength\itemsep{0.3em}
-        \item 场景层统一管理LaneFollow, LaneChange等
-        \item Task流水线内，PathBoundsDecider把障碍物决策转成QP的左右边界
-        \item 该边界形状直接决定PJPO可行域
-      \end{itemize}
-    \end{block}
-    \small 本文改动限定在路径边界构建这一步，其他链路保持不变。
-  \end{columns}
-\end{frame}
-
-% ============================================================
-% [06] MIKU 总体框架
+% [05] MIKU 总体框架
 % ============================================================
 \begin{frame}{MIKU 总体框架}
   \begin{columns}[T,onlytextwidth]
@@ -232,17 +210,17 @@
     \begin{block}{复杂度从指数压到对数线性}
       \footnotesize
       \begin{itemize}\setlength\itemsep{0.2em}
-        \item \textbf{引理}\quad{}最优分割在横向排序下连续
-        \item \textbf{定理}\quad{}组内按$l_{\min}$排序后，$k+1$个候选间隙里的最大者即最优
+        \item \textbf{引理}\quad{}最优分割在$u_i$排序下连续
+        \item \textbf{定理}\quad{}组内按$u_i$升序后，$k+1$个候选间隙里的最大者即最优
         \item 搜索空间\quad{}\ComplexityOldBase$\to$\ComplexityNewBase
         \item 组规模上限$k_{\max}\!=\!\GroupKmax$，超限回退Baseline逐障碍物策略
       \end{itemize}
     \end{block}
     \begin{block}{一步出解}
       \scriptsize
-      扫描线得连通组$\to$组内按$l_{\min}$排序得$k+1$个间隙$\to$取宽度最大间隙即$\mathbf{d}^*$。C3密集施工下$k\!=\!\GroupCThreeK$，Baseline需$2^{\GroupCThreeK}\!\approx\!\GroupCThreeCombCount$万次组合判断，MIKU按排序一步出解。
+      扫描线按$s_i^-$升序得连通组$\to$组内按$u_i$升序得$k+1$个候选间隙$\to$取宽度最大间隙即$\mathbf{d}^*$。P3窄路锥桶下$k\!=\!\GroupCThreeK$，Baseline需$2^{\GroupCThreeK}\!\approx\!\GroupCThreeCombCount$万次组合判断，MIKU按排序一步出解。
       \par\vspace{0.15em}
-      \textbf{实测佐证}\quad{}C2行人加停车QP总耗时\MTwoBaselineQpTotal$\to$\MTwoMikuQpTotal\,ms，约24倍加速。
+      \textbf{实测佐证}\quad{}P4单车道封闭导流下w/o C2--C3变体仅走\AblationMTwoScFourSEndPct\%路程（$s_{end}\!=\!\AblationMTwoScFourSEnd$\,m）即降级停车，MIKU全通。
     \end{block}
   \end{columns}
 \end{frame}
@@ -303,8 +281,8 @@
       \scriptsize
       \begin{itemize}\setlength\itemsep{0.2em}
         \item 从SL二维升格为ST时空规划，\texttt{IsStatic}过滤被废弃
-        \item \textbf{C1单行人}\quad{}到达时间\MOneBaselineTArrive$\to$\MOneMikuTArrive\,s，Jerk\,\MOneBaselineMaxAbsJerk$\to$\MOneMikuMaxAbsJerk
-        \item \textbf{C4密集施工}\quad{}效率\MFourBaselineEfficiency$\to$\MFourMikuEfficiency，$\to$加速\MFourBaselineAvgV$\to$\MFourMikuAvgV\,m/s
+        \item \textbf{P1单行人}\quad{}到达时间\MOneBaselineTArrive$\to$\MOneMikuTArrive\,s，Jerk\,\MOneBaselineMaxAbsJerk$\to$\MOneMikuMaxAbsJerk
+        \item \textbf{P4密集施工}\quad{}效率\MFourBaselineEfficiency$\to$\MFourMikuEfficiency，平均速度\MFourBaselineAvgV$\to$\MFourMikuAvgV\,m/s
       \end{itemize}
     \end{block}
   \end{columns}
@@ -352,8 +330,8 @@
     \begin{block}{场景矩阵\quad{}共\MScenarioTotal 组}
       \footnotesize
       \begin{itemize}\setlength\itemsep{0.2em}
-        \item \textbf{压力}\quad{}\MPressureScenarioTotal 组，C1单行人横穿/C2行人加停车/C3窄路锥桶/C4密集施工
-        \item \textbf{可比}\quad{}\MComparableScenarioTotal 组，同几何但稀疏，用于不失败场景下的横向对比
+        \item \textbf{压力}\quad{}\MPressureScenarioTotal 组 P1--P4，P1单行人横穿/P2行人加停车/P3窄路锥桶/P4密集施工
+        \item \textbf{可比}\quad{}\MComparableScenarioTotal 组 C1--C4，同几何但调整到双方均可达，用于可通过前提下的连续指标对比
         \item 复现方式\quad{}Python重写apollo\_pipeline，OSQP实测QP耗时
       \end{itemize}
     \end{block}
@@ -395,11 +373,11 @@
     \toprule
     \textbf{场景组} & \textbf{算法} & \textbf{通过数} & \textbf{平均速度\,m/s} & \textbf{QP总耗时\,ms} \\
     \midrule
-    \multirow{2}{*}{压力\,C1--C4}
+    \multirow{2}{*}{压力\,P1--P4}
       & Baseline & \MPressureBaselinePassCount/\MPressureScenarioTotal & \MPressureBaselineAvgV & \MPressureBaselineQpTotal \\
       & \textbf{MIKU} & \textbf{\MPressureMikuPassCount/\MPressureScenarioTotal} & \textbf{\MPressureMikuAvgV} & \textbf{\MPressureMikuQpTotal} \\
     \midrule
-    \multirow{2}{*}{可比\,C5--C8}
+    \multirow{2}{*}{可比\,C1--C4}
       & Baseline & \MComparableBaselinePassCount/\MComparableScenarioTotal & \MComparableBaselineAvgV & \MComparableBaselineQpTotal \\
       & \textbf{MIKU} & \textbf{\MComparableMikuPassCount/\MComparableScenarioTotal} & \textbf{\MComparableMikuAvgV} & \textbf{\MComparableMikuQpTotal} \\
     \midrule
@@ -429,11 +407,11 @@
     \toprule
     \textbf{变体} & \textbf{配置} & \textbf{通过率} & \textbf{综合评分} & \textbf{相对M5} \\
     \midrule
-    M0 & 原始Baseline                      & \AblationMZeroPassCount/\AblationMZeroScenarioTotal  & \AblationScoreMZero  & $-100.00$ \\
-    M1 & 仅差异化$\delta_i$                & \AblationMOnePassCount/\AblationMOneScenarioTotal    & \AblationScoreMOne   & $-75.12$ \\
-    M2 & M1+扫描线分组                      & \AblationMTwoPassCount/\AblationMTwoScenarioTotal    & \AblationScoreMTwo   & $-62.33$ \\
-    M3 & M2+最大间隙                        & \AblationMThreePassCount/\AblationMThreeScenarioTotal & \AblationScoreMThree & $-64.39$ \\
-    M4 & 留一不加（\AblationLeaveOneOutVariantTotal 项任缺一） & \AblationMFourPassCount/\AblationMFourScenarioTotal  & \AblationScoreMFour  & $+\AblationMarginMFourMFive$ \\
+    M0 & Apollo Baseline                      & \AblationMZeroPassCount/\AblationMZeroScenarioTotal  & \AblationScoreMZero  & $-100.00$ \\
+    M1 & MIKU w/o C1（无$\tau$投影）          & \AblationMOnePassCount/\AblationMOneScenarioTotal    & \AblationScoreMOne   & $-74.70$ \\
+    M2 & MIKU w/o C2--C3（无组级决策）        & \AblationMTwoPassCount/\AblationMTwoScenarioTotal    & \AblationScoreMTwo   & $-60.56$ \\
+    M3 & MIKU w/o C4（统一$\delta$）          & \AblationMThreePassCount/\AblationMThreeScenarioTotal & \AblationScoreMThree & $-64.51$ \\
+    M4 & MIKU w/o C5（无走廊注入）            & \AblationMFourPassCount/\AblationMFourScenarioTotal  & \AblationScoreMFour  & $\AblationMarginMFourMFive$ \\
     \rowcolor{lightgreen!40}
     M5 & MIKU全量                            & \AblationMFivePassCount/\AblationMFiveScenarioTotal  & \textbf{\AblationScoreMFive} & $0.00$ \\
     \bottomrule
@@ -442,9 +420,9 @@
   \begin{block}{结论}
     \footnotesize
     \begin{itemize}\setlength\itemsep{0.15em}
-      \item 单项改进（M1--M3）因问题维度不匹配，评分天花板被\AblationFailedScoreCeil 分的失败惩罚压制
-      \item M4留一不加仍达\AblationScoreMFour 分，与全量M5仅相差\AblationMarginMFourMFive 分，说明\textbf{三项改进高度互补}
-      \item 组合成MIKU全量（M5）即达评分上限\AblationScoreMFive，\textbf{缺一则退化}
+      \item M1/M2/M3 分别关闭动态投影、组级决策、差异化$\delta$，均在P1--P4触发失败被\AblationFailedScoreCeil 分惩罚压制，证路径阶段三组件缺一即退化
+      \item M4（w/o C5）在当前压力场景走廊注入未激活，评分\AblationScoreMFour 接近全量，与M5仅差$\AblationMarginMFourMFive$分
+      \item 路径阶段组件 C1、C2--C3、C4 三组互补，MIKU核心收益来自路径阶段的时变与组级建模
     \end{itemize}
   \end{block}
 \end{frame}
@@ -461,13 +439,13 @@
     \toprule
     \textbf{场景} & \textbf{Baseline总\,ms} & \textbf{MIKU总\,ms} & \textbf{路径QP对比\,ms} & \textbf{加速比} \\
     \midrule
-    C2 行人加停车    & \MTwoBaselineQpTotal    & \MTwoMikuQpTotal    & \MTwoBaselineQpPath/\MTwoMikuQpPath     & $24.2\times$ \\
-    C6 行人加停车稀疏 & \MSixBaselineQpTotal    & \MSixMikuQpTotal    & \MSixBaselineQpPath/\MSixMikuQpPath     & $16.6\times$ \\
-    C7 窄路锥桶稀疏   & \MSevenBaselineQpTotal  & \MSevenMikuQpTotal  & \MSevenBaselineQpPath/\MSevenMikuQpPath & $1.1\times$ \\
-    C8 密集施工稀疏   & \MEightBaselineQpTotal  & \MEightMikuQpTotal  & \MEightBaselineQpPath/\MEightMikuQpPath & $1.0\times$ \\
+    P2 行人加停车    & \MTwoBaselineQpTotal    & \MTwoMikuQpTotal    & \MTwoBaselineQpPath/\MTwoMikuQpPath     & $24.2\times$ \\
+    C2 行人加停车可比 & \MSixBaselineQpTotal    & \MSixMikuQpTotal    & \MSixBaselineQpPath/\MSixMikuQpPath     & $16.6\times$ \\
+    C3 窄路锥桶可比   & \MSevenBaselineQpTotal  & \MSevenMikuQpTotal  & \MSevenBaselineQpPath/\MSevenMikuQpPath & $1.1\times$ \\
+    C4 密集施工可比   & \MEightBaselineQpTotal  & \MEightMikuQpTotal  & \MEightBaselineQpPath/\MEightMikuQpPath & $1.0\times$ \\
     \midrule
-    压力\,C1--C4组均 & \MPressureBaselineQpTotal & \textbf{\MPressureMikuQpTotal} & \MPressureBaselineQpPath/\MPressureMikuQpPath & \textbf{降84.3\%} \\
-    可比\,C5--C8组均 & \MComparableBaselineQpTotal & \textbf{\MComparableMikuQpTotal} & \MComparableBaselineQpPath/\MComparableMikuQpPath & \textbf{降66.6\%} \\
+    压力\,P1--P4组均 & \MPressureBaselineQpTotal & \textbf{\MPressureMikuQpTotal} & \MPressureBaselineQpPath/\MPressureMikuQpPath & \textbf{降84.3\%} \\
+    可比\,C1--C4组均 & \MComparableBaselineQpTotal & \textbf{\MComparableMikuQpTotal} & \MComparableBaselineQpPath/\MComparableMikuQpPath & \textbf{降66.6\%} \\
     \bottomrule
   \end{tabular}
   \vspace{0.4em}
@@ -504,15 +482,15 @@
         \toprule
         场景 & 翻转率 & 最坏相对偏差 \\
         \midrule
-        C1 单行人         & \SensOneMcFlipRate\%   & \SensOneMcMaxRelDev\% \\
-        C2 行人加停车      & \SensTwoMcFlipRate\%   & \SensTwoMcMaxRelDev\% \\
-        C3 窄路锥桶       & \SensThreeMcFlipRate\% & \SensThreeMcMaxRelDev\% \\
+        P1 单行人         & \SensOneMcFlipRate\%   & \SensOneMcMaxRelDev\% \\
+        P2 行人加停车      & \SensTwoMcFlipRate\%   & \SensTwoMcMaxRelDev\% \\
+        P3 窄路锥桶       & \SensThreeMcFlipRate\% & \SensThreeMcMaxRelDev\% \\
         \rowcolor{lightorange!30}
-        C4 密集施工       & \textbf{\SensFourMcFlipRate\%} & \textbf{\SensFourMcMaxRelDev\%} \\
+        P4 密集施工       & \textbf{\SensFourMcFlipRate\%} & \textbf{\SensFourMcMaxRelDev\%} \\
         \bottomrule
       \end{tabular}
       \par\vspace{0.3em}
-      C4翻转率\SensFourMcFlipRate\%，单因子扰动出现\SensFourSingleFlipCnt 例决策翻转，
+      P4翻转率\SensFourMcFlipRate\%，单因子扰动出现\SensFourSingleFlipCnt 例决策翻转，
       最坏相对偏差仅\SensWorstRelDev\%由动态走廊兜底。
     \end{block}
   \end{columns}
@@ -536,13 +514,12 @@
 \begin{frame}{主要结论}
   \footnotesize
   \begin{itemize}\setlength\itemsep{0.35em}
-    \item 针对Apollo PathBoundsDecider三项源码层局限，提出多障碍物交互运动学统一规划算法MIKU，以差异化$\delta_i$、组级最优$\mathbf{d}^*$、时空走廊$\tau(s)$三条改进共用同一组$(u_i, v_i, \delta, \tau)$数学记号
-    \item \textbf{通过率}\quad{}压力场景\MPressureBaselinePassCount/\MPressureScenarioTotal$\to$\MPressureMikuPassCount/\MPressureScenarioTotal，整体\MSummaryBaselinePassCount/\MScenarioTotal$\to$\MSummaryMikuPassCount/\MScenarioTotal
+    \item \textbf{核心结论}\quad{}可通过场景下MIKU不劣于Apollo Baseline，轨迹平顺性与QP求解开销均有改善；Baseline触发BLOCKED的压力场景下，MIKU通过差异化$\delta_i$、组级$\mathbf{d}^*$、时空走廊$\tau(s)$三条改进将通行率从\MPressureBaselinePassCount/\MPressureScenarioTotal 提升至\MPressureMikuPassCount/\MPressureScenarioTotal
+    \item \textbf{方法}\quad{}三条改进共用同一组$(u_i, v_i, \delta, \tau)$符号，源码层只动PathBoundsDecider一步，下游链路零改动
     \item \textbf{效率}\quad{}整体平均速度提升\MSummarySummaryVImprovement\%；压力场景平均速度\MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s
-    \item \textbf{计算}\quad{}压力场景QP总耗时\MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降84.3\%），可比场景\MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降66.6\%），仅多付\MSummarySummaryExtraMs\,ms平均开销
-    \item \textbf{消融}\quad{}M0原始\AblationScoreMZero 分$\to$M5全量\AblationScoreMFive 分；留一不加M4仅\AblationScoreMFour 分（差\AblationMarginMFourMFive），证三项改进高度互补
+    \item \textbf{计算}\quad{}压力场景QP总耗时\MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降84.3\%），可比场景\MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降66.6\%），整体仅多付\MSummarySummaryExtraMs\,ms平均开销
+    \item \textbf{消融}\quad{}减法消融下关闭路径阶段任一组件（M1--M3）即在P1--P4失败，w/o C5评分\AblationScoreMFour 与全量\AblationScoreMFive 差$\AblationMarginMFourMFive$分，路径阶段四组件互补
     \item \textbf{鲁棒}\quad{}威胁度权重$\pm\SensPerturbPct$\% $\times$ \SensTrialCount 次蒙特卡洛，3/4场景翻转率\SensOneMcFlipRate\%，最坏相对偏差\SensWorstRelDev\%
-    \item 已完成C++增量接入，保持Apollo数据流与QP求解链路不变，下游Control模块无需修改
   \end{itemize}
 \end{frame}
 
