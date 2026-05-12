@@ -501,6 +501,9 @@ def post_process(docx_path: Path) -> None:
     # 26. 兜底：按学校《规范化要求》格式检测口径统一收尾，闭环
     _normalize_for_inspector(doc)
 
+    # 27. 最终闭环：针对 0045robot 格式检测报告 error.txt 明细的精修
+    _close_inspector_issues(doc)
+
     doc.save(str(docx_path))
 
 
@@ -977,3 +980,287 @@ def _insert_blank_before_abstract(doc) -> None:
         blank = _OxmlElement("w:p")
         child.addprevious(blank)
         inserted.add(kind)
+
+
+# =============================================================================
+# Stage 4 — 0045robot error.txt 明细修复（最终闭环）
+# =============================================================================
+
+_CAP_LEAD_FIG_RE = re.compile(r"^(图)([\s   　]+)(\d)")
+_CAP_LEAD_TAB_RE = re.compile(r"^(表)([\s   　]+)(\d)")
+_CAP_LEAD_CODE_RE = re.compile(r"^(代码|算法)([\s   　]+)(\d)")
+_INSPECT_ANY_CAP_RE = re.compile(r"^(图|表|代码|算法)\s*\d+[\.\-]\d+")
+
+
+def _close_inspector_issues(doc) -> None:
+    """按 0045robot error.txt 明细做最后修复，闭环所有"严重"/"错误"级问题。
+
+    共 10 类：caption 前缀空格、正文 run-level 误加粗、Heading3 字号、
+    首行缩进、Bibliography 行距、摘要段前段后、TOC 前导符、半角逗号、
+    算法说明段对齐、代码caption \\xa0 清理。
+    """
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.oxml.ns import qn as _qn
+
+    body = doc.element.body
+    styles_el = doc.styles.element
+
+    def _para_style(p_el):
+        pPr = p_el.find(_qn("w:pPr"))
+        if pPr is None:
+            return ""
+        pStyle = pPr.find(_qn("w:pStyle"))
+        if pStyle is None:
+            return ""
+        return pStyle.get(_qn("w:val")) or ""
+
+    def _para_text(p_el):
+        return "".join((t.text or "") for t in p_el.findall(".//" + _qn("w:t")))
+
+    def _ensure_child(parent, tag):
+        el = parent.find(_qn(tag))
+        if el is None:
+            el = _OxmlElement(tag)
+            parent.append(el)
+        return el
+
+    def _ensure_pPr(p_el):
+        pPr = p_el.find(_qn("w:pPr"))
+        if pPr is None:
+            pPr = _OxmlElement("w:pPr")
+            p_el.insert(0, pPr)
+        return pPr
+
+    # ========== 1. Heading3 样式 sz 改 24（12pt 小四） ==========
+    # 检测器读样式级字号：Heading3 原 sz=28（14pt 四号），违规；改 24 + 12
+    for s in styles_el.findall(_qn("w:style")):
+        sid = s.get(_qn("w:styleId"))
+        if sid not in ("Heading3", "Heading3Char"):
+            continue
+        rPr = s.find(_qn("w:rPr"))
+        if rPr is None:
+            rPr = _OxmlElement("w:rPr")
+            s.append(rPr)
+        for tag in ("w:sz", "w:szCs"):
+            for old in list(rPr.findall(_qn(tag))):
+                rPr.remove(old)
+            el = _OxmlElement(tag)
+            el.set(_qn("w:val"), "24")
+            rPr.append(el)
+
+    # ========== 2. caption 段前缀"图 N"→"图N"（去掉所有空白、\xa0、全角空格） ==========
+    def _strip_caption_prefix_space(p_el):
+        ts = p_el.findall(".//" + _qn("w:t"))
+        if not ts:
+            return False
+        full = "".join((t.text or "") for t in ts)
+        m = _CAP_LEAD_FIG_RE.match(full) or _CAP_LEAD_TAB_RE.match(full) or _CAP_LEAD_CODE_RE.match(full)
+        if not m:
+            return False
+        del_start, del_end = m.start(2), m.end(2)
+        if del_start >= del_end:
+            return False
+        pos = 0
+        for t in ts:
+            tt = t.text or ""
+            if not tt:
+                continue
+            t_len = len(tt)
+            t_end = pos + t_len
+            lo = max(pos, del_start)
+            hi = min(t_end, del_end)
+            if lo < hi:
+                rel_lo = lo - pos
+                rel_hi = hi - pos
+                t.text = tt[:rel_lo] + tt[rel_hi:]
+            pos = t_end
+        return True
+
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        style_val = _para_style(child)
+        txt = _para_text(child).strip()
+        if not txt:
+            continue
+        is_caption_style = style_val in ("ImageCaption", "TableCaption", "Caption")
+        is_caption_by_text = (
+            _INSPECT_ANY_CAP_RE.match(txt) is not None and len(txt) < 120
+        )
+        if is_caption_style or is_caption_by_text:
+            _strip_caption_prefix_space(child)
+
+    # ========== 3. 正文段 run-level bold 清除 ==========
+    # 只针对：样式为 Body Text / First Paragraph / Normal（且不是 caption 段）
+    # 图/表/算法 caption 要保留加粗；Heading 不碰；代码块不碰
+    BODY_STYLES = {"BodyText", "FirstParagraph", "Normal"}
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        style_val = _para_style(child)
+        if style_val not in BODY_STYLES and style_val != "":
+            continue
+        txt = _para_text(child).strip()
+        if not txt:
+            continue
+        # 跳过 caption 段（图/表/代码/算法 短标题段）
+        if _INSPECT_ANY_CAP_RE.match(txt) and len(txt) < 50:
+            continue
+        # 跳过摘要前缀（摘要：/关键词：/Abstract: 整段首 run 需保留加粗）
+        if txt.lstrip().startswith(("摘要", "关键词", "Abstract", "Key words", "Keywords")):
+            continue
+        for r_el in child.findall(_qn("w:r")):
+            rPr = r_el.find(_qn("w:rPr"))
+            if rPr is None:
+                continue
+            # 跳过本 run 明显是"缩写/符号/数学"独立强调：不做；直接清所有 b/bCs
+            for tag in ("w:b", "w:bCs"):
+                for old in list(rPr.findall(_qn(tag))):
+                    rPr.remove(old)
+
+    # ========== 4. 图/表/代码/算法开头正文段补首行缩进 2 字符 ==========
+    # error.txt 报的"首行缩进 0 实际"：图X.X/表X.X 开头但非 caption 的正文段
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        style_val = _para_style(child)
+        if style_val in ("ImageCaption", "TableCaption", "Caption"):
+            continue
+        if style_val.startswith("Heading"):
+            continue
+        txt = _para_text(child).strip()
+        if not _INSPECT_ANY_CAP_RE.match(txt):
+            continue
+        pPr = _ensure_pPr(child)
+        ind = pPr.find(_qn("w:ind"))
+        if ind is None:
+            ind = _OxmlElement("w:ind")
+            pPr.append(ind)
+        # 清掉可能的 firstLine=0
+        for attr in ("w:firstLine", "w:firstLineChars"):
+            if ind.get(_qn(attr)) is not None:
+                del ind.attrib[_qn(attr)]
+        ind.set(_qn("w:firstLineChars"), "200")
+        ind.set(_qn("w:firstLine"), "480")
+
+    # ========== 5. Bibliography 段行距 line=400 lineRule=exact（固定 20 磅） ==========
+    # 覆盖 Bibliography 样式 + 所有 [N] 开头的实际段
+    for s in styles_el.findall(_qn("w:style")):
+        sid = s.get(_qn("w:styleId"))
+        if sid != "Bibliography":
+            continue
+        pPr = s.find(_qn("w:pPr"))
+        if pPr is None:
+            pPr = _OxmlElement("w:pPr")
+            s.append(pPr)
+        sp = _ensure_child(pPr, "w:spacing")
+        sp.set(_qn("w:line"), "400")
+        sp.set(_qn("w:lineRule"), "exact")
+
+    bracket_re = re.compile(r"^\s*\[\d+\]\s")
+    for p in doc.paragraphs:
+        style_name = p.style.name if p.style else ""
+        txt = p.text or ""
+        is_bib_style = style_name.lower().startswith(("bibliograph", "reference"))
+        is_bib_by_text = bracket_re.match(txt) is not None
+        if not (is_bib_style or is_bib_by_text):
+            continue
+        pPr = _ensure_pPr(p._element)
+        sp = _ensure_child(pPr, "w:spacing")
+        sp.set(_qn("w:line"), "400")
+        sp.set(_qn("w:lineRule"), "exact")
+
+    # ========== 6. 摘要页/Abstract 页论文题目段 spacing before=120(6磅) after=31(1.54磅) ==========
+    # error.txt 第17/19条："第4页第1段(基于Apollo...路径规划算法实现)" 段前要6磅段后1.54磅
+    # 摘要页第1段是**论文题目段**（居中 16pt Normal），不是"摘要："段。
+    # 定位：在"摘要："/"Abstract:"段前紧邻的居中非空段。
+    zh_abs_idx = None
+    en_abs_idx = None
+    body_children = list(body)
+    p_children = [c for c in body_children if c.tag == _qn("w:p")]
+    for idx, child in enumerate(p_children):
+        txt = _para_text(child).lstrip()
+        if zh_abs_idx is None and txt.startswith(("摘要：", "摘要:")):
+            zh_abs_idx = idx
+        elif en_abs_idx is None and txt.startswith(("Abstract:", "Abstract：")) or (
+            txt.startswith("Abstract") and len(txt) > 8 and txt[8] in (" ", ":", "：")
+        ):
+            if en_abs_idx is None:
+                en_abs_idx = idx
+
+    for abs_idx in (zh_abs_idx, en_abs_idx):
+        if abs_idx is None:
+            continue
+        # 向前回溯，找首个非空段（即论文题目段）
+        for back in range(abs_idx - 1, max(-1, abs_idx - 6), -1):
+            prev = p_children[back]
+            prev_txt = _para_text(prev).strip()
+            if not prev_txt:
+                continue
+            pPr = _ensure_pPr(prev)
+            sp = _ensure_child(pPr, "w:spacing")
+            sp.set(_qn("w:before"), "120")
+            sp.set(_qn("w:after"), "31")
+            for tag in ("w:beforeLines", "w:afterLines", "w:beforeAutospacing", "w:afterAutospacing"):
+                if sp.get(_qn(tag)) is not None:
+                    sp.set(_qn(tag), "0")
+            break
+
+    # ========== 7. 中文半角逗号替换为全角（中文紧邻半角逗号场景） ==========
+    # error.txt 报 10 处。匹配：CJK+","+(CJK|数字|字母)、包括前后是英文但紧接中文的边界
+    cjk_comma_re = re.compile(r"([一-鿿]),(?=[一-鿿])")
+    # 还包括 CJK 前有 ASCII 字母/数字结尾的中文字面
+    cjk_comma_re2 = re.compile(r"([一-鿿])\s*,\s*([一-鿿])")
+    for p in doc.paragraphs:
+        style_name = p.style.name if p.style else ""
+        if style_name.lower().startswith(("bibliograph", "reference")):
+            continue  # 参考文献英文半角逗号保留
+        # 代码块不动
+        if style_name in ("SourceCode", "Verbatim"):
+            continue
+        for r in p.runs:
+            if not r.text:
+                continue
+            new_text = cjk_comma_re2.sub(r"\1，\2", r.text)
+            if new_text != r.text:
+                r.text = new_text
+
+    # ========== 8. "算法 N-M 的伪代码..." 说明段对齐改 both ==========
+    algo_desc_re = re.compile(r"^算法\s*\d+[\.-]\d+\s*的伪代码")
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        txt = _para_text(child).strip()
+        if not algo_desc_re.match(txt):
+            continue
+        pPr = _ensure_pPr(child)
+        jc = _ensure_child(pPr, "w:jc")
+        jc.set(_qn("w:val"), "both")
+
+    # ========== 9. TOC1/TOC2 样式 tab leader 再次确认（样式级已有，这里保险） ==========
+    for s in styles_el.findall(_qn("w:style")):
+        sid = s.get(_qn("w:styleId"))
+        if sid not in ("TOC1", "TOC2", "TOC3"):
+            continue
+        pPr = s.find(_qn("w:pPr"))
+        if pPr is None:
+            pPr = _OxmlElement("w:pPr")
+            s.append(pPr)
+        tabs = pPr.find(_qn("w:tabs"))
+        if tabs is None:
+            tabs = _OxmlElement("w:tabs")
+            pPr.append(tabs)
+        has_right_dot = False
+        for tab in tabs.findall(_qn("w:tab")):
+            if tab.get(_qn("w:val")) == "right":
+                tab.set(_qn("w:leader"), "dot")
+                if not tab.get(_qn("w:pos")):
+                    tab.set(_qn("w:pos"), "8306")
+                has_right_dot = True
+        if not has_right_dot:
+            tab_el = _OxmlElement("w:tab")
+            tab_el.set(_qn("w:val"), "right")
+            tab_el.set(_qn("w:leader"), "dot")
+            tab_el.set(_qn("w:pos"), "8306")
+            tabs.append(tab_el)
+
