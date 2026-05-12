@@ -24,6 +24,9 @@
 \usepackage{xcolor}
 \usepackage{caption}
 \usepackage{subcaption}
+% merge 图 subcaption 字号 = Word 小四（12pt / baseline 14pt），与主文档主 caption 字号接近
+\DeclareCaptionFont{xiaosi}{\fontsize{12pt}{14pt}\selectfont}
+\captionsetup[sub]{font=xiaosi,labelfont=xiaosi}
 \usepackage{float}
 \usepackage{geometry}
 \geometry{a4paper, margin=1cm}
