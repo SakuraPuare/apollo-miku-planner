@@ -42,10 +42,8 @@ from .tables import (
     center_all_images,
     center_all_table_cells,
     flatten_list_indent,
-    resize_vertical_subfigure_drawings,
-    split_vertical_subfigure_tables,
+    resize_all_images_to_width,
     style_code_block_tables,
-    style_subfigure_captions,
     wrap_listings_and_algorithms,
 )
 
@@ -415,13 +413,6 @@ def post_process(docx_path: Path) -> None:
                         line_spacing=1.0,
                     )
 
-    # 6.5. 子图图注刷成图题规格（黑体小四加粗，前缀 a)/b)/c)）
-    #      必须在通用 cell 样式循环之后，否则会被刷回宋体不加粗
-    #      先把带竖排 marker 的 1×N 表转 N×1，再把竖排图放大到文本宽，再打样式
-    split_vertical_subfigure_tables(doc)
-    resize_vertical_subfigure_drawings(doc)
-    style_subfigure_captions(doc)
-
     # 7. 主样式循环完成后：插入中英文论文题目页（避免被 Normal 样式覆盖字号）
     insert_thesis_title_pages(doc)
 
@@ -435,9 +426,10 @@ def post_process(docx_path: Path) -> None:
     _set_page_margins_a4(doc)
     setup_page_numbers_and_sections(doc)
 
-    # 10. 表格三线化 + 整表居中；图片段居中
+    # 10. 表格三线化 + 整表居中；图片段居中；图片等比缩放：宽 ≤14.7cm 且 高 ≤9.9cm(A4 页高 1/3)
     apply_three_line_tables(doc)
     center_all_images(doc)
+    resize_all_images_to_width(doc, width_cm=14.7, max_height_cm=9.9)
 
     # 11. 公式编号：独立公式右对齐 "（N-M）"
     add_equation_numbers(doc)
@@ -506,7 +498,449 @@ def post_process(docx_path: Path) -> None:
     #     用户要求代码展示不用等宽，统一回正文字形
     _unmono_code_styles(doc)
 
+    # 26. 兜底：按学校《规范化要求》格式检测口径统一收尾，闭环
+    _normalize_for_inspector(doc)
+
     doc.save(str(docx_path))
+
+
+_INSPECTOR_FIG_CAP_RE = re.compile(r"^\s*图\s*\d+[\.\-]\d+")
+_INSPECTOR_TAB_CAP_RE = re.compile(r"^\s*表\s*\d+[\.\-]\d+")
+_INSPECTOR_CODE_CAP_RE = re.compile(r"^\s*(代码|算法)\s*\d+[\.\-]\d+")
+
+
+def _normalize_for_inspector(doc) -> None:
+    """按学校格式检测器口径做最后统一修正，闭环修复检测报告列出的错误。
+
+    规则来源——thesis_格式检测报告.html：
+    - 图 caption：段前 0 段后 0（当前 after=120 违规）。
+    - 表 caption：段前 0 段后 0（当前 before=120 违规）。
+    - 代码/算法 caption：宋体常规，居中，无首行缩进，段前 0 段后 0（当前是黑体加粗 before=120）。
+    - 摘要/Abstract 首段：段前 0 段后 0（当前 before=120 after=31 违规）。
+    - 摘要/Abstract/目录 题目段：行距 1.5 倍（当前单倍）。
+    - "目录"说明段："（打开文档后…）"行距 1.5。
+    - 成果页标题 "本科期间的学习与科研成果"：居中对齐。
+    - 所有 caption 段 run 的 eastAsia 强制宋体（当前部分 caption 混黑体）。
+    """
+    from docx.oxml import OxmlElement as _OxmlElement
+    from docx.oxml.ns import qn as _qn
+
+    WNS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+    def _ensure(child, tag):
+        el = child.find(_qn(tag))
+        if el is None:
+            el = _OxmlElement(tag)
+            child.append(el)
+        return el
+
+    def _set_zero_spacing(pPr):
+        sp = _ensure(pPr, "w:spacing")
+        sp.set(_qn("w:before"), "0")
+        sp.set(_qn("w:after"), "0")
+        sp.set(_qn("w:beforeLines"), "0")
+        sp.set(_qn("w:afterLines"), "0")
+        sp.set(_qn("w:beforeAutospacing"), "0")
+        sp.set(_qn("w:afterAutospacing"), "0")
+
+    def _set_line_1p5(pPr):
+        sp = _ensure(pPr, "w:spacing")
+        sp.set(_qn("w:line"), "360")
+        sp.set(_qn("w:lineRule"), "auto")
+
+    def _clear_firstline(pPr):
+        ind = pPr.find(_qn("w:ind"))
+        if ind is None:
+            return
+        for attr in ("firstLine", "firstLineChars"):
+            k = _qn(f"w:{attr}")
+            if k in ind.attrib:
+                del ind.attrib[k]
+
+    def _force_run_songti(r_el, *, unbold=False, bold=False):
+        rPr = r_el.find(_qn("w:rPr"))
+        if rPr is None:
+            rPr = _OxmlElement("w:rPr")
+            r_el.insert(0, rPr)
+        rF = rPr.find(_qn("w:rFonts"))
+        if rF is None:
+            rF = _OxmlElement("w:rFonts")
+            rPr.insert(0, rF)
+        rF.set(_qn("w:eastAsia"), "宋体")
+        if not rF.get(_qn("w:ascii")):
+            rF.set(_qn("w:ascii"), "Times New Roman")
+        if not rF.get(_qn("w:hAnsi")):
+            rF.set(_qn("w:hAnsi"), "Times New Roman")
+        if not rF.get(_qn("w:cs")):
+            rF.set(_qn("w:cs"), "Times New Roman")
+        for attr in ("w:asciiTheme", "w:hAnsiTheme", "w:eastAsiaTheme", "w:cstheme"):
+            k = _qn(attr)
+            if k in rF.attrib:
+                del rF.attrib[k]
+        if unbold:
+            # 显式关闭加粗（覆盖父级样式/run 级）
+            for tag in ("w:b", "w:bCs"):
+                for old in list(rPr.findall(_qn(tag))):
+                    rPr.remove(old)
+                neg = _OxmlElement(tag)
+                neg.set(_qn("w:val"), "0")
+                rPr.append(neg)
+        elif bold:
+            # 显式开启加粗（caption 家族要求加粗）
+            for tag in ("w:b", "w:bCs"):
+                for old in list(rPr.findall(_qn(tag))):
+                    rPr.remove(old)
+                pos = _OxmlElement(tag)
+                # 不设 val 等价于 val=true
+                rPr.append(pos)
+
+    def _para_text(p_el):
+        return "".join((t.text or "") for t in p_el.findall(".//" + _qn("w:t")))
+
+    def _para_style(p_el):
+        pPr = p_el.find(_qn("w:pPr"))
+        if pPr is None:
+            return ""
+        pStyle = pPr.find(_qn("w:pStyle"))
+        if pStyle is None:
+            return ""
+        return pStyle.get(_qn("w:val")) or ""
+
+    body = doc.element.body
+
+    # —— Pass 0：给 pandoc 跨 OMML 吞掉前缀的 ImageCaption / TableCaption 段补回 "图 N.M " / "表 N.M "。
+    # 状态机：按 body 直属顺序扫描，H1 递增章号并清零图/表计数，ImageCaption / TableCaption 段内递增。
+    # 若段文本已带 "图 N.M" / "表 N.M" 前缀则跳过；仅对 pandoc 因 caption 内含 OMML 导致前缀被吞的段补回。
+    _chap = 0
+    _fig_n = 0
+    _tab_n = 0
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        style_val = _para_style(child)
+        if style_val == "Heading1":
+            _chap += 1
+            _fig_n = 0
+            _tab_n = 0
+            continue
+        if style_val not in ("ImageCaption", "TableCaption"):
+            continue
+        txt = _para_text(child).strip()
+        if not txt:
+            continue
+        if style_val == "ImageCaption":
+            _fig_n += 1
+            if _INSPECTOR_FIG_CAP_RE.match(txt):
+                continue  # 已带前缀
+            prefix_text = f"图{_chap}.{_fig_n} "
+        else:
+            _tab_n += 1
+            if _INSPECTOR_TAB_CAP_RE.match(txt):
+                continue
+            prefix_text = f"表{_chap}.{_tab_n} "
+        # 构造前缀 run：宋体加粗小四，与 caption 其他 run 样式对齐
+        new_r = _OxmlElement("w:r")
+        new_rPr = _OxmlElement("w:rPr")
+        rF = _OxmlElement("w:rFonts")
+        rF.set(_qn("w:ascii"), "Times New Roman")
+        rF.set(_qn("w:hAnsi"), "Times New Roman")
+        rF.set(_qn("w:cs"), "Times New Roman")
+        rF.set(_qn("w:eastAsia"), "宋体")
+        new_rPr.append(rF)
+        new_rPr.append(_OxmlElement("w:b"))
+        new_rPr.append(_OxmlElement("w:bCs"))
+        sz = _OxmlElement("w:sz")
+        sz.set(_qn("w:val"), "24")
+        new_rPr.append(sz)
+        szCs = _OxmlElement("w:szCs")
+        szCs.set(_qn("w:val"), "24")
+        new_rPr.append(szCs)
+        new_r.append(new_rPr)
+        new_t = _OxmlElement("w:t")
+        new_t.set(_qn("xml:space"), "preserve")
+        new_t.text = prefix_text
+        new_r.append(new_t)
+        # 找第一个内容节点（w:r / m:oMath / m:oMathPara），插在它之前
+        _M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+        content_tags = {_qn("w:r"), f"{_M}oMath", f"{_M}oMathPara"}
+        first_content = None
+        for c in child:
+            if c.tag in content_tags:
+                first_content = c
+                break
+        if first_content is not None:
+            first_content.addprevious(new_r)
+        else:
+            child.append(new_r)
+
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        txt = _para_text(child).strip()
+        if not txt:
+            continue
+        style_val = _para_style(child)
+        pPr = child.find(_qn("w:pPr"))
+        if pPr is None:
+            pPr = _OxmlElement("w:pPr")
+            child.insert(0, pPr)
+
+        is_img_cap = (
+            style_val == "ImageCaption"
+            or (style_val == "Caption" and txt.startswith("图"))
+            or (_INSPECTOR_FIG_CAP_RE.match(txt) and len(txt) < 120)
+        )
+        is_tab_cap = (
+            style_val == "TableCaption"
+            or (style_val == "Caption" and txt.startswith("表"))
+            or (_INSPECTOR_TAB_CAP_RE.match(txt) and len(txt) < 120)
+        )
+        is_code_cap = bool(_INSPECTOR_CODE_CAP_RE.match(txt)) and len(txt) < 80
+
+        if is_code_cap:
+            _set_zero_spacing(pPr)
+            _clear_firstline(pPr)
+            jc = _ensure(pPr, "w:jc")
+            jc.set(_qn("w:val"), "center")
+            for r_el in child.findall(_qn("w:r")):
+                _force_run_songti(r_el, bold=True)
+            continue
+
+        if is_img_cap or is_tab_cap:
+            _set_zero_spacing(pPr)
+            _clear_firstline(pPr)
+            for r_el in child.findall(_qn("w:r")):
+                _force_run_songti(r_el, bold=True)
+            continue
+
+        # 摘要/Abstract 首段：段前 0 段后 0
+        txt_strip = txt.lstrip()
+        if txt_strip.startswith(("摘要：", "摘要:", "Abstract:", "Abstract：")) or (
+            txt_strip.startswith("Abstract") and len(txt_strip) > 8 and txt_strip[8] in (" ", ":", "：")
+        ):
+            _set_zero_spacing(pPr)
+            continue
+
+        # 成果页标题居中
+        if txt == "本科期间的学习与科研成果":
+            jc = _ensure(pPr, "w:jc")
+            jc.set(_qn("w:val"), "center")
+            continue
+
+    # 摘要/Abstract/目录 的居中题目段 + 目录说明段：行距 1.5
+    for child in list(body):
+        if child.tag != _qn("w:p"):
+            continue
+        txt = _para_text(child).strip()
+        pPr = child.find(_qn("w:pPr"))
+        if pPr is None:
+            continue
+        jc = pPr.find(_qn("w:jc"))
+        jc_val = jc.get(_qn("w:val")) if jc is not None else ""
+        # 论文题目段（居中、非 caption、非目录）
+        if jc_val == "center" and txt and not (
+            _INSPECTOR_FIG_CAP_RE.match(txt)
+            or _INSPECTOR_TAB_CAP_RE.match(txt)
+            or _INSPECTOR_CODE_CAP_RE.match(txt)
+            or txt in ("目  录", "目录")
+        ):
+            _set_line_1p5(pPr)
+            continue
+        # 目录/Abstract/摘要标题段
+        if txt in ("目  录", "目录"):
+            _set_line_1p5(pPr)
+            continue
+        # 目录说明段
+        if txt.startswith("（打开文档"):
+            _set_line_1p5(pPr)
+            continue
+
+    # 参考文献段：悬挂缩进按编号位数 (1 位数 175, 2 位及以上 200) + 1.5 倍行距
+    for p in doc.paragraphs:
+        style_name = (p.style.name if p.style else "").lower()
+        if not style_name.startswith(("bibliograph", "reference")):
+            continue
+        pPr = p._element.get_or_add_pPr()
+        ind = pPr.find(_qn("w:ind"))
+        if ind is None:
+            ind = _OxmlElement("w:ind")
+            pPr.append(ind)
+        # 清 firstLine，设 hangingChars 随编号宽度
+        for attr in ("firstLine", "firstLineChars", "hanging"):
+            k = _qn(f"w:{attr}")
+            if k in ind.attrib:
+                del ind.attrib[k]
+        # 用正则抓条目编号：[1]~[9] → 175, [10]+ → 200
+        ref_text = p.text or ""
+        m = re.match(r"\s*\[(\d+)\]", ref_text)
+        if m and len(m.group(1)) >= 2:
+            hang_chars = "200"
+        else:
+            hang_chars = "175"
+        ind.set(_qn("w:hangingChars"), hang_chars)
+        ind.set(_qn("w:leftChars"), hang_chars)
+        # 行距 1.5 倍（pandoc 默认 400/exact=固定20pt，学校要求 360/auto）
+        sp = pPr.find(_qn("w:spacing"))
+        if sp is None:
+            sp = _OxmlElement("w:spacing")
+            pPr.append(sp)
+        sp.set(_qn("w:line"), "360")
+        sp.set(_qn("w:lineRule"), "auto")
+
+    # 中文段落英文半角逗号 → 全角（跨 run 映射）
+    cjk_re = re.compile(r"[一-鿿]")
+    half_comma_re = re.compile(r"[一-鿿]\s*,\s*[一-鿿]")
+
+    def _has_cjk(s):
+        return bool(cjk_re.search(s))
+
+    for p in doc.paragraphs:
+        style_name = (p.style.name if p.style else "")
+        # 跳过代码块/verbatim、参考文献
+        if style_name.startswith(("Source", "Verbatim", "Reference", "Bibliograph")):
+            continue
+        text = p.text or ""
+        if not _has_cjk(text) or "," not in text:
+            continue
+        # 找所有半角逗号的段内绝对位置，要求其前一个 CJK 字符 + 后一个 CJK 字符
+        comma_positions = []
+        for m in re.finditer(r",", text):
+            i = m.start()
+            # 左侧最近非空字符
+            li = i - 1
+            while li >= 0 and text[li].isspace():
+                li -= 1
+            if li < 0 or not cjk_re.match(text[li]):
+                continue
+            # 右侧最近非空字符
+            ri = i + 1
+            while ri < len(text) and text[ri].isspace():
+                ri += 1
+            if ri >= len(text) or not cjk_re.match(text[ri]):
+                continue
+            comma_positions.append(i)
+        if not comma_positions:
+            continue
+        # 把段内 run 文本的绝对区间算出来，逐 run 重写
+        offset = 0
+        for r in p.runs:
+            rt = r.text or ""
+            r_start = offset
+            r_end = offset + len(rt)
+            # 落在本 run 的半角逗号位置
+            hits = [cp - r_start for cp in comma_positions if r_start <= cp < r_end]
+            if hits:
+                chars = list(rt)
+                for h in hits:
+                    if 0 <= h < len(chars) and chars[h] == ",":
+                        chars[h] = "，"
+                r.text = "".join(chars)
+            offset = r_end
+
+    # CJK ↔ ASCII 交界处插入半角空格（模拟 xeCJK 的自动间距）
+    # PDF 走 xeCJK 自动处理；pandoc→docx 走纯文本流会丢失空格。
+    # 规则：CJK 字符紧跟 ASCII 字母/数字时在中间插空格；反向同理。
+    # 跨 run 处理：段内 run 顺序拼接后识别交界位置，再逐 run 精确插入。
+    # 排除：代码块、参考文献、公式段（OMML 另外渲染）。
+    cjk_ascii_re = re.compile(r"[一-鿿][A-Za-z0-9]")
+    ascii_cjk_re = re.compile(r"[A-Za-z0-9][一-鿿]")
+
+    for p in doc.paragraphs:
+        style_name = (p.style.name if p.style else "")
+        # 跳过代码块 / verbatim —— 代码里的空格有语义
+        if style_name.startswith(("Source", "Verbatim")):
+            continue
+        # 跳过目录行
+        if style_name.startswith(("TOC", "toc")):
+            continue
+        # 拼接段文本，记录每个 run 的 [start, end) 区间
+        text = ""
+        run_spans = []  # (run, start, end)
+        for r in p.runs:
+            rt = r.text or ""
+            run_spans.append((r, len(text), len(text) + len(rt)))
+            text += rt
+        if not text:
+            continue
+        # 找所有需要插空格的位置（在第 i 和 i+1 字符之间）
+        insert_positions = set()
+        for m in cjk_ascii_re.finditer(text):
+            insert_positions.add(m.start() + 1)  # 插在 CJK 和 ASCII 之间
+        for m in ascii_cjk_re.finditer(text):
+            insert_positions.add(m.start() + 1)  # 插在 ASCII 和 CJK 之间
+        if not insert_positions:
+            continue
+        # 逐 run 插入：对每个 run 按其区间内相对位置插空格
+        for r, s, e in run_spans:
+            rt = r.text or ""
+            if not rt:
+                continue
+            # 本 run 区间内的插入点（转为本 run 内的相对偏移）
+            local_hits = sorted(
+                [pos - s for pos in insert_positions if s < pos <= e],
+                reverse=True,
+            )
+            if not local_hits:
+                continue
+            chars = list(rt)
+            for h in local_hits:
+                chars.insert(h, " ")
+            r.text = "".join(chars)
+
+    # OMML 数学对象字号统一小四 24 半磅（12pt）
+    M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
+    for mr in body.iter(f"{M}r"):
+        rPr = mr.find(f"{M}rPr")
+        # 在 OMML 里字号用 w:sz 挂在 w:rPr 下，而不是 m:rPr；要插一个 w:rPr
+        w_rPr = None
+        for child in mr:
+            if child.tag == _qn("w:rPr"):
+                w_rPr = child
+                break
+        if w_rPr is None:
+            w_rPr = _OxmlElement("w:rPr")
+            # 放在 m:rPr 之后、m:t 之前
+            insert_at = 0
+            for idx, ch in enumerate(mr):
+                if ch.tag == f"{M}rPr":
+                    insert_at = idx + 1
+                    break
+            mr.insert(insert_at, w_rPr)
+        sz = w_rPr.find(_qn("w:sz"))
+        if sz is None:
+            sz = _OxmlElement("w:sz")
+            w_rPr.append(sz)
+        sz.set(_qn("w:val"), "24")
+        szCs = w_rPr.find(_qn("w:szCs"))
+        if szCs is None:
+            szCs = _OxmlElement("w:szCs")
+            w_rPr.append(szCs)
+        szCs.set(_qn("w:val"), "24")
+
+    # 目录段：添加前导符（tab leader = dot）
+    for p in doc.paragraphs:
+        t = (p.text or "").strip()
+        style_name = (p.style.name if p.style else "").lower()
+        if "toc" in style_name or "目录" in style_name or style_name.startswith("contents"):
+            pPr = p._element.find(_qn("w:pPr"))
+            if pPr is None:
+                continue
+            tabs = pPr.find(_qn("w:tabs"))
+            if tabs is None:
+                tabs = _OxmlElement("w:tabs")
+                pPr.append(tabs)
+            # 确保有一个右对齐 tab 带 dot leader
+            has_right_dot = False
+            for tab in tabs.findall(_qn("w:tab")):
+                if tab.get(_qn("w:val")) == "right":
+                    tab.set(_qn("w:leader"), "dot")
+                    has_right_dot = True
+            if not has_right_dot:
+                tab_el = _OxmlElement("w:tab")
+                tab_el.set(_qn("w:val"), "right")
+                tab_el.set(_qn("w:leader"), "dot")
+                tab_el.set(_qn("w:pos"), "8306")
+                tabs.append(tab_el)
 
 
 def _insert_blank_before_abstract(doc) -> None:
