@@ -226,53 +226,61 @@ def _extract_first_caption_star(block: str) -> tuple[str, str | None]:
     return block, None
 
 
-# pandoc 把 figure 环境里所有 subfigure 一律塞成 1 行 N 列表格（不看 \\textwidth 宽度），
-# 导致本该竖排（每行一个）的 \\textwidth 子图被横向挤在一起。
-# 办法：在 flatten 阶段给"整宽"subfigure 的 \\caption{...} 里注入这个零宽 marker，
-# 后处理阶段扫到 cell 里含 marker 就把 1×N 表转 N×1 并清掉 marker。
-_VERT_SUBFIG_MARKER = "⁣VERT⁣"
+# 学校格式检测器不认多 cell 子图表格，figure 块里的所有 subfigure 整体替换为单张
+# fig_merged_<label>.svg（由 图片/fig_merged_*.tex 经 svg 流水线生成，内部已含子图小标）。
+def _collapse_subfigures_to_merged(block: str) -> str:
+    """把 figure 块里所有 \\begin{subfigure}...\\end{subfigure} 整体替换为单个
+    `\\includegraphics{SVG_DIR/fig_merged_<label>.svg}`。
 
-
-def _mark_vertical_subfigures(block: str) -> str:
-    """给 `\\begin{subfigure}[pos]{宽度}` 中宽度为整幅（\\textwidth 或 >=0.9\\textwidth）的子图
-    在其内部 \\caption{...} 文字首注入 _VERT_SUBFIG_MARKER。"""
-
-    def _is_full_width(width_expr: str) -> bool:
-        s = width_expr.replace(" ", "")
-        if s == r"\textwidth" or s == r"1\textwidth" or s == r"1.0\textwidth":
-            return True
-        m = re.match(r"^(0?\.\d+)\\textwidth$", s)
-        if m:
-            try:
-                return float(m.group(1)) >= 0.9
-            except ValueError:
-                return False
-        return False
-
-    def _inject(m: re.Match[str]) -> str:
-        width = m.group("w")
-        inner = m.group("inner")
-        if not _is_full_width(width):
-            return m.group(0)
-        # 在第一个 \caption{...} 内容首插入 marker（只标这一次，主 figure caption 不会被动到，
-        # 因为 subfigure 作用域由 \begin{subfigure}...\end{subfigure} 限定）。
-        def _cap(cm: re.Match[str]) -> str:
-            return f"\\caption{{{_VERT_SUBFIG_MARKER}{cm.group(1)}}}"
-
-        new_inner = re.sub(
-            r"\\caption\{((?:[^{}]|\{[^{}]*\})*)\}",
-            _cap,
-            inner,
-            count=1,
-        )
-        return f"\\begin{{subfigure}}[{m.group('pos')}]{{{width}}}{new_inner}\\end{{subfigure}}"
-
-    return re.sub(
-        r"\\begin\{subfigure\}\[(?P<pos>[^\]]*)\]\{(?P<w>[^}]*)\}(?P<inner>.*?)\\end\{subfigure\}",
-        _inject,
+    父 \\caption{...} 和父 \\label{fig:xxx} 保留；子 caption/子 label 随 subfigure 块一起丢弃。
+    直接输出 includegraphics 而非 \\input 是因为本函数在 rewrite_figure_inputs 之后调用，
+    再走 \\input 就 miss 掉 SVG 替换环节。"""
+    if r"\begin{subfigure}" not in block:
+        return block
+    # 屏蔽 subfigure 块后再找父 label，避免命中子图里残留的 label
+    masked = re.sub(
+        r"\\begin\{subfigure\}.*?\\end\{subfigure\}",
+        "",
         block,
         flags=re.DOTALL,
     )
+    lab_m = re.search(r"\\label\{(fig:[^}]+)\}", masked)
+    if not lab_m:
+        return block  # 没有父 label，不替换
+    merged_name = "fig_merged_" + lab_m.group(1)[len("fig:") :]
+    svg_path = SVG_DIR / f"{merged_name}.svg"
+    if not svg_path.exists():
+        # merged svg 未生成，保留原 subfigure 结构（pandoc 会兜底渲成多 cell 表）
+        return block
+
+    # 删所有 subfigure 块
+    new_block = re.sub(
+        r"\\begin\{subfigure\}.*?\\end\{subfigure\}",
+        "",
+        block,
+        flags=re.DOTALL,
+    )
+    # 清连接符（\hfill / \hspace{...} / \vspace{...}）和由此产生的孤立空行
+    new_block = re.sub(r"\\hfill\b", "", new_block)
+    new_block = re.sub(r"\\hspace\{[^}]*\}", "", new_block)
+    new_block = re.sub(r"\\vspace\{[^}]*\}", "", new_block)
+    new_block = re.sub(r"\n\s*\n\s*\n+", "\n\n", new_block)
+
+    # 在 \begin{figure}[...]\centering 之后插入 \includegraphics
+    insert_pat = re.compile(
+        r"(\\begin\{figure\}(?:\[[^\]]*\])?\s*)(\\centering\s*)?",
+        flags=re.DOTALL,
+    )
+    insert_m = insert_pat.search(new_block)
+    if not insert_m:
+        return block  # 结构异常，保守回退
+    idx = insert_m.end()
+    injected = (
+        f"\\includegraphics[width=0.8\\textwidth]{{{svg_path.as_posix()}}}\n"
+    )
+    if insert_m.group(2) is None:
+        injected = "\\centering\n" + injected
+    return new_block[:idx] + injected + new_block[idx:]
 
 
 def _prefix_outermost_caption(block: str, prefix: str) -> str:
@@ -403,12 +411,14 @@ def number_figures_and_tables(body: str) -> tuple[str, dict[str, str]]:
                 _sweep_inner_equations(g)
             state[key] += 1
             num = f"{state['chap']}.{state[key]}"
-            _record(g, prefix, num)
+            # 算法/代码 用短横线编号 "N-M"（学校规范），图/表/公式/定理/引理保留 "N.M"
+            display_num = num.replace(".", "-", 1) if key in ("alg", "lst") else num
+            _record(g, prefix, display_num)
             if cap_tmpl:
                 g, star_note = _extract_first_caption_star(g)
-                g = _prefix_outermost_caption(g, cap_tmpl.format(num=num))
+                g = _prefix_outermost_caption(g, cap_tmpl.format(num=display_num))
                 if env == "figure":
-                    g = _mark_vertical_subfigures(g)
+                    g = _collapse_subfigures_to_merged(g)
                 if star_note is not None:
                     star_note = re.sub(
                         r"\\(?:scriptsize|footnotesize|small|tiny|normalsize)\s*",
@@ -418,10 +428,8 @@ def number_figures_and_tables(body: str) -> tuple[str, dict[str, str]]:
                     if star_note:
                         g = g + f"\n\n\\noindent {star_note}\n\n"
                 return g
-            # listing: 单独从 [caption={...}] 可选参数提取标题，在块前插入"代码 X.Y 标题"段
+            # listing: 单独从 [caption={...}] 可选参数提取标题，在块前插入"代码 X-Y 标题"段
             if key == "lst":
-                display_num = num.replace(".", "-", 1)
-                _record(g, prefix, display_num)
                 cap_match = re.search(r"caption\s*=\s*\{([^}]*)\}", g)
                 cap_text = cap_match.group(1) if cap_match else ""
                 # 去掉 caption 里的 LaTeX 命令残留
