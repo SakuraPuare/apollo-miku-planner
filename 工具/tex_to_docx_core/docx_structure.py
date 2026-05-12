@@ -81,11 +81,11 @@ def _extract_thesis_titles() -> tuple[str, str]:
 
 
 def insert_page_breaks_before_headings(doc) -> None:
-    """在所有 Heading 1 之前插入分页符（首个除外），对齐规范"每个一级标题前插入分页符"。"""
+    """在所有 Heading 1 之前插入分页符（首个除外，由 TOC 域段内 page break 覆盖）。"""
     h1_list = [p for p in doc.paragraphs if p.style and p.style.name == "Heading 1"]
     for i, p in enumerate(h1_list):
         if i == 0:
-            # 首个 Heading 1（通常是"摘要"）紧跟目录 TOC 分页，不重复加
+            # 首个 Heading 1（通常是"摘要"）紧跟 TOC 域段内的分页符，不重复加
             continue
         # 若前一段已有分页符则跳过（避免 prepend_front_matter 之后重复）
         prev_el = p._element.getprevious()
@@ -282,6 +282,13 @@ def _make_toc_block(doc) -> list:
     toc_p.append(r5)
     els.append(toc_p)
 
-    # 分页符，让正文（摘要）落到下一页
-    els.append(_make_page_break_para(doc))
+    # 分页符放在 TOC 域段落内部（field end 之后），而非独立段落。
+    # 这样 Word 更新目录域后，page break 跟最后一条目录项同段，
+    # 不会在分页符前多出一个空段落。
+    r_br = OxmlElement("w:r")
+    br = OxmlElement("w:br")
+    br.set(qn("w:type"), "page")
+    r_br.append(br)
+    toc_p.append(r_br)
+
     return els
