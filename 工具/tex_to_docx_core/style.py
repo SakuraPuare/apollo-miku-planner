@@ -365,17 +365,21 @@ def normalize_paragraph_spacing(doc) -> None:
                     if k in spacing.attrib:
                         del spacing.attrib[k]
             elif _looks_like_abstract_title(txt_c):
-                _set_spacing(pPr, before=120, after=31)
+                _set_spacing(pPr, before=0, after=0)
             elif style_val in ("ImageCaption",) or (
                 style_val == "Caption" and txt_c.startswith("图")
             ):
-                # 图题：段前 0、段后 6 磅（图在上、图题在下、与正文留白）
-                _set_spacing(pPr, before=0, after=120)
+                # 图题：段前段后 0（学校模板要求 caption 四围归零）
+                _set_spacing(pPr, before=0, after=0)
             elif style_val in ("TableCaption",) or (
                 style_val == "Caption" and txt_c.startswith("表")
             ):
-                # 表题：段前 6 磅、段后 0（表题在上、表在下、与正文留白）
-                _set_spacing(pPr, before=120, after=0)
+                # 表题：段前段后 0（学校模板要求 caption 四围归零）
+                _set_spacing(pPr, before=0, after=0)
+            elif style_val == "CaptionedFigure":
+                # pandoc 把「图+图题」整体包成 CaptionedFigure 段；学校模板
+                # 要求段前段后 0（跨页留白由 1.5 倍行距与浮动体自身承载）
+                _set_spacing(pPr, before=0, after=0)
             else:
                 _set_spacing(pPr, before=120, after=0)
             continue
@@ -389,13 +393,13 @@ def normalize_paragraph_spacing(doc) -> None:
                 pPr.remove(ind)
             continue
 
-        # 摘要/Abstract 首段（含正文）：段前 6 磅、段后 1.55 磅
+        # 摘要/Abstract 首段（含正文）：学校模板要求段前段后 0
         # 触发词：以"摘要："或"Abstract"开头（兼容半角/全角冒号）
         txt_strip = txt.lstrip()
         if txt_strip.startswith(("摘要：", "摘要:", "Abstract:", "Abstract：")) or (
             txt_strip.startswith("Abstract") and len(txt_strip) > 8 and txt_strip[8] in (" ", ":", "：")
         ):
-            _set_spacing(pPr, before=120, after=31)
+            _set_spacing(pPr, before=0, after=0)
             _set_firstline_chars(pPr)
             continue
 
@@ -621,23 +625,48 @@ def _ensure_toc_styles(doc) -> None:
             if color.get(qn(attr)) is not None:
                 del color.attrib[qn(attr)]
 
-    # TOC 1（一级目录项）：黑体加粗；不设缩进
+    def _ensure_pPr(target):
+        pPr = target.find(qn("w:pPr"))
+        if pPr is None:
+            pPr = OxmlElement("w:pPr")
+            rPr = target.find(qn("w:rPr"))
+            if rPr is not None:
+                target.insert(list(target).index(rPr), pPr)
+            else:
+                target.append(pPr)
+        return pPr
+
+    def _ensure_leader_dot_tab(pPr):
+        """给 pPr 写入带 dot leader 的右对齐 tab，页码对齐位置 8306 twips。
+        用正文栏宽 A4-3-2=15.7cm ≈ 8906 twips，减去 600 微调 8306。"""
+        tabs = pPr.find(qn("w:tabs"))
+        if tabs is None:
+            tabs = OxmlElement("w:tabs")
+            pPr.insert(0, tabs)
+        has_right_dot = False
+        for tab in tabs.findall(qn("w:tab")):
+            if tab.get(qn("w:val")) == "right":
+                tab.set(qn("w:leader"), "dot")
+                tab.set(qn("w:pos"), "8306")
+                has_right_dot = True
+        if not has_right_dot:
+            tab_el = OxmlElement("w:tab")
+            tab_el.set(qn("w:val"), "right")
+            tab_el.set(qn("w:leader"), "dot")
+            tab_el.set(qn("w:pos"), "8306")
+            tabs.append(tab_el)
+
+    # TOC 1（一级目录项）：黑体加粗；不设缩进；右侧 tab 带 dot leader
     toc1 = _find_or_create(("TOC1", "toc1"), "toc 1")
     _force_toc_style(toc1, bold=True, cjk_font="黑体")
+    _ensure_leader_dot_tab(_ensure_pPr(toc1))
 
-    # TOC 2（二级目录项）：宋体不加粗 + 缩进 2 字符
+    # TOC 2（二级目录项）：宋体不加粗 + 缩进 2 字符；右侧 tab 带 dot leader
     toc2 = _find_or_create(("TOC2", "toc2"), "toc 2")
     _force_toc_style(toc2, bold=False, cjk_font="宋体")
 
-    pPr = toc2.find(qn("w:pPr"))
-    if pPr is None:
-        pPr = OxmlElement("w:pPr")
-        # 放在 rPr 之前
-        rPr = toc2.find(qn("w:rPr"))
-        if rPr is not None:
-            toc2.insert(list(toc2).index(rPr), pPr)
-        else:
-            toc2.append(pPr)
+    pPr = _ensure_pPr(toc2)
+    _ensure_leader_dot_tab(pPr)
     ind = pPr.find(qn("w:ind"))
     if ind is None:
         ind = OxmlElement("w:ind")
