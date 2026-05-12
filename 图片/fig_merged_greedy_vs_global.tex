@@ -1,0 +1,12 @@
+%% fig_merged: 合并 fig:greedy_vs_global 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_greedy_vs_global_a}}
+  \caption{贪心独立决策 $\to$ BLOCKED}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_greedy_vs_global_b}}
+  \caption{全局协调统一右绕 $\to$ 通行}
+\end{subfigure}

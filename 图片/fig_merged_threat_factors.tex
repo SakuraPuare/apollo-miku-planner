@@ -1,0 +1,30 @@
+%% fig_merged: 合并 fig:threat_factors 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \input{fig_threat_factors_a}
+  \caption{碰撞时间因子}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \input{fig_threat_factors_b}
+  \caption{横向重叠率因子}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \input{fig_threat_factors_c}
+  \caption{相对速度因子}
+\end{subfigure}
+
+\vspace{0.8em}
+
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \input{fig_threat_factors_d}
+  \caption{障碍物类型因子}
+\end{subfigure}\hspace{0.02\textwidth}
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \input{fig_threat_factors_e}
+  \caption{单邻居交互贡献}
+\end{subfigure}

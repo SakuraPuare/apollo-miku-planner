@@ -1,0 +1,12 @@
+%% fig_merged: 合并 fig:qp_geometry 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_qp_geometry}}
+  \caption{二维等值线视角下的KKT 切线条件}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_qp_geometry_3d}}
+  \caption{三维曲面视角下的抛物面碗型直觉}
+\end{subfigure}

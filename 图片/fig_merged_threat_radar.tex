@@ -1,0 +1,12 @@
+%% fig_merged: 合并 fig:threat_radar 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_threat_radar_a}}
+  \caption{高威胁 \;\; 对向来车}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_threat_radar_b}}
+  \caption{低威胁 \;\; 远处静态路锥}
+\end{subfigure}

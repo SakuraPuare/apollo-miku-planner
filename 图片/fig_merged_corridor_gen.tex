@@ -1,0 +1,17 @@
+%% fig_merged: 合并 fig:corridor_gen 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_corridor_gen_a}}
+  \caption{$s=s^\star$横向切片间隙分析}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_corridor_gen_b}}
+  \caption{$g_{p^*}(s)$剖面判定通行$s$区间}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.32\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_corridor_gen_c}}
+  \caption{映射至ST空间合成走廊$\Omega$}
+\end{subfigure}

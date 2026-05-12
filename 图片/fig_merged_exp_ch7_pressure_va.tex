@@ -1,0 +1,19 @@
+%% fig_merged: 合并 fig:exp_ch7_pressure_va 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{\textwidth}
+  \centering
+  \input{fig_exp_01_crossing_ped_va_a}
+  \caption{速度对比}
+\end{subfigure}
+
+\begin{subfigure}[b]{\textwidth}
+  \centering
+  \input{fig_exp_01_crossing_ped_va_b}
+  \caption{纵向/横向加速度对比}
+\end{subfigure}
+
+\begin{subfigure}[b]{\textwidth}
+  \centering
+  \input{fig_exp_01_crossing_ped_va_c}
+  \caption{jerk 对比}
+\end{subfigure}

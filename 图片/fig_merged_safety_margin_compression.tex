@@ -1,0 +1,12 @@
+%% fig_merged: 合并 fig:safety_margin_compression 的子图为单张输出（svg 流水线用）
+%% wrapper 已提供 \begin{figure}[H]\centering ... \end{figure}，本文件只放 subfigure 内容
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_safety_margin_compression_a}}
+  \caption{$\delta{=}0.15$m（差异化），恰好可通行}
+\end{subfigure}\hfill
+\begin{subfigure}[b]{0.48\textwidth}
+  \centering
+  \adjustbox{max width=\linewidth}{\input{fig_safety_margin_compression_b}}
+  \caption{$\delta{=}0.3$m（统一），BLOCKED}
+\end{subfigure}
