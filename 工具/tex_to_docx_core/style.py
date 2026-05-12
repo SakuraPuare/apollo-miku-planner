@@ -5,7 +5,7 @@ import re
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-from .docx_common import _set_rfonts
+from .docx_common import _ensure_pPr, _ensure_child, _set_rfonts, _set_spacing, _set_indent
 
 
 def bolden_abstract_prefixes(doc) -> None:
@@ -267,13 +267,6 @@ def normalize_paragraph_spacing(doc) -> None:
 
     heading_prefixes = ("Heading", "Title", "TOC")
 
-    def _ensure_pPr(p_el):
-        pPr = p_el.find(qn("w:pPr"))
-        if pPr is None:
-            pPr = OxmlElement("w:pPr")
-            p_el.insert(0, pPr)
-        return pPr
-
     def _set_snap_false(pPr):
         snap = pPr.find(qn("w:snapToGrid"))
         if snap is None:
@@ -281,7 +274,8 @@ def normalize_paragraph_spacing(doc) -> None:
             pPr.append(snap)
         snap.set(qn("w:val"), "0")
 
-    def _set_spacing(pPr, before=None, after=None):
+    def _set_spacing_local(pPr, before=None, after=None):
+        """局部快捷：只处理 before/after；line/lineRule 由 docx_common._set_spacing 负责。"""
         spacing = pPr.find(qn("w:spacing"))
         if spacing is None:
             spacing = OxmlElement("w:spacing")
@@ -625,7 +619,10 @@ def _ensure_toc_styles(doc) -> None:
             if color.get(qn(attr)) is not None:
                 del color.attrib[qn(attr)]
 
-    def _ensure_pPr(target):
+    def _ensure_style_pPr(target):
+        """专门给 <w:style> 元素用：pPr 必须放在 rPr 之前，否则 Word 拒绝读取样式。
+        不同于 docx_common._ensure_pPr（那是段落用的 insert(0)）。
+        """
         pPr = target.find(qn("w:pPr"))
         if pPr is None:
             pPr = OxmlElement("w:pPr")
@@ -659,13 +656,13 @@ def _ensure_toc_styles(doc) -> None:
     # TOC 1（一级目录项）：黑体加粗；不设缩进；右侧 tab 带 dot leader
     toc1 = _find_or_create(("TOC1", "toc1"), "toc 1")
     _force_toc_style(toc1, bold=True, cjk_font="黑体")
-    _ensure_leader_dot_tab(_ensure_pPr(toc1))
+    _ensure_leader_dot_tab(_ensure_style_pPr(toc1))
 
     # TOC 2（二级目录项）：宋体不加粗 + 缩进 2 字符；右侧 tab 带 dot leader
     toc2 = _find_or_create(("TOC2", "toc2"), "toc 2")
     _force_toc_style(toc2, bold=False, cjk_font="宋体")
 
-    pPr = _ensure_pPr(toc2)
+    pPr = _ensure_style_pPr(toc2)
     _ensure_leader_dot_tab(pPr)
     ind = pPr.find(qn("w:ind"))
     if ind is None:
@@ -724,11 +721,14 @@ def normalize_toc_entries(doc) -> None:
         if ind is None:
             ind = OxmlElement("w:ind")
             pPr.append(ind)
-        for attr in ("left", "leftChars", "hanging", "hangingChars", "firstLine"):
+        for attr in ("left", "leftChars", "hanging", "hangingChars", "firstLine", "firstLineChars"):
             key = qn(f"w:{attr}")
             if key in ind.attrib:
                 del ind.attrib[key]
-        ind.set(qn("w:firstLineChars"), "200")
+        # 所有 TOC 级别 firstLine=0（检测器硬指标：目录项无首行缩进）
+        # 层级视觉在 _rule_styles 的样式级用 left 表达，这里段级不重复设
+        ind.set(qn("w:firstLineChars"), "0")
+        ind.set(qn("w:firstLine"), "0")
 
 
 def normalize_bibliography_text(doc) -> None:
