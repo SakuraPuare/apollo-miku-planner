@@ -10,366 +10,6 @@ from docx.shared import Pt, RGBColor
 from .config import FONT_SIZE
 from .docx_common import _set_rfonts
 
-# 见 flatten._mark_vertical_subfigures：整幅宽度 subfigure 的 caption 里注入此 marker，
-# 提示下面的 split_vertical_subfigure_tables 把对应 1×N 布局表拆成 N×1 竖排。
-VERT_SUBFIG_MARKER = "⁣VERT⁣"
-
-
-def _is_subfigure_layout_table(tbl) -> bool:
-    """子图排版表格判定。涵盖两种形态：
-    1. 横排（pandoc 默认）：1 行 N 列，至少一个 cell 含 drawing。
-    2. 竖排（split_vertical_subfigure_tables 产物）：N 行 1 列，至少一个 cell 含 drawing。
-    """
-    rows = tbl._element.findall(qn("w:tr"))
-    if len(rows) < 1:
-        return False
-    # 横排：1 行 >=2 列
-    if len(rows) == 1:
-        tcs = rows[0].findall(qn("w:tc"))
-        if len(tcs) < 2:
-            return False
-        for tc in tcs:
-            if tc.findall(".//" + qn("w:drawing")):
-                return True
-        return False
-    # 竖排：>=2 行，每行都是 1 列
-    for tr in rows:
-        tcs = tr.findall(qn("w:tc"))
-        if len(tcs) != 1:
-            return False
-    for tr in rows:
-        for tc in tr.findall(qn("w:tc")):
-            if tc.findall(".//" + qn("w:drawing")):
-                return True
-    return False
-
-
-def _cell_has_vert_marker(tc) -> bool:
-    for t in tc.findall(".//" + qn("w:t")):
-        if t.text and VERT_SUBFIG_MARKER in t.text:
-            return True
-    return False
-
-
-def _strip_vert_markers_in_tree(root) -> None:
-    for t in root.findall(".//" + qn("w:t")):
-        if t.text and VERT_SUBFIG_MARKER in t.text:
-            t.text = t.text.replace(VERT_SUBFIG_MARKER, "")
-
-
-def split_vertical_subfigure_tables(doc) -> None:
-    """把带竖排 marker 的 1×N subfigure 布局表重排成 N×1，并把表格拉满页宽。
-
-    LaTeX 源里 `\\begin{subfigure}[b]{\\textwidth}` 意味"每图独占一行"，
-    但 pandoc 不看宽度，一律塞成单行多列表格。flatten 阶段已在这类子图的 caption 里
-    注入 VERT_SUBFIG_MARKER；这里检测到 marker 就把 tr 拆成 N 行（每行一 cell），
-    并清掉 marker 文本。
-
-    竖排时每个子图本应占满文本宽度，所以把 tblW / tcW 显式改成 pct=5000（100%），
-    避免继承 pandoc 默认的 auto / w=0，在 Word 里表格宽度塌到内容自然宽。
-    """
-    for tbl in doc.tables:
-        if not _is_subfigure_layout_table(tbl):
-            continue
-        t_el = tbl._element
-        rows = t_el.findall(qn("w:tr"))
-        if len(rows) != 1:
-            continue
-        tr = rows[0]
-        tcs = tr.findall(qn("w:tc"))
-        if not any(_cell_has_vert_marker(tc) for tc in tcs):
-            continue
-
-        # 1. tblW 改成 pct=5000（铺满页宽）
-        tblPr = t_el.find(qn("w:tblPr"))
-        if tblPr is not None:
-            old_tblW = tblPr.find(qn("w:tblW"))
-            if old_tblW is not None:
-                tblPr.remove(old_tblW)
-            tblW = OxmlElement("w:tblW")
-            tblW.set(qn("w:type"), "pct")
-            tblW.set(qn("w:w"), "5000")
-            # tblW 在 OOXML 里的位置：tblStyle, tblpPr, tblOverlap, bidiVisual,
-            # tblStyleRowBandSize, tblStyleColBandSize, tblW, jc, ...
-            # 简化：append 到 tblPr 末尾即可，Word 容忍顺序轻微偏差
-            tblPr.append(tblW)
-
-        # 2. tblGrid 改单列（宽度求和，虽然 pct 生效时 grid 只是 hint，但补全避免校验警告）
-        grid = t_el.find(qn("w:tblGrid"))
-        if grid is not None:
-            total_w = 0
-            for col in grid.findall(qn("w:gridCol")):
-                w = col.get(qn("w:w"))
-                if w and w.isdigit():
-                    total_w += int(w)
-            for col in list(grid.findall(qn("w:gridCol"))):
-                grid.remove(col)
-            new_col = OxmlElement("w:gridCol")
-            if total_w > 0:
-                new_col.set(qn("w:w"), str(total_w))
-            grid.append(new_col)
-
-        # 3. 每个 tc 单独包成新 tr，并把 tcW 也设 pct=5000
-        tr_pr = tr.find(qn("w:trPr"))
-        for tc in tcs:
-            tcPr = tc.find(qn("w:tcPr"))
-            if tcPr is None:
-                tcPr = OxmlElement("w:tcPr")
-                tc.insert(0, tcPr)
-            old_tcW = tcPr.find(qn("w:tcW"))
-            if old_tcW is not None:
-                tcPr.remove(old_tcW)
-            tcW = OxmlElement("w:tcW")
-            tcW.set(qn("w:type"), "pct")
-            tcW.set(qn("w:w"), "5000")
-            # tcW 应位于 tcPr 最前部（cnfStyle/tcW/gridSpan/... 顺序），insert(0) 最稳
-            tcPr.insert(0, tcW)
-
-            new_tr = OxmlElement("w:tr")
-            if tr_pr is not None:
-                import copy
-                new_tr.append(copy.deepcopy(tr_pr))
-            tr.remove(tc)
-            new_tr.append(tc)
-            tr.addprevious(new_tr)
-        t_el.remove(tr)
-
-        # 4. 清 marker
-        _strip_vert_markers_in_tree(t_el)
-
-
-# 竖排 subfigure drawing 等比缩放：wp:extent / a:ext 同步改；单位全是 EMU
-_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
-_A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
-# 页面留白系数：0.98 保留一点点 cell 内边距，避免贴着页边
-_VERT_FILL_RATIO = 0.98
-# 1 twip = 1/20 pt = 1/1440 in；1 EMU = 1/914400 in → 1 twip = 635 EMU
-_TWIP_TO_EMU = 635
-
-
-def _compute_text_width_emu(doc) -> int | None:
-    """从 sectPr 读 pgSz.w / pgMar.left / pgMar.right，算正文可用宽度（EMU）。"""
-    sect_pr = None
-    for sp in doc.element.body.iter(qn("w:sectPr")):
-        # 只取能同时提供 pgSz + pgMar 的
-        if sp.find(qn("w:pgSz")) is not None and sp.find(qn("w:pgMar")) is not None:
-            sect_pr = sp
-            break
-    if sect_pr is None:
-        # A4 (210mm × 297mm) 纵向 + 默认左右 30mm 边距的兜底值
-        # 210mm = 11906 twip；30mm = 1701 twip
-        # text = 11906 - 2*1701 = 8504 twip → 8504 * 635 = 5400040 EMU
-        return 5400040
-    pg_sz = sect_pr.find(qn("w:pgSz"))
-    pg_mar = sect_pr.find(qn("w:pgMar"))
-    try:
-        w = int(pg_sz.get(qn("w:w")))
-        left = int(pg_mar.get(qn("w:left")))
-        right = int(pg_mar.get(qn("w:right")))
-    except (TypeError, ValueError):
-        return 5400040
-    text_w_twip = w - left - right
-    if text_w_twip <= 0:
-        return 5400040
-    return text_w_twip * _TWIP_TO_EMU
-
-
-def resize_vertical_subfigure_drawings(doc) -> None:
-    """把竖排 subfigure 表里每张图的 drawing 尺寸等比拉到"文本宽 × 0.98"。
-
-    pandoc 输出的 wp:inline/wp:extent 是绝对 EMU（来自 \\includegraphics 宽度计算），
-    拆成竖排后 tc 已经铺满页宽，但 drawing 还停留在原小尺寸——视觉上图片没跟上表格。
-    这里按原纵横比，把 cx 拉到文本宽 × 0.98，cy 同比缩放。wp:extent 与 a:ext 同步更新。
-    """
-    target_cx = _compute_text_width_emu(doc)
-    if target_cx is None:
-        print("[resize_vert] text_width_emu 未取到，跳过")
-        return
-    target_cx = int(target_cx * _VERT_FILL_RATIO)
-
-    from docx.oxml.ns import qn as _qn  # 局部别名避免遮蔽
-
-    touched = 0
-    vert_tables = 0
-    for tbl in doc.tables:
-        if not _is_subfigure_layout_table(tbl):
-            continue
-        t_el = tbl._element
-        rows = t_el.findall(_qn("w:tr"))
-        # 只处理竖排 N×1 形态；横排保留 pandoc 原 cell 内图尺寸
-        if len(rows) < 2 or not all(
-            len(tr.findall(_qn("w:tc"))) == 1 for tr in rows
-        ):
-            continue
-        vert_tables += 1
-        for inline in t_el.iter(f"{{{_WP_NS}}}inline"):
-            wp_extent = inline.find(f"{{{_WP_NS}}}extent")
-            if wp_extent is None:
-                continue
-            try:
-                old_cx = int(wp_extent.get("cx"))
-                old_cy = int(wp_extent.get("cy"))
-            except (TypeError, ValueError):
-                continue
-            if old_cx <= 0 or old_cy <= 0:
-                continue
-            # 已经比目标还宽（原图本就很大）就不动，避免不合理放大
-            if old_cx >= target_cx:
-                continue
-            scale = target_cx / old_cx
-            new_cx = target_cx
-            new_cy = int(round(old_cy * scale))
-            wp_extent.set("cx", str(new_cx))
-            wp_extent.set("cy", str(new_cy))
-            # 同步 a:xfrm/a:ext（pic 内部）；有些 drawing 也有 effectExtent，不动它（边距）
-            for a_ext in inline.iter(f"{{{_A_NS}}}ext"):
-                # a:ext 可能出现在 a:xfrm 里；属性同样是 cx/cy
-                a_ext.set("cx", str(new_cx))
-                a_ext.set("cy", str(new_cy))
-            touched += 1
-    print(f"[resize_vert] target_cx={target_cx} vertical tables={vert_tables} drawings touched={touched}")
-
-
-def style_subfigure_captions(doc) -> None:
-    """子图图注按"图注"规范渲染：宋体五号不加粗居中，前缀 a) b) c) 按 cell 顺序。
-
-    pandoc 把并排的 subfigure 渲染成 1 行 N 列的表格，每个 cell 内：
-        - 段 0：图片 drawing
-        - 段 1：子图 caption 文字（例如"安全裕度一刀切"）
-    默认的 cell 样式循环会把 caption 刷成宋体不加粗，与图注规范不符。
-    """
-    for tbl in doc.tables:
-        if not _is_subfigure_layout_table(tbl):
-            continue
-        rows = tbl._element.findall(qn("w:tr"))
-        if not rows:
-            continue
-        # 横排：一行多列 tcs；竖排：多行单列 tcs 按行展平。两种形态都按出现顺序编 a) b) c)
-        tcs: list = []
-        for tr in rows:
-            tcs.extend(tr.findall(qn("w:tc")))
-        for idx, tc in enumerate(tcs):
-            caption_p = None
-            for p_el in tc.findall(qn("w:p")):
-                if p_el.findall(".//" + qn("w:drawing")):
-                    continue
-                text = "".join(
-                    (t.text or "") for t in p_el.findall(".//" + qn("w:t"))
-                ).strip()
-                if not text:
-                    continue
-                caption_p = p_el
-                break
-            if caption_p is None:
-                continue
-            _apply_subfig_caption_style(caption_p, idx)
-
-
-def _apply_subfig_caption_style(p_el, idx: int) -> None:
-    """把 caption 段整体刷宋体五号不加粗居中，并在首个文字 run 前插 a)/b)/c) 前缀。"""
-    pPr = p_el.find(qn("w:pPr"))
-    if pPr is None:
-        pPr = OxmlElement("w:pPr")
-        p_el.insert(0, pPr)
-
-    jc = pPr.find(qn("w:jc"))
-    if jc is None:
-        jc = OxmlElement("w:jc")
-        pPr.append(jc)
-    jc.set(qn("w:val"), "center")
-
-    ind = pPr.find(qn("w:ind"))
-    if ind is not None:
-        for attr in ("firstLine", "firstLineChars", "left", "leftChars"):
-            key = qn(f"w:{attr}")
-            if key in ind.attrib:
-                del ind.attrib[key]
-
-    for r_el in p_el.findall(qn("w:r")):
-        rPr = r_el.find(qn("w:rPr"))
-        if rPr is None:
-            rPr = OxmlElement("w:rPr")
-            r_el.insert(0, rPr)
-        rFonts = rPr.find(qn("w:rFonts"))
-        if rFonts is None:
-            rFonts = OxmlElement("w:rFonts")
-            rPr.insert(0, rFonts)
-        rFonts.set(qn("w:eastAsia"), "宋体")
-        rFonts.set(qn("w:ascii"), "Times New Roman")
-        rFonts.set(qn("w:hAnsi"), "Times New Roman")
-        rFonts.set(qn("w:cs"), "Times New Roman")
-        # 图注不加粗：显式把 b / bCs 置 0，覆盖父级 Caption 样式可能的加粗继承
-        for tag_name in ("w:b", "w:bCs"):
-            for old in rPr.findall(qn(tag_name)):
-                rPr.remove(old)
-            b = OxmlElement(tag_name)
-            b.set(qn("w:val"), "0")
-            rPr.append(b)
-        for i_tag in ("w:i", "w:iCs"):
-            for old in rPr.findall(qn(i_tag)):
-                rPr.remove(old)
-            neg_i = OxmlElement(i_tag)
-            neg_i.set(qn("w:val"), "0")
-            rPr.append(neg_i)
-        sz = rPr.find(qn("w:sz"))
-        if sz is None:
-            sz = OxmlElement("w:sz")
-            rPr.append(sz)
-        sz.set(qn("w:val"), str(int(FONT_SIZE["五号"] * 2)))
-        # szCs 同步为五号，避免复杂脚本字号仍按旧值继承
-        szCs = rPr.find(qn("w:szCs"))
-        if szCs is None:
-            szCs = OxmlElement("w:szCs")
-            rPr.append(szCs)
-        szCs.set(qn("w:val"), str(int(FONT_SIZE["五号"] * 2)))
-
-    prefix = f"{chr(ord('a') + idx)}) "
-    prefix_r = OxmlElement("w:r")
-    prefix_rPr = OxmlElement("w:rPr")
-    pr_f = OxmlElement("w:rFonts")
-    pr_f.set(qn("w:eastAsia"), "宋体")
-    pr_f.set(qn("w:ascii"), "Times New Roman")
-    pr_f.set(qn("w:hAnsi"), "Times New Roman")
-    pr_f.set(qn("w:cs"), "Times New Roman")
-    prefix_rPr.append(pr_f)
-    # 前缀也不加粗，与图注正文同一颗粒度
-    for tag_name in ("w:b", "w:bCs"):
-        neg_b = OxmlElement(tag_name)
-        neg_b.set(qn("w:val"), "0")
-        prefix_rPr.append(neg_b)
-    pr_sz = OxmlElement("w:sz")
-    pr_sz.set(qn("w:val"), str(int(FONT_SIZE["五号"] * 2)))
-    prefix_rPr.append(pr_sz)
-    pr_szCs = OxmlElement("w:szCs")
-    pr_szCs.set(qn("w:val"), str(int(FONT_SIZE["五号"] * 2)))
-    prefix_rPr.append(pr_szCs)
-    prefix_r.append(prefix_rPr)
-    prefix_t = OxmlElement("w:t")
-    prefix_t.set(qn("xml:space"), "preserve")
-    prefix_t.text = prefix
-    prefix_r.append(prefix_t)
-
-    # 定位插入点：caption 段里 **第一个可见内容节点**，可能是：
-    #   - <w:r>（普通文本 run）
-    #   - <m:oMath> / <m:oMathPara>（pandoc 把 $…$ 转成的 OMML 公式块）
-    # 必须把前缀插到 pPr 之后、任何内容节点之前，否则当 caption 以 $\delta$ 起手
-    # 时，前缀会被挤到 math 之后，出现 "δ=0.15a) m（差异化）" 这类错位。
-    M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
-    content_tags = {
-        qn("w:r"),
-        f"{M}oMath",
-        f"{M}oMathPara",
-    }
-    first_content = None
-    for child in p_el:
-        if child.tag in content_tags:
-            first_content = child
-            break
-    if first_content is not None:
-        first_content.addprevious(prefix_r)
-    else:
-        p_el.append(prefix_r)
-
 
 def _is_code_block_table(tbl) -> bool:
     """代码块表格判定：pandoc 把 lstlisting verbatim 渲染成 1x1 单元格，里面每行一个段落或一个段内用 <w:br> 换行。
@@ -447,10 +87,6 @@ def apply_three_line_tables(doc) -> None:
         # 跳过封面表格（第一行第一个 cell 含"论文题目"），保留其下划线样式
         if len(tbl.rows) > 0 and "论文题目" in (tbl.rows[0].cells[0].text or ""):
             continue
-        # 跳过子图排版表格：行数 == 1 且至少 2 列（subfigure 并排），或者任一 cell 含图片但无正文文字
-        if _is_subfigure_layout_table(tbl):
-            _clear_table_borders(tbl)
-            continue
         # 跳过代码块表格（单 1x1 cell，文本为等宽代码）——保持无边框
         if _is_code_block_table(tbl):
             _clear_table_borders(tbl)
@@ -522,6 +158,57 @@ def center_all_images(doc) -> None:
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
 
+_WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
+_A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+
+def resize_all_images_to_width(
+    doc,
+    width_cm: float = 14.7,
+    max_height_cm: float | None = None,
+) -> None:
+    """所有嵌入图片等比缩放到指定栏宽，高度可选硬上限。
+
+    Word OOXML 里图片尺寸由两组节点决定：
+      1. ``<wp:extent cx cy/>`` —— inline/anchor 容器尺寸
+      2. ``<a:ext cx cy/>``     —— pic 内部 xfrm 的 transform 尺寸
+
+    两者必须同步缩放，否则图形容器与内部绘图会错位。按 wp:extent 的缩放比
+    同步更新 drawing 子树下所有 a:ext，保证容器与 transform 一致。
+
+    若给了 ``max_height_cm``，则最终缩放比取 ``min(width_scale, height_scale)``，
+    保证宽≤width_cm 且 高≤max_height_cm，始终等比例不变形。典型用法：
+    ``width_cm=14.7, max_height_cm=9.9`` — A4 正文栏宽 + 页高 1/3 (29.7/3) 上限。
+    """
+    target_cx = int(round(width_cm * 360000))  # 1 cm = 360000 EMU
+    max_cy = int(round(max_height_cm * 360000)) if max_height_cm else None
+    for drawing in doc.element.iter(qn("w:drawing")):
+        wp_extent = None
+        for c in drawing.iter(f"{{{_WP_NS}}}extent"):
+            wp_extent = c
+            break
+        if wp_extent is None:
+            continue
+        old_cx = int(wp_extent.get("cx") or 0)
+        old_cy = int(wp_extent.get("cy") or 0)
+        if old_cx <= 0 or old_cy <= 0:
+            continue
+        # 等比缩放：取宽度和高度两个约束的最小缩放比
+        scale_w = target_cx / old_cx
+        scale = scale_w if max_cy is None else min(scale_w, max_cy / old_cy)
+        new_cx = int(round(old_cx * scale))
+        new_cy = int(round(old_cy * scale))
+        wp_extent.set("cx", str(new_cx))
+        wp_extent.set("cy", str(new_cy))
+        # 同步 drawing 内所有 a:ext（pic xfrm 的尺寸）
+        for a_ext in drawing.iter(f"{{{_A_NS}}}ext"):
+            a_cx = int(a_ext.get("cx") or 0)
+            a_cy = int(a_ext.get("cy") or 0)
+            if a_cx > 0 and a_cy > 0:
+                a_ext.set("cx", str(int(round(a_cx * scale))))
+                a_ext.set("cy", str(int(round(a_cy * scale))))
+
+
 def style_code_block_tables(doc) -> None:
     """代码块表格里的段落：五号字（21 half-points = 10.5pt）+ 取消首行缩进 + 左对齐。"""
     for tbl in doc.tables:
@@ -570,12 +257,9 @@ def style_code_block_tables(doc) -> None:
 
 def apply_table_body_font_size(doc) -> None:
     """所有数据型表格 cell 内 run 统一五号字（sz=21 half-points = 10.5pt）。
-    跳过：封面表（保留自有排版）/ 子图布局表（cell 内是图与子图 caption，独立刷图题规格）/
-    代码块表（已在 style_code_block_tables 单独刷五号）。"""
+    跳过：封面表（保留自有排版）/ 代码块表（已在 style_code_block_tables 单独刷五号）。"""
     for tbl in doc.tables:
         if len(tbl.rows) > 0 and "论文题目" in (tbl.rows[0].cells[0].text or ""):
-            continue
-        if _is_subfigure_layout_table(tbl):
             continue
         if _is_code_block_table(tbl):
             continue
@@ -600,8 +284,7 @@ def center_all_table_cells(doc) -> None:
     抓手：
       1. 跳过封面表（第一行第一 cell 含"论文题目"）—— 保留自有下划线 + 左对齐样式
       2. 跳过代码块表（_is_code_block_table）—— 代码保持左对齐 + 顶对齐
-      3. 子图布局表（_is_subfigure_layout_table）—— 图片本身居中即可，cell vAlign 也设 center
-      4. 其余表格（三线表 / 单列表 / 对比表）：cell vAlign=center + 每段 jc=center"""
+      3. 其余表格（三线表 / 单列表 / 对比表）：cell vAlign=center + 每段 jc=center"""
     for tbl in doc.tables:
         # 封面表保留
         if len(tbl.rows) > 0 and "论文题目" in (tbl.rows[0].cells[0].text or ""):
