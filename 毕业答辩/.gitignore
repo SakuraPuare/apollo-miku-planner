@@ -1,0 +1,2 @@
+# Round-2 review 中间产物，可由 `pdftoppm -png slides.pdf review_png/slide` 重新生成
+review_png/
