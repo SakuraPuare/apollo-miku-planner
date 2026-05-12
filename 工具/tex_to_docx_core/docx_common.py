@@ -7,6 +7,143 @@ from docx.oxml.ns import qn
 from docx.shared import Pt, RGBColor
 
 
+# =============================================================================
+# pPr / rPr 公共工具（其他模块统一引用，避免各自再定义）
+# =============================================================================
+
+
+def _ensure_pPr(p_el):
+    """返回段落 w:pPr，没有则插到段首。"""
+    pPr = p_el.find(qn("w:pPr"))
+    if pPr is None:
+        pPr = OxmlElement("w:pPr")
+        p_el.insert(0, pPr)
+    return pPr
+
+
+def _ensure_child(parent, tag: str):
+    """获取或创建 parent 的直接子元素 tag（如 "w:spacing"）。"""
+    el = parent.find(qn(tag))
+    if el is None:
+        el = OxmlElement(tag)
+        parent.append(el)
+    return el
+
+
+def _set_spacing(pPr, *, before=None, after=None, line=None, lineRule=None):
+    """设置 w:spacing 的 before/after/line/lineRule；未传值不动。"""
+    sp = _ensure_child(pPr, "w:spacing")
+    if before is not None:
+        sp.set(qn("w:before"), str(before))
+        sp.set(qn("w:beforeLines"), "0")
+        sp.set(qn("w:beforeAutospacing"), "0")
+    if after is not None:
+        sp.set(qn("w:after"), str(after))
+        sp.set(qn("w:afterLines"), "0")
+        sp.set(qn("w:afterAutospacing"), "0")
+    if line is not None:
+        sp.set(qn("w:line"), str(line))
+    if lineRule is not None:
+        sp.set(qn("w:lineRule"), lineRule)
+    return sp
+
+
+def _set_indent(pPr, *, firstLineChars=None, firstLine=None, clear_left: bool = False):
+    """设置 w:ind 首行缩进；clear_left=True 时清 left/leftChars/right/rightChars。"""
+    ind = _ensure_child(pPr, "w:ind")
+    if clear_left:
+        for attr in ("leftChars", "left", "rightChars", "right"):
+            k = qn(f"w:{attr}")
+            if k in ind.attrib:
+                del ind.attrib[k]
+    if firstLineChars is not None:
+        ind.set(qn("w:firstLineChars"), str(firstLineChars))
+    if firstLine is not None:
+        ind.set(qn("w:firstLine"), str(firstLine))
+    return ind
+
+
+def _set_jc(pPr, val: str):
+    """段落对齐：left/center/right/both。"""
+    jc = _ensure_child(pPr, "w:jc")
+    jc.set(qn("w:val"), val)
+    return jc
+
+
+def _run_clear_bold(r_el):
+    """清除 run 的 w:b / w:bCs。"""
+    rPr = r_el.find(qn("w:rPr"))
+    if rPr is None:
+        return
+    for tag in ("w:b", "w:bCs"):
+        for old in list(rPr.findall(qn(tag))):
+            rPr.remove(old)
+
+
+def _run_set_bold(r_el):
+    """强制 run 为加粗（保证无 val=0 残留）。"""
+    rPr = r_el.find(qn("w:rPr"))
+    if rPr is None:
+        rPr = OxmlElement("w:rPr")
+        r_el.insert(0, rPr)
+    for tag in ("w:b", "w:bCs"):
+        for old in list(rPr.findall(qn(tag))):
+            rPr.remove(old)
+        rPr.append(OxmlElement(tag))
+
+
+def _run_is_bold(r_el) -> bool:
+    """判断 run 是否 run-level bold=True（忽略样式继承）。"""
+    rPr = r_el.find(qn("w:rPr"))
+    if rPr is None:
+        return False
+    b = rPr.find(qn("w:b"))
+    if b is None:
+        return False
+    val = b.get(qn("w:val"))
+    return val != "0" and val != "false"
+
+
+def _all_runs_bold(p_el) -> bool:
+    """判断段内所有非空 run 是否 run-level 全加粗。
+    用于识别 pandoc 从 \\textbf{...} 生成的整段粗体 caption：
+    整段所有非空 run 的 rPr 都有 <w:b/>（或 w:b val≠"0"），
+    区分于正文段中"算法5-1 给出..."这种正文引用（run 不加粗）。
+    """
+    t_q = qn("w:t")
+    r_q = qn("w:r")
+    has_text = False
+    for r_el in p_el.findall(r_q):
+        txt = "".join((t.text or "") for t in r_el.findall(t_q))
+        if not txt.strip():
+            continue
+        has_text = True
+        if not _run_is_bold(r_el):
+            return False
+    return has_text
+
+
+def _ptext(p_el) -> str:
+    """返回段落全部 w:t 文字拼接。"""
+    return "".join((t.text or "") for t in p_el.findall(".//" + qn("w:t")))
+
+
+def _pstyle(p_el) -> str:
+    """返回段落 w:pStyle/@val，没则返回空串。"""
+    pPr = p_el.find(qn("w:pPr"))
+    if pPr is None:
+        return ""
+    pStyle = pPr.find(qn("w:pStyle"))
+    if pStyle is None:
+        return ""
+    return pStyle.get(qn("w:val")) or ""
+
+
+# =============================================================================
+# 字体 / 段落格式
+# =============================================================================
+
+
 def _set_rfonts(run, *, ascii_: str | None = None, cjk: str | None = None) -> None:
     rPr = run._element.get_or_add_rPr()
     rFonts = rPr.find(qn("w:rFonts"))
