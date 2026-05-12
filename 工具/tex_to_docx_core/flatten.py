@@ -283,9 +283,189 @@ def _collapse_subfigures_to_merged(block: str) -> str:
     return new_block[:idx] + injected + new_block[idx:]
 
 
+def _flatten_caption_math(cap_body: str) -> str:
+    """把 caption 内联数学公式 `$...$` 纯文本化。
+
+    根因：caption 整段由 `\\textbf{...}` 包裹，但 LaTeX 的 `$...$` 进入数学模式后
+    数学字体不继承父级 bold。pandoc 翻译时把这段输出成独立 OMML 块
+    （`<m:oMath>`），OMML 里的字符不受 run-level `<w:b/>` 控制，导致检测器
+    按"单词"粒度扫描时命中"字形部分常规"。
+
+    做法：把 `$...$` 内容拉平成纯文本 — LaTeX 上下标符号 `^{}` `_{}` 转成 Unicode
+    上/下标；无法转的保留字面。这样 pandoc 会把整段输出为普通文本 run，
+    完全继承 `\\textbf` 的加粗。
+    """
+    _SUPER = str.maketrans({
+        "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹",
+        "+":"⁺","-":"⁻","=":"⁼","(":"⁽",")":"⁾","n":"ⁿ","i":"ⁱ",
+    })
+    _SUB = str.maketrans({
+        "0":"₀","1":"₁","2":"₂","3":"₃","4":"₄","5":"₅","6":"₆","7":"₇","8":"₈","9":"₉",
+        "+":"₊","-":"₋","=":"₌","(":"₍",")":"₎",
+        "a":"ₐ","e":"ₑ","h":"ₕ","i":"ᵢ","j":"ⱼ","k":"ₖ","l":"ₗ","m":"ₘ","n":"ₙ",
+        "o":"ₒ","p":"ₚ","r":"ᵣ","s":"ₛ","t":"ₜ","u":"ᵤ","v":"ᵥ","x":"ₓ",
+    })
+
+    def _sup_sub(token: str, table) -> str:
+        # str.translate 对每个字符：table 里有对应 code point 的就替换，否则原样保留
+        return token.translate(table)
+
+    def _math_to_text(inner: str) -> str:
+        s = inner.strip()
+        # 先处理 \command{arg} 形如 \mathbf{x}, \text{xyz} → 仅保留 arg
+        s = re.sub(r"\\(?:mathbf|mathrm|mathit|text|textrm|mathsf|mathtt|operatorname)\s*\{([^{}]*)\}", r"\1", s)
+        # \frac{a}{b} → a/b
+        s = re.sub(r"\\frac\s*\{([^{}]*)\}\s*\{([^{}]*)\}", r"\1/\2", s)
+        # 常见希腊字母宏 → Unicode
+        greek = {
+            "alpha":"α","beta":"β","gamma":"γ","delta":"δ","epsilon":"ε","zeta":"ζ",
+            "eta":"η","theta":"θ","iota":"ι","kappa":"κ","lambda":"λ","mu":"μ",
+            "nu":"ν","xi":"ξ","pi":"π","rho":"ρ","sigma":"σ","tau":"τ","phi":"φ",
+            "chi":"χ","psi":"ψ","omega":"ω","Delta":"Δ","Theta":"Θ","Lambda":"Λ",
+            "Xi":"Ξ","Pi":"Π","Sigma":"Σ","Phi":"Φ","Psi":"Ψ","Omega":"Ω",
+        }
+        for k, v in greek.items():
+            s = s.replace("\\" + k, v)
+        # 处理上下标：^{xxx} / ^x  和  _{xxx} / _x
+        def _repl_sup(m):
+            body = m.group(1) or m.group(2)
+            return _sup_sub(body, _SUPER)
+        def _repl_sub(m):
+            body = m.group(1) or m.group(2)
+            return _sup_sub(body, _SUB)
+        s = re.sub(r"\^\{([^{}]*)\}|\^([A-Za-z0-9+\-=()])", _repl_sup, s)
+        s = re.sub(r"_\{([^{}]*)\}|_([A-Za-z0-9+\-=()])", _repl_sub, s)
+        # 去剩余反斜杠命令（安全兜底）
+        s = re.sub(r"\\[a-zA-Z]+\s*", "", s)
+        # 吃掉残留 { }
+        s = s.replace("{", "").replace("}", "")
+        return s
+
+    # 替换所有 $...$（单行、非贪婪；避开 \$）
+    def _one(m):
+        inner = m.group(1)
+        return _math_to_text(inner)
+
+    return re.sub(r"(?<!\\)\$([^$]+?)(?<!\\)\$", _one, cap_body)
+
+
+def _find_balanced_brace_end(s: str, start: int) -> int:
+    """s[start] 必须是 `{`。返回配对的 `}` 下标（含）。支持任意深度嵌套，
+    并忽略被 `\\` 转义的 `\\{` `\\}`。失败返回 -1。
+    """
+    if start >= len(s) or s[start] != "{":
+        return -1
+    depth = 0
+    i = start
+    while i < len(s):
+        ch = s[i]
+        if ch == "\\" and i + 1 < len(s):
+            i += 2  # 跳过转义字符对
+            continue
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return -1
+
+
+def _find_caption_body(block: str, cmd: str = "\\caption", from_pos: int = 0):
+    """在 block 从 from_pos 起定位第一个 `\\caption` / `\\caption*` / `\\caption[...]`。
+
+    严格处理 LaTeX caption 语法的三种形态：
+      `\\caption{body}` / `\\caption*{body}` / `\\caption[short]{body}`
+
+    同时过滤误匹配（`\\captionsetup` / `\\captionof` 这种名字更长的命令）。
+
+    返回 (cmd_start, body_start_inclusive_of_brace, body_end_inclusive_of_brace, body)
+    未找到返回 None。
+    """
+    search_from = from_pos
+    while True:
+        idx = block.find(cmd, search_from)
+        if idx < 0:
+            return None
+        # 词边界：\caption 后必须是 *、[、{ 或空白，不能是字母（否则是 \captionsetup 等）
+        nxt = block[idx + len(cmd):idx + len(cmd) + 1]
+        if nxt.isalpha():
+            search_from = idx + len(cmd)
+            continue
+        cursor = idx + len(cmd)
+        # \caption*
+        if cursor < len(block) and block[cursor] == "*":
+            cursor += 1
+        # 允许少量空白
+        while cursor < len(block) and block[cursor] in " \t":
+            cursor += 1
+        # \caption[short]{...}：跳过 [short]
+        if cursor < len(block) and block[cursor] == "[":
+            # 简单扫描到匹配 ]（允许 \[ \] 转义，不嵌套）
+            j = cursor + 1
+            while j < len(block):
+                if block[j] == "\\" and j + 1 < len(block):
+                    j += 2
+                    continue
+                if block[j] == "]":
+                    break
+                j += 1
+            if j >= len(block):
+                search_from = idx + len(cmd)
+                continue
+            cursor = j + 1
+            while cursor < len(block) and block[cursor] in " \t":
+                cursor += 1
+        if cursor >= len(block) or block[cursor] != "{":
+            search_from = idx + len(cmd)
+            continue
+        end = _find_balanced_brace_end(block, cursor)
+        if end < 0:
+            return None
+        body = block[cursor + 1:end]
+        return (idx, cursor, end, body)
+
+
+def _find_kv_value_balanced(block: str, key: str, from_pos: int = 0):
+    """匹配 `key=val` 可选参数里的 `key = {...}`，{...} 支持任意嵌套。
+
+    用于 lstlisting 的 `caption={...}` 这种 key-value 形式。
+    返回 (kv_start, brace_start, brace_end, body)，未找到 None。
+    """
+    pat = re.compile(r"\b" + re.escape(key) + r"\s*=\s*\{")
+    m = pat.search(block, from_pos)
+    if not m:
+        return None
+    brace_start = m.end() - 1  # 指向 `{`
+    end = _find_balanced_brace_end(block, brace_start)
+    if end < 0:
+        return None
+    return (m.start(), brace_start, end, block[brace_start + 1:end])
+
+
+def _replace_first_caption(block: str, transformer) -> str:
+    """在 block 里定位第一个 `\\caption{...}` 并用 transformer(body) 改写 body。
+    用平衡括号扫描代替正则，支持任意深度嵌套（如 $S_{\\mathrm{scn}}$）。
+    transformer 接收 body 字符串，返回新 body。未找到则原样返回。
+    """
+    r = _find_caption_body(block)
+    if r is None:
+        return block
+    _, brace_start, end, body = r
+    new_body = transformer(body)
+    return block[:brace_start + 1] + new_body + block[end:]
+
+
 def _prefix_outermost_caption(block: str, prefix: str) -> str:
     """在 figure/table 块里给最外层 \\caption{...} 前加编号前缀。
-    屏蔽 subfigure 子块，避免命中子图 caption。"""
+    屏蔽 subfigure 子块，避免命中子图 caption。
+
+    同时把 caption 内联数学公式纯文本化，避免 pandoc 生成 OMML 导致的
+    "字形部分常规"（OMML 不继承 \\textbf 的 bold）。
+
+    用平衡括号扫描，支持任意深度嵌套（如 $S_{\\mathrm{scn}}$ 这种 2 层嵌套）。
+    """
     sub_blocks: list[str] = []
 
     def _store(m: re.Match[str]) -> str:
@@ -299,15 +479,10 @@ def _prefix_outermost_caption(block: str, prefix: str) -> str:
         flags=re.DOTALL,
     )
 
-    def _prefix_it(m: re.Match[str]) -> str:
-        return f"\\caption{{{prefix}{m.group(1)}}}"
+    def _transform(body: str) -> str:
+        return prefix + _flatten_caption_math(body)
 
-    masked = re.sub(
-        r"\\caption\{((?:[^{}]|\{[^{}]*\})*)\}",
-        _prefix_it,
-        masked,
-        count=1,
-    )
+    masked = _replace_first_caption(masked, _transform)
     for i, b in enumerate(sub_blocks):
         masked = masked.replace(f"\x00SUB{i}\x00", b)
     return masked
@@ -428,19 +603,24 @@ def number_figures_and_tables(body: str) -> tuple[str, dict[str, str]]:
                     if star_note:
                         g = g + f"\n\n\\noindent {star_note}\n\n"
                 return g
-            # listing: 单独从 [caption={...}] 可选参数提取标题，在块前插入"代码 X-Y 标题"段
+            # listing: 从 [caption={...}] 可选参数提取标题，在块前插入"代码 X-Y 标题"段
+            # 用平衡括号扫描支持嵌套（如 caption={含 $s_i$ 或 \texttt{x}}）
             if key == "lst":
-                cap_match = re.search(r"caption\s*=\s*\{([^}]*)\}", g)
-                cap_text = cap_match.group(1) if cap_match else ""
-                # 去掉 caption 里的 LaTeX 命令残留
+                kv = _find_kv_value_balanced(g, "caption")
+                cap_text = kv[3] if kv else ""
+                # 去掉 caption 里的 LaTeX 命令残留（\texttt\textbf 等）
                 cap_text = re.sub(
-                    r"\\(?:texttt|textbf|textit|emph|mbox)\s*\{([^}]*)\}",
+                    r"\\(?:texttt|textbf|textit|emph|mbox)\s*\{([^{}]*)\}",
                     r"\1",
                     cap_text,
                 )
                 cap_text = cap_text.replace("\\_", "_").strip()
+                # caption 内联数学公式纯文本化（与 figure/table 统一）
+                cap_text = _flatten_caption_math(cap_text)
+                # 用普通空格而非 "\ " (LaTeX control-space)：后者会被 pandoc 拆成
+                # 独立 run 且不继承 \textbf 加粗，导致检测器报"字形部分常规"
                 label_line = (
-                    f"\n\n\\noindent\\textbf{{代码{display_num} \\ {cap_text}}}\n\n"
+                    f"\n\n\\noindent\\textbf{{代码{display_num} {cap_text}}}\n\n"
                 )
                 return label_line + g
             return g
@@ -660,13 +840,21 @@ def rewrite_algorithms(body: str) -> str:
 
     def _one(m: re.Match[str]) -> str:
         block = m.group(0)
-        # 抽 caption
-        cap_m = re.search(r"\\caption\s*\{([^}]*)\}", block)
-        caption = cap_m.group(1).strip() if cap_m else "算法"
+        # 抽 caption（用平衡括号扫描，支持嵌套 $..._{..}$）
+        cap_info = _find_caption_body(block)
+        caption_raw = cap_info[3].strip() if cap_info else "算法"
+        # 内联数学公式纯文本化：统一避免 OMML 进入 \textbf 包裹
+        caption = _flatten_caption_math(caption_raw)
         # 抽 body：去掉 \begin/\end、\caption{...}、\label{...}
         inner = re.sub(r"\\begin\{algorithm\}\s*(?:\[[^\]]*\])?", "", block)
         inner = re.sub(r"\\end\{algorithm\}", "", inner)
-        inner = re.sub(r"\\caption\s*\{[^}]*\}", "", inner)
+        # 删除 caption 整段（用平衡括号扫描）
+        while True:
+            r = _find_caption_body(inner)
+            if r is None:
+                break
+            cmd_start, _, end, _ = r
+            inner = inner[:cmd_start] + inner[end + 1:]
         inner = re.sub(r"\\label\s*\{[^}]*\}", "", inner)
         try:
             lines = _render_algo_body(inner)
