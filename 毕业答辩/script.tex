@@ -35,7 +35,7 @@
 \maketitle
 
 \vspace{0.5em}
-\noindent\textbf{讲稿使用说明}\quad{}本讲稿与 \texttt{slides.pdf} 的 20 张幻灯片逐张对应。每节给出该 Slide 的讲述时间窗口、口语要点、过渡句与可能追问。节标题 ``Slide XX'' 中 XX 为幻灯片编号。累计时间以封面起算，最后一页收在 10 分钟之内，保留约 30 秒缓冲。
+\noindent\textbf{讲稿使用说明}\quad{}本讲稿与 \texttt{slides.pdf} 的 19 张幻灯片逐张对应（Apollo 现状节已合并至 MIKU 总体框架，作为追问储备保留在本稿）。每节给出该 Slide 的讲述时间窗口、口语要点、过渡句与可能追问。节标题 ``Slide XX'' 中 XX 为幻灯片编号。累计时间以封面起算，最后一页收在 10 分钟之内，保留约 30 秒缓冲。
 
 \section{封面}
 \textbf{时间}\quad{}0:00 -- 0:20（累计 00:20）\\
@@ -76,7 +76,7 @@
 \textbf{要点}
 \begin{itemize}
   \item 对应三条维度给出三点改进，多因子威胁度、组级最优通行带、时空可通行走廊。
-  \item 三点改进共用同一套$\boldsymbol{u_i, v_i, \delta, \tau}$符号，不是三块补丁。
+  \item 记忆点是\textbf{一组符号、三项改进、一步 PathBoundsDecider}。三项改进共用同一套 $(u_i, v_i, \delta, \tau)$ 符号，不是三块补丁；源码层只动 Apollo 的 \texttt{PathBoundsDecider} 一步，PJPO、PJSO 与 Control 链路零改动。
   \item 组级最优把 $O(2^k)$ 的暴力搜索压到 $O(k\log k)$ 的精确求解。
 \end{itemize}
 \textbf{过渡}\quad{}在讲改进之前先交代 Apollo 现状，给大家定位本文改动的范围。\\
@@ -97,8 +97,13 @@
 \textbf{时间}\quad{}2:20 -- 3:40（累计 03:40）\\
 \textbf{要点}
 \begin{itemize}
-  \item 整体流水三阶段，第一步用威胁度评估给每个障碍物打分得到 $\delta_i$，第二步用到达时间 $\tau(s)$ 把动态障碍物投影到 SL，第三步扫描线分组后组内选最大间隙完成全局决策。
-  \item 输出仍然是 Apollo 标准的 \texttt{PathBoundary} 与 \texttt{STDrivableBoundary}，下游模块无需改动。
+  \item 整体流水三阶段，与论文 5/6/7 章一一对应。
+  \begin{itemize}
+    \item \textbf{裕度级}（第5章）——多因子威胁度 $\Theta_i$ 映射到分级 $d_{buf,i}$，得差异化 $\delta_i$。
+    \item \textbf{组级}（第6章）——扫描线分组 $\mathcal{G}_j$，组内按 $u_i$ 升序取最大间隙得 $\mathbf{d}^*$。
+    \item \textbf{时空级}（第7章）——到达时间 $\tau(s)$ 投影 $O_i(\tau(s))$，并把组级通行带的时间有效性向速度 QP 反投影为 ST 走廊。
+  \end{itemize}
+  \item 输出仍然是 Apollo 标准的 \texttt{PathBoundary} 与 \texttt{STDrivableBoundary}，下游模块零改动。
 \end{itemize}
 \textbf{过渡}\quad{}下面分别展开三点改进。\\
 \textbf{可能追问}\quad{}这个流水会不会超预算。应对，扫描线分组 $O(n\log n)$ 加逐离散点 $O(K)$，实测 QP 总耗时远低于 Baseline，第 16 张会给出数字。
@@ -107,9 +112,9 @@
 \textbf{时间}\quad{}3:40 -- 4:30（累计 04:30）\\
 \textbf{要点}
 \begin{itemize}
-  \item 把一刀切的 \DeltaBaseline\,米换成分级裕度 $\delta_i \in [\DeltaIntervalLow, \DeltaIntervalHigh]$\,米，由 5 个因子加权决定。
-  \item TTC 反映碰撞紧迫度，横向重叠率反映是否真的挡路，相对速度方向区分迎面与并行，障碍物类型先验区分锥桶与违停车，交互密度体现是否处于人群中。
-  \item 5 项通过固定权重加权归一化，$\delta_i = \delta_{\min} + (\delta_{\max}-\delta_{\min})\cdot T_i$，锥桶 $T_i\!\approx\!0.2$，行人 $T_i\!\approx\!0.9$。
+  \item 把一刀切的额外缓冲 \DeltaBaseline\,米换成分级 $d_{buf,i} \in [\DeltaIntervalLow, \DeltaIntervalHigh]$\,米（总裕度 $\delta_i = W_{ego}/2 + d_{buf,i}$），由 5 个因子加权决定。
+  \item TTC 反映碰撞紧迫度，横向重叠率反映是否真的挡路，相对速度 Sigmoid 映射接近速度大小，障碍物类型先验区分锥桶与违停车，交互密度体现是否处于人群中。
+  \item 5 项通过固定权重加权归一化为 $\Theta_i\!\in\![0,1]$，$d_{buf,i} = d_{buf,\min} + (d_{buf,\max}-d_{buf,\min})\cdot \Theta_i$，锥桶 $\Theta_i\!\approx\!0.2$，行人 $\Theta_i\!\approx\!0.9$。
 \end{itemize}
 \textbf{过渡}\quad{}这个方法在窄路锥桶场景下效果最直接。\\
 \textbf{可能追问}\quad{}权重怎么定。应对，固定权重来自初始参数调优没有在线学习，灵敏度分析显示 $\pm\SensPerturbPct\%$ 扰动下最坏相对偏差仅 \SensWorstRelDev\%。
@@ -118,9 +123,9 @@
 \textbf{时间}\quad{}4:30 -- 5:10（累计 05:10）\\
 \textbf{要点}
 \begin{itemize}
-  \item P3 窄路密集锥桶场景，18 个路锥沿车道两侧布置成通行带。
-  \item Baseline 统一 0.30 米裕度，左右净间距不足车宽，被卡在起点停车 \MThreeBaselineStopDur\,秒，最终 TArrive 是 $\infty$，没走完。
-  \item MIKU 差异化裕度把路锥的 $\delta_i$ 压到 0.10 米，打开一条连续通行带，14 秒走完，通行效率从 \MThreeBaselineEfficiency\,提升到 \MThreeMikuEfficiency。
+  \item P3 窄路锥桶场景，左右各 3 个水马/锥桶（共 6 个）沿车道两侧布置成通行带。
+  \item Baseline 统一 0.30 米额外缓冲，左右净间距不足车宽，被卡在 $s\!=\!\MThreeBaselineSEnd$\,m 处停车 \MThreeBaselineStopDur\,秒，最终 TArrive 是 $\infty$，没走完。
+  \item MIKU 差异化裕度把锥桶的 $d_{buf,i}$ 压到 0.10 米，打开一条连续通行带，14 秒完成通行，通行效率从 \MThreeBaselineEfficiency\,提升到 \MThreeMikuEfficiency。
   \item 平顺度提升更直观，最大 Jerk 从 \MThreeBaselineMaxAbsJerk\,m/s\textsuperscript{3} 降到 \MThreeMikuMaxAbsJerk\,m/s\textsuperscript{3}，接近 5.7 倍。
 \end{itemize}
 \textbf{过渡}\quad{}这张图只改了裕度参数，下面讲决策粒度。\\
@@ -133,7 +138,7 @@
   \item 贪心容易拧反的根源是每个障碍物独立决策，本文把同一组在纵向上重叠的障碍物看作一个连通分量。
   \item 引理证明，最优分割在按横向排序后一定是连续的，不会交错。
   \item 定理进一步说，组内按 $u_i$ 升序（动态 $\delta_i$ 使 $u_i=l_i^{-}-\delta_i$ 的排序未必等价 $l_i^{-}$）得到 $k+1$ 个候选间隙，最大那一个间隙就是最优解。
-  \item 复杂度从 $O(2^k)$ 指数级压到 $O(k\log k)$ 对数线性。以 P3 窄路锥桶为例，组规模 $k\!=\!18$，原本 $2^{18}\!\approx\!26$ 万次组合判断，MIKU 按排序一步出解。
+  \item 复杂度由 $O(2^k)$ 指数级降至 $O(k\log k)$ 对数线性。以 P4 密集施工为例，组规模 $k\!=\!\GroupCThreeK$，原本 $2^{\GroupCThreeK}\!\approx\!\GroupCThreeCombCount$ 万次组合判断，MIKU 按排序一次给出最优解。
 \end{itemize}
 \textbf{过渡}\quad{}下一张给出最典型的行人加停车场景。\\
 \textbf{可能追问}\quad{}连通分量太大怎么办。应对，论文在降级机制里设置 $k_{\max}\!=\!15$ 阈值，超过后回退到 Baseline 的逐障碍物策略。
@@ -145,7 +150,7 @@
   \item P2 行人加违停车场景，左侧违停车，右侧一位横向行走的行人。
   \item Baseline 独立决策给左侧违停分配 RIGHT\_NUDGE，给右侧行人分配 LEFT\_NUDGE，方向对冲导致 $l^+<l^-$，路径 BLOCKED，到达时间 $\infty$。
   \item MIKU 组级决策把两者看成一个连通分量，中间间隙最宽，自车从两者之间穿过，\MTwoMikuTArrive\,秒到位，通行效率从 \MTwoBaselineEfficiency\,提升到 \MTwoMikuEfficiency。
-  \item 这张图最震撼的是 QP 耗时，Baseline 因为路径阻塞触发多轮速度 QP 回退，总耗时 \MTwoBaselineQpTotal\,ms；MIKU 一次收敛只要 \MTwoMikuQpTotal\,ms，加速 24 倍。
+  \item 本场景 QP 耗时差距最显著，Baseline 因路径阻塞触发多轮速度 QP 回退，总耗时 \MTwoBaselineQpTotal\,ms；MIKU 一次收敛只要 \MTwoMikuQpTotal\,ms，加速 20.6 倍。
 \end{itemize}
 \textbf{过渡}\quad{}行人刚才按静态处理，下面讲真正的动态场景。\\
 \textbf{可能追问}\quad{}为什么这里把行人当成静态。应对，SL 平面上行人横向位置在一个规划周期内近似静态，动态特性在下一点的时空走廊里展开。
@@ -154,9 +159,9 @@
 \textbf{时间}\quad{}6:40 -- 7:30（累计 07:30）\\
 \textbf{要点}
 \begin{itemize}
-  \item 引入到达时间函数 $\tau(s)$，表示自车预估到达位置 $s$ 的时刻，把规划维度从 SL 二维升格为 ST 时空。
-  \item 时变投影 $O_i(\tau(s))$ 让动态障碍物的预测轨迹参与路径边界构建，Apollo 原来的 \texttt{IsStatic} 过滤在路径阶段被废弃。
-  \item 组级通行带的时间有效性再投影一次，成为速度 QP 的 $s$ 上界约束，与 SpeedBoundsDecider 原 ST 边界取交集。
+  \item 引入到达时间函数 $\tau(s)$，表示自车预估到达位置 $s$ 的时刻，把规划维度从 SL 二维升格为 ST 时空。$\tau(s)$ 由上周期速度曲线查表获得，失效时退回二阶运动学模型。
+  \item 两路约束融合。其一为时变 SL 投影 $O_i(\tau(s))$，动态障碍物的预测轨迹参与路径边界构建，Apollo 原来的 \texttt{IsStatic} 过滤在路径阶段被废弃。
+  \item 其二为速度 QP 反投影，组级通行带的时间有效性反投影为速度 QP 的 $s$ 上界 $s_j^{ub}$，与原 SBD 边界取交集后收紧。
   \item 量化效益可以用 P1 单行人看，Baseline TArrive 是 $\infty$，MIKU \MOneMikuTArrive\,秒；P4 密集施工 Baseline 效率 \MFourBaselineEfficiency，MIKU \MFourMikuEfficiency。
 \end{itemize}
 \textbf{过渡}\quad{}下一张在 ST 图上看效果。\\
@@ -192,8 +197,8 @@
 \textbf{要点}
 \begin{itemize}
   \item 这一页是全文最重量级的数据，请各位老师看主表。
-  \item 压力 P1--P4\quad{}Baseline 通过率 \MPressureBaselinePassCount/\MPressureScenarioTotal 全灭，MIKU \MPressureMikuPassCount/\MPressureScenarioTotal 全通；平均速度 \MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s，QP 总耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms，降 84.3\%。
-  \item 可比 C1--C4\quad{}两者都能走完，但 MIKU 把 QP 总耗时从 \MComparableBaselineQpTotal\,ms 降到 \MComparableMikuQpTotal\,ms，降 66.6\%。
+  \item 压力场景 P1--P4\quad{}Baseline 通过率 \MPressureBaselinePassCount/\MPressureScenarioTotal 均触发降级；MIKU \MPressureMikuPassCount/\MPressureScenarioTotal 全通；平均速度 \MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s，QP 总耗时降 84.1\%。
+  \item 可比 C1--C4\quad{}两者都能完成通行，MIKU 把 QP 总耗时从 \MComparableBaselineQpTotal\,ms 降到 \MComparableMikuQpTotal\,ms，降 65.6\%。
   \item 汇总 \MScenarioTotal\,场景\quad{}通过 \MSummaryBaselinePassCount/\MScenarioTotal$\to$\MSummaryMikuPassCount/\MScenarioTotal，整体平均速度提升 \MSummarySummaryVImprovement\%。
 \end{itemize}
 \textbf{过渡}\quad{}消融结果支持三点改进各有贡献。\\
@@ -203,14 +208,14 @@
 \textbf{时间}\quad{}9:30 -- 9:50（累计 09:50，可留 10 秒缓冲）\\
 \textbf{要点}
 \begin{itemize}
-  \item 六组消融变体是减法消融 leave-one-out 口径，从 MIKU 全量依次关闭单个组件。
+  \item 六组消融变体是减法消融 leave-one-out 口径，从 MIKU 全量依次关闭单个组件（本节的 C1--C5 指算法组件，与前面可比场景 C1--C4 不同）。
   \item M0 Apollo Baseline\quad{}\AblationScoreMZero\,分，通过 \AblationMZeroPassCount/\AblationMZeroScenarioTotal。
-  \item M1 MIKU w/o C1（无 $\tau$ 投影）\quad{}\AblationScoreMOne\,分，\AblationMOnePassCount/\AblationMOneScenarioTotal；动态行人在路径阶段被关成静态快照，P1/P2 均失败。
-  \item M2 MIKU w/o C2--C3（无组级决策）\quad{}\AblationScoreMTwo\,分，\AblationMTwoPassCount/\AblationMTwoScenarioTotal；P4 密集施工逐障碍物贪心与水马方向对冲，$s_{end}$ 仅 \AblationMTwoScFourSEndPct\% 即停车。
-  \item M3 MIKU w/o C4（统一 $\delta$）\quad{}\AblationScoreMThree\,分，\AblationMThreePassCount/\AblationMThreeScenarioTotal；P3 窄路锥桶统一缓冲压死通行带。
-  \item M4 MIKU w/o C5（无走廊注入）\quad{}\AblationScoreMFour\,分，\AblationMFourPassCount/\AblationMFourScenarioTotal；C5 接口在当前压力场景未激活，与 M5 仅差 $\AblationMarginMFourMFive$\,分。
+  \item M1 MIKU w/o 组件C1（无 $\tau(s)$ 投影）\quad{}\AblationScoreMOne\,分，\AblationMOnePassCount/\AblationMOneScenarioTotal；动态行人在路径阶段被关成静态快照，P1/P2 均失败。
+  \item M2 MIKU w/o 组件C2--C3（无组级决策）\quad{}\AblationScoreMTwo\,分，\AblationMTwoPassCount/\AblationMTwoScenarioTotal；P4 密集施工逐障碍物贪心与水马方向对冲，$s_{end}$ 仅 \AblationMTwoScFourSEndPct\% 即停车。
+  \item M3 MIKU w/o 组件C4（统一 $\delta$）\quad{}\AblationScoreMThree\,分，\AblationMThreePassCount/\AblationMThreeScenarioTotal；P3 窄路锥桶统一缓冲压死通行带。
+  \item M4 MIKU w/o 组件C5（无走廊注入）\quad{}\AblationScoreMFour\,分，\AblationMFourPassCount/\AblationMFourScenarioTotal；C5 接口在当前压力场景未激活，与 M5 仅差 $\AblationMarginMFourMFive$\,分。
   \item M5 MIKU 全量\quad{}\AblationScoreMFive\,分，\AblationMFivePassCount/\AblationMFiveScenarioTotal。
-  \item 结论是路径阶段 C1/C2--C3/C4 四组件互补，任缺其一即在 P1--P4 中某一场景失败；C5 走廊注入的定量贡献需要多动态冲突点场景补测。
+  \item 结论是路径阶段组件 C1/C2--C3/C4 三组互补，任缺其一即在 P1--P4 中某一场景被压到 \AblationFailedScoreCeil\,分以下；组件 C5 走廊注入的定量贡献需要多动态冲突点场景补测。
 \end{itemize}
 \textbf{过渡}\quad{}下面看耗时。\\
 \textbf{可能追问}\quad{}M4 为什么反而比 M5 的 QP 耗时更低。应对，M5 比 M4 多做一次走廊到速度 QP 的投影，压力场景下该投影尚未起作用但已付出约 \MSummarySummaryExtraMs\,ms 额外开销；一旦遇到多动态冲突点 C5 才会通过收紧速度上界回收耗时。
@@ -219,10 +224,10 @@
 \textbf{时间}\quad{}9:50 -- 10:00（累计 10:00）\\
 \textbf{要点}
 \begin{itemize}
-  \item P2 行人加停车差距最大，Baseline QP 总耗时 \MTwoBaselineQpTotal\,ms，MIKU 只要 \MTwoMikuQpTotal\,ms，加速 24 倍。
-  \item C2 行人加停车可比\quad{}\MSixBaselineQpTotal$\to$\MSixMikuQpTotal\,ms，加速 16.6 倍。
-  \item 压力组均 QP 总耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms，降 84.3\%。
-  \item 可比组均 QP 总耗时 \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms，降 66.6\%。
+  \item P2 行人加停车差距最大，Baseline QP 总耗时 \MTwoBaselineQpTotal\,ms，MIKU 只要 \MTwoMikuQpTotal\,ms，加速约 20 倍。
+  \item C2 行人加停车可比\quad{}\MSixBaselineQpTotal$\to$\MSixMikuQpTotal\,ms，加速约 14 倍。
+  \item 压力组均 QP 总耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms，降 84.1\%。
+  \item 可比组均 QP 总耗时 \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms，降 65.6\%。
   \item 整体 MIKU 比 Baseline 仅多付 \MSummarySummaryExtraMs\,ms 的计算开销，换来 \MPressureMikuPassCount/\MPressureScenarioTotal 个压力场景的突破。
   \item 压力场景 Baseline 因路径阻塞进入 FallbackPath 降级，数值不构成效率比较依据；可比场景的差异主要来自 MIKU 路径已绕开障碍，速度 QP 一次收敛。
 \end{itemize}
@@ -233,10 +238,9 @@
 \textbf{时间}\quad{}10:00 -- 10:30（缓冲段）\\
 \textbf{要点}
 \begin{itemize}
-  \item 预测开环，$\tau(s)$ 是单次前向估计，没做自车对周车的反馈。
+  \item 预测耦合单向，$\tau(s)$ 由上一帧速度反推，没做自车候选回传周车预测。
   \item 纵向重叠组粒度，组内截面求解对链式重叠没做细粒度拆分。
-  \item 验证边界，限于 Python 复现加 Dreamview 在环，未覆盖多车交互与恶劣天气。
-  \item 硬件映射，桌面级耗时不能直接外推到车载嵌入式算力。
+  \item 验证边界，限于 Python 复现加 Dreamview 在环，未覆盖多车交互、恶劣天气与车载嵌入式算力外推。
   \item 鲁棒性边界已用蒙特卡洛量化\quad{}威胁度权重 $\pm\SensPerturbPct\%$ 扰动 \SensTrialCount\,次，P1 到 P3 翻转率 \SensOneMcFlipRate\%，P4 密集施工翻转率 \SensFourMcFlipRate\%，最坏相对偏差 \SensWorstRelDev\%。P4 翻转主要出现在单因子扰动下的 \SensFourSingleFlipCnt\,例决策切换，动态走廊兜底保证可行。
 \end{itemize}
 \textbf{过渡}\quad{}局限对应未来工作。\\
@@ -246,11 +250,11 @@
 \textbf{时间}\quad{}缓冲段\\
 \textbf{要点}
 \begin{itemize}
-  \item 交互式预测，把自车候选行为回传预测模块降低开环偏差。
-  \item 路径速度迭代求解并给出收敛界。
-  \item 多候选评分，多个间隙宽度接近时引入学习辅助评分。
-  \item 实车部署，在真实感知与控制链路下评估噪声与延迟并给出降级方案。
-\end{itemize}
+  \item \textbf{交互式预测}——把自车候选轨迹回传预测模块，降低预测与规划的单向耦合偏差。
+  \item \textbf{路径速度迭代}——将单次前向 $\tau(s)$ 扩展为迭代求解，给出收敛界与单帧预算。
+  \item \textbf{组内细粒度}——对纵向链式重叠做细粒度拆分；多间隙宽度接近时引入学习辅助评分。
+  \item \textbf{实车部署}——在真实感知与控制链路下评估噪声、延迟与嵌入式算力映射，给出降级与失效安全方案。
+\end{itemize>
 \textbf{过渡}\quad{}收尾回到结论。\\
 \textbf{可能追问}\quad{}为什么要引入学习辅助评分。应对，多个间隙宽度接近时最大间隙策略的选择对外部驾驶习惯不敏感，学习评分可以补充这些因素但不作为决策主干。
 
@@ -261,7 +265,7 @@
   \item 核心结论\quad{}可通过场景下 MIKU 不劣于 Apollo Baseline，轨迹平顺性与 QP 求解开销均有改善；Baseline 触发 BLOCKED 的压力场景下，MIKU 通过差异化 $\delta_i$、组级 $\mathbf{d}^*$、时空走廊 $\tau(s)$ 三条改进把通行率从 \MPressureBaselinePassCount/\MPressureScenarioTotal 提升至 \MPressureMikuPassCount/\MPressureScenarioTotal。
   \item 方法\quad{}三条改进共用同一组 $(u_i, v_i, \delta, \tau)$ 符号，源码层只动 PathBoundsDecider 一步，上下游 PJPO、PJSO 与 Control 链路零改动。
   \item 效率\quad{}整体平均速度提升 \MSummarySummaryVImprovement\%，压力平均速度 \MPressureBaselineAvgV$\to$\MPressureMikuAvgV\,m/s。
-  \item 计算\quad{}压力 QP 耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降 84.3\%），可比 \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降 66.6\%），整体仅多付 \MSummarySummaryExtraMs\,ms。
+  \item 计算\quad{}压力 QP 耗时 \MPressureBaselineQpTotal$\to$\MPressureMikuQpTotal\,ms（降 84.1\%），可比 \MComparableBaselineQpTotal$\to$\MComparableMikuQpTotal\,ms（降 65.6\%），整体仅多付 \MSummarySummaryExtraMs\,ms。
   \item 消融\quad{}减法消融下，关闭路径阶段任一组件（M1/M2/M3）即在 P1--P4 中某场景失败，评分被压到 \AblationFailedScoreCeil\,分以下；M4（w/o 组件 C5）\AblationScoreMFour\,分，与 M5 仅差 $\AblationMarginMFourMFive$\,分，组件 C5 的边际贡献待多冲突点场景补测，路径阶段组件 C1/C2--C3/C4 互补。
   \item 鲁棒\quad{}威胁度权重 $\pm\SensPerturbPct\%$ 扰动 \SensTrialCount\,次蒙特卡洛，最坏相对偏差 \SensWorstRelDev\%。
   \item 已完成 C++ 增量接入。
