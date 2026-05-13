@@ -25,6 +25,8 @@
 \usepackage{caption}
 \usepackage{subcaption}
 \usepackage{adjustbox}
+\usepackage[absolute,overlay]{textpos}
+\usepackage[skins]{tcolorbox}
 
 % ---------- 统一调色板（与 图片/_figpreamble.tex 同步） ----------
 \definecolor{deepblue}{RGB}{81, 132, 178}
@@ -42,6 +44,28 @@
 \definecolor{vibrantgreen}{RGB}{46, 175, 80}
 \definecolor{vibrantorange}{RGB}{240, 130, 30}
 \definecolor{vibrantred}{RGB}{220, 50, 50}
+
+% ---------- 答辩页浮动信息卡 ----------
+\tcbset{
+  slideMetricCard/.style={
+    enhanced,
+    colback=white,
+    colframe=deepblue!70!black,
+    coltitle=white,
+    colbacktitle=deepblue!85!black,
+    fonttitle=\bfseries\scriptsize,
+    boxrule=0.5pt,
+    arc=2pt,
+    left=4pt,
+    right=4pt,
+    top=3pt,
+    bottom=0pt,
+    toptitle=1pt,
+    bottomtitle=1pt,
+    titlerule=0pt,
+    drop fuzzy shadow=black!18
+  }
+}
 
 % ---------- 统一 tikz 样式（与 图片/_figpreamble.tex 同步） ----------
 \tikzset{
