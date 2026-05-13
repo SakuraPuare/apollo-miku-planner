@@ -50,7 +50,10 @@ OUTPUTDIR     := outputs
 DOCX          := $(OUTPUTDIR)/thesis.docx
 DOCX_TOOL     := 工具/tex_to_docx.py
 DOCX_CORE     := $(wildcard 工具/tex_to_docx_core/*.py)
+DOCX_CSL      := 工具/gbt7714.csl
+DOCX_TEMPLATE := 模板/湖北文理学院计算机工程学院2026届本科毕业论文模板样例.docx
 CHAPTERS_SRC  := $(wildcard $(THESISDIR)/chapters/*.tex)
+INFO_SRC      := $(THESISDIR)/info.tex
 BIB_SRC       := $(THESISDIR)/references.bib
 
 .PHONY: all check-deps svg svg-clean thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
@@ -157,7 +160,7 @@ thesis: check-deps $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_T
 #  与 thesis 同源：依赖 chapters + 仿真宏 + bib + svg + 转换脚本本身
 # ══════════════════════════════════════════════════
 docx: $(DOCX)
-$(DOCX): $(DOCX_TOOL) $(DOCX_CORE) $(CHAPTERS_SRC) $(BIB_SRC) $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) | check-deps svg
+$(DOCX): $(DOCX_TOOL) $(DOCX_CORE) $(DOCX_CSL) $(DOCX_TEMPLATE) $(CHAPTERS_SRC) $(INFO_SRC) $(BIB_SRC) $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) | check-deps svg
 	@mkdir -p $(OUTPUTDIR)
 	uv run $(DOCX_TOOL) -o $(DOCX)
 	@test -f $(DOCX) || { echo "错误: $(DOCX) 未生成"; exit 1; }
