@@ -18,6 +18,13 @@ NON_NUMBERED_HEADINGS_1 = {
     "本科期间的学习与科研成果",
 }
 
+# 这些 H1 虽然保留 Heading1 样式/分页，但不在 TOC 目录中展示
+# 规范：摘要/Abstract 是论文正文的"前置材料"（front matter），目录列参考文献起
+EXCLUDED_FROM_TOC = {
+    "摘要",
+    "Abstract",
+}
+
 # 这些章单独起一页
 PAGE_BREAK_BEFORE_HEADINGS = {
     "参考文献",
@@ -216,10 +223,175 @@ def add_heading_numbers(doc) -> None:
             _prepend_run_text(p, f"{chap}.{sec}.{subsec}.{subsubsec} ")
 
 
-def _make_toc_block(doc) -> list:
-    """构造 Word 原生 TOC 域 + 前置的"目录"标题段。返回段 XML 列表。"""
-    from docx.oxml import OxmlElement
+def _inject_toc_bookmarks(doc) -> list:
+    """给所有 Heading 1/2 注入 bookmark（_Toc_XXX），返回 [(level, name, text), ...]。
 
+    根因：检测器需要真实 TOC 段才能判定缩进。如果 docx 仅含 TOC 域（fldChar），
+    段要等 Word/LO 更新域才生成，段级 pPr 不受样式 firstLine 控制 → 检测器报错
+    "TOC2 首行缩进 0 字符"。解法是 postprocess 阶段预渲染真实 TOC 段 + PAGEREF
+    域保留页码动态更新能力。这一步先给 heading 加 bookmark 供 PAGEREF 引用。
+    """
+    body = doc.element.body
+    entries = []
+    bm_id = 1000
+    # 收集所有非 NON_NUMBERED_HEADINGS_1 的 Heading 1/2
+    for p in body.findall('.//' + qn('w:p')):
+        pPr = p.find(qn('w:pPr'))
+        pStyle = pPr.find(qn('w:pStyle')) if pPr is not None else None
+        sid = pStyle.get(qn('w:val')) if pStyle is not None else ''
+        if sid not in ('Heading1', 'Heading2'):
+            continue
+        txt = ''.join(t.text or '' for t in p.findall('.//' + qn('w:t'))).strip()
+        if not txt:
+            continue
+        # 过滤掉不入目录的 H1（摘要/Abstract）：它们仍保留 Heading1 样式与分页，
+        # 但不在 TOC 段列表中出现，也不打 bookmark（无外部引用价值）
+        if txt in EXCLUDED_FROM_TOC:
+            continue
+        # 跳过非 TOC 目录内容的 H1（封面、前置页的一些标签）
+        # 保留：1 绪论 / 2 ... / 参考文献 / 致谢 / 成果
+        level = 1 if sid == 'Heading1' else 2
+        bm_name = f"_Toc{bm_id}"
+        bm_id += 1
+        # 插入 bookmarkStart / bookmarkEnd，包裹所有 run
+        bs = OxmlElement("w:bookmarkStart")
+        bs.set(qn("w:id"), str(bm_id))
+        bs.set(qn("w:name"), bm_name)
+        be = OxmlElement("w:bookmarkEnd")
+        be.set(qn("w:id"), str(bm_id))
+        # 插入点：pPr 之后（即段内所有 run 之前）与段尾
+        pPr_el = p.find(qn('w:pPr'))
+        insert_idx = list(p).index(pPr_el) + 1 if pPr_el is not None else 0
+        p.insert(insert_idx, bs)
+        p.append(be)
+        entries.append((level, bm_name, txt))
+    return entries
+
+
+def _make_toc_entry_paragraph(level: int, bm_name: str, text: str):
+    """生成一个真实 TOC 段。
+
+    顶层设计（根因解法）：`<w:hyperlink>` 只包标题文字；`tab` 与 `PAGEREF` 域
+    放在 hyperlink **外部**。避免 WPS 的"hyperlink 嵌套 PAGEREF"域解析 bug
+    （症状：WPS 打开后所有目录页码 fallback 成同一值，如全 6）。
+
+    结构：
+        <w:p>
+          <w:pPr>...style + tabs + ind...</w:pPr>
+          <w:hyperlink anchor="_TocN"><w:r>(黑体)1 绪论</w:r></w:hyperlink>  ← 可点击跳转
+          <w:r><w:tab/></w:r>                                                  ← tab 到右侧
+          <w:r><w:fldChar begin/></w:r>                                        ← 独立 PAGEREF 域
+          <w:r><w:instrText> PAGEREF _TocN \h </w:instrText></w:r>
+          <w:r><w:fldChar separate/></w:r>
+          <w:r><w:t>1</w:t></w:r>                                              ← 占位页码
+          <w:r><w:fldChar end/></w:r>
+        </w:p>
+
+    Word/WPS 打开即可按 settings.updateFields=true 自动更新所有 PAGEREF 域到
+    真实页号，无需按 F9，无需静态化。
+
+    学校规范：
+      - TOC1 左对齐不缩进，中文用 **黑体**（eastAsia=黑体）
+      - TOC2/TOC3 首行缩进 2 字符（firstLineChars=200, firstLine=480）
+    """
+    style_id = f"TOC{level}"
+    # TOC1: firstLine=0（左对齐）；TOC2/TOC3: firstLine=480（2 字符缩进）
+    fl, flc = ("0", "0") if level == 1 else ("480", "200")
+
+    p = OxmlElement("w:p")
+    pPr = OxmlElement("w:pPr")
+    ps = OxmlElement("w:pStyle")
+    ps.set(qn("w:val"), style_id)
+    pPr.append(ps)
+    # tabs: right dot 引导到页码
+    tabs = OxmlElement("w:tabs")
+    tab = OxmlElement("w:tab")
+    tab.set(qn("w:val"), "right")
+    tab.set(qn("w:leader"), "dot")
+    tab.set(qn("w:pos"), "8306")
+    tabs.append(tab)
+    pPr.append(tabs)
+    # 段级 ind：显式、不依赖样式继承
+    ind = OxmlElement("w:ind")
+    ind.set(qn("w:firstLineChars"), flc)
+    ind.set(qn("w:firstLine"), fl)
+    pPr.append(ind)
+    p.append(pPr)
+
+    # --- 1. HYPERLINK：只包标题文字（可点击跳转）---
+    hyp = OxmlElement("w:hyperlink")
+    hyp.set(qn("w:anchor"), bm_name)
+    hyp.set(qn("w:history"), "1")
+
+    # 标题文本 run
+    # TOC1 条目：中文必须用黑体（eastAsia=黑体），西文保持 TNR
+    r_text = OxmlElement("w:r")
+    if level == 1:
+        rPr = OxmlElement("w:rPr")
+        rf = OxmlElement("w:rFonts")
+        rf.set(qn("w:ascii"), "Times New Roman")
+        rf.set(qn("w:hAnsi"), "Times New Roman")
+        rf.set(qn("w:eastAsia"), "黑体")
+        rf.set(qn("w:cs"), "Times New Roman")
+        rPr.append(rf)
+        r_text.append(rPr)
+    t = OxmlElement("w:t")
+    t.set(qn("xml:space"), "preserve")
+    t.text = text
+    r_text.append(t)
+    hyp.append(r_text)
+    p.append(hyp)
+
+    # --- 2. tab run（在 hyperlink 外） ---
+    r_tab = OxmlElement("w:r")
+    tab_el = OxmlElement("w:tab")
+    r_tab.append(tab_el)
+    p.append(r_tab)
+
+    # --- 3. PAGEREF 域（独立，不嵌套在 hyperlink 内）---
+    # 关键：begin / instr / separate / 占位 / end 五段 run 直接挂在段落下，
+    # 绕开 WPS 的 hyperlink+PAGEREF 嵌套解析 bug，让域引擎正常更新页号。
+    r_fb = OxmlElement("w:r")
+    fb = OxmlElement("w:fldChar")
+    fb.set(qn("w:fldCharType"), "begin")
+    r_fb.append(fb)
+    p.append(r_fb)
+
+    r_fi = OxmlElement("w:r")
+    fi = OxmlElement("w:instrText")
+    fi.set(qn("xml:space"), "preserve")
+    fi.text = f" PAGEREF {bm_name} \\h "
+    r_fi.append(fi)
+    p.append(r_fi)
+
+    r_fs = OxmlElement("w:r")
+    fs = OxmlElement("w:fldChar")
+    fs.set(qn("w:fldCharType"), "separate")
+    r_fs.append(fs)
+    p.append(r_fs)
+
+    # 占位页码（Word/WPS 打开后按 updateFields 更新成真实值）
+    r_pn = OxmlElement("w:r")
+    t_pn = OxmlElement("w:t")
+    t_pn.text = "1"
+    r_pn.append(t_pn)
+    p.append(r_pn)
+
+    r_fe = OxmlElement("w:r")
+    fe = OxmlElement("w:fldChar")
+    fe.set(qn("w:fldCharType"), "end")
+    r_fe.append(fe)
+    p.append(r_fe)
+
+    return p
+
+
+def _make_toc_block(doc) -> list:
+    """构造预渲染的 TOC：标题段 + 真实 TOC 段列表 + 分页符。
+
+    不再使用 `TOC` 域。改为扫描所有 Heading 1/2 自行生成 TOC 段，每段显式
+    段级 ind 以对齐检测器的分级缩进规则。页码由 PAGEREF 域保留动态更新。
+    """
     els = []
 
     # "目  录" 标题段
@@ -247,48 +419,18 @@ def _make_toc_block(doc) -> list:
     title_p.append(title_r)
     els.append(title_p)
 
-    # TOC 域段
-    toc_p = OxmlElement("w:p")
-    # begin
-    r1 = OxmlElement("w:r")
-    fc1 = OxmlElement("w:fldChar")
-    fc1.set(qn("w:fldCharType"), "begin")
-    r1.append(fc1)
-    toc_p.append(r1)
-    # instrText
-    r2 = OxmlElement("w:r")
-    it = OxmlElement("w:instrText")
-    it.set(qn("xml:space"), "preserve")
-    it.text = ' TOC \\o "1-2" \\h \\z \\u '
-    r2.append(it)
-    toc_p.append(r2)
-    # separate
-    r3 = OxmlElement("w:r")
-    fc2 = OxmlElement("w:fldChar")
-    fc2.set(qn("w:fldCharType"), "separate")
-    r3.append(fc2)
-    toc_p.append(r3)
-    # 占位文字
-    r4 = OxmlElement("w:r")
-    t4 = OxmlElement("w:t")
-    t4.text = "（打开文档后右键目录→更新域 即可生成实际目录）"
-    r4.append(t4)
-    toc_p.append(r4)
-    # end
-    r5 = OxmlElement("w:r")
-    fc3 = OxmlElement("w:fldChar")
-    fc3.set(qn("w:fldCharType"), "end")
-    r5.append(fc3)
-    toc_p.append(r5)
-    els.append(toc_p)
+    # 扫描 heading 注入 bookmark，并生成 TOC 段
+    entries = _inject_toc_bookmarks(doc)
+    for level, bm_name, text in entries:
+        els.append(_make_toc_entry_paragraph(level, bm_name, text))
 
-    # 分页符放在 TOC 域段落内部（field end 之后），而非独立段落。
-    # 这样 Word 更新目录域后，page break 跟最后一条目录项同段，
-    # 不会在分页符前多出一个空段落。
-    r_br = OxmlElement("w:r")
-    br = OxmlElement("w:br")
-    br.set(qn("w:type"), "page")
-    r_br.append(br)
-    toc_p.append(r_br)
+    # 分页符段
+    pb_p = OxmlElement("w:p")
+    pb_r = OxmlElement("w:r")
+    pb_br = OxmlElement("w:br")
+    pb_br.set(qn("w:type"), "page")
+    pb_r.append(pb_br)
+    pb_p.append(pb_r)
+    els.append(pb_p)
 
     return els

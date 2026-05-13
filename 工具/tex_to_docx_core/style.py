@@ -658,7 +658,7 @@ def _ensure_toc_styles(doc) -> None:
     _force_toc_style(toc1, bold=True, cjk_font="黑体")
     _ensure_leader_dot_tab(_ensure_style_pPr(toc1))
 
-    # TOC 2（二级目录项）：宋体不加粗 + 缩进 2 字符；右侧 tab 带 dot leader
+    # TOC 2（二级目录项）：宋体不加粗 + 首行缩进 2 字符（学校规范）
     toc2 = _find_or_create(("TOC2", "toc2"), "toc 2")
     _force_toc_style(toc2, bold=False, cjk_font="宋体")
 
@@ -668,10 +668,13 @@ def _ensure_toc_styles(doc) -> None:
     if ind is None:
         ind = OxmlElement("w:ind")
         pPr.append(ind)
-    ind.set(qn("w:leftChars"), "200")
-    ind.set(qn("w:left"), "0")
-    ind.set(qn("w:firstLineChars"), "0")
-    ind.set(qn("w:firstLine"), "0")
+    # 用 firstLine 表达缩进，不用 left（与段级 ind 规则、_TOC_FL_RULES 严格对齐）
+    for attr in ("leftChars", "left", "hanging", "hangingChars"):
+        k = qn(f"w:{attr}")
+        if k in ind.attrib:
+            del ind.attrib[k]
+    ind.set(qn("w:firstLineChars"), "200")
+    ind.set(qn("w:firstLine"), "480")
 
 
 def _ensure_toc2_not_bold(doc) -> None:
@@ -725,10 +728,22 @@ def normalize_toc_entries(doc) -> None:
             key = qn(f"w:{attr}")
             if key in ind.attrib:
                 del ind.attrib[key]
-        # 所有 TOC 级别 firstLine=0（检测器硬指标：目录项无首行缩进）
-        # 层级视觉在 _rule_styles 的样式级用 left 表达，这里段级不重复设
-        ind.set(qn("w:firstLineChars"), "0")
-        ind.set(qn("w:firstLine"), "0")
+        # 顶层设计（学校检测器规范）：
+        #   TOC1 无首行缩进（左对齐）
+        #   TOC2/TOC3 首行缩进 2 字符（firstLineChars=200, firstLine=480）
+        # 段级覆盖样式级，必须与 postprocess._rule_styles 的 _TOC_FL_RULES 完全对齐
+        style_upper = style_val.upper()
+        style_lower = style_name.strip().lower()
+        is_toc1 = (
+            style_upper == "TOC1"
+            or style_lower in ("toc 1", "toc1")
+        )
+        if is_toc1:
+            ind.set(qn("w:firstLineChars"), "0")
+            ind.set(qn("w:firstLine"), "0")
+        else:
+            ind.set(qn("w:firstLineChars"), "200")
+            ind.set(qn("w:firstLine"), "480")
 
 
 def normalize_bibliography_text(doc) -> None:

@@ -466,6 +466,11 @@ def post_process(docx_path: Path) -> None:
 
     doc.save(str(docx_path))
 
+    # 历史注记：早期曾做 PDF-driven 静态化（toc_freeze 模块）规避 WPS 对
+    # hyperlink 嵌套 PAGEREF 的解析 bug（fallback 全 6）。现根因已在
+    # `_make_toc_entry_paragraph` 解决——PAGEREF 域拆出 hyperlink 外部，配合
+    # settings.updateFields=true 由 Word/WPS 自己更新域。静态化模块已移除。
+
 
 _INSPECTOR_FIG_CAP_RE = re.compile(r"^\s*图\s*\d+[\.\-]\d+")
 _INSPECTOR_TAB_CAP_RE = re.compile(r"^\s*表\s*\d+[\.\-]\d+")
@@ -1124,11 +1129,19 @@ def _rule_styles(styles_el):
             el.set(_qn_("w:val"), "24")
             rPr.append(el)
     # TOC1/TOC2/TOC3: spacing after=0 line=360 auto + tabs right dot
-    # 底层逻辑：检测器要求"目录项无首行缩进"（error.txt #1,7,15,23,31,39,47,55,57,59,61）
-    # 所有 TOC 级别 firstLine=0；层级视觉由 left 整段缩进体现（TOC2/3 在 left 上加缩进）
+    # 顶层设计（学校检测器规范）：
+    #   TOC1 (一级章节项 "1 绪论"/"参考文献"/...)  → firstLine=0   左对齐，中文黑体
+    #   TOC2 (二级章节项 "1.1 ..."/"1.2 ..."/...) → firstLine=480 缩进 2 字符（检测器强制）
+    #   TOC3 (三级章节项 "1.1.1 ..."/...)         → firstLine=480 缩进 2 字符
+    # 关键：用 firstLine 而非 left 表达缩进，检测器按段级 firstLine 判定。
+    _TOC_FL_RULES = {
+        "TOC1": ("0", "0"),
+        "TOC2": ("200", "480"),
+        "TOC3": ("200", "480"),
+    }
     for s in styles_el.findall(_qn_("w:style")):
         sid = s.get(_qn_("w:styleId"))
-        if sid not in ("TOC1", "TOC2", "TOC3"):
+        if sid not in _TOC_FL_RULES:
             continue
         pPr = s.find(_qn_("w:pPr"))
         if pPr is None:
@@ -1142,16 +1155,9 @@ def _rule_styles(styles_el):
             k = _qn_(f"w:{attr}")
             if k in ind.attrib:
                 del ind.attrib[k]
-        # firstLine=0：所有级别无首行缩进（硬指标）
-        ind.set(_qn_("w:firstLineChars"), "0")
-        ind.set(_qn_("w:firstLine"), "0")
-        # 层级缩进：TOC2/TOC3 用 left（整段缩进，非首行）
-        if sid == "TOC2":
-            ind.set(_qn_("w:leftChars"), "200")
-            ind.set(_qn_("w:left"), "480")
-        elif sid == "TOC3":
-            ind.set(_qn_("w:leftChars"), "400")
-            ind.set(_qn_("w:left"), "960")
+        flc, fl = _TOC_FL_RULES[sid]
+        ind.set(_qn_("w:firstLineChars"), flc)
+        ind.set(_qn_("w:firstLine"), fl)
         # tab right dot
         tabs = _ensure_child(pPr, "w:tabs")
         has_right_dot = False
