@@ -1,7 +1,7 @@
 \chapter{总结与展望}
 \label{chap:conclusion}
 
-本文以百度Apollo 11.0开源自动驾驶平台为基础，针对多障碍物密集场景下路径边界构建保守或失效的问题，提出多障碍物交互运动学统一规划算法，即MIKU（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner）。源码分析显示，历史版本中的\texttt{PathBoundsDecider}在Apollo 11.0中已主要下沉为\texttt{PathBoundsDeciderUtil}工具类，其边界构建逻辑表现出三个特征，即逐障碍物独立决策、统一安全裕度，以及动态障碍物在路径阶段被滤除。笔者据此从安全距离、决策粒度与时空协调三个方向切入改进。
+本文以百度Apollo 11.0开源自动驾驶平台为基础，针对多障碍物密集场景下路径边界构建保守或失效的问题，提出多障碍物交互运动学统一规划算法，即MIKU（Multi-obstacle Interaction-density Kinematic-prediction Unified planner）。源码分析显示，历史版本中的\texttt{PathBoundsDecider}在Apollo 11.0中已主要下沉为\texttt{PathBoundsDeciderUtil}工具类，其边界构建逻辑表现出三个特征，即逐障碍物独立决策、统一安全裕度，以及动态障碍物在路径阶段被滤除。笔者据此从安全距离、决策粒度与时空协调三个方向切入改进。
 
 算法层面，本文在SL层建立融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的威胁度模型，以差异化安全裕度$\delta_i$释放低威胁障碍物占用的通行空间。针对组内避让方向选择，本文将问题建模为最大通行带宽度优化，证明了最优分割在横向排序下的连续性以及最大间隙策略在该形式化下的最优性，将组内搜索从$O(2^k)$候选压缩为$k+1$个候选分割，精确求解复杂度为$O(k \log k)$。在ST层，本文利用到达时间函数$\tau(s)$与预测轨迹将动态障碍物纳入路径边界构建，并将时变通行带的时间有效性约束投影到速度QP中，与\texttt{SpeedBoundsDecider}的ST边界融合。MIKU总复杂度为扫描线分组的$O(n\log n)$叠加逐离散点边界构建的$O(K)$，合计$O(n\log n + K)$，其中$K$为路径或时间离散化规模；同场景下Baseline的$O(nK)$在$n$较大时劣于本文方法。
 

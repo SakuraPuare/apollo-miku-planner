@@ -1,7 +1,7 @@
 \chapter{MIKU 总体框架与问题概览}
 \label{chap:framework}
 
-本章建立多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）所依赖的数学语言。首先梳理多障碍物场景下的三类核心局限，随后在Frenet坐标系下给出障碍物投影、安全裕度与通行带宽度的定义，将多障碍物避让方向选择写成$2^n$规模的组合优化问题。基于该模型分析Apollo Baseline逐障碍物贪心决策在空间、时间和安全裕度三个维度上的次优性根源，最后给出MIKU沿差异化安全距离、全局协调决策与时变投影展开的三项改进，分别对应后续第\ref{chap:threat}、\ref{chap:group}、\ref{chap:st_corridor}章。
+本章建立多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU）所依赖的数学语言。首先梳理多障碍物场景下的三类核心局限，随后在Frenet坐标系下给出障碍物投影、安全裕度与通行带宽度的定义，将多障碍物避让方向选择写成$2^n$规模的组合优化问题。基于该模型分析Apollo Baseline逐障碍物贪心决策在空间、时间和安全裕度三个维度上的次优性根源，最后给出MIKU沿差异化安全距离、全局协调决策与时变投影展开的三项改进，分别对应后续第\ref{chap:threat}、\ref{chap:group}、\ref{chap:st_corridor}章。
 
 \section{多障碍物场景下的三个核心局限}
 

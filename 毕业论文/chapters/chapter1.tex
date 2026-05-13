@@ -121,7 +121,7 @@ OpenSpacePlanner补充时期（2020年至今），为支持泊车、OpenSpace等
 
 将多障碍物场景下的避让方向选择建模为组合优化问题，引入到达时间函数将动态障碍物的预测轨迹纳入路径决策，建立统一的多障碍物统一规划数学框架。将时变通行带投影至ST空间解读为时空可通行走廊，建立路径决策与速度规划之间的约束传递机制。
 
-基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified Planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入。
+基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入。
 
 三项改进各自配套章内数值仿真，用以单独验证威胁度评估、组级分组决策与时空走廊的算法正确性。系统层面则在Apollo Planning的C++实现上完成集成实验，含6变体消融、3场景Dreamview在环展示与8场景全场景对比，其中8场景由4个压力场景和4个可比场景构成。对比维度覆盖规划成功率、通行效率、加减速峰值与QP求解耗时等，用以评估MIKU与Apollo Baseline的整体性能差异。
 
