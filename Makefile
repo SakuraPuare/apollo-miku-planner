@@ -27,8 +27,8 @@ DEFENSEDIR := 毕业答辩
 SVGDIR   := $(FIGDIR)/svg
 BUILDDIR := $(FIGDIR)/build
 
-# 单图源（每个 fig_*.tex 一图）
-FIGSRC   := $(wildcard $(FIGDIR)/fig_*.tex)
+# 单图源（每个 fig_*.tex 一图；排除 fig_slide_* 答辩专用复合图）
+FIGSRC   := $(filter-out $(FIGDIR)/fig_slide_%.tex,$(wildcard $(FIGDIR)/fig_*.tex))
 # 数据驱动图（metric_score.py 自动生成，位于 data/ablation/）也纳入 svg 流水线
 ABLATION_FIG_SRC := $(FIGDIR)/data/ablation/score_radar.tex $(FIGDIR)/data/ablation/score_heatmap.tex
 FIGSRC   += $(ABLATION_FIG_SRC)
@@ -56,7 +56,7 @@ CHAPTERS_SRC  := $(wildcard $(THESISDIR)/chapters/*.tex)
 INFO_SRC      := $(THESISDIR)/info.tex
 BIB_SRC       := $(THESISDIR)/references.bib
 
-.PHONY: all check-deps svg svg-clean thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
+.PHONY: all check-deps svg svg-clean thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-slides-all defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -97,6 +97,8 @@ $(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex Makefile | $(BUILDDIR)
 	  '\documentclass[UTF8,fontset=none]{ctexart}' \
 	  '\input{_figpreamble}' \
 	  '\input{../../$(CONTEXT_TEX)}' \
+	  '\input{../../$(METRICS_TEX)}' \
+	  '\input{../../$(ABLATION_TEX)}' \
 	  '\begin{document}' \
 	  '\begin{figure}[H]\centering' \
 	  '\input{$*}' \
@@ -104,6 +106,8 @@ $(BUILDDIR)/wrap_%.tex: $(FIGDIR)/%.tex Makefile | $(BUILDDIR)
 	  '\end{document}' > $@
 
 # 1b) data/ablation/score_*.tex 的 wrapper（因源文件不在 FIGDIR 根目录）
+#     源文件由 sim 流水线生成，必须等 FIGS_STAMP 完成
+$(ABLATION_FIG_SRC): $(FIGS_STAMP)
 $(BUILDDIR)/wrap_score_%.tex: $(FIGDIR)/data/ablation/score_%.tex Makefile | $(BUILDDIR)
 	@printf '%s\n' \
 	  '\documentclass[UTF8,fontset=none]{ctexart}' \
@@ -116,7 +120,7 @@ $(BUILDDIR)/wrap_score_%.tex: $(FIGDIR)/data/ablation/score_%.tex Makefile | $(B
 	  '\end{document}' > $@
 
 # 2) 单图编译；TEXINPUTS=.:..: 显式 cwd 优先，再到父目录找源 fig 与 preamble
-$(BUILDDIR)/wrap_%.pdf: $(BUILDDIR)/wrap_%.tex $(PREAMBLE) $(FIGDIR)/%.tex $(CONTEXT_TEX) $(FONT_FILES)
+$(BUILDDIR)/wrap_%.pdf: $(BUILDDIR)/wrap_%.tex $(PREAMBLE) $(FIGDIR)/%.tex $(CONTEXT_TEX) $(METRICS_TEX) $(ABLATION_TEX) $(FONT_FILES)
 	@cd $(BUILDDIR) && TEXINPUTS=.:..:../data/ablation: $(TEX) $(TEXFLAGS) wrap_$*.tex >/dev/null 2>&1 || { \
 	  echo "✗ $* 编译失败，尾部日志："; \
 	  tail -30 $(BUILDDIR)/wrap_$*.log 2>/dev/null; \
@@ -232,15 +236,33 @@ $(KAITIDIR)/slides.pdf: $(KAITIDIR)/slides.tex $(wildcard $(KAITIDIR)/figures/*.
 # ══════════════════════════════════════════════════
 #  毕业答辩（beamer slides + 独立讲稿，两份 PDF）
 # ══════════════════════════════════════════════════
-defense: defense-slides defense-script
-	@echo "✓ 毕业答辩: $(DEFENSEDIR)/slides.pdf + $(DEFENSEDIR)/script.pdf"
+defense: defense-slides defense-slides-all defense-script
+	@echo "✓ 毕业答辩: $(DEFENSEDIR)/slides.pdf (16:9, 4:3, 16:10) + $(DEFENSEDIR)/script.pdf"
 
 defense-slides: $(DEFENSEDIR)/slides.pdf
-$(DEFENSEDIR)/slides.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(FONT_FILES) | check-deps
+$(DEFENSEDIR)/slides.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(METRICS_TEX) $(ABLATION_TEX) $(CONTEXT_TEX) $(FONT_FILES) | check-deps
 	cd $(DEFENSEDIR) && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1 \
 	  && $(TEX) $(TEXFLAGS) slides.tex >/dev/null 2>&1
 	@test -f $(DEFENSEDIR)/slides.pdf || { echo "错误: 毕业答辩 slides.pdf 未生成"; exit 1; }
-	@echo "✓ 毕业答辩幻灯片: $(DEFENSEDIR)/slides.pdf"
+	@echo "✓ 毕业答辩幻灯片: $(DEFENSEDIR)/slides.pdf (16:9)"
+
+defense-slides-all: $(DEFENSEDIR)/slides.pdf $(DEFENSEDIR)/slides_4x3.pdf $(DEFENSEDIR)/slides_16x10.pdf
+
+$(DEFENSEDIR)/slides_4x3.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(METRICS_TEX) $(ABLATION_TEX) $(CONTEXT_TEX) $(FONT_FILES) | check-deps
+	cd $(DEFENSEDIR) && sed 's/aspectratio=169/aspectratio=43/' slides.tex > .slides_43.tex \
+	  && $(TEX) $(TEXFLAGS) -jobname=slides_4x3 .slides_43.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) -jobname=slides_4x3 .slides_43.tex >/dev/null 2>&1 \
+	  && rm -f .slides_43.tex
+	@test -f $(DEFENSEDIR)/slides_4x3.pdf || { echo "错误: slides_4x3.pdf 未生成"; exit 1; }
+	@echo "✓ 毕业答辩幻灯片: $(DEFENSEDIR)/slides_4x3.pdf (4:3)"
+
+$(DEFENSEDIR)/slides_16x10.pdf: $(DEFENSEDIR)/slides.tex $(DEFENSEDIR)/preamble.tex $(METRICS_TEX) $(ABLATION_TEX) $(CONTEXT_TEX) $(FONT_FILES) | check-deps
+	cd $(DEFENSEDIR) && sed 's/aspectratio=169/aspectratio=1610/' slides.tex > .slides_1610.tex \
+	  && $(TEX) $(TEXFLAGS) -jobname=slides_16x10 .slides_1610.tex >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) -jobname=slides_16x10 .slides_1610.tex >/dev/null 2>&1 \
+	  && rm -f .slides_1610.tex
+	@test -f $(DEFENSEDIR)/slides_16x10.pdf || { echo "错误: slides_16x10.pdf 未生成"; exit 1; }
+	@echo "✓ 毕业答辩幻灯片: $(DEFENSEDIR)/slides_16x10.pdf (16:10)"
 
 defense-script: $(DEFENSEDIR)/script.pdf
 $(DEFENSEDIR)/script.pdf: $(DEFENSEDIR)/script.tex $(DEFENSEDIR)/preamble.tex $(FONT_FILES) | check-deps
@@ -288,6 +310,8 @@ clean:
 	rm -f $(FOREIGNDIR)/original/original.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
 	rm -f $(FOREIGNDIR)/translation/translation.{pdf,aux,log,bbl,blg,bcf,run.xml,toc,out}
 	rm -f $(DEFENSEDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -f $(DEFENSEDIR)/slides_4x3.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
+	rm -f $(DEFENSEDIR)/slides_16x10.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -f $(DEFENSEDIR)/script.{pdf,aux,log,out,toc}
 	rm -rf $(DEFENSEDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
 	rm -f $(DOCX)
@@ -305,5 +329,5 @@ help:
 	@echo "make slides     编译答辩演示"
 	@echo "make kaiti      编译开题答辩"
 	@echo "make foreign    编译外文文献原文及译文"
-	@echo "make defense    编译毕业答辩 (slides + 讲稿)"
+	@echo "make defense    编译毕业答辩 (slides 三比例 + 讲稿)"
 	@echo "make clean      清理全部生成物"
