@@ -178,9 +178,7 @@
       <if variable="medium">
         <text variable="medium"/>
       </if>
-      <else-if variable="URL DOI" match="any">
-        <text value="OL"/>
-      </else-if>
+      <!-- OL suppressed: DOI/URL not shown per advisor requirement -->
     </choose>
   </macro>
   <!-- 其他责任者 -->
@@ -353,20 +351,12 @@
   <macro name="issued-date">
     <date variable="issued" form="numeric"/>
   </macro>
-  <!-- 引用日期 -->
+  <!-- 引用日期 (suppressed: URL not shown) -->
   <macro name="accessed-date">
-    <choose>
-      <if variable="URL DOI" match="any">
-        <date variable="accessed" form="numeric" prefix="[" suffix="]"/>
-      </if>
-    </choose>
   </macro>
   <!-- 获取和访问路径、数字对象唯一标识符 -->
   <macro name="access">
-    <group delimiter=". ">
-      <text variable="URL"/>
-      <text variable="DOI" prefix="DOI:"/>
-    </group>
+    <text variable="URL"/>
   </macro>
   <!-- 参考文献表格式 -->
   <macro name="entry-layout">
@@ -417,7 +407,8 @@
           <text macro="publisher"/>
         </else>
       </choose>
-      <text macro="access"/>
+      <!-- DOI/URL removed per advisor requirement -->
+      <!-- <text macro="access"/> -->
     </group>
   </macro>
   <citation collapse="citation-number" after-collapse-delimiter=",">
