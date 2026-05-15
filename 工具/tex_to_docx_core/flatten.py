@@ -1084,12 +1084,33 @@ def rewrite_post_chapter(raw: str, fallback_title: str) -> str:
         "",
         text,
     )
-    # \appendix 独立命令
-    text = re.sub(r"\\appendix\b", "", text)
-    # \lstinputlisting[opts]{path} → 占位
+    # \appendix 独立命令 → 把后续 \chapter{title} 改为 \chapter*{附录X title}
+    if re.search(r"\\appendix\b", text):
+        text = re.sub(r"\\appendix\b", "", text)
+        _app_counter = [0]
+
+        def _appendix_repl(m):
+            _app_counter[0] += 1
+            letter = chr(ord("A") + _app_counter[0] - 1)
+            return f"\\chapter*{{附录{letter} {m.group(1)}}}"
+
+        text = re.sub(r"\\chapter\{([^}]+)\}", _appendix_repl, text)
+    # \lstinputlisting[opts]{path} → 内联源码（LaTeX verbatim 环境）
+    def _inline_listing(m):
+        rel_path = m.group(1)
+        # 解析文件路径（相对于 THESIS_DIR）
+        src = THESIS_DIR / rel_path
+        if src.exists():
+            code = src.read_text(encoding="utf-8", errors="replace")
+            # verbatim 环境内不能有 \end{verbatim}，替换之
+            code = code.replace("\\end{verbatim}", "\\end {verbatim}")
+            return f"\n\n\\begin{{verbatim}}\n{code}\n\\end{{verbatim}}\n\n"
+        else:
+            return f"\n\n\\textit{{（源码文件未找到：{rel_path}）}}\n\n"
+
     text = re.sub(
         r"\\lstinputlisting(?:\[[^\]]*\])?\{([^}]+)\}",
-        lambda m: f"\n\n\\textit{{（源码完整清单请参见项目仓库 {m.group(1)}）}}\n\n",
+        _inline_listing,
         text,
     )
     # \chapter*{致\hspace{2em}谢} → \chapter*{致谢}；先剥 hspace，再收紧空格

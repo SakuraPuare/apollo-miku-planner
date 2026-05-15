@@ -44,6 +44,7 @@ BODY_CHAPTERS = [1, 3, 4, 5, 6, 7, 8, 9]  # chapter2 被导师屏蔽
 POST_CHAPTERS = [
     ("acknowledgment.tex", "致谢"),
     ("achievements.tex", "本科期间的学习与科研成果"),
+    ("appendix.tex", "附录"),
 ]
 
 REFS_ANCHOR_TEXT = "参考文献"
