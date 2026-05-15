@@ -576,15 +576,21 @@ def compress_declaration_and_authorization(doc) -> None:
         if txt.startswith("指导教师") and "签名" in txt:
             end_idx = i
             break
-    # 给声明+授权区域所有段落加 keepNext，防止跨页
+    # 给声明+授权区域所有段落加 keepNext + 清除段后间距，防止跨页
     if start_idx is not None and end_idx is not None:
-        for p in doc.paragraphs[start_idx : end_idx]:
+        for p in doc.paragraphs[start_idx : end_idx + 1]:
             pPr = p._element.find(qn("w:pPr"))
             if pPr is None:
                 pPr = OxmlElement("w:pPr")
                 p._element.insert(0, pPr)
             if pPr.find(qn("w:keepNext")) is None:
                 pPr.append(OxmlElement("w:keepNext"))
+            # 覆盖 docDefaults 的 after="200"（10pt），设为 0
+            spacing = pPr.find(qn("w:spacing"))
+            if spacing is None:
+                spacing = OxmlElement("w:spacing")
+                pPr.append(spacing)
+            spacing.set(qn("w:after"), "0")
 
 
 def tab_align_cover_and_signature_rows(doc) -> None:
