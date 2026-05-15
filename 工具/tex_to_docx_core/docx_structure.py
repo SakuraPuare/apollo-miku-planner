@@ -204,7 +204,7 @@ def add_heading_numbers(doc) -> None:
         sn = p.style.name if p.style else ""
         text = p.text.strip()
         if sn == "Heading 1":
-            if text in NON_NUMBERED_HEADINGS_1:
+            if text in NON_NUMBERED_HEADINGS_1 or text.startswith("附录"):
                 sec = subsec = subsubsec = 0
                 continue
             chap += 1
@@ -424,13 +424,6 @@ def _make_toc_block(doc) -> list:
     for level, bm_name, text in entries:
         els.append(_make_toc_entry_paragraph(level, bm_name, text))
 
-    # 分页符段
-    pb_p = OxmlElement("w:p")
-    pb_r = OxmlElement("w:r")
-    pb_br = OxmlElement("w:br")
-    pb_br.set(qn("w:type"), "page")
-    pb_r.append(pb_br)
-    pb_p.append(pb_r)
-    els.append(pb_p)
+    # 分页由 setup_page_numbers_and_sections 的 sectPr(nextPage) 处理，不再重复加分页符
 
     return els
