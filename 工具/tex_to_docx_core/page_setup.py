@@ -27,13 +27,12 @@ def _set_page_margins_a4(doc) -> None:
 def setup_page_numbers_and_sections(doc) -> None:
     """规范 P1-P5 页码分层：
 
-        Section 1（封面）             ：无页码，空 footer
-        Section 2（声明/授权/摘要/目录）：罗马数字 I II III...，start=I
-        Section 3（正文"1 绪论"起）     ：阿拉伯数字 1 2 3...，start=1
+        Section 1（封面+声明/授权）    ：无页码
+        Section 2（目录）              ：罗马数字 I II III...，start=I
+        Section 3（摘要）              ：罗马数字 I II III...，start=I
+        Section 4（正文"1 绪论"起）     ：阿拉伯数字 1 2 3...，start=1
 
-    顶层设计：每节独立 footer part（FooterPart），避免 3 节共用同一 footer 引起
-    跨节格式污染；用 python-docx 官方 Part API（FooterPart + DocumentPart
-    .relate_to）注册关系，不做 post-save zip 补丁。
+    每节独立 footer part（FooterPart），避免跨节格式污染。
     """
     _enable_update_fields_on_open(doc)
 
@@ -44,34 +43,74 @@ def setup_page_numbers_and_sections(doc) -> None:
         return "".join((t.text or "") for t in p.iter(qn("w:t")))
 
     # 分节锚点定位
-    cover_end_idx = None
-    body_start_idx = None
+    cover_end_idx = None      # 封面+声明/授权 最后一段
+    toc_start_idx = None      # 目录第一段
+    abstract_start_idx = None # 摘要第一段（论文题目页或"摘要："段）
+    body_start_idx = None     # 正文第一段
+
     for i, p in enumerate(paras):
         t = _para_text(p).strip()
         if cover_end_idx is None and len(t) < 60:
             if "原创性声明" in t or "独创性声明" in t:
                 cover_end_idx = i - 1 if i > 0 else None
+        if toc_start_idx is None and ("目" in t and "录" in t and len(t) < 10):
+            toc_start_idx = i
         if body_start_idx is None:
             pPr = p.find(qn("w:pPr"))
-            if pPr is None:
-                continue
-            pStyle = pPr.find(qn("w:pStyle"))
-            if pStyle is None or pStyle.get(qn("w:val")) != "Heading1":
-                continue
-            if t.startswith("1 ") or t.startswith("1　"):
-                body_start_idx = i
+            if pPr is not None:
+                pStyle = pPr.find(qn("w:pStyle"))
+                if pStyle is not None and pStyle.get(qn("w:val")) == "Heading1":
+                    if t.startswith("1 ") or t.startswith("1　") or t.startswith("1绪"):
+                        body_start_idx = i
+
+    # 摘要锚点：正文前第一个含"摘要"的段（论文题目页段或摘要正文段）
+    if body_start_idx is not None:
+        for i in range(body_start_idx - 1, -1, -1):
+            t = _para_text(paras[i]).strip()
+            if t.startswith("摘要") or "摘要" in t and len(t) < 10:
+                abstract_start_idx = i
+                break
+        # 如果没找到"摘要"标题，找论文题目页（通常在摘要前一两段）
+        if abstract_start_idx is None:
+            for i in range(body_start_idx - 1, -1, -1):
+                t = _para_text(paras[i]).strip()
+                if len(t) > 5 and "论文" not in t and "目" not in t:
+                    # 第一个有实质内容的段（论文中文题目）
+                    abstract_start_idx = i
+                    break
 
     if (
         cover_end_idx is None
+        or toc_start_idx is None
         or body_start_idx is None
         or body_start_idx <= cover_end_idx + 1
     ):
-        # 结构不符预期：退化为单节默认页码
         _fallback_single_section(doc)
         return
-    front_end_idx = body_start_idx - 1
 
-    # 提取模板 sectPr 作为版面基础
+    # 确定各节结束段
+    # 封面节结束：目录开始前一段
+    sec1_end_idx = toc_start_idx - 1
+    # 目录节结束：摘要开始前一段（如果摘要在目录后）或正文前一段
+    if abstract_start_idx is not None and abstract_start_idx > toc_start_idx:
+        sec2_end_idx = abstract_start_idx - 1
+        sec3_end_idx = body_start_idx - 1
+        n_sections = 4
+    else:
+        # 摘要在目录前或未找到，退化为 3 节
+        sec2_end_idx = body_start_idx - 1
+        sec3_end_idx = None
+        n_sections = 3
+
+    # 清理所有段内旧 sectPr
+    for p in paras:
+        pPr = p.find(qn("w:pPr"))
+        if pPr is None:
+            continue
+        for sp in list(pPr.findall(qn("w:sectPr"))):
+            pPr.remove(sp)
+
+    # 提取模板 sectPr
     template_sectPr = None
     for el in reversed(list(body)):
         if el.tag == qn("w:sectPr"):
@@ -81,29 +120,37 @@ def setup_page_numbers_and_sections(doc) -> None:
         _fallback_single_section(doc)
         return
 
-    # 清理所有段内旧 sectPr（模板/pandoc 残留 continuous 节点一并移除）
-    for p in paras:
-        pPr = p.find(qn("w:pPr"))
-        if pPr is None:
-            continue
-        for sp in list(pPr.findall(qn("w:sectPr"))):
-            pPr.remove(sp)
+    if n_sections == 4:
+        # 4 个 FooterPart
+        cover_rid = _add_footer_part(doc, _footer_empty_xml())
+        toc_rid = _add_footer_part(doc, _footer_page_field_xml())
+        abstract_rid = _add_footer_part(doc, _footer_page_field_xml())
+        arabic_rid = _add_footer_part(doc, _footer_page_field_xml())
 
-    # 3 个 FooterPart 串行注册（create → relate_to）
-    # 底层逻辑：next_partname 靠 package.parts 扫描，必须挂一个再建下一个
-    cover_rid = _add_footer_part(doc, _footer_empty_xml())
-    roman_rid = _add_footer_part(doc, _footer_page_field_xml())
-    arabic_rid = _add_footer_part(doc, _footer_page_field_xml())
+        sec1 = _build_sectPr(template_sectPr, cover_rid, fmt=None, start=None, is_final=False)
+        sec2 = _build_sectPr(template_sectPr, toc_rid, fmt="upperRoman", start=1, is_final=False)
+        sec3 = _build_sectPr(template_sectPr, abstract_rid, fmt="upperRoman", start=1, is_final=False)
+        sec4 = _build_sectPr(template_sectPr, arabic_rid, fmt="decimal", start=1, is_final=True)
 
-    # 构造 3 个 sectPr 并挂载
-    sec1 = _build_sectPr(template_sectPr, cover_rid, fmt=None, start=None, is_final=False)
-    sec2 = _build_sectPr(template_sectPr, roman_rid, fmt="upperRoman", start=1, is_final=False)
-    sec3 = _build_sectPr(template_sectPr, arabic_rid, fmt="decimal", start=1, is_final=True)
+        _attach_sectPr_to_para(paras[sec1_end_idx], sec1)
+        _attach_sectPr_to_para(paras[sec2_end_idx], sec2)
+        _attach_sectPr_to_para(paras[sec3_end_idx], sec3)
+        body.remove(template_sectPr)
+        body.append(sec4)
+    else:
+        # 3 节退化
+        cover_rid = _add_footer_part(doc, _footer_empty_xml())
+        roman_rid = _add_footer_part(doc, _footer_page_field_xml())
+        arabic_rid = _add_footer_part(doc, _footer_page_field_xml())
 
-    _attach_sectPr_to_para(paras[cover_end_idx], sec1)
-    _attach_sectPr_to_para(paras[front_end_idx], sec2)
-    body.remove(template_sectPr)
-    body.append(sec3)
+        sec1 = _build_sectPr(template_sectPr, cover_rid, fmt=None, start=None, is_final=False)
+        sec2 = _build_sectPr(template_sectPr, roman_rid, fmt="upperRoman", start=1, is_final=False)
+        sec3 = _build_sectPr(template_sectPr, arabic_rid, fmt="decimal", start=1, is_final=True)
+
+        _attach_sectPr_to_para(paras[sec1_end_idx], sec1)
+        _attach_sectPr_to_para(paras[sec2_end_idx], sec2)
+        body.remove(template_sectPr)
+        body.append(sec3)
 
 
 # ---------------------------------------------------------------
