@@ -63,7 +63,7 @@ def setup_page_numbers_and_sections(doc) -> None:
                     if t.startswith("1 ") or t.startswith("1　") or t.startswith("1绪"):
                         body_start_idx = i
 
-    # 摘要锚点：正文前第一个含"摘要"的段（论文题目页段或摘要正文段）
+    # 摘要锚点：论文题目页（含题目段+摘要正文），即目录之后、正文之前的第一个有实质内容的段
     if body_start_idx is not None:
         for i in range(body_start_idx - 1, -1, -1):
             t = _para_text(paras[i]).strip()
@@ -75,9 +75,27 @@ def setup_page_numbers_and_sections(doc) -> None:
             for i in range(body_start_idx - 1, -1, -1):
                 t = _para_text(paras[i]).strip()
                 if len(t) > 5 and "论文" not in t and "目" not in t:
-                    # 第一个有实质内容的段（论文中文题目）
                     abstract_start_idx = i
                     break
+        # 从摘要段往前扩展：把论文题目段也纳入摘要节（跳过空段，遇到 toc 段停止）
+        if abstract_start_idx is not None and abstract_start_idx > 0:
+            for i in range(abstract_start_idx - 1, -1, -1):
+                t = _para_text(paras[i]).strip()
+                if not t:
+                    continue  # 跳过空段
+                # 如果是 toc 段或目录标题段，停止
+                pPr = paras[i].find(qn("w:pPr"))
+                pStyle = None
+                if pPr is not None:
+                    ps = pPr.find(qn("w:pStyle"))
+                    if ps is not None:
+                        pStyle = ps.get(qn("w:val"))
+                if pStyle and ("toc" in pStyle.lower() or pStyle.lower().startswith("contents")):
+                    break
+                if "目" in t and "录" in t and len(t) < 10:
+                    break
+                # 纳入摘要节并继续往前找
+                abstract_start_idx = i
 
     if (
         cover_end_idx is None
@@ -151,6 +169,23 @@ def setup_page_numbers_and_sections(doc) -> None:
         _attach_sectPr_to_para(paras[sec2_end_idx], sec2)
         body.remove(template_sectPr)
         body.append(sec3)
+
+    # sectPr(nextPage) 已经分页，清除 sectPr 段本身及紧后面那段的多余 run 级分页符
+    sect_end_indices = [sec1_end_idx, sec2_end_idx]
+    if n_sections == 4:
+        sect_end_indices.append(sec3_end_idx)
+    for idx in sect_end_indices:
+        # 清除 sectPr 段本身的分页符 run
+        for target_idx in (idx, idx + 1):
+            if target_idx >= len(paras):
+                continue
+            target_p = paras[target_idx]
+            for r in list(target_p.findall(qn("w:r"))):
+                brs = r.findall(qn("w:br"))
+                if brs and all(br.get(qn("w:type")) == "page" for br in brs):
+                    texts = r.findall(qn("w:t"))
+                    if not texts or all(not (t.text or "").strip() for t in texts):
+                        target_p.remove(r)
 
 
 # ---------------------------------------------------------------
