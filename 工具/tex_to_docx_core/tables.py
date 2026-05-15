@@ -613,6 +613,14 @@ def flatten_list_indent(doc) -> None:
         root = numbering_part.element  # CT_Numbering (lxml wrapper)
         W = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
         for lvl in root.iter(W + "lvl"):
+            # 编号格式统一为（1）（2）…（规范要求中文括号包裹阿拉伯数字）
+            ilvl_val = lvl.get(W + "ilvl", "0")
+            numFmt_el = lvl.find(W + "numFmt")
+            if numFmt_el is not None and numFmt_el.get(W + "val", "") == "decimal":
+                lvlText_el = lvl.find(W + "lvlText")
+                if lvlText_el is not None and ilvl_val == "0":
+                    lvlText_el.set(W + "val", "（%1）")
+
             pPr = lvl.find(W + "pPr")
             if pPr is None:
                 continue
