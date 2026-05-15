@@ -746,6 +746,95 @@ def normalize_toc_entries(doc) -> None:
             ind.set(qn("w:firstLine"), "480")
 
 
+_CJK_RANGES = (
+    "⺀-鿿"
+    "豈-﫿"
+    "︰-﹏"
+    "\U00020000-\U0002fa1f"
+)
+_RE_CJK_SPACE_LATIN = re.compile(
+    rf"([{_CJK_RANGES}])\s+([A-Za-z0-9Ͱ-Ͽ([\-])"
+)
+_RE_LATIN_SPACE_CJK = re.compile(
+    rf"([A-Za-z0-9Ͱ-Ͽ)\]%.])\s+([{_CJK_RANGES}])"
+)
+
+
+_RE_CJK_TAIL = re.compile(rf"[{_CJK_RANGES}]$")
+_RE_CJK_HEAD = re.compile(rf"^[{_CJK_RANGES}]")
+_RE_LATIN_TAIL = re.compile(r"[A-Za-z0-9\u0370-\u03ff)\]%.]$")
+_RE_LATIN_HEAD = re.compile(r"^[A-Za-z0-9\u0370-\u03ff([\-]")
+
+
+def _strip_cjk_latin_in_para(p) -> None:
+    """Strip CJK-Latin spaces in a single paragraph's runs."""
+    runs = p.runs
+    # Pass 1: within-run
+    for run in runs:
+        if not run.text:
+            continue
+        t = run.text
+        t = _RE_CJK_SPACE_LATIN.sub(r"\1\2", t)
+        t = _RE_LATIN_SPACE_CJK.sub(r"\1\2", t)
+        if t != run.text:
+            run.text = t
+    # Pass 2: cross-run boundaries (trailing/leading space)
+    for i in range(len(runs) - 1):
+        cur = runs[i].text or ""
+        nxt = runs[i + 1].text or ""
+        if not cur or not nxt:
+            continue
+        if cur != cur.rstrip():
+            stripped = cur.rstrip()
+            if (
+                (_RE_CJK_TAIL.search(stripped) and _RE_LATIN_HEAD.match(nxt))
+                or (_RE_LATIN_TAIL.search(stripped) and _RE_CJK_HEAD.match(nxt))
+            ):
+                runs[i].text = stripped
+        cur = runs[i].text or ""
+        nxt = runs[i + 1].text or ""
+        if nxt != nxt.lstrip():
+            stripped_nxt = nxt.lstrip()
+            if (
+                (_RE_CJK_TAIL.search(cur) and _RE_LATIN_HEAD.match(stripped_nxt))
+                or (_RE_LATIN_TAIL.search(cur) and _RE_CJK_HEAD.match(stripped_nxt))
+            ):
+                runs[i + 1].text = stripped_nxt
+    # Pass 3: space-only run between CJK and Latin runs
+    for i in range(len(runs) - 2):
+        mid = runs[i + 1].text or ""
+        if not mid or mid.strip():
+            continue  # not a space-only run
+        prev = runs[i].text or ""
+        nxt = runs[i + 2].text or ""
+        if not prev or not nxt:
+            continue
+        if (
+            (_RE_CJK_TAIL.search(prev) and _RE_LATIN_HEAD.match(nxt))
+            or (_RE_LATIN_TAIL.search(prev) and _RE_CJK_HEAD.match(nxt))
+        ):
+            runs[i + 1].text = ""
+
+
+def strip_cjk_latin_spaces(doc) -> None:
+    """删除中英文之间的手动空格，让 Word autoSpaceDE/DN 自动管理间距。"""
+    _SKIP = ("toc", "bibliograph", "reference", "source", "verbatim")
+    for p in doc.paragraphs:
+        style_name = (p.style.name if p.style else "").lower()
+        if style_name.startswith(_SKIP):
+            continue
+        _strip_cjk_latin_in_para(p)
+    # Also process table cells (cover page, etc.)
+    for tbl in doc.tables:
+        for row in tbl.rows:
+            for cell in row.cells:
+                for p in cell.paragraphs:
+                    style_name = (p.style.name if p.style else "").lower()
+                    if style_name.startswith(_SKIP):
+                        continue
+                    _strip_cjk_latin_in_para(p)
+
+
 def normalize_bibliography_text(doc) -> None:
     """修复参考文献英文半角小圆点后缺空格这类低风险格式问题。
     同时把 pandoc citeproc 在 "[N]" 后默认插入的 Tab（制表符）替换为单空格，

@@ -34,6 +34,7 @@ from .style import (
     normalize_all_fonts,
     normalize_paragraph_spacing,
     normalize_toc_entries,
+    strip_cjk_latin_spaces,
 )
 from .tables import (
     add_equation_numbers,
@@ -464,6 +465,11 @@ def post_process(docx_path: Path) -> None:
     _normalize_for_inspector(doc)               # F1 兜底层：caption 前缀补回、数学对象字号、TOC tab leader
     _close_inspector_issues(doc)                # F2 规则层：_apply_format_rules 按 7 块规则链
 
+    # ---------------------------------------------------------------
+    # Stage G：最终文本清理（必须在 F1 的空格插入之后）
+    # ---------------------------------------------------------------
+    strip_cjk_latin_spaces(doc)                 # G1 删除中英文间手动空格（Word autoSpace 管理）
+
     doc.save(str(docx_path))
 
     # 历史注记：早期曾做 PDF-driven 静态化（toc_freeze 模块）规避 WPS 对
@@ -805,55 +811,8 @@ def _normalize_for_inspector(doc) -> None:
                 r.text = "".join(chars)
             offset = r_end
 
-    # CJK ↔ ASCII 交界处插入半角空格（模拟 xeCJK 的自动间距）
-    # PDF 走 xeCJK 自动处理；pandoc→docx 走纯文本流会丢失空格。
-    # 规则：CJK 字符紧跟 ASCII 字母/数字时在中间插空格；反向同理。
-    # 跨 run 处理：段内 run 顺序拼接后识别交界位置，再逐 run 精确插入。
-    # 排除：代码块、参考文献、公式段（OMML 另外渲染）。
-    cjk_ascii_re = re.compile(r"[一-鿿][A-Za-z0-9]")
-    ascii_cjk_re = re.compile(r"[A-Za-z0-9][一-鿿]")
-
-    for p in doc.paragraphs:
-        style_name = (p.style.name if p.style else "")
-        # 跳过代码块 / verbatim —— 代码里的空格有语义
-        if style_name.startswith(("Source", "Verbatim")):
-            continue
-        # 跳过目录行
-        if style_name.startswith(("TOC", "toc")):
-            continue
-        # 拼接段文本，记录每个 run 的 [start, end) 区间
-        text = ""
-        run_spans = []  # (run, start, end)
-        for r in p.runs:
-            rt = r.text or ""
-            run_spans.append((r, len(text), len(text) + len(rt)))
-            text += rt
-        if not text:
-            continue
-        # 找所有需要插空格的位置（在第 i 和 i+1 字符之间）
-        insert_positions = set()
-        for m in cjk_ascii_re.finditer(text):
-            insert_positions.add(m.start() + 1)  # 插在 CJK 和 ASCII 之间
-        for m in ascii_cjk_re.finditer(text):
-            insert_positions.add(m.start() + 1)  # 插在 ASCII 和 CJK 之间
-        if not insert_positions:
-            continue
-        # 逐 run 插入：对每个 run 按其区间内相对位置插空格
-        for r, s, e in run_spans:
-            rt = r.text or ""
-            if not rt:
-                continue
-            # 本 run 区间内的插入点（转为本 run 内的相对偏移）
-            local_hits = sorted(
-                [pos - s for pos in insert_positions if s < pos <= e],
-                reverse=True,
-            )
-            if not local_hits:
-                continue
-            chars = list(rt)
-            for h in local_hits:
-                chars.insert(h, " ")
-            r.text = "".join(chars)
+    # CJK ↔ ASCII 交界处空格管理：已改为由 Word autoSpaceDE/DN 自动处理，
+    # strip_cjk_latin_spaces (Stage G) 负责删除手动空格。此处不再插入。
 
     # OMML 数学对象字号统一小四 24 半磅（12pt）
     M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
