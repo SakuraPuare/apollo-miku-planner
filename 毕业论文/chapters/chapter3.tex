@@ -240,26 +240,25 @@ DP输出的速度曲线作为$v_{ref,k}$传入QP，为非凸的ST边界约束提
 
 \subsection{两阶段信息传递}
 
-两阶段之间的信息传递是单向的，路径阶段输出\texttt{PathData}，包含离散路径点和Frenet坐标系路径，速度阶段在此路径的基础上构建ST图并进行速度优化。在Apollo的Task流水线中，各Task按配置顺序执行，不进行回溯迭代。LANE\_FOLLOW场景的完整Task流水线配置如代码\ref{lst:lane_follow_pipeline}所示。
+两阶段之间的信息传递是单向的，路径阶段输出\texttt{PathData}，包含离散路径点和Frenet坐标系路径，速度阶段在此路径的基础上构建ST图并进行速度优化。在Apollo的Task流水线中，各Task按配置顺序执行，不进行回溯迭代。LANE\_FOLLOW场景的完整Task流水线配置如算法\ref{alg:lane_follow_pipeline}所示。
 
-\begin{lstlisting}[language={json},caption={LANE\_FOLLOW场景Task流水线配置},label={lst:lane_follow_pipeline}]
-// scenarios/lane_follow/conf/pipeline.pb.txt
-stage {
-  name: "LANE_FOLLOW_STAGE"
-  type: "LaneFollowStage"
-  task { name: "LANE_CHANGE_PATH"            type: "LaneChangePath" }
-  task { name: "LANE_FOLLOW_PATH"            type: "LaneFollowPath" }
-  task { name: "LANE_BORROW_PATH"            type: "LaneBorrowPath" }
-  task { name: "FALLBACK_PATH"               type: "FallbackPath" }
-  task { name: "PATH_DECIDER"                type: "PathDecider" }
-  task { name: "RULE_BASED_STOP_DECIDER"     type: "RuleBasedStopDecider" }
-  task { name: "SPEED_BOUNDS_PRIORI_DECIDER" type: "SpeedBoundsDecider" }
-  task { name: "SPEED_HEURISTIC_OPTIMIZER"   type: "PathTimeHeuristicOptimizer" }
-  task { name: "SPEED_DECIDER"               type: "SpeedDecider" }
-  task { name: "SPEED_BOUNDS_FINAL_DECIDER"  type: "SpeedBoundsDecider" }
-  task { name: "PIECEWISE_JERK_SPEED"        type: "PiecewiseJerkSpeedOptimizer" }
-}
-\end{lstlisting}
+\begin{algorithm}[htbp]
+\caption{LANE\_FOLLOW场景Task流水线}
+\label{alg:lane_follow_pipeline}
+\KwIn{参考线、障碍物列表、自车状态}
+\KwOut{规划轨迹（路径+速度）}
+\textcolor{gray!30!black}{\textit{// 路径阶段}}\;
+依次尝试 LaneChangePath、LaneFollowPath、LaneBorrowPath、FallbackPath \;
+执行 PathDecider（路径决策）\;
+执行 RuleBasedStopDecider（规则停车决策）\;
+\textcolor{gray!30!black}{\textit{// 速度阶段}}\;
+执行 SpeedBoundsDecider（先验速度边界构建）\;
+执行 PathTimeHeuristicOptimizer（DP启发式搜索）\;
+执行 SpeedDecider（速度决策）\;
+执行 SpeedBoundsDecider（最终速度边界构建）\;
+执行 PiecewiseJerkSpeedOptimizer（QP速度优化）\;
+\KwRet 规划轨迹 \;
+\end{algorithm}
 
 其中，路径阶段包含四种路径生成Task，即换道、跟车道、借道、降级，以及路径决策和规则停车决策两个决策Task；速度阶段包含先验速度边界构建、DP启发式搜索、速度决策、最终速度边界构建和QP速度优化五个Task。\texttt{SpeedBoundsDecider}被调用两次，分别在DP搜索前后执行先验和最终的边界构建。
 
