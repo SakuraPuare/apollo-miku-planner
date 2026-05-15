@@ -162,6 +162,35 @@ def _style_code_algorithm_captions(doc) -> None:
         )
 
 
+def _keep_captions_with_objects(doc) -> None:
+    """给图片段、表题段、算法/代码题段加 keepNext，防止标题与主体跨页。"""
+    from docx.oxml.ns import qn as _qn
+    from docx.oxml import OxmlElement
+
+    for i, p in enumerate(doc.paragraphs):
+        style = p.style.name if p.style else ""
+        text = p.text.strip()
+        need_keep = False
+
+        # 图片段（CaptionedFigure）：图片和下方图题不分页
+        if style == "Captioned Figure":
+            need_keep = True
+        # 表题段：表题和下方表格不分页
+        elif style == "Table Caption":
+            need_keep = True
+        # 代码/算法题段
+        elif _CODE_ALGO_CAPTION_RE.match(text):
+            need_keep = True
+
+        if need_keep:
+            pPr = p._element.find(_qn("w:pPr"))
+            if pPr is None:
+                pPr = OxmlElement("w:pPr")
+                p._element.insert(0, pPr)
+            if pPr.find(_qn("w:keepNext")) is None:
+                pPr.append(OxmlElement("w:keepNext"))
+
+
 def _unmono_code_styles(doc) -> None:
     """去掉 pandoc 给 inline code / code block 施加的等宽字体。
 
@@ -304,8 +333,11 @@ def post_process(docx_path: Path) -> None:
         lvl = _heading_level(style)
 
         if lvl == 1:
-            # 致谢单独规格：三号黑体加粗居中（规范要求）
-            if text in ("致 谢", "致谢"):
+            # 致谢/参考文献/成果/附录：三号黑体加粗居中（规范要求）
+            if (
+                text in ("致 谢", "致谢", "参考文献", "本科期间的学习与科研成果")
+                or text.startswith("附录")
+            ):
                 _apply_para(
                     p,
                     cjk_font="黑体",
@@ -317,7 +349,7 @@ def post_process(docx_path: Path) -> None:
                     space_after=6.0,
                 )
             else:
-                # 其它章 / 摘要 / Abstract / 参考文献 / 成果 — 四号黑体加粗左对齐
+                # 其它章 / 摘要 / Abstract — 四号黑体加粗左对齐
                 _apply_para(
                     p,
                     cjk_font="黑体",
@@ -435,6 +467,7 @@ def post_process(docx_path: Path) -> None:
     center_all_table_cells(doc)                 #    + 表格 cell 居中（代码块只垂直居中）
     apply_table_body_font_size(doc)             #    + 数据型表格 cell 字号五号
     _style_code_algorithm_captions(doc)         # C8 代码/算法题标题段刷成表题规格
+    _keep_captions_with_objects(doc)             # C9 图/表/算法题与主体不跨页
 
     # ---------------------------------------------------------------
     # Stage D：文本 + 字符级
