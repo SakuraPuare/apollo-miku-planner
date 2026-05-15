@@ -73,10 +73,10 @@ for (size_t i = 1; i < path_boundary->size(); ++i) {
 
 场景设定如下，双车道道路总宽\GroupExampleRoadWidth\,m，$l_{road}^- = \GroupExampleRoadLeft$\,m，$l_{road}^+ = \GroupExampleRoadRight$\,m。在某纵向位置$s^*$处同时存在两个路锥，关于参考线近似对称
 
-\begin{itemize}[noitemsep]
+\begin{enumerate}[noitemsep]
 \item $O_a$偏左，横向占据$[\GroupExampleRightObsLow,\; \GroupExampleRightObsHigh]$\,m，中心$\GroupExampleRightObsCenter$\,m
 \item $O_b$偏右，横向占据$[\GroupExampleLeftObsLow,\; \GroupExampleLeftObsHigh]$\,m，中心$\GroupExampleLeftObsCenter$\,m
-\end{itemize}
+\end{enumerate}
 
 两个路锥均未越过车道中线，安全距离$\delta = \GroupExampleDelta$\,m。
 
@@ -336,11 +336,11 @@ $g_0$表示道路右边界到第一个即最右侧障碍物之间的间隙，$g_
 
 若存在障碍物$i$使得$u_i < l_{road}^{-}$或$v_i > l_{road}^{+}$，则按以下规则预处理后，定理\ref{thm:max_gap}的结论仍然成立。
 
-\begin{itemize}
+\begin{enumerate}
 \item 若$u_i < l_{road}^{-}$且$v_i > l_{road}^{+}$，即障碍物膨胀后完全覆盖道路横截面，则判定当前$s$截面BLOCKED，不进入后续分割搜索。
 \item 若$u_i < l_{road}^{-}$且$v_i \leq l_{road}^{+}$，即障碍物右膨胀区越过道路右边界，则强制$d_i = L$即左绕并从候选列表中移除，其约束由$v_i$并入$V_p$的\texttt{max}运算，不影响其它分割点$g_p$。
 \item 若$u_i \geq l_{road}^{-}$且$v_i > l_{road}^{+}$，即障碍物左膨胀区越过道路左边界，则强制$d_i = R$即右绕并从候选列表中移除，其约束由$u_i$并入$\min$运算，不影响其它分割点$g_p$。
-\end{itemize}
+\end{enumerate}
 \end{lemma}
 
 证明：规则A下$l^{+}(\mathbf{d}) < l^{-}(\mathbf{d})$对任意$\mathbf{d}$成立，故无可行分割，直接BLOCKED等价于$W^{*} = 0$。规则B中若分配$d_i = R$，则$l^{+}(\mathbf{d}) = \min(l_{road}^{+}, u_i, \ldots) = u_i < l_{road}^{-} \leq l^{-}(\mathbf{d})$，通行带宽度非正，故$d_i = L$为唯一最优选择；强制$d_i = L$后，$v_i$参与$\max_{j\in\mathcal{L}}v_j$的聚合，对应全局$V_p$的值已经包含该$v_i$贡献，不改变剩余障碍物间的$g_p$序。规则C对称。因此，三条规则预处理后剩余障碍物全部满足$u_j \geq l_{road}^{-}$且$v_j \leq l_{road}^{+}$，定理\ref{thm:max_gap}的前提条件成立。\hfill$\Box$

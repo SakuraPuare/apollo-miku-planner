@@ -257,13 +257,13 @@ Cyber RT是Apollo的实时通信框架，替代了早期版本中的机器人操
 \end{enumerate}
 
 Planning模块通过Cyber RT订阅以下消息
-\begin{itemize}[noitemsep]
+\begin{enumerate}[noitemsep]
 \item \texttt{PredictionObstacles}，预测模块输出的障碍物预测轨迹
 \item \texttt{Chassis}，底盘状态，含档位、速度、转向
 \item \texttt{LocalizationEstimate}，定位信息，含位置、速度、加速度
 \item \texttt{TrafficLightDetection}，交通灯检测结果
 \item \texttt{PlanningCommand}，规划命令，含路由信息
-\end{itemize}
+\end{enumerate}
 
 输出消息为\texttt{ADCTrajectory}，包含完整的轨迹点序列及其对应的时间戳、速度、加速度、曲率等信息。
 
