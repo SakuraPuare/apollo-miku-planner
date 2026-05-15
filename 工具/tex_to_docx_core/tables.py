@@ -28,13 +28,7 @@ def _is_code_block_table(tbl) -> bool:
         return False
     # 代码特征
     code_markers = ("//", "/*", "#include", "{", "}", ";", "==", "->", "← ", "←")
-    if any(m in all_t for m in code_markers):
-        return True
-    # 伪代码特征（中文算法）
-    pseudo_markers = ("输入：", "输出：", "if ", "then", "while", "foreach", "end", "return")
-    if sum(1 for m in pseudo_markers if m in all_t) >= 3:
-        return True
-    return False
+    return any(m in all_t for m in code_markers)
 
 
 def _clear_table_borders(tbl) -> None:
