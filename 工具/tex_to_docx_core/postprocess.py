@@ -796,6 +796,7 @@ def _normalize_for_inspector(doc) -> None:
         if not comma_positions:
             continue
         # 把段内 run 文本的绝对区间算出来，逐 run 重写
+        # 同时删除全角逗号后紧跟的空格（中文标点后不需要空格）
         offset = 0
         for r in p.runs:
             rt = r.text or ""
@@ -805,11 +806,24 @@ def _normalize_for_inspector(doc) -> None:
             hits = [cp - r_start for cp in comma_positions if r_start <= cp < r_end]
             if hits:
                 chars = list(rt)
-                for h in hits:
+                for h in sorted(hits, reverse=True):
                     if 0 <= h < len(chars) and chars[h] == ",":
                         chars[h] = "，"
+                        # 删除逗号后紧跟的空格
+                        while h + 1 < len(chars) and chars[h + 1] == " ":
+                            chars.pop(h + 1)
                 r.text = "".join(chars)
             offset = r_end
+
+    # 全角逗号/顿号后跨 run 空格清理
+    for p in doc.paragraphs:
+        runs = p.runs
+        for i in range(len(runs) - 1):
+            cur = runs[i].text or ""
+            if cur and cur[-1] in "，、；：":
+                nxt = runs[i + 1].text or ""
+                if nxt and nxt[0] == " ":
+                    runs[i + 1].text = nxt.lstrip(" ")
 
     # CJK ↔ ASCII 交界处空格管理：已改为由 Word autoSpaceDE/DN 自动处理，
     # strip_cjk_latin_spaces (Stage G) 负责删除手动空格。此处不再插入。
