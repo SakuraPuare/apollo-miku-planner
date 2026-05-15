@@ -416,22 +416,8 @@ def fill_cover_info(doc) -> None:
                 p_el.append(_mk_run("年   月   日"))
                 break
 
-    # "目  录"段前加分页符
-    for p in doc.paragraphs[:60]:
-        txt = (p.text or "").strip()
-        if txt == "目  录" or txt == "目录":
-            # 在第一个 run 之前插入分页符 run
-            br_run = OxmlElement("w:r")
-            br = OxmlElement("w:br")
-            br.set(qn("w:type"), "page")
-            br_run.append(br)
-            # 插入到段的第一个 run 之前
-            first_run = p._element.find(qn("w:r"))
-            if first_run is not None:
-                first_run.addprevious(br_run)
-            else:
-                p._element.append(br_run)
-            break
+    # "目  录"段前的分页由 setup_page_numbers_and_sections 的 sectPr(nextPage) 处理，
+    # 不再在此重复插入分页符。
 
     # 压缩封面到一页：清掉冗余空段，用段前间距控制视觉留白
     _compact_cover_page(doc)
@@ -568,16 +554,37 @@ def prepend_front_matter(doc) -> None:
 
 
 def compress_declaration_and_authorization(doc) -> None:
-    """确保原创性声明和版权使用授权书在同一页（不插入分页符）。"""
-    for p in doc.paragraphs[:80]:
+    """确保原创性声明从新页开始，且声明和授权书在同一页（keepLines+keepNext）。"""
+    start_idx = end_idx = None
+    for i, p in enumerate(doc.paragraphs[:80]):
         txt = (p.text or "").strip()
+        if ("原创性声明" in txt or "独创性声明" in txt) and start_idx is None:
+            start_idx = i
+            # 声明从新页开始
+            pPr = p._element.find(qn("w:pPr"))
+            if pPr is None:
+                pPr = OxmlElement("w:pPr")
+                p._element.insert(0, pPr)
+            if pPr.find(qn("w:pageBreakBefore")) is None:
+                pPr.append(OxmlElement("w:pageBreakBefore"))
         if "版权使用授权书" in txt:
             pPr = p._element.find(qn("w:pPr"))
             if pPr is not None:
                 old = pPr.find(qn("w:pageBreakBefore"))
                 if old is not None:
                     pPr.remove(old)
+        if txt.startswith("指导教师") and "签名" in txt:
+            end_idx = i
             break
+    # 给声明+授权区域所有段落加 keepNext，防止跨页
+    if start_idx is not None and end_idx is not None:
+        for p in doc.paragraphs[start_idx : end_idx]:
+            pPr = p._element.find(qn("w:pPr"))
+            if pPr is None:
+                pPr = OxmlElement("w:pPr")
+                p._element.insert(0, pPr)
+            if pPr.find(qn("w:keepNext")) is None:
+                pPr.append(OxmlElement("w:keepNext"))
 
 
 def tab_align_cover_and_signature_rows(doc) -> None:
