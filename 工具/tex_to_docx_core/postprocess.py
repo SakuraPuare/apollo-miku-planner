@@ -53,7 +53,7 @@ from .tables import (
 # =============================================================================
 
 
-_CODE_ALGO_CAPTION_RE = re.compile(r"^(?:代码|算法)\s*\d+[\.-]\d+\s")
+_CODE_ALGO_CAPTION_RE = re.compile(r"^(?:代码|算法)\s*\d+[\.-]\d+")
 
 
 def _migrate_heading_bold_to_style(doc) -> None:
@@ -141,6 +141,8 @@ def _style_code_algorithm_captions(doc) -> None:
     pandoc 不落 Caption 样式，主循环的表题分支覆盖不到，这里独立识别补刷。
     判定：段文字匹配 ^(代码|算法)N[-.]N 且段内所有非空 run 均粗体，过滤正文中"算法 5.1"这种局部加粗片段。
     """
+    _NUM_TAIL_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)$")
+    _NUM_INLINE_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)(\S)")
     for p in doc.paragraphs:
         text = p.text.strip()
         if not _CODE_ALGO_CAPTION_RE.match(text):
@@ -160,6 +162,64 @@ def _style_code_algorithm_captions(doc) -> None:
             space_before=6.0,
             space_after=0.0,
         )
+
+
+def _fix_numbering_spaces(doc) -> None:
+    """G2: strip_cjk_latin_spaces 会删除 digit+space+CJK 中的空格，
+    导致标题/图题/表题/算法题编号后空格丢失。此步在 G1 后补回。"""
+    _HEADING_NUM_RE = re.compile(r"^(\d+(?:\.\d+)*)(\S)")
+    _CAP_NUM_RE = re.compile(r"^([图表]\d+[\.\-]\d+)(\S)")
+    _ALGO_NUM_TAIL_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)$")
+    _ALGO_NUM_INLINE_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)(\S)")
+
+    for p in doc.paragraphs:
+        style = p.style.name if p.style else ""
+        text = p.text.strip()
+
+        # Heading: "1绪论" → "1 绪论"
+        if style.startswith("Heading"):
+            m = _HEADING_NUM_RE.match(text)
+            if m:
+                for r in p.runs:
+                    if r.text and _HEADING_NUM_RE.match(r.text):
+                        r.text = _HEADING_NUM_RE.sub(r"\1 \2", r.text, count=1)
+                        break
+                    # 编号独占 run
+                    if r.text and re.match(r"^\d+(?:\.\d+)*$", r.text.strip()):
+                        r.text = r.text.rstrip() + " "
+                        break
+            continue
+
+        # Image/Table Caption: "图1.1路径" → "图1.1 路径"
+        if style in ("Image Caption", "Table Caption"):
+            m = _CAP_NUM_RE.match(text)
+            if m:
+                for r in p.runs:
+                    if r.text and _CAP_NUM_RE.match(r.text):
+                        r.text = _CAP_NUM_RE.sub(r"\1 \2", r.text, count=1)
+                        break
+                    # 编号独占 run
+                    if r.text and re.match(r"^[图表]\d+[\.\-]\d+$", r.text.strip()):
+                        r.text = r.text.rstrip() + " "
+                        break
+            continue
+
+        # 算法/代码题（全粗体段）
+        if _CODE_ALGO_CAPTION_RE.match(text):
+            runs_with_text = [r for r in p.runs if (r.text or "").strip()]
+            if not runs_with_text or not all(r.bold for r in runs_with_text):
+                continue
+            for r in p.runs:
+                if not r.text:
+                    continue
+                m = _ALGO_NUM_INLINE_RE.match(r.text)
+                if m:
+                    r.text = m.group(1) + " " + r.text[m.end(1):]
+                    break
+                m2 = _ALGO_NUM_TAIL_RE.match(r.text)
+                if m2:
+                    r.text = r.text + " "
+                    break
 
 
 def _keep_captions_with_objects(doc) -> None:
@@ -300,6 +360,65 @@ def _force_hyperlinks_black(doc) -> None:
             # 去掉下划线（themeColor 可能也带蓝），保留纯黑文本
             for u in list(rPr.findall(_qn('w:u'))):
                 rPr.remove(u)
+
+
+def _style_figure_notes(doc) -> None:
+    """将【图注】标记段转为 "注：xxx" 格式（宋体五号1.5倍行距首行缩进，"注："加粗）。"""
+    from docx.oxml import OxmlElement as _El
+    from docx.oxml.ns import qn as _q
+    from docx.shared import Pt
+
+    MARKER = "【图注】"
+    for p in doc.paragraphs:
+        txt = p.text or ""
+        if MARKER not in txt:
+            continue
+        note_text = txt.replace(MARKER, "", 1).strip()
+        # 清空原 runs
+        for r in list(p._element.findall(_q("w:r"))):
+            p._element.remove(r)
+        # pPr: 首行缩进2字符 + 1.5倍行距
+        pPr = p._element.find(_q("w:pPr"))
+        if pPr is None:
+            pPr = _El("w:pPr")
+            p._element.insert(0, pPr)
+        ind = pPr.find(_q("w:ind"))
+        if ind is None:
+            ind = _El("w:ind")
+            pPr.append(ind)
+        ind.set(_q("w:firstLineChars"), "200")
+        ind.set(_q("w:firstLine"), "480")
+        sp = pPr.find(_q("w:spacing"))
+        if sp is None:
+            sp = _El("w:spacing")
+            pPr.append(sp)
+        sp.set(_q("w:line"), "360")
+        sp.set(_q("w:lineRule"), "auto")
+
+        def _mk_run(text, bold=False):
+            r = _El("w:r")
+            rPr = _El("w:rPr")
+            sz = _El("w:sz"); sz.set(_q("w:val"), "21")
+            rPr.append(sz)
+            szCs = _El("w:szCs"); szCs.set(_q("w:val"), "21")
+            rPr.append(szCs)
+            rF = _El("w:rFonts")
+            rF.set(_q("w:ascii"), "Times New Roman")
+            rF.set(_q("w:hAnsi"), "Times New Roman")
+            rF.set(_q("w:eastAsia"), "宋体")
+            rPr.append(rF)
+            if bold:
+                rPr.append(_El("w:b"))
+                rPr.append(_El("w:bCs"))
+            r.append(rPr)
+            t = _El("w:t")
+            t.text = text
+            t.set(_q("xml:space"), "preserve")
+            r.append(t)
+            return r
+
+        p._element.append(_mk_run("注：", bold=True))
+        p._element.append(_mk_run(note_text))
 
 
 def post_process(docx_path: Path) -> None:
@@ -479,6 +598,7 @@ def post_process(docx_path: Path) -> None:
     bolden_abstract_prefixes(doc)               # D5 摘要/关键词前缀黑体加粗（必须在主循环后）
     normalize_text_punctuation(doc)             # D6 半角引号→全角（避开代码块）
     normalize_bibliography_text(doc)            # D7 参考文献英文小圆点后补空格
+    _style_figure_notes(doc)                    # D8 图注（\caption*）→ "注：xxx" 正文格式
 
     # ---------------------------------------------------------------
     # Stage E：全局规格化
@@ -486,7 +606,7 @@ def post_process(docx_path: Path) -> None:
     normalize_all_fonts(doc)                    # E1 字体正则化（宋体+TNR，CJK_SAFE 含黑体不覆盖前缀）
     justify_body_paragraphs(doc)                # E2 正文段两端对齐（所有段已定型后）
     normalize_paragraph_spacing(doc)            # E3 段间距/首行缩进/snapToGrid
-    enable_latin_word_break(doc)                # E4 允许长驼峰词（PathBoundsDecider）中间拆行
+    # enable_latin_word_break(doc)                # E4 允许长驼峰词（PathBoundsDecider）中间拆行
     normalize_toc_entries(doc)                  # E5 目录项缩进/段后收口
     _force_hyperlinks_black(doc)                # E6 超链接（DOI/URL）强制黑色
     _migrate_heading_bold_to_style(doc)         # E7 H1/H2 bold+黑体 run→style（防 TOC 域污染）
@@ -502,6 +622,7 @@ def post_process(docx_path: Path) -> None:
     # Stage G：最终文本清理（必须在 F1 的空格插入之后）
     # ---------------------------------------------------------------
     strip_cjk_latin_spaces(doc)                 # G1 删除中英文间手动空格（Word autoSpace 管理）
+    _fix_numbering_spaces(doc)                   # G2 编号与标题间补回空格（G1 可能误删）
 
     doc.save(str(docx_path))
 
