@@ -57,7 +57,7 @@ THESIS_TEX    := $(THESISDIR)/thesis.tex
 INFO_SRC      := $(THESISDIR)/info.tex
 BIB_SRC       := $(THESISDIR)/references.bib
 
-.PHONY: all check-deps svg svg-clean thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-slides-all defense-script clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
+.PHONY: all check-deps svg svg-clean svg-print thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-slides-all defense-script thesis-print docx-print print clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -83,7 +83,7 @@ check-deps:
 #  默认：并行 SVG + 论文 + 答辩演示
 #  全量推荐：make -j$(nproc)
 # ══════════════════════════════════════════════════
-all: svg thesis docx slides kaiti foreign defense
+all: svg thesis docx print slides kaiti foreign defense
 
 # ══════════════════════════════════════════════════
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
@@ -170,6 +170,36 @@ $(DOCX): $(DOCX_TOOL) $(DOCX_CORE) $(DOCX_CSL) $(DOCX_TEMPLATE) $(THESIS_TEX) $(
 	uv run $(DOCX_TOOL) -o $(DOCX)
 	@test -f $(DOCX) || { echo "错误: $(DOCX) 未生成"; exit 1; }
 	@echo "✓ 论文 docx: $(DOCX)"
+
+# ══════════════════════════════════════════════════
+#  灰度打印版（PDF + DOCX）
+#  策略：PDF 用 \PrintVersionFlag 源码级灰度 + Ghostscript 兜底外部位图
+#        DOCX 用 magick 转灰度 SVG 后重新生成
+# ══════════════════════════════════════════════════
+PRINT_PDF  := $(OUTPUTDIR)/thesis_print.pdf
+PRINT_DOCX := $(OUTPUTDIR)/thesis_print.docx
+SVG_PRINT_DIR := $(FIGDIR)/svg_print
+
+print: thesis-print docx-print
+
+thesis-print: check-deps $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) svg | $(OUTPUTDIR)
+	cd $(THESISDIR) && latexmk -jobname=thesis_print -usepretex='\def\PrintVersionFlag{1}' thesis.tex >/dev/null 2>&1
+	gs -sDEVICE=pdfwrite -sColorConversionStrategy=Gray -dProcessColorModel=/DeviceGray \
+	   -dCompatibilityLevel=1.5 -dNOPAUSE -dBATCH -o $(PRINT_PDF) $(THESISDIR)/thesis_print.pdf >/dev/null 2>&1
+	@test -f $(PRINT_PDF) || { echo "错误: $(PRINT_PDF) 未生成"; exit 1; }
+	@echo "✓ 灰度打印版 PDF: $(PRINT_PDF)"
+
+docx-print: $(DOCX_TOOL) $(DOCX_CORE) $(DOCX_CSL) $(DOCX_TEMPLATE) $(THESIS_TEX) $(CHAPTERS_SRC) $(INFO_SRC) $(BIB_SRC) $(METRICS_TEX) $(ABLATION_TEX) $(SENSITIVITY_TEX) $(CONTEXT_TEX) | check-deps svg $(OUTPUTDIR)
+	@mkdir -p $(SVG_PRINT_DIR)
+	@for f in $(SVGDIR)/*.svg; do \
+	  magick "$$f" -colorspace Gray "$(SVG_PRINT_DIR)/$$(basename $$f)" 2>/dev/null || cp "$$f" "$(SVG_PRINT_DIR)/$$(basename $$f)"; \
+	done
+	SVG_DIR_OVERRIDE=$(CURDIR)/$(SVG_PRINT_DIR) uv run $(DOCX_TOOL) -o $(PRINT_DOCX)
+	@test -f $(PRINT_DOCX) || { echo "错误: $(PRINT_DOCX) 未生成"; exit 1; }
+	@echo "✓ 灰度打印版 DOCX: $(PRINT_DOCX)"
+
+$(OUTPUTDIR):
+	@mkdir -p $(OUTPUTDIR)
 
 # ══════════════════════════════════════════════════
 #  仿真链路（增量构建：源码改了才重生，chapter 不被修改）
@@ -301,8 +331,9 @@ $(FOREIGNDIR)/translation/translation.pdf: $(FOREIGNDIR)/translation/translation
 # ══════════════════════════════════════════════════
 clean:
 	rm -rf $(SVGDIR) $(BUILDDIR)
-	rm -r $(THESISDIR)/_*.tex
+	rm -f $(THESISDIR)/_experiment_metrics.tex $(THESISDIR)/_ablation_macros.tex $(THESISDIR)/_sensitivity_macros.tex $(THESISDIR)/_experiment_context.tex
 	rm -f $(THESISDIR)/thesis.{pdf,aux,log,toc,bbl,blg,out,bcf,run.xml,xdv,fls,auxlock}
+	rm -f $(THESISDIR)/thesis_print.{pdf,aux,log,toc,bbl,blg,out,bcf,run.xml,xdv,fls,auxlock}
 	rm -f $(SLIDEDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -f $(KAITIDIR)/slides.{pdf,aux,log,nav,out,snm,toc,vrb,auxlock}
 	rm -rf $(THESISDIR)/thesis-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
@@ -316,6 +347,8 @@ clean:
 	rm -f $(DEFENSEDIR)/script.{pdf,aux,log,out,toc}
 	rm -rf $(DEFENSEDIR)/slides-figure*.{md5,vrb,pdf,dpth,auxlock,log,xml,dep}
 	rm -f $(DOCX)
+	rm -f $(PRINT_PDF) $(PRINT_DOCX)
+	rm -rf $(SVG_PRINT_DIR)
 
 # ══════════════════════════════════════════════════
 #  帮助
@@ -327,6 +360,9 @@ help:
 	@echo "make svg-clean  清空 svg/ 与 build/ 目录"
 	@echo "make thesis     编译论文"
 	@echo "make docx       转换论文为 Word docx ($(DOCX))"
+	@echo "make print      一次性生成灰度打印版 PDF + DOCX"
+	@echo "make thesis-print  灰度打印版 PDF"
+	@echo "make docx-print    灰度打印版 DOCX"
 	@echo "make slides     编译答辩演示"
 	@echo "make kaiti      编译开题答辩"
 	@echo "make foreign    编译外文文献原文及译文"
