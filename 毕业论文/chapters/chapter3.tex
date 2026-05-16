@@ -7,14 +7,14 @@
 
 \subsection{模块入口与数据流}
 
-Planning模块的主入口函数为\texttt{PlanningComponent::Proc()}，每个规划周期由Cyber RT调度执行。从输入消息到输出轨迹的完整数据流如图\ref{fig:planning_flow}所示。整个处理过程划分为三个层次的函数调用。最外层的\texttt{PlanningComponent::Proc()}负责从Cyber RT消息通道读取五类输入数据并完成路由检查和有效性校验。中间层的\texttt{OnLanePlanning::RunOnce()}完成车辆状态更新、参考线缓存读取、轨迹拼接和Frame初始化等准备工作。参考线的生成与平滑并不在RunOnce的调用栈内，而是由\texttt{ReferenceLineProvider}托管的独立异步线程\texttt{GenerateThread}以50\,ms周期持续执行，RunOnce仅通过\texttt{GetReferenceLines()}读取其最新缓存，并通过\texttt{UpdateVehicleState()}和\texttt{UpdatePlanningCommand()}向该线程注入触发输入。核心执行层的\texttt{OnLanePlanning::Plan()}通过\texttt{ScenarioManager}选择场景，再由Stage驱动Task列表按顺序执行，最终产生\texttt{ADCTrajectory}轨迹输出。
-
 \begin{figure}[htbp]
 \centering
 \adjustbox{max width=\textwidth}{\input{../图片/fig_planning_dataflow}}
 \caption{Planning模块数据流}
 \label{fig:planning_flow}
 \end{figure}
+
+Planning模块的主入口函数为\texttt{PlanningComponent::Proc()}，每个规划周期由Cyber RT调度执行。从输入消息到输出轨迹的完整数据流如图\ref{fig:planning_flow}所示。整个处理过程划分为三个层次的函数调用。最外层的\texttt{PlanningComponent::Proc()}负责从Cyber RT消息通道读取五类输入数据并完成路由检查和有效性校验。中间层的\texttt{OnLanePlanning::RunOnce()}完成车辆状态更新、参考线缓存读取、轨迹拼接和Frame初始化等准备工作。参考线的生成与平滑并不在RunOnce的调用栈内，而是由\texttt{ReferenceLineProvider}托管的独立异步线程\texttt{GenerateThread}以50\,ms周期持续执行，RunOnce仅通过\texttt{GetReferenceLines()}读取其最新缓存，并通过\texttt{UpdateVehicleState()}和\texttt{UpdatePlanningCommand()}向该线程注入触发输入。核心执行层的\texttt{OnLanePlanning::Plan()}通过\texttt{ScenarioManager}选择场景，再由Stage驱动Task列表按顺序执行，最终产生\texttt{ADCTrajectory}轨迹输出。
 
 Task列表内部不进行回溯迭代，各Task按配置顺序单向执行，前序Task的输出作为后续Task的输入。这种流水线式的结构对每个Task的正确性要求较高。若前序Task中由\texttt{PathBoundsDeciderUtil}承载的路径边界构建逻辑出现不必要的保守决策，后续Task无法修正，只能在其输出之上继续处理。这一特征决定了横向边界的构造方式对最终轨迹的影响难以在下游环节被弥补。
 
@@ -88,6 +88,15 @@ VALET\_PARKING & 代客泊车 \\
 
 \subsection{参考线生成流程}
 
+图\ref{fig:ref_smooth}展示了参考线平滑的完整过程。
+
+\begin{figure}[htbp]
+\centering
+\adjustbox{max width=\textwidth}{\input{../图片/fig_ref_smooth}}
+\caption{参考线平滑过程示意图}
+\label{fig:ref_smooth}
+\end{figure}
+
 ReferenceLine是Planning模块的规划基准线，由\texttt{ReferenceLineProvider}在\texttt{Init()}阶段经\texttt{cyber::Async}启动专用线程\texttt{GenerateThread}，以50\,ms周期反复调用\texttt{CreateReferenceLine()}产出最新参考线并写入内部缓存，供主规划线程的\texttt{RunOnce}通过\texttt{GetReferenceLines()}读取。生成流程主要步骤如下。
 
 \begin{enumerate}
@@ -97,19 +106,10 @@ ReferenceLine是Planning模块的规划基准线，由\texttt{ReferenceLineProvi
 
 \item 调用\texttt{GetAnchorPoints()}，按\texttt{max\_constraint\_interval}间隔在参考线上均匀采样锚点，默认取0.25\,m。每个锚点包含位置、航向角和横向边界。
 
-\item 以锚点为约束，通过离散点偏差最小化QP优化生成平滑的参考线。
+\item 以锚点位置为约束，通过离散点偏差最小化QP优化生成平滑的参考线。
 
 \item 验证平滑后的参考线偏差不超过阈值，并根据车辆位置裁剪。
 \end{enumerate}
-
-图\ref{fig:ref_smooth}展示了参考线平滑的完整过程。
-
-\begin{figure}[htbp]
-\centering
-\adjustbox{max width=\textwidth}{\input{../图片/fig_ref_smooth}}
-\caption{参考线平滑过程示意图}
-\label{fig:ref_smooth}
-\end{figure}
 
 \subsection{离散点偏差平滑的数学建模}
 
