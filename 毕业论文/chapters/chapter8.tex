@@ -4,7 +4,7 @@
 前三章已分别完成多因子威胁度建模、横向最优通行带构造与ST动态走廊的算法设计。本章把这些算法整合进Apollo Planning的C++代码，通过消融实验量化各组件的必要性，用Dreamview在环截图展示C++接入后的规划行为，并在全场景对比矩阵中核算轨迹质量与求解开销。
 
 \section{与Apollo系统的集成实现}
-MIKU已按Apollo的Scenario-Stage-Task架构完成Planning侧C++工程接入，改动集中在\texttt{LaneFollowPath}的路径边界构建环节，其余模块保持原状，并通过\texttt{LaneFollowPathConfig}中的独立开关在Baseline与MIKU之间切换。第\ref{sec:experiment_setup}节的连续数值指标取自Python复现实验，Dreamview截图取自Apollo工程在环运行，前者用于量化指标对照，后者用于展示C++接入后的规划行为。改进后的系统架构如图\ref{fig:sys_arch}所示。输入层沿用Apollo原有的Routing、感知障碍物、预测轨迹与车辆状态。处理层在参考线处理流水线之后新增两个以粉色标注的模块，其中威胁度评估模块输出差异化安全裕度$\delta_i$，动态权重ST边界构建模块把时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的\texttt{ADCTrajectory}，下游Control模块无需改动。
+MIKU已按Apollo的Scenario-Stage-Task架构完成Planning侧C++工程接入，改动集中在\texttt{LaneFollowPath}的路径边界构建环节，其余模块保持原状，并通过\texttt{LaneFollowPathConfig}中的独立开关在Baseline与MIKU之间切换。第\ref{sec:experiment_setup}节的连续数值指标取自Python复现实验，Dreamview截图取自Apollo工程在环运行，前者用于量化指标对照，后者用于展示C++接入后的规划行为。改进后的系统架构如图\ref{fig:sys_arch}所示。输入层沿用Apollo原有的Routing、感知障碍物、预测轨迹与车辆状态。处理层在参考线处理流水线之后新增两个以深色底纹标注的模块，其中威胁度评估模块输出差异化安全裕度$\delta_i$，动态权重ST边界构建模块把时空走廊以动态ST上界形式注入QP。输出层仍为Apollo标准的\texttt{ADCTrajectory}，下游Control模块无需改动。
 
 \begin{figure}[H]
 \centering
@@ -308,7 +308,7 @@ S_{\mathrm{overall}} = \begin{cases}
 }
 \end{table}
 
-为展示每个变体在不同场景下的具体表现，将$S_{\mathrm{scn}}$以热力图形式排布如图\ref{fig:ablation_heatmap}所示。色阶由RdYlGn色板从0红色经50黄色到100绿色连续映射，每格内部数字为该变体在该场景的得分。热力图便于直接读出每个变体的失效场景，红色格子直接对应硬门触发的关键组件。
+为展示每个变体在不同场景下的具体表现，将$S_{\mathrm{scn}}$以热力图形式排布如图\ref{fig:ablation_heatmap}所示。色阶由RdYlGn色板从0（深色/低分）经50（中间色）到100（浅色/满分）连续映射，每格内部数字为该变体在该场景的得分。热力图便于直接读出每个变体的失效场景，深色格子直接对应硬门触发的关键组件。
 
 \begin{figure}[H]
 \centering
