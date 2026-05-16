@@ -601,7 +601,7 @@ def number_figures_and_tables(body: str) -> tuple[str, dict[str, str]]:
                         star_note,
                     ).strip()
                     if star_note:
-                        g = g + f"\n\n\\noindent {star_note}\n\n"
+                        g = g + f"\n\n\\noindent 【图注】{star_note}\n\n"
                 return g
             # listing: 从 [caption={...}] 可选参数提取标题，在块前插入"代码 X-Y 标题"段
             # 用平衡括号扫描支持嵌套（如 caption={含 $s_i$ 或 \texttt{x}}）

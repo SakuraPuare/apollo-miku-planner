@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from pathlib import Path
 
 PACKAGE_DIR = Path(__file__).resolve().parent
@@ -8,7 +9,7 @@ ROOT = TOOLS_DIR.parent
 THESIS_DIR = ROOT / "毕业论文"
 OUTPUT_DIR = ROOT / "outputs"
 CSL_PATH = TOOLS_DIR / "gbt7714.csl"
-SVG_DIR = ROOT / "图片" / "svg"
+SVG_DIR = Path(os.environ["SVG_DIR_OVERRIDE"]) if "SVG_DIR_OVERRIDE" in os.environ else ROOT / "图片" / "svg"
 TEMPLATE_DOCX = (
     ROOT / "模板" / "湖北文理学院计算机工程学院2026届本科毕业论文模板样例.docx"
 )
