@@ -179,6 +179,27 @@ def _style_code_algorithm_captions(doc) -> None:
         )
 
 
+_ALIGN_MARKER_RE = re.compile(r"(.*)​ALIGN:(right|left)​$")
+
+
+def _apply_alignment_markers(doc) -> None:
+    """G3: 识别 flatten 阶段插入的 ALIGN 标记（ZWSP包裹），
+    设置段落对齐并去除标记文本。"""
+    for p in doc.paragraphs:
+        full_text = p.text or ""
+        m = _ALIGN_MARKER_RE.match(full_text)
+        if not m:
+            continue
+        clean_text = m.group(1)
+        align = m.group(2)
+        # 设置对齐
+        _set_jc(_ensure_pPr(p._element), align)
+        # 去除标记：找到包含标记的 run 并清理
+        for r in p.runs:
+            if "​ALIGN:" in (r.text or ""):
+                r.text = re.sub(r"​ALIGN:(right|left)​", "", r.text)
+
+
 def _fix_numbering_spaces(doc) -> None:
     """G2: strip_cjk_latin_spaces 可能删除算法/代码题编号后的空格，此步补回。
     注意：Heading 和 Image/Table Caption 段已被 G1 跳过，无需在此处理。"""
@@ -612,6 +633,9 @@ def post_process(docx_path: Path) -> None:
     # ---------------------------------------------------------------
     strip_cjk_latin_spaces(doc)                 # G1 删除中英文间手动空格（Word autoSpace 管理）
     _fix_numbering_spaces(doc)                   # G2 编号与标题间补回空格（G1 可能误删）
+
+    # G3 对齐环境（flushright/flushleft）→ 段落对齐
+    _apply_alignment_markers(doc)
 
     doc.save(str(docx_path))
 

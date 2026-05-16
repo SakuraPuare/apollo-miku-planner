@@ -905,7 +905,45 @@ def strip_cjk_font_commands(text: str) -> str:
         "",
         text,
     )
+    # 5. flushright/flushleft 环境 → pandoc custom-style div
+    text = _rewrite_alignment_envs(text)
     return text
+
+
+def _rewrite_alignment_envs(text: str) -> str:
+    r"""将 \begin{flushright}...\end{flushright} 等对齐环境转为
+    pandoc 可识别的 raw openxml 段落属性标记。
+
+    策略：在环境内每段前插入一个 pandoc raw_attribute inline，
+    但 pandoc 对 LaTeX 的 raw block 支持有限。最稳妥的方式是
+    把内容提取出来，加上一个特殊注释标记，在 postprocess 阶段识别。
+    """
+    for env, align in [("flushright", "right"), ("flushleft", "left")]:
+        pattern = re.compile(
+            r"\\begin\{" + env + r"\}(.*?)\\end\{" + env + r"\}",
+            re.DOTALL,
+        )
+        text = pattern.sub(
+            lambda m: _wrap_align_marker(m.group(1).strip(), align),
+            text,
+        )
+    return text
+
+
+def _wrap_align_marker(content: str, align: str) -> str:
+    """将对齐环境内容转为独立段落，末尾附加不可见标记供 postprocess 识别。
+    使用 U+200B (ZWSP) + align 关键字 + U+200B 作为段尾标记。"""
+    # 处理 \\ 换行为段落分隔
+    content = re.sub(r"\\\\", "\n", content)
+    marker = f"​ALIGN:{align}​"
+    lines = content.split("\n")
+    result = []
+    for line in lines:
+        stripped = line.strip()
+        if stripped:
+            result.append(f"{stripped}{marker}")
+    # 每段之间用空行分隔确保 pandoc 视为独立段落
+    return "\n\n".join(result)
 
 
 def parse_bib_author_short(bib_path: Path) -> dict[str, str]:
