@@ -140,7 +140,7 @@ def _reset_cover_table_borders(tbl) -> None:
             bottom = OxmlElement("w:bottom")
             if ci == 1:  # 第二列
                 bottom.set(qn("w:val"), "single")
-                bottom.set(qn("w:sz"), "12")
+                bottom.set(qn("w:sz"), "4")
                 bottom.set(qn("w:color"), "auto")
             else:
                 bottom.set(qn("w:val"), "nil")
@@ -172,16 +172,15 @@ def fill_cover_info(doc) -> None:
         7: info.get("thesisAdvisor", ""),
     }
 
-    # 左列标签（去冒号，对应 tex 的 \makebox[4em][s]{学院} 等）
     label_values = {
-        0: "论文题目",
+        0: "论文题目：",
         1: "",
-        2: "学　　院",
-        3: "专　　业",
-        4: "班　　级",
-        5: "学　　号",
-        6: "学生姓名",
-        7: "指导教师",
+        2: "学    院：",
+        3: "专    业：",
+        4: "班    级：",
+        5: "学    号：",
+        6: "姓    名：",
+        7: "指导教师：",
     }
 
     # 找封面表格（第一个含"论文题目"的表格）
@@ -242,6 +241,9 @@ def fill_cover_info(doc) -> None:
                 rF.set(qn("w:hAnsi"), "Times New Roman")
                 rF.set(qn("w:eastAsia"), "宋体")
                 rPr.append(rF)
+                if row_idx == 0:
+                    rPr.append(OxmlElement("w:b"))
+                    rPr.append(OxmlElement("w:bCs"))
                 r_el.append(rPr)
                 t_el = OxmlElement("w:t")
                 t_el.text = label
@@ -290,6 +292,9 @@ def fill_cover_info(doc) -> None:
                 rF.set(qn("w:hAnsi"), "Times New Roman")
                 rF.set(qn("w:eastAsia"), "宋体")
                 rPr.append(rF)
+                if row_idx <= 1:
+                    rPr.append(OxmlElement("w:b"))
+                    rPr.append(OxmlElement("w:bCs"))
                 r_el.append(rPr)
                 t_el = OxmlElement("w:t")
                 t_el.text = value
@@ -304,6 +309,10 @@ def fill_cover_info(doc) -> None:
         txt = (p.text or "").strip()
         if "年" in txt and "月" in txt and ("日" in txt or txt.endswith("月")):
             date_text = info.get("thesisDate", "2026年5月")
+            # 解析年月，格式化为 "年     月     日"
+            m = re.match(r"(\d{4})年(\d{1,2})月(?:(\d{1,2})日)?", date_text)
+            if m:
+                date_text = f"{m.group(1)}年     {m.group(2)}月     {m.group(3) or ''}日"
             for r in list(p.runs):
                 r._element.getparent().remove(r._element)
             run = p.add_run(date_text)
@@ -576,15 +585,20 @@ def compress_declaration_and_authorization(doc) -> None:
         if txt.startswith("指导教师") and "签名" in txt:
             end_idx = i
             break
-    # 给声明+授权区域所有段落加 keepNext，防止跨页
+    # 给声明+授权区域所有段落加 keepNext + 清除段后间距，防止跨页
     if start_idx is not None and end_idx is not None:
-        for p in doc.paragraphs[start_idx : end_idx]:
+        for p in doc.paragraphs[start_idx : end_idx + 1]:
             pPr = p._element.find(qn("w:pPr"))
             if pPr is None:
                 pPr = OxmlElement("w:pPr")
                 p._element.insert(0, pPr)
             if pPr.find(qn("w:keepNext")) is None:
                 pPr.append(OxmlElement("w:keepNext"))
+            spacing = pPr.find(qn("w:spacing"))
+            if spacing is None:
+                spacing = OxmlElement("w:spacing")
+                pPr.append(spacing)
+            spacing.set(qn("w:after"), "0")
 
 
 def tab_align_cover_and_signature_rows(doc) -> None:
