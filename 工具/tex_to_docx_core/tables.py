@@ -210,7 +210,7 @@ def resize_all_images_to_width(
 
 
 def style_code_block_tables(doc) -> None:
-    """代码块表格里的段落：五号字（21 half-points = 10.5pt）+ 取消首行缩进 + 左对齐。"""
+    """代码块表格里的段落：小五号字（18 half-points = 9pt）+ 取消首行缩进 + 左对齐 + 单倍行距。"""
     for tbl in doc.tables:
         if not _is_code_block_table(tbl):
             continue
@@ -237,7 +237,16 @@ def style_code_block_tables(doc) -> None:
                         jc = OxmlElement("w:jc")
                         pPr.append(jc)
                     jc.set(qn("w:val"), "left")
-                    # 每个 run 的字号设 21 half-points = 10.5pt (五号)
+                    # 单倍行距
+                    spacing = pPr.find(qn("w:spacing"))
+                    if spacing is None:
+                        spacing = OxmlElement("w:spacing")
+                        pPr.append(spacing)
+                    spacing.set(qn("w:line"), "240")
+                    spacing.set(qn("w:lineRule"), "auto")
+                    spacing.set(qn("w:before"), "0")
+                    spacing.set(qn("w:after"), "0")
+                    # 每个 run 的字号设 18 half-points = 9pt (小五号)
                     for r in p_el.findall(qn("w:r")):
                         rPr = r.find(qn("w:rPr"))
                         if rPr is None:
@@ -247,12 +256,12 @@ def style_code_block_tables(doc) -> None:
                         if sz is None:
                             sz = OxmlElement("w:sz")
                             rPr.append(sz)
-                        sz.set(qn("w:val"), "21")
+                        sz.set(qn("w:val"), "18")
                         szCs = rPr.find(qn("w:szCs"))
                         if szCs is None:
                             szCs = OxmlElement("w:szCs")
                             rPr.append(szCs)
-                        szCs.set(qn("w:val"), "21")
+                        szCs.set(qn("w:val"), "18")
 
 
 def apply_table_body_font_size(doc) -> None:
