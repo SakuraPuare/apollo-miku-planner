@@ -14,7 +14,7 @@
 
 \noindent\hspace{2em}{\heiti\bfseries 摘要：}多障碍物密集场景下，自动驾驶路径规划常出现路径阻塞与过度保守避让。本文以百度Apollo 11.0开源自动驾驶平台Planning模块为研究对象，梳理PathBoundsDeciderUtil所承载的路径边界构建逻辑，识别出三处局限，即统一安全裕度压缩可行通道、逐障碍物独立决策产生相互矛盾的避让方向、动态障碍物未进入路径边界计算而使路径与速度脱节。
 
-本文据此提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU），将多障碍物避让方向选择建模为组合优化问题，从三个维度改进。安全距离上，用融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度评估替换统一缓冲，得到差异化安全裕度$\delta_i$。决策粒度上，以扫描线纵向重叠检测将关联障碍物聚为连通分量，在组级执行全局最优决策，证明了横向排序后最优分割的连续性引理与最大间隙最优性定理，将组合搜索复杂度由$O(2^k)$降至$O(k\log k)$。时空协调上，引入到达时间函数$\tau(s)$与预测轨迹，把动态障碍物纳入路径边界构建以得到时空可通行走廊，并在速度二次规划（Quadratic Programming, QP）层将走廊边界约束与SpeedBoundsDecider所得纵向位移-时间（Station-Time, ST）边界做双源融合。
+本文据此提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU），将多障碍物避让方向选择建模为组合优化问题，从三个维度进行了改进。安全距离上，用融合碰撞时间、横向重叠率、相对速度、障碍物类型与交互密度的多因子威胁度评估替换统一缓冲，得到差异化安全裕度$\delta_i$。决策粒度上，以扫描线纵向重叠检测将关联障碍物聚为连通分量，在组级执行全局最优决策，证明了横向排序后最优分割的连续性引理与最大间隙最优性定理，将组合搜索复杂度由$O(2^k)$降至$O(k\log k)$。时空协调上，引入到达时间函数$\tau(s)$与预测轨迹，把动态障碍物纳入路径边界构建以得到时空可通行走廊，并在速度二次规划（Quadratic Programming, QP）层将走廊边界约束与SpeedBoundsDecider所得纵向位移-时间（Station-Time, ST）边界做双源融合。
 
 仿真共设计\MScenarioTotal{}个测试场景，含\MPressureScenarioTotal{}个原始压力场景与\MComparableScenarioTotal{}个经轻量微调的可比场景。压力场景下，Baseline通过率为\MPressureBaselinePassCount{}/\MPressureScenarioTotal{}，MIKU通过率为\MPressureMikuPassCount{}/\MPressureScenarioTotal{}。可比场景下两者均可完成通过，MIKU降低了动态场景的加减速峰值，平均QP求解总耗时由\MComparableBaselineQpTotal\,ms降至\MComparableMikuQpTotal\,ms。算法整体复杂度$O(n\log n+K)$，其中$K$为路径或时间离散化规模，满足Planning模块的实时预算。工程上，MIKU作为LaneFollowPath新增路径边界分支接入Apollo，并经STDrivableBoundary将走廊约束传递至PiecewiseJerkSpeedOptimizer。
 
