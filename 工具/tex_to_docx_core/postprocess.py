@@ -143,6 +143,7 @@ def _style_code_algorithm_captions(doc) -> None:
     """
     _NUM_TAIL_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)$")
     _NUM_INLINE_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)(\S)")
+    _MULTI_SPACE_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)\s{2,}")
     for p in doc.paragraphs:
         text = p.text.strip()
         if not _CODE_ALGO_CAPTION_RE.match(text):
@@ -152,6 +153,20 @@ def _style_code_algorithm_captions(doc) -> None:
             continue
         if not all(r.bold for r in runs_with_text):
             continue
+        # 合并编号后多余空格：删除纯空白 run，确保编号 run 末尾恰好 1 个空格
+        for i, r in enumerate(p.runs):
+            if r.text and r.text.strip():
+                # 编号 run 末尾保留恰好 1 个空格
+                m = _NUM_TAIL_RE.match(r.text.strip())
+                if m:
+                    r.text = m.group(1) + " "
+                    # 删除后续纯空白 run 的内容
+                    for r2 in p.runs[i+1:]:
+                        if r2.text and not r2.text.strip():
+                            r2.text = ""
+                        else:
+                            break
+                break
         _apply_para(
             p,
             cjk_font="黑体",
@@ -165,10 +180,8 @@ def _style_code_algorithm_captions(doc) -> None:
 
 
 def _fix_numbering_spaces(doc) -> None:
-    """G2: strip_cjk_latin_spaces 会删除 digit+space+CJK 中的空格，
-    导致标题/图题/表题/算法题编号后空格丢失。此步在 G1 后补回。"""
-    _HEADING_NUM_RE = re.compile(r"^(\d+(?:\.\d+)*)(\S)")
-    _CAP_NUM_RE = re.compile(r"^([图表]\d+[\.\-]\d+)(\S)")
+    """G2: strip_cjk_latin_spaces 可能删除算法/代码题编号后的空格，此步补回。
+    注意：Heading 和 Image/Table Caption 段已被 G1 跳过，无需在此处理。"""
     _ALGO_NUM_TAIL_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)$")
     _ALGO_NUM_INLINE_RE = re.compile(r"^((?:代码|算法)\s*\d+[\.-]\d+)(\S)")
 
@@ -176,32 +189,8 @@ def _fix_numbering_spaces(doc) -> None:
         style = p.style.name if p.style else ""
         text = p.text.strip()
 
-        # Heading: "1绪论" → "1 绪论"
-        if style.startswith("Heading"):
-            m = _HEADING_NUM_RE.match(text)
-            if m:
-                for r in p.runs:
-                    if r.text and _HEADING_NUM_RE.match(r.text):
-                        r.text = _HEADING_NUM_RE.sub(r"\1 \2", r.text, count=1)
-                        break
-                    # 编号独占 run
-                    if r.text and re.match(r"^\d+(?:\.\d+)*$", r.text.strip()):
-                        r.text = r.text.rstrip() + " "
-                        break
-            continue
-
-        # Image/Table Caption: "图1.1路径" → "图1.1 路径"
-        if style in ("Image Caption", "Table Caption"):
-            m = _CAP_NUM_RE.match(text)
-            if m:
-                for r in p.runs:
-                    if r.text and _CAP_NUM_RE.match(r.text):
-                        r.text = _CAP_NUM_RE.sub(r"\1 \2", r.text, count=1)
-                        break
-                    # 编号独占 run
-                    if r.text and re.match(r"^[图表]\d+[\.\-]\d+$", r.text.strip()):
-                        r.text = r.text.rstrip() + " "
-                        break
+        # 跳过 Heading / Caption（G1 已跳过，无需补回）
+        if style.startswith("Heading") or style in ("Image Caption", "Table Caption"):
             continue
 
         # 算法/代码题（全粗体段）
@@ -452,9 +441,9 @@ def post_process(docx_path: Path) -> None:
         lvl = _heading_level(style)
 
         if lvl == 1:
-            # 致谢/参考文献/成果/附录：三号黑体加粗居中（规范要求）
+            # 致谢/成果/附录：三号黑体加粗居中（规范要求）
             if (
-                text in ("致 谢", "致谢", "参考文献", "本科期间的学习与科研成果")
+                text in ("致 谢", "致谢", "本科期间的学习与科研成果")
                 or text.startswith("附录")
             ):
                 _apply_para(

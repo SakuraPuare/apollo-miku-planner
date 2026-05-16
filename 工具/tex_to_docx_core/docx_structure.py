@@ -191,7 +191,7 @@ def _prepend_run_text(p, text: str) -> None:
     """在段落首 run 开头插入文字；无 run 则新建一个（继承段落样式）。"""
     if p.runs:
         r = p.runs[0]
-        r.text = text + (r.text or "").lstrip()
+        r.text = text + (r.text or "")
     else:
         p.add_run(text)
 
