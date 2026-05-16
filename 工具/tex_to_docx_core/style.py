@@ -818,7 +818,8 @@ def _strip_cjk_latin_in_para(p) -> None:
 
 def strip_cjk_latin_spaces(doc) -> None:
     """删除中英文之间的手动空格，让 Word autoSpaceDE/DN 自动管理间距。"""
-    _SKIP = ("toc", "bibliograph", "reference", "source", "verbatim")
+    _SKIP = ("toc", "bibliograph", "reference", "source", "verbatim", "heading",
+             "image caption", "table caption")
     for p in doc.paragraphs:
         style_name = (p.style.name if p.style else "").lower()
         if style_name.startswith(_SKIP):
