@@ -11,8 +11,6 @@
 }
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
-\usetikzlibrary{external}
-\tikzexternalize % 激活全自动外部化
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{fillbetween}
@@ -54,6 +52,11 @@
 \definecolor{vibrantgreen}{RGB}{46, 175, 80}      % MIKU 路径 / QP 曲线
 \definecolor{vibrantorange}{RGB}{240, 130, 30}    % 路径边界
 \definecolor{vibrantred}{RGB}{220, 50, 50}        % 障碍物（更饱和的 dangerred）
+
+% 灰度打印版开关
+\newif\ifprintversion
+\ifdefined\PrintVersionFlag \printversiontrue \fi
+\ifprintversion \input{_grayscale} \fi
 
 % 统一 tikz 样式
 \tikzset{

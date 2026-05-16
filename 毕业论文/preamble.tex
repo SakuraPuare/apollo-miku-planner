@@ -23,8 +23,6 @@
 \usepackage{url}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
-\usetikzlibrary{external}
-\tikzexternalize % 激活全自动外部化
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{fillbetween, polar, patchplots, colormaps}
@@ -82,6 +80,11 @@
 \colorlet{bandok}{lightgreen}
 \colorlet{obsbuf}{dangerred!70}
 \colorlet{egopt}{deepblue}
+
+% 灰度打印版开关（make thesis-print 通过 jobname 激活）
+\newif\ifprintversion
+\ifdefined\PrintVersionFlag \printversiontrue \fi
+\ifprintversion \input{_grayscale} \fi
 
 % 统一 tikz 样式（与 图片/figures.tex 保持同步）
 \tikzset{
