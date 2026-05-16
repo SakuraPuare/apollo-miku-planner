@@ -105,9 +105,9 @@ OpenSpacePlanner补充时期（2020年至今），为支持泊车、OpenSpace等
 
 在多因子赋权方面，\citet{linjiarui2021}针对蜂窝车联网（Cellular Vehicle-to-Everything, C-V2X）车载消息预处理场景提出基于层次分析法（Analytic Hierarchy Process, AHP）、Delphi与熵的混合赋权法，解决传统主观赋权法的赋权趋同与片面性问题，为多因子综合威胁度的权重确定提供了方法论参考。
 
-\subsection{研究空间与本文切入点}
+% \subsection{研究空间与本文切入点}
 
-上述文献留下三个尚未被充分回答的问题。其一，已有工作整体上聚焦于速度规划层面的优化或单一模块改进，对Apollo 路径边界构建逻辑在多障碍物场景下的几何后果缺少系统分析，尤其针对当前的\texttt{PathBoundsDeciderUtil}实现。其二，在本文所分析的Apollo链路中，多障碍物的避让方向选择仍停留在逐障碍物独立决策的贪心模式，尚未从组合优化角度建立全局最优性保证，密集场景下容易产生矛盾避让方向。其三，当前路径边界构建通常把动态障碍物留给速度规划阶段处理，路径层对预测轨迹缺少显式利用。\citet{li2025perturbation}还指出当前时空联合规划算法对感知扰动的鲁棒性仍有不足，这一观察也为本文未来工作指明了方向。本文围绕上述三个问题，分别从路径边界构建的源码分析、组合优化的最优性证明与高效求解、到达时间函数驱动的时空走廊融合三个维度展开改进。
+% 上述文献留下三个尚未被充分回答的问题。其一，已有工作整体上聚焦于速度规划层面的优化或单一模块改进，对Apollo 路径边界构建逻辑在多障碍物场景下的几何后果缺少系统分析，尤其针对当前的\texttt{PathBoundsDeciderUtil}实现。其二，在本文所分析的Apollo链路中，多障碍物的避让方向选择仍停留在逐障碍物独立决策的贪心模式，尚未从组合优化角度建立全局最优性保证，密集场景下容易产生矛盾避让方向。其三，当前路径边界构建通常把动态障碍物留给速度规划阶段处理，路径层对预测轨迹缺少显式利用。\citet{li2025perturbation}还指出当前时空联合规划算法对感知扰动的鲁棒性仍有不足，这一观察也为本文未来工作指明了方向。本文围绕上述三个问题，分别从路径边界构建的源码分析、组合优化的最优性证明与高效求解、到达时间函数驱动的时空走廊融合三个维度展开改进。
 
 \section{研究内容与技术路线}
 
@@ -115,26 +115,25 @@ OpenSpacePlanner补充时期（2020年至今），为支持泊车、OpenSpace等
 
 本文的研究内容主要包括以下五个方面。
 
-对Apollo 11.0版本的Planning模块进行源码级分析，理解其Scenario-Stage-Task三级管理架构、ReferenceLine平滑机制、\texttt{PublicRoadPlanner}中源自早期EM Planner思想的路径-速度解耦两阶段优化流程、路径边界构建逻辑及其\texttt{PathBoundsDeciderUtil}实现，以及\texttt{SpeedBoundsDecider}的ST边界构建机制。
-
-通过源码分析与数学建模，识别Apollo现有算法在多障碍物场景下的三项局限，即安全裕度一刀切压缩通行空间、路径边界构建逻辑逐障碍物独立决策导致矛盾避让方向、动态障碍物未在路径边界构建中被显式利用进而造成路径-速度协调缺失。这三项局限分别对应安全距离、决策粒度与时空协调三个维度，也划定了后续章节的改进切入点。
-
-将多障碍物场景下的避让方向选择建模为组合优化问题，引入到达时间函数将动态障碍物的预测轨迹纳入路径决策，建立统一的多障碍物统一规划数学框架。将时变通行带投影至ST空间解读为时空可通行走廊，建立路径决策与速度规划之间的约束传递机制。
-
-基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入。
-
-三项改进各自配套章内数值仿真，用以单独验证威胁度评估、组级分组决策与时空走廊的算法正确性。系统层面则在Apollo Planning的C++实现上完成集成实验，含6变体消融、3场景Dreamview在环展示与8场景全场景对比，其中8场景由4个压力场景和4个可比场景构成。对比维度覆盖规划成功率、通行效率、加减速峰值与QP求解耗时等，用以评估MIKU与Apollo Baseline的整体性能差异。
+\begin{enumerate}
+    \item 对Apollo 11.0版本的Planning模块进行源码级分析，理解其Scenario-Stage-Task三级管理架构、ReferenceLine平滑机制、\texttt{PublicRoadPlanner}中源自早期EM Planner思想的路径-速度解耦两阶段优化流程、路径边界构建逻辑及其\texttt{PathBoundsDeciderUtil}实现，以及\texttt{SpeedBoundsDecider}的ST边界构建机制
+    \item 通过源码分析与数学建模，识别Apollo现有算法在多障碍物场景下的三项局限，即安全裕度一刀切压缩通行空间、路径边界构建逻辑逐障碍物独立决策导致矛盾避让方向、动态障碍物未在路径边界构建中被显式利用进而造成路径-速度协调缺失。这三项局限分别对应安全距离、决策粒度与时空协调三个维度，也划定了后续章节的改进切入点
+    \item 将多障碍物场景下的避让方向选择建模为组合优化问题，引入到达时间函数将动态障碍物的预测轨迹纳入路径决策，建立统一的多障碍物统一规划数学框架。将时变通行带投影至ST空间解读为时空可通行走廊，建立路径决策与速度规划之间的约束传递机制
+    \item 基于上述数学框架提出多障碍物交互运动学统一规划算法（Multi-obstacle Interaction-density Kinematic-prediction Unified planner, MIKU）。MIKU沿安全距离、决策粒度、时空协调三个维度依次展开，先以融合TTC、横向重叠率、相对速度、障碍物类型与交互密度的五因子威胁度评估模型得到差异化安全裕度$\delta_i$，再以扫描线连通分量分组配合最优分割连续性引理与最大间隙最优性定理把组合搜索复杂度由$O(2^k)$降至$O(k\log k)$，最后借助到达时间函数$\tau(s)$与预测轨迹构造时空可通行走廊，并与\texttt{SpeedBoundsDecider}的ST边界在速度QP层双源融合，总体复杂度保持在$O(n \log n + K)$，其中$K$为路径或时间离散化规模。MIKU在Apollo~11.0的\texttt{LaneFollowPath}与\texttt{STDrivableBoundary}链路中完成工程接入
+    \item 三项改进各自配套章内数值仿真，用以单独验证威胁度评估、组级分组决策与时空走廊的算法正确性。系统层面则在Apollo Planning的C++实现上完成集成实验，含6变体消融、3场景Dreamview在环展示与8场景全场景对比，其中8场景由4个压力场景和4个可比场景构成。对比维度覆盖规划成功率、通行效率、加减速峰值与QP求解耗时，用以评估MIKU与Apollo Baseline的整体性能差异。
+\end{enumerate}
 
 \subsection{技术路线}
 
-本文的技术路线如图\ref{fig:tech_route}所示，分为七个阶段依次推进。前两个阶段围绕Apollo~11.0~Planning模块的源码分析与多障碍物场景下的问题识别展开，为整体改进建立工程参照；第三阶段建立多障碍物统一规划的数学模型，把避让方向选择刻画为组合优化问题，并引入到达时间函数沟通路径与速度两个子问题；第四至第六阶段分别落地三项改进，依次给出多因子威胁度与差异化安全裕度、基于扫描线的组级最优通行带、以预测轨迹为输入的时空可通行走廊，每一项均配套章内仿真；第七阶段完成MIKU到Apollo Planning流水线的C++接入与综合实验，用以系统性评估与Apollo Baseline的差异。
-
 \begin{figure}[htbp]
-\centering
-\adjustbox{max width=\textwidth}{\input{../图片/fig_tech_route_thesis}}
-\caption{技术路线图}
-\label{fig:tech_route}
+    \centering
+    \adjustbox{max width=\textwidth}{\input{../图片/fig_tech_route_thesis}}
+    \caption{技术路线图}
+    \label{fig:tech_route}
 \end{figure}
+    
+本文的技术路线如图\ref{fig:tech_route}所示，分为七个阶段依次推进。前两个阶段围绕Apollo~11.0~Planning模块的源码分析与多障碍物场景下的问题识别展开，为整体改进建立工程参照。第三阶段建立多障碍物统一规划的数学模型，把避让方向选择刻画为组合优化问题，并引入到达时间函数沟通路径与速度两个子问题；第四至第六阶段分别落地三项改进，依次给出多因子威胁度与差异化安全裕度、基于扫描线的组级最优通行带、以预测轨迹为输入的时空可通行走廊，每一项均配套章内仿真；第七阶段完成MIKU到Apollo Planning流水线的C++接入与综合实验，用以系统性评估与Apollo Baseline的差异。
+
 
 \section{论文组织结构}
 
