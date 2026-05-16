@@ -113,9 +113,9 @@ def apply_three_line_tables(doc) -> None:
         # 3. 新边框：三线表的上下两条粗线
         tb = OxmlElement("w:tblBorders")
         for side, val, sz in [
-            ("top", "single", "12"),  # 粗 1.5pt (12 八分之一 pt)
+            ("top", "single", "4"),
             ("left", "nil", None),
-            ("bottom", "single", "12"),
+            ("bottom", "single", "4"),
             ("right", "nil", None),
             ("insideH", "nil", None),
             ("insideV", "nil", None),
@@ -146,7 +146,7 @@ def apply_three_line_tables(doc) -> None:
                     tc.insert(0, tcPr)
                 tcB = OxmlElement("w:tcBorders")
                 # 只写 bottom，其它 side 省略 → 继承 tblBorders
-                tcB.append(_mkborder("bottom", "single", "4"))  # 细 0.5pt
+                tcB.append(_mkborder("bottom", "single", "4"))
                 tcPr.append(tcB)
 
 
