@@ -15,4 +15,8 @@ dependencies = [
 dev = [
     "python-docx>=1.2.0",
     "ruff>=0.15.12",
+    "pytest>=8.0",
 ]
+
+[tool.pytest.ini_options]
+testpaths = ["工具/tests"]
