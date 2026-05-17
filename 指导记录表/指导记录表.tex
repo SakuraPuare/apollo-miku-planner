@@ -1,0 +1,326 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[UTF8]{ctex}
+\usepackage[top=2.5cm,bottom=2cm,left=2.5cm,right=2cm]{geometry}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{setspace}
+
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+\renewcommand{\arraystretch}{1.8}
+
+\begin{document}
+
+\begin{center}
+{\LARGE\heiti 湖北文理学院毕业设计（论文）指导记录表}
+\end{center}
+
+\vspace{6pt}
+
+\begin{longtable}{|p{2cm}|p{4cm}|p{2cm}|p{5.46cm}|}
+\hline
+学院 & 计算机工程学院 & 专业 & 计算机科学与技术 \\
+\hline
+学生姓名 & 廖嘉旺 & 学号 & 2022117117 \\
+\hline
+指导教师 & \multicolumn{3}{l|}{孙成娇} \\
+\hline
+课题题目 & \multicolumn{3}{l|}{基于Apollo的多障碍物场景下路径规划算法实现} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录1} \quad 主题：选题方向
+
+\vspace{4pt}
+指导时间：2025年 1 月 5 日
+
+\vspace{4pt}
+主要工作：与学生讨论毕业设计选题方向，结合学生专业背景（计算机科学与技术）与兴趣，初步确定以"自动驾驶路径规划"为核心研究领域。分析当前自动驾驶系统在多障碍物密集场景下的路径规划局限性，引出基于Apollo开源平台进行算法改进的研究思路，明确研究目标为实现多障碍物场景下更优的路径规划策略。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录2} \quad 主题：确认选题
+
+\vspace{4pt}
+指导时间：2025年 1 月 10 日
+
+\vspace{4pt}
+主要工作：确认选题为"基于Apollo的多障碍物场景下路径规划算法实现"。指导学生查阅Apollo开源平台官方文档、路径规划相关文献（如Lattice Planner、EM Planner框架），推荐阅读Apollo技术白皮书及相关学术论文，明确后续需重点关注Apollo Planning模块源码架构与PathBoundsDecider等核心组件的工作机制。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录3} \quad 主题：开题申请
+
+\vspace{4pt}
+指导时间：2025 年 1 月 13 日
+
+\vspace{4pt}
+主要工作：解答学生对学院文档提出的问题，深入了解学生的专业背景知识，与学生再次商讨选题，就基于Apollo平台改进多障碍物路径规划算法的技术可行性、功能需求等进行沟通，要求学生阅读初步的文献资料，明确研究思路。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录4} \quad 主题：开题报告
+
+\vspace{4pt}
+指导时间：2025 年 2 月 20 日
+
+\vspace{4pt}
+主要工作：询问开题报告撰写进度，针对文献综述部分提出建议：需区分国内外研究现状，重点分析Apollo路径规划模块的演进历程（如从EM Planner到Lattice Planner的技术路线）。建议在"研究内容"中明确算法改进方向（障碍物分组策略、避让方向优化），并补充技术路线图。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录5} \quad 主题：开题报告
+
+\vspace{4pt}
+指导时间：2025 年 2 月 21 日
+
+\vspace{4pt}
+主要工作：检查开题报告初稿，指出文献引用格式不规范、研究目标表述模糊等问题。建议将研究目标细化为"提升多障碍物场景下路径规划成功率""降低规划耗时"等可量化指标，补充实验方案（如对比Baseline与改进算法在不同场景下的表现）。要求学生修改后提交终稿。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录6} \quad 主题：开题答辩
+
+\vspace{4pt}
+指导时间：2025 年 2 月 23 日
+
+\vspace{4pt}
+主要工作：在N5-403审阅开题报告，针对答辩要点进行指导：需突出Apollo Planning模块的整体架构及PathBoundsDecider在路径边界决策中的核心作用，明确现有算法在多障碍物密集场景下的不足。教导学生如何阅读Apollo源码、使用Cyber RT框架进行调试，推荐使用DreamView进行可视化验证。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录7} \quad 主题：收集资料
+
+\vspace{4pt}
+指导时间：2025 年 2 月 25 日
+
+\vspace{4pt}
+主要工作：指定资料收集清单，包括：Apollo Planning模块源码及设计文档；PathBoundsDecider、SpeedBoundsDecider等核心决策器的实现逻辑；SL坐标系与ST坐标系下的路径与速度规划方法；二次规划（QP）在轨迹优化中的应用。要求学生重点阅读Apollo源码中PathBoundsDecider的障碍物处理流程，做好算法原理笔记。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录8} \quad 主题：开题指导
+
+\vspace{4pt}
+指导时间：2025 年 2 月 28 日
+
+\vspace{4pt}
+主要工作：指导开题答辩PPT制作，强调逻辑框架：选题背景→研究目标→技术方案→创新点→进度规划。对开题报告中的流程图提出修改意见，建议绘制Apollo Planning模块架构图与算法改进流程图，确保图示清晰、标注完整。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录9} \quad 主题：指导学生
+
+\vspace{4pt}
+指导时间：2025 年 3 月 1 日
+
+\vspace{4pt}
+主要工作：在N5-401讨论开题答辩中评委提出的问题，如"Apollo现有路径规划在多障碍物场景下的具体瓶颈""改进算法的理论依据"。与学生共同分析解决方案：通过障碍物交互密度分组策略优化PathBoundsDecider的决策逻辑，并要求学生在论文中增设"算法设计与实现"章节详细阐述改进方法。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录10} \quad 主题：指导学生
+
+\vspace{4pt}
+指导时间：2025 年 3 月 3 日
+
+\vspace{4pt}
+主要工作：指出算法设计中的关键问题：障碍物分组需考虑空间邻近性与运动相关性；路径边界计算需兼顾安全裕度与通行效率；速度规划需与路径规划协同，避免产生不可行轨迹。提示学生在仿真阶段验证算法可行性，使用Apollo内置的场景仿真工具进行测试。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录11} \quad 主题：系统测试
+
+\vspace{4pt}
+指导时间：2025 年 3 月 15 日
+
+\vspace{4pt}
+主要工作：检查学生实现的算法改进代码与仿真测试环境，进行初步测试：验证改进后的PathBoundsDecider在多障碍物场景下能正确生成路径边界；对比Baseline算法与改进算法的规划结果；检查算法在边界条件下的鲁棒性。要求学生撰写测试报告，记录问题并开始撰写论文初稿，重点描述算法设计与实现细节。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录12} \quad 主题：论文相关问题
+
+\vspace{4pt}
+指导时间：2025 年 3 月 20 日
+
+\vspace{4pt}
+主要工作：解答论文写作疑问，强调：摘要需简明扼要，包含研究目的、方法、结果（如"规划成功率提升""规划耗时降低"）；图表需编号、标题清晰（如图3.1 Apollo Planning模块架构图）；参考文献需按GB/T 7714格式规范，区分期刊、会议、学位论文等类型。提示学生使用文献管理工具，避免格式错误。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录13} \quad 主题：论文初稿
+
+\vspace{4pt}
+指导时间：2025 年 3 月 24 日
+
+\vspace{4pt}
+主要工作：检查论文初稿，指出结构问题：绪论部分需补充多障碍物路径规划的研究空白与Apollo平台的技术优势；算法设计章节需细化数学建模（如SL坐标系下的障碍物投影、路径边界约束）；实验章节需增加定量对比数据。要求学生对照学院论文模板调整格式，确保每章独立起页，正确引用文献。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录14} \quad 主题：收集资料
+
+\vspace{4pt}
+指导时间：2025 年 3 月 29 日
+
+\vspace{4pt}
+主要工作：针对论文中"速度规划改进"章节，要求学生补充Apollo SpeedBoundsDecider的ST图构建细节，查阅相关文献了解ST走廊约束与二次规划求解方法。建议对比不同场景下Baseline与改进算法的速度曲线差异，在实验部分增加对比数据。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录15} \quad 主题：毕业论文
+
+\vspace{4pt}
+指导时间：2025 年 3 月 28 日
+
+\vspace{4pt}
+主要工作：审阅论文第二版，逐段修改摘要、引言及实验结果部分：摘要中需具体化改进效果的量化指标；实验数据表格需增加多场景对比（如静态障碍物、动态障碍物、混合场景）；结论部分需总结创新点（如障碍物交互密度分组、全局避让方向优化、ST走廊裁剪）。要求学生根据意见修改后提交第三版。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录16} \quad 主题：毕业论文
+
+\vspace{4pt}
+指导时间：2025 年 4 月 10 日
+
+\vspace{4pt}
+主要工作：检查学生修改后的论文，对论文格式提出进一步的修改意见，指出其中符号使用不规范、段落缩进不一致等细节问题，确认论文内容在逻辑与学术表达上正确无误，要求学生继续完善。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录17} \quad 主题：毕业论文
+
+\vspace{4pt}
+指导时间：2025 年 4 月 28 日
+
+\vspace{4pt}
+主要工作：审阅毕业论文与毕业设计成果，指出其中存在的错误与疏漏之处，如路径规划算法部分分析不够深入、实验结果讨论不够全面等，指导学生如何进行相应的修改与补充。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录18} \quad 主题：毕业论文
+
+\vspace{4pt}
+指导时间：2025 年 5 月 1 日
+
+\vspace{4pt}
+主要工作：指导学生进行论文查重和格式检测，向学生讲解查重的注意事项与方法，对毕业论文中仍存在的问题提出修改意见，要求学生根据查重结果和格式检测反馈进行修改。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录19} \quad 主题：毕业论文
+
+\vspace{4pt}
+指导时间：2025 年 5 月 5 日
+
+\vspace{4pt}
+主要工作：针对论文格式查重结果，详细指导学生修改格式问题，确保论文格式完全符合学院要求，对论文整体内容进行最后的把关，保证论文质量。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录20} \quad 主题：答辩指导
+
+\vspace{4pt}
+指导时间：2025 年 5 月 7 日
+
+\vspace{4pt}
+主要工作：指导答辩PPT制作，强调：突出算法改进成果（如对比图表、场景仿真截图）；用流程图展示改进算法架构，用对比表格呈现实验数据；准备常见问题应答（如"为何选择Apollo平台""改进算法的适用范围""与深度学习方法的对比"）。要求学生进行模拟答辩，控制汇报时间在8分钟内，重点清晰、逻辑连贯。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\multicolumn{4}{|p{15.46cm}|}{
+\textbf{指导记录21} \quad 主题：终稿提交
+
+\vspace{4pt}
+指导时间：2025 年 5 月 10 日
+
+\vspace{4pt}
+主要工作：针对答辩可能提出的问题，向学生提出相关修改意见，对论文名称的准确性与吸引力进行指导，和学生一起分析问题。最后检查学生毕业论文最终版本，确认无误后提交学院。
+
+\vspace{30pt}
+\hfill 指导教师签名：\hspace{3cm}
+\vspace{4pt}
+} \\
+\hline
+\end{longtable}
+
+\end{document}
