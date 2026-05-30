@@ -57,7 +57,7 @@ THESIS_TEX    := $(THESISDIR)/thesis.tex
 INFO_SRC      := $(THESISDIR)/info.tex
 BIB_SRC       := $(THESISDIR)/references.bib
 
-.PHONY: all check-deps svg svg-clean svg-print thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-slides-all defense-script thesis-print docx-print print clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context
+.PHONY: all check-deps svg svg-clean svg-print thesis docx slides kaiti foreign foreign-original foreign-translation defense defense-slides defense-slides-all defense-script thesis-print docx-print print clean help sim sim-data sim-figs sim-metrics sim-ablation sim-sensitivity sim-context renwushu kaitibg jilu chengji qingdan materials
 .PRECIOUS: $(BUILDDIR)/wrap_%.tex $(BUILDDIR)/wrap_%.pdf $(BUILDDIR)/wrap_%-crop.pdf
 
 # ══════════════════════════════════════════════════
@@ -83,7 +83,7 @@ check-deps:
 #  默认：并行 SVG + 论文 + 答辩演示
 #  全量推荐：make -j$(nproc)
 # ══════════════════════════════════════════════════
-all: svg thesis docx print slides kaiti foreign defense
+all: svg thesis docx print slides kaiti foreign defense materials
 
 # ══════════════════════════════════════════════════
 #  SVG 并行编译（每图独立 xelatex，-j N 并行）
@@ -327,6 +327,50 @@ $(FOREIGNDIR)/translation/translation.pdf: $(FOREIGNDIR)/translation/translation
 	@echo "✓ 外文文献译文: $(FOREIGNDIR)/translation/translation.pdf"
 
 # ══════════════════════════════════════════════════
+#  附件材料（任务书 / 开题报告 / 指导记录表 / 成绩评定表 / 档案材料清单）
+# ══════════════════════════════════════════════════
+RENWUSHUDIR  := 任务书
+KAITIBGDIR   := 开题报告
+JILUDIR      := 指导记录表
+CHENGJIDIR   := 成绩评定表
+QINGDANDIR   := 档案材料清单
+
+materials: renwushu kaitibg jilu chengji qingdan
+	@echo "✓ 附件材料全部编译完成"
+
+renwushu: $(RENWUSHUDIR)/任务书.pdf
+$(RENWUSHUDIR)/任务书.pdf: $(RENWUSHUDIR)/任务书.tex | check-deps
+	cd $(RENWUSHUDIR) && $(TEX) $(TEXFLAGS) 任务书.tex >/dev/null 2>&1
+	@test -f $@ || { echo "错误: 任务书.pdf 未生成"; exit 1; }
+	@echo "✓ 任务书: $@"
+
+kaitibg: $(KAITIBGDIR)/开题报告.pdf
+$(KAITIBGDIR)/开题报告.pdf: $(KAITIBGDIR)/开题报告.tex $(KAITIBGDIR)/references.bib $(FIGDIR)/fig_tech_route_thesis.tex $(FIGDIR)/fig_sys_arch.tex $(FIGDIR)/fig_planning_arch.tex | check-deps
+	cd $(KAITIBGDIR) && $(TEX) $(TEXFLAGS) 开题报告.tex >/dev/null 2>&1 \
+	  && $(BIBER) 开题报告 >/dev/null 2>&1 \
+	  && $(TEX) $(TEXFLAGS) 开题报告.tex >/dev/null 2>&1
+	@test -f $@ || { echo "错误: 开题报告.pdf 未生成"; exit 1; }
+	@echo "✓ 开题报告: $@"
+
+jilu: $(JILUDIR)/指导记录表.pdf
+$(JILUDIR)/指导记录表.pdf: $(JILUDIR)/指导记录表.tex | check-deps
+	cd $(JILUDIR) && $(TEX) $(TEXFLAGS) 指导记录表.tex >/dev/null 2>&1
+	@test -f $@ || { echo "错误: 指导记录表.pdf 未生成"; exit 1; }
+	@echo "✓ 指导记录表: $@"
+
+chengji: $(CHENGJIDIR)/成绩评定表.pdf
+$(CHENGJIDIR)/成绩评定表.pdf: $(CHENGJIDIR)/成绩评定表.tex | check-deps
+	cd $(CHENGJIDIR) && $(TEX) $(TEXFLAGS) 成绩评定表.tex >/dev/null 2>&1
+	@test -f $@ || { echo "错误: 成绩评定表.pdf 未生成"; exit 1; }
+	@echo "✓ 成绩评定表: $@"
+
+qingdan: $(QINGDANDIR)/档案材料清单.pdf
+$(QINGDANDIR)/档案材料清单.pdf: $(QINGDANDIR)/档案材料清单.tex | check-deps
+	cd $(QINGDANDIR) && $(TEX) $(TEXFLAGS) 档案材料清单.tex >/dev/null 2>&1
+	@test -f $@ || { echo "错误: 档案材料清单.pdf 未生成"; exit 1; }
+	@echo "✓ 档案材料清单: $@"
+
+# ══════════════════════════════════════════════════
 #  清理
 # ══════════════════════════════════════════════════
 clean:
@@ -349,6 +393,11 @@ clean:
 	rm -f $(DOCX)
 	rm -f $(PRINT_PDF) $(PRINT_DOCX)
 	rm -rf $(SVG_PRINT_DIR)
+	rm -f $(RENWUSHUDIR)/任务书.{pdf,aux,log,out}
+	rm -f $(KAITIBGDIR)/开题报告.{pdf,aux,log,out,bcf,run.xml,bbl,blg}
+	rm -f $(JILUDIR)/指导记录表.{pdf,aux,log,out}
+	rm -f $(CHENGJIDIR)/成绩评定表.{pdf,aux,log,out}
+	rm -f $(QINGDANDIR)/档案材料清单.{pdf,aux,log,out}
 
 # ══════════════════════════════════════════════════
 #  帮助
@@ -367,4 +416,5 @@ help:
 	@echo "make kaiti      编译开题答辩"
 	@echo "make foreign    编译外文文献原文及译文"
 	@echo "make defense    编译毕业答辩 (slides 三比例 + 讲稿)"
+	@echo "make materials  编译附件材料 (任务书/开题报告/指导记录表/成绩评定表/档案材料清单)"
 	@echo "make clean      清理全部生成物"
