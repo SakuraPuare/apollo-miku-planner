@@ -1,0 +1,149 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[UTF8,fontset=none]{ctex}
+\usepackage[top=2.5cm,bottom=2cm,left=2.5cm,right=2cm]{geometry}
+\usepackage{array}
+\usepackage{fontspec}
+
+\setmainfont{TeX Gyre Termes}
+\setCJKmainfont{Source Han Serif CN}
+\setCJKsansfont{Noto Sans CJK SC}
+
+\pagestyle{empty}
+\setlength{\parindent}{2em}
+\renewcommand{\arraystretch}{1.8}
+
+\begin{document}
+
+\begin{titlepage}
+\begin{center}
+
+\vspace{2cm}
+
+{\fontsize{46.5pt}{56pt}\selectfont\bfseries 湖北文理学院}
+
+\vspace{1cm}
+
+{\fontsize{38.5pt}{46pt}\selectfont 毕业设计（论文）任务书}
+
+\vspace{2.5cm}
+
+{\large
+\renewcommand{\arraystretch}{1.6}
+\begin{tabular}{@{}r@{\hspace{0.5em}}l@{}}
+毕业论文题目 & \underline{\makebox[11cm][c]{基于Apollo的多障碍物场景下路径规划算法实现}} \\
+\makebox[5em][s]{学生姓名} & \underline{\makebox[11cm][c]{廖嘉旺}} \\
+\makebox[5em][s]{学号} & \underline{\makebox[11cm][c]{2022117117}} \\
+\makebox[5em][s]{所在学院} & \underline{\makebox[11cm][c]{计算机工程学院}} \\
+\makebox[5em][s]{所学专业} & \underline{\makebox[11cm][c]{计算机科学与技术}} \\
+\makebox[5em][s]{班级} & \underline{\makebox[11cm][c]{计科2211}} \\
+\makebox[5em][s]{指导教师} & \underline{\makebox[11cm][c]{孙成娇}} \\
+\end{tabular}}
+
+\vfill
+
+{\large \hspace{2em}年\hspace{2em}月\hspace{2em}日}
+
+\vspace{1cm}
+
+\end{center}
+\end{titlepage}
+
+{\bfseries 一、毕业设计（论文）内容要求}
+
+根据给定的题目与任务书要求，查阅相关文献，撰写文献综述，包括课题背景与意义、研究现状等。
+
+学生需调研自动驾驶路径规划领域的国内外研究现状，重点关注多障碍物环境下的规划难点（如动态避障、狭窄通道通行）。深入阅读Baidu Apollo官方文档及相关学术论文，理解基于采样（Lattice）和基于优化（EM Planner）的规划方法原理，分析其在多障碍物场景下的性能瓶颈。
+
+描述题目具体的任务，有助于学生明确毕业设计的具体工作
+
+随着自动驾驶技术向城市复杂场景延伸，多障碍物环境下的路径规划成为保障行车安全与效率的核心挑战。Apollo开源平台虽然提供了成熟的规划框架，但在面对密集动态障碍物或非结构化道路时，其基准算法（如EM Planner）在路径边界决策和速度规划方面存在保守性问题，导致车辆频繁停车或绕行效率低下。
+
+本项目旨在基于Apollo自动驾驶平台，设计并实现一种改进的局部路径规划算法。具体任务包括：
+
+环境搭建与源码分析：在Ubuntu环境下配置Docker与Apollo编译环境，深入阅读modules/planning模块源码，重点分析ReferenceLine（参考线）、PathDecider（路径决策器）、SpeedDecider（速度决策器）等核心组件的实现逻辑与数据流。
+
+算法设计与改进：针对多障碍物场景，改进原有的代价函数（Cost Function）或约束条件。例如，在Frenet坐标系下优化障碍物膨胀策略，或引入动态规划（DP）与二次规划（QP）相结合的混合策略，提升路径在密集障碍物间的通行能力。
+
+系统实现与集成：基于C++语言，在Apollo的planning组件中开发新的Task或Optimizer插件，实现改进后的算法，并完成与Routing（路由）、Prediction（预测）模块的消息接口对接。
+
+仿真验证：利用Dreamview可视化工具和PnC Monitor，在典型多障碍物场景（如静态障碍物绕行、动态车辆切入）中进行仿真测试，对比改进算法与Apollo基准算法在路径平滑度、计算耗时及避障成功率等指标上的表现。
+
+在面述任务的基础上，撰写开题报告。正文部分不少于2500字，准备开题答辩相关材料。
+
+开题报告需明确技术路线，绘制算法流程图（如DP+QP优化流程），并制定详细的实施计划。
+
+要求学生掌握的相关技能。
+
+熟练掌握 C++ 编程语言及面向对象编程思想。
+
+熟悉 Linux 操作系统常用指令，掌握 Docker 容器技术及 Bazel 构建工具的使用。
+
+理解自动驾驶规划控制基础理论，包括 Frenet坐标系转换、凸优化（QP/SQP）、图搜索算法（A*/Dijkstra）等。
+
+熟悉 Apollo 软件架构（Cyber RT通信机制），能够阅读和修改大型C++工程代码。
+
+选择合适的开发工具，开发原型系统，并能正常运行。
+
+撰写符合学院要求的毕业论文，符合查重要求和论文格式规范性检测要求。
+
+论文应包含算法原理推导、代码实现细节、仿真实验数据分析及对比结论。
+
+整理资料，打印论文，准备论文答辩相关材料。
+
+\vspace{12pt}
+{\bfseries 二、主要参考资料}
+
+\setlength{\parindent}{0pt}
+
+[1] 王云泽, 孙宇, 骆中斌, 等. 基于深度强化学习的自动驾驶行为决策研究综述[J]. 控制与决策, 2025.
+
+[2] 陈俊杰, 上官伟, 蔡伯根, 等. 交通流特征深度认知的车队运行参数优化方法[J]. 中国公路学报, 2020, 33(11): 264-274.
+
+[3] 周洪龙, 裴晓飞, 刘一平, 等. 面向动态不确定场景的自动驾驶车辆时空耦合分层轨迹规划研究[J]. 机械工程学报, 2024, 60(10): 222-234.
+
+[4] 郝鹤声. 无信号交叉口智能网联车辆通行策略研究[D]. 吉林大学, 2025.
+
+[5] 李灵恩. 智能汽车变道决策系统的预期功能安全研究[D]. 江苏大学, 2025.
+
+[6] 王金强, 黄航, 郅朋, 等. 自动驾驶发展与关键技术综述[J]. 电子技术应用, 2019, 45(6): 28-36.
+
+[7] GUO Y, GUO Z, WANG Y, et al. A Survey of Trajectory Planning Methods for Autonomous Driving---Part I[J]. arXiv, 2024.
+
+[8] Apollo Planning README[EB/OL]. [2025-11-26]. https://github.com/ApolloAuto/apollo/blob/master/modules/planning/planning\_component/README\_cn.md.
+
+[9] FAN H, ZHU F, LIU C, et al. Baidu Apollo EM Motion Planner[A]. arXiv, 2018.
+
+[10] WERLING M, ZIEGLER J, KAMMEL S, et al. Optimal trajectory generation for dynamic street scenarios in a Frenét Frame[C]//2010 IEEE International Conference on Robotics and Automation. 2010: 987-993.
+
+\setlength{\parindent}{2em}
+
+\vspace{12pt}
+{\bfseries 三、毕业设计（论文）进度安排}
+
+\setlength{\parindent}{0pt}
+
+2023-2024学年下学期第11-12周，学院组织准备及动员教育、系统培训
+
+2023-2024学年下学期第13-14周，征题、审题
+
+2023-2024学年下学期第15-16周，学生选题
+
+2023-2024学年下学期第17-18周，教师下达任务书
+
+2024-2025学年上学期第1-2周，开题：学生完成开题报告及开题申请
+
+2024-2025学年上学期第3周，教师审批开题报告（开题答辩）
+
+2024-2025学年上学期第4-10周，毕业设计、论文撰写与指导
+
+2024-2025学年上学期第11-13周，查重、论文评阅
+
+2024-2025学年上学期第14周，答辩资格审查
+
+2024-2025学年上学期第15周，答辩（一辩、二辩）
+
+2024-2025学年上学期第16周，推优、复查
+
+2024-2025学年上学期第17-18周，总结及资料归类
+
+\end{document}
