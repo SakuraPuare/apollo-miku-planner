@@ -1,0 +1,1094 @@
+# Path–Speed Decoupling Planning Method Based on Risk Cooperative Game for Intelligent Vehicles
+
+Ziyu Zhang , Chunyan Wang , Wanzhong Zhao, Mingchun Cao , Jinqiang Liu , and Kunhao Xu
+
+Abstract— In order to reduce the solving dimension of trajectory planning process and improve the solving efficiency, the path and speed are often decoupled in the planning process of intelligent vehicles. However, under the existing serial decoupling planning framework, that is, the path is planned first and, then, the speed is planned, the collaborative relationship between path and speed is weak, and usually, speed planning can only be carried out under fixed path planning. The first fixed path cannot be adjusted according to the speed state, making it difficult to balance the overall performance of the trajectory. Therefore, in scenarios that require close coordination between the two, such as steering to avoid obstacles, the synthesized trajectory often lacks safety or smoothness. Hence, this article proposes a path–speed decoupling planning method based on risk cooperative game (DP-RCG). It performs decoupled planning of path and speed at large time intervals and obtains a series of candidate coarse-grained path and speed curves. Then, a coarsegrained trajectory satisfying the demand is obtained by the static risk cooperative game of path and speed. Finally, the convex optimization method is used to generate a fine-grained smooth trajectory that can be well executed and tracked by the vehicle. Moreover, an omnidirectional risk assessment model (ORA) is built to assess the risk of collision. Simulation results in different scenarios show that DP-RCG can ensure the safety and comfort of the planned trajectory. Meanwhile, compared with the existing methods, it has better computational efficiency and real-time performance.
+
+Index Terms— Omnidirectional risk assessment, path–speed decoupling planning, risk cooperative game, trajectory planning.
+
+# I. INTRODUCTION
+
+AS A direct embodiment of the intelligence of vehicles,trajectory planning plays a decisive role in the driving safety and stability of vehicles [1]. During the driving process, trajectory planning is required to deeply understand the surrounding traffic environment and plan a smooth, safe, and executable trajectory on the basis of accurately predicting the risk of the surrounding environment [2], [3]. However, with the application of intelligent driving technology, the driving
+
+Manuscript received 17 May 2023; revised 18 August 2023; accepted 11 September 2023. Date of publication 18 September 2023; date of current version 18 June 2024. This work was supported in part by the National Science Foundation of China under Grant 52072175, in part by the Jiangsu Outstanding Youth Fund Project under Grant BK20220078, in part by the Jiangsu Key Research and Development Plan under Grant BE2022053, and in part by the Postgraduate Research and Practice Innovation Program of Jiangsu Province under Grant KYCX22\_0337 and Grant SJCX21\_0105. (Corresponding author: Chunyan Wang.)
+
+The authors are with the Department of Vehicle Engineering, Nanjing University of Aeronautics and Astronautics, Nanjing 210016, China (e-mail: zhangziyu@nuaa.edu.cn; wcynuaa@126.com; zhaowz2020@126.com; nuaa\_cmc@nuaa.edu.cn; jinqiang916@163.com; xukunhao@nuaa.edu.cn).
+
+Digital Object Identifier 10.1109/TTE.2023.3316124
+
+scenes faced by the trajectory planning module become more and more complex, and it has to make choices and concessions between optimal efficiency and optimal trajectory. How to efficiently plan a safe, comfortable, and executable trajectory in complex environments remains a challenge.
+
+For trajectory planning, scholars have proposed many solutions, including graph searching, random sampling, artificial potential field, curve interpolation, and numerical optimization [4], [5], [6]. Among them, the principle of graph search method is to search the optimal trajectory satisfying constraints from the constructed environment graph, but the environment modeling is complicated and the computational efficiency is low [7], [8]. The basic idea of random sampling method is to randomly sample in the world space and screen out the optimal sampling points that meet the performance requirements, which has probability completeness but poor computational efficiency [8], [9]. The artificial potential field method controls the speed and direction of motion of the vehicle by solving for the attractive force and repulsive force on the vehicle to generate a planned trajectory [10]. This method has the advantage of being easy to express mathematically, but it is easy to fall into the local optimal solution in the process of solving. Due to some limitations of the above methods, in order to quickly solve the optimal trajectory in complex scenarios and improve the convenience of algorithm deployment, curve interpolation and numerical optimization methods have gradually become the mainstream of current research. The core idea of curve interpolation method is to solve the curve correlation coefficient according to the desired state of the vehicle to generate the expected trajectory, which has the advantages of good path smoothness and feasibility [11], [12]. The numerical optimization methods usually consider trajectory planning as an optimization problem. Then, the trajectory that minimizes the safety, smoothness, and efficiency objectives is solved under the constraints of model and collision [13]. In addition, in order to further reduce the solving dimension and improve efficiency, the above studies usually decompose the 3-D trajectory planning problem into two 2-D planning problems. They usually decouple the path and speed planning based on the Frenet coordinate system to compress the solution space and achieve faster running speed [14], [15].
+
+Based on existing research, it can be found that in order to improve the efficiency of planning in practical applications to adapt to complex environments, path and speed decoupling planning has gradually become the current mainstream. However, the existing decoupling planning is usually a serial planning architecture, i.e., the path is determined first and, then, the speed of that path is allocated. However, it has certain shortcomings. On the one hand, serial computing cannot fully utilize computing resources, resulting in a certain efficiency loss. On the other hand, the serial planning framework usually does not consider the speed curve when planning the path.
+
+![](images/ca86ae5c27dc8a54452339e2b6d483156a20129f5ef55df8033a433ebcee305a.jpg)
+
+<details>
+<summary>flowchart</summary>
+
+```mermaid
+graph TD
+    A["Trajectory prediction based on data fusion"] --> B["Omnidirectional risk assessment model"]
+    B --> C["Coarse-grained trajectory selection based on risk cooperative game"]
+    C --> D["Fine-grained optimization of coarse-grained trajectories"]
+    D --> E["Output"]
+```
+</details>
+
+Fig. 1. Path–speed decoupling planning based on risk cooperative game.
+
+However, when the speed planning is completed, it may be found that the previous planned path is actually not optimal or may even be poor at such speed allocation. Therefore, the decoupling planning approach sometimes results in higher risk or poorer smoothness of the synthesized trajectory in scenarios that require a close match between path and speed, such as steering for collision avoidance [16]. Thus, how to effectively coordinate path planning and speed planning according to actual risks and ensure planning efficiency is a major difficulty in this article.
+
+In addition, understanding the long-term evolution of future traffic risks is conducive to improving the safety of trajectory planning, which requires accurate long-term trajectory prediction. At present, the solutions to trajectory prediction can be roughly divided into intention-planning prediction, deep learning prediction, and physical model prediction [17]. Intention-planning prediction and deep learning prediction methods are characterized by poor accuracy in short time domain and high accuracy in long time domain [18]. The physical model prediction method has the opposite property with them [19]. In addition, deep learning prediction can show the best performance under a standard data sample set, but it has high requirements on the size and type of dataset; its prediction performance fluctuates greatly in practical applications, and it is not easy to deploy, which limits its application [20]. Therefore, how to achieve long-term and accurate trajectory prediction is another difficulty in this article.
+
+In view of the above problems, this article proposes a path–speed decoupling planning method based on risk cooperative game (DP-RCG), as shown in Fig. 1. First, aiming at the trajectory prediction problem, the trajectory prediction method based on long and short time-domain data fusion (LSDF) is proposed to accurately extract the future motion state and trend of surrounding vehicles. Second, based on the extracted future motion information of surrounding vehicles and the omnidirectional risk assessment model (ORA), the driving risk of the ego vehicle can be accurately quantified to provide guarantee for the trajectory planning process. Then, the coarse-grained candidate trajectories are planned based on the current and future driving risks of ego vehicle, and the path and speed planning modules are regarded as independent agents for cooperative game to extract a safe coarse-grained trajectory. Finally, considering the requirements of vehicle kinematics constraints, trajectory smoothness, and comfort, fine-grained convex optimization is carried out on the obtained coarse-grained trajectory. The main contributions of this article are given as follows.
+
+1) A path–speed DP-RCG is proposed. The planning efficiency is enhanced and the trajectory risk is reduced by coarse-grained planning and risk cooperative game. Moreover, the fine-grained optimization of trajectory is carried out to ensure the smoothness and comfort of the final trajectory.   
+2) A vehicle trajectory prediction method based on LSDF is proposed. By combining the advantages of Gaussian process model and Markov model, the accuracy of trajectory prediction is guaranteed.   
+3) An ORA is established, which effectively enhances the expression ability of the risk assessment model by integrating the collision forms and future motion trajectories of vehicles.
+
+The rest of this article is organized as follows. Section II introduces the trajectory prediction method of surrounding vehicles and the ORA. Section III mainly introduces two parts: coarse-grained trajectory planning and fine-grained trajectory optimization. Sections III-A and III-B describe the coarse-grained path–speed decoupling planning process based on risk cooperative game. Section III-C introduces the fine-grained optimization process of coarse-grained trajectory. In Section IV, the proposed DP-RCG is verified, compared, and analyzed by simulation tests under different working conditions. Section V gives the conclusion.
+
+# II. MOTION PREDICTION OF SURROUNDING VEHICLESAND OMNIDIRECTIONAL RISK ASSESSMENT MODELING
+
+To ensure the safety of the planned trajectory, the intelligent vehicle needs to fully understand the changing trend of the future traffic environment and its impact on the driving safety of ego vehicle. Thus, this section combines the Gaussian process model and Markov theory to build a trajectory prediction method based on LSDF for predicting the motion state of surrounding vehicles. Then, based on the prediction results, an omnidirectional collision time model and an omnidirectional safety distance model are proposed to construct an ORA that can reflect the driving risk of intelligent vehicles.
+
+# A. Trajectory Prediction of Surrounding Vehicles Based on LSDF
+
+In actual traffic environments, the driving behavior of surrounding vehicles has significant uncertainty, which poses a great challenge to accurately predict the movement states of them [21]. Considering the limitations of existing trajectory prediction methods, some studies have proposed the combination of physical model and intention-planning method to achieve accurate and efficient trajectory prediction [22]. However, they ignore the problem that the prediction method based on kinematic model is not applicable at high speed.
+
+![](images/a77f772b6aaaa65edc58cd35b8583258c462bbfe5d1a8ffd5e2badeab27224be.jpg)
+
+<details>
+<summary>line</summary>
+
+| Trajectory Type | Point Label | Description |
+| --------------- | ----------- | ----------- |
+| Short-time-domain trajectory | t₀ | Linear increase from -1 to 2 |
+| Long-time-domain trajectory | t₁ | Linear increase from 0 to 2 |
+| Data fusion: Target lateral position prediction, Predicted trajectory generation, Tr_L, Tr_LS, Min | Tr_S, Tr_LS | Linear trend with peak at x=170, minimum at x=40, 100 |
+| GPR (left)     | k(x,y₀) = σ_f² exp[−(x−x)²/(2l²)] + σ_n²δ(x,x') | Curve peaks around x=130, then declines slightly. Legend: P₀ (red circle), P₁ (blue circle), P₂ (green circle), Tr_L (blue dashed line), Tr_LS (red dashed line).
+</details>
+
+Fig. 2. Trajectory prediction based on LSDF.
+
+Therefore, when adopting the above scheme, it is necessary to first solve this problem. Consider that Gaussian process regression (GPR) can make full use of the distribution state of prior data to realize accurate prediction of data changes in a short time [23]. Thus, this article proposes a trajectory prediction method based on LSDF, as shown in Fig. 2. This method first uses GPR to obtain the predicted trajectory in the short time domain (1 s). Second, the Markov theory is used to obtain the target lateral position of the vehicle. Then, the short time-domain prediction data and target lateral position are used as constraints to solve the long time-domain candidate trajectories. Finally, the predicted trajectory of the first 1s in the long time-domain trajectory is compared with the short time-domain trajectory, and the trajectory with smaller error is selected as the final trajectory prediction result.
+
+1) Trajectory Prediction in Short Time-Domain Based on GPR: GPR can obtain the corresponding posterior probability with Bayesian theory on the premise that the prior probability distribution of learning samples is known, thus realizing the prediction of test samples [24]. Due to its high accuracy in the short time-domain and independence from physical models, this article uses GPR for short time-domain trajectory prediction.
+
+A Gaussian process can be determined by the covariance function $k ( x , x ^ { \prime } )$ and the mean function m(x)
+
+$$
+\left\{ \begin{array}{l} m (x) = E [ f (x) ] \\ k (x, x ^ {\prime}) = E [ (f (x) - m (x)) (f (x ^ {\prime}) - m (x ^ {\prime})) ] \end{array} \right. \tag {1}
+$$
+
+where x, $x ^ { \prime } \in R ^ { m }$ are arbitrary random variables and the GPR model $f$ can be defined as
+
+$$
+f (x) \sim G P (m (x), k (x, x ^ {\prime})). \tag {2}
+$$
+
+In order to solve the prediction problem by using the GPR model, a training set TS needs to be given
+
+$$
+\begin{array}{l} \boldsymbol {T} \boldsymbol {S} = [ \boldsymbol {T}, \boldsymbol {X}, \boldsymbol {Y} ] \\ = \left[ \left(t _ {1}, t _ {2}, \dots , t _ {N}\right), \left(x _ {1}, x _ {2}, \dots , x _ {N}\right), \left(y _ {1}, y _ {2}, \dots , y _ {N}\right) \right] \tag {3} \\ \end{array}
+$$
+
+where T is the time series of sampling points, X and Y are longitudinal and lateral displacement data series, respectively, $x _ { i } , y _ { i } \in R ( i = 1 , 2 , . . . , N )$ are the longitudinal and lateral displacement of the vehicle at time i, respectively, and N is the size of the training sample.
+
+In addition, trajectory prediction based on the GPR also requires a key assumption, that is, the observed value y and the predicted value $y _ { * }$ can be regarded as a sampling point from joint Gaussian distribution. Thus, the prior normal distribution N of the observed value y can be obtained
+
+$$
+y \sim \mathcal {N} (0, \boldsymbol {K} (\boldsymbol {X}, \boldsymbol {X})) + \sigma_ {N} ^ {2} \boldsymbol {I} _ {N} \tag {4}
+$$
+
+where $\sigma _ { N } ^ { 2 }$ is the noise variance matrix and $I _ { N }$ is $N \times N$ identity matrix. $K ( X , X ) ~ = ~ K _ { N } ~ = ~ ( k _ { i j } )$ is the $N \times N$ symmetric positive definite covariance matrix, which can be expressed as
+
+$$
+\boldsymbol {K} (\boldsymbol {X}, \boldsymbol {X}) = \left[ \begin{array}{c c c c} k \left(x _ {1}, x _ {1}\right) & k \left(x _ {1}, x _ {2}\right) & \dots & k \left(x _ {1}, x _ {N}\right) \\ k \left(x _ {2}, x _ {1}\right) & k \left(x _ {2}, x _ {2}\right) & \dots & k \left(x _ {2}, x _ {N}\right) \\ \vdots & \vdots & \ddots & \vdots \\ k \left(x _ {N}, x _ {1}\right) & k \left(x _ {N}, x _ {2}\right) & \dots & k \left(x _ {N}, x _ {N}\right) \end{array} \right]. \tag {5}
+$$
+
+The joint distribution of the observed value y and the predicted value $y _ { * }$ can be expressed as
+
+$$
+\left[ \begin{array}{c} y \\ y _ {*} \end{array} \right] \sim \mathcal {N} \left(0, \left[ \begin{array}{c c} \boldsymbol {K} (\boldsymbol {X}, \boldsymbol {X}) + \sigma_ {N} ^ {2} I _ {N} & \boldsymbol {K} (\boldsymbol {X}, x _ {*}) \\ \boldsymbol {K} (x _ {*}, \boldsymbol {X}) & k (x _ {*}, x _ {*}) \end{array} \right]\right) \tag {6}
+$$
+
+where $k _ { i j } = k ( x _ { i } , x _ { j } )$ is the correlation between $x _ { i }$ and $x _ { j } ,$ and $k ( x _ { * } , x _ { * } )$ is the covariance of the test point $x _ { * } . \ K ( x _ { * } , X ) =$ $K ( X , x _ { * } ) ^ { T }$ is the covariance matrix between the test point $x _ { * }$ and the training set X, which can be expressed as
+
+$$
+\boldsymbol {K} (x ^ {*}, \boldsymbol {X}) = \left[ k (x ^ {*}, x _ {1}) \quad k (x ^ {*}, x _ {2}) \quad \dots \quad k (x ^ {*}, x _ {N}) \right]. \tag {7}
+$$
+
+Therefore, the posterior distribution of the predicted value $y _ { * }$ can be obtained as follows:
+
+$$
+y _ {*} \mid (X, y, x _ {*}) \sim \mathcal {N} (\mu (y _ {*}), \operatorname{cov} (y _ {*})) \tag {8}
+$$
+
+where $\mu ( y _ { * } )$ is the mean value corresponding to test point $x _ { * }$ and $\mathrm { c o v } ( y _ { \ast } )$ is the corresponding variance, which can be expressed as
+
+$$
+\begin{array}{l} \mu (y _ {*}) = \boldsymbol {K} (x _ {*}, \boldsymbol {X}) ^ {T} \big [ \boldsymbol {K} (\boldsymbol {X}, \boldsymbol {X}) + \sigma_ {N} ^ {2} \boldsymbol {I} _ {N} \big ] ^ {- 1} y \\ \operatorname{cov} \left(y _ {*}\right) = k \left(x _ {*}, x _ {*}\right) - \boldsymbol {K} \left(x _ {*}, \boldsymbol {X}\right) ^ {T} \left[ \boldsymbol {K} (\boldsymbol {X}, \boldsymbol {X}) + \sigma_ {N} ^ {2} \boldsymbol {I} _ {N} \right] ^ {- 1} \\ \times \boldsymbol {K} (x _ {*}, \boldsymbol {X}). \tag {9} \\ \end{array}
+$$
+
+For the trajectory prediction problem in this article, it can be converted into a multiprediction period GPR problem based on the historical trajectory data of the vehicle, that is, a rolling iterative prediction process based on historical data and prediction data. The GPR model can be shown as follows:
+
+$$
+y _ {i} = f (x _ {i}) + \varepsilon \tag {10}
+$$
+
+where $x _ { i }$ is the input vector, $y _ { i }$ is the output vector, and $\varepsilon$ is a Gaussian noise whose mean value is 0 and variance is $\sigma _ { N } ^ { 2 }$ .
+
+For a GPR model, the purpose is to determine $f$ that can express the relationship between the input and the output. For this article, it is to determine the covariance function in (2). In order to determine the GPR model in the nonlinear situation, the kernel function can be used to map the input to the high-dimensional space. In this article, the square exponential covariance is adopted as the kernel function. At the same time, in order to facilitate the expression and solution, the noise factor is transformed into the covariance function. The final covariance function can be expressed as
+
+$$
+k (x, x ^ {\prime}) = \sigma_ {f} ^ {2} \exp \left[ \frac {- (x - x ^ {\prime}) ^ {2}}{2 l ^ {2}} \right] + \sigma_ {N} ^ {2} \delta (x, x ^ {\prime})
+$$
+
+$$
+\delta (x, x ^ {\prime}) = \left\{ \begin{array}{l l} 1, & x = x ^ {\prime} \\ 0, & x \neq x ^ {\prime} \end{array} \right. \tag {11}
+$$
+
+where $[ \sigma _ { f } , l , \sigma _ { N } ] = \pmb { \theta }$ is the hyperparameter in the covariance function and $\delta ( x , x ^ { \prime } )$ is the Kronecker delta.
+
+According to (11), once θ in $k ( x , x ^ { \prime } )$ are determined, the unique covariance function can be determined. The maximum likelihood method is generally used to obtain a group of optimal hyperparameters by solving the maximum posteriori estimation of θ. According to the Bayesian principle
+
+$$
+p (\boldsymbol {\theta} | y, x) = \frac {p (y | x , \boldsymbol {\theta}) p (\boldsymbol {\theta})}{p (y , x)}. \tag {12}
+$$
+
+When $p ( \pmb \theta | y , x )$ is maximum, the estimate of $\pmb \theta$ is the maximum posterior estimate. Assuming that the prior distribution of θ is the uniform distribution, then
+
+$$
+\arg \max (p (\boldsymbol {\theta} | y, x)) \approx \arg \max (p (y | x, \boldsymbol {\theta}))
+$$
+
+$$
+\widehat {\boldsymbol {\theta}} = \arg \max (p (y | x, \boldsymbol {\theta})) \tag {13}
+$$
+
+where $\widehat { \pmb { \theta } }$ is an ideal hyperparameter set. Here, $p ( \boldsymbol { y } | \boldsymbol { x } , \pmb { \theta } )$ is the marginal likelihood. Hence, the maximum a posteriori estimation of $\pmb \theta$ is equivalent to the maximum likelihood estimation. The likelihood function can be expressed as
+
+$$
+L (\boldsymbol {\theta}) = \log p (y | x, \boldsymbol {\theta})
+$$
+
+$$
+= \frac {1}{2} y ^ {T} \boldsymbol {K} ^ {- 1} y + \frac {1}{2} \log | \boldsymbol {K} | + \frac {N}{2} \log 2 \pi . \tag {14}
+$$
+
+An ideal hyperparameter set $\widehat { \pmb { \theta } }$ of can be obtained by taking the derivative of θ in (14) and minimizing the partial derivative by a conjugate gradient method.
+
+Then, the predicted values $x _ { * }$ and $y _ { * }$ can be obtained by combining the historical data and (10) and (11). Finally, the short time-domain prediction trajectory $T r _ { S } ~ = ~ [ ( x _ { * } ( 1 )$ , $y _ { * } ( 1 ) ) , \ldots , ( x _ { * } ( 1 0 ) , y _ { * } ( 1 0 ) ) ]$ can be obtained by cycling ten times at an interval of 0.1 s.
+
+To verify the performance of the established GPR model, 500 left lane-changing trajectories, right lane-changing trajectories, and lane-keeping trajectories are extracted from the NGSIM database, and they are used to train the GPR model to obtain the prior distribution of parameters. Then, two groups of lane-changing trajectories A and B are randomly extracted from the NGSIM database for trajectory prediction (the sampling frequency is 10 Hz). In addition, in order to ensure the computational efficiency of the algorithm, the input data sequence length $N = 2 0$ is set and is used to predict the vehicle motion trajectory in the next 1 s. The final trajectory prediction results are shown in Fig. 3.
+
+According to the predicted trajectory in Fig. 3, it can be seen that the trajectory predicted based on GPR is relatively close to the actual trajectory within 1 s, but the two gradually separate as the prediction time increases. It can be seen from the prediction error that the error of different trajectories at different moments within 1 s is less than 0.5 m, but the prediction error of the trajectories increases exponential growth with time. The change in prediction error reflects the divergence features of GPR prediction over time, but in terms of prediction accuracy within 1 s, it meets the requirements of this article.
+
+![](images/8b0a908c6a4a9114f88c0ac45432862469252bf6a6e9e2ed1d2f687701632071.jpg)
+
+<details>
+<summary>line</summary>
+
+| Time(s) | Actual trajectory Y(m) | Predicted trajectory Y(m) | A: 0s History trajectory data | Short Time-domain (1s) | Short Time-domain (1s) | B: 0s History trajectory data | Short Time-domain (1s) | Short Time-domain (1s) | A(0.5s)-prediction error (m) | A(1s)-prediction error (m) | B(0.5s)-prediction error (m) | B(1s)-prediction error (m) |
+|---------|--------------------------|----------------------------|----------------------------------|------------------------|------------------------|----------------------------------|------------------------|------------------------|------------------------------|------------------------------|------------------------------|------------------------------|
+| 0.1     | -1.4                     | -1.4                       | ~-10                             | ~-10                   | ~-10                   | ~-1.4                            | ~-10                   | ~-10                   | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.2     | -1.3                     | -1.3                       | ~-9                              | ~-9                    | ~-9                    | ~-1.3                            | ~-9                    | ~-9                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.3     | -1.2                     | -1.2                       | ~-8                              | ~-8                    | ~-8                    | ~-1.2                            | ~-8                    | ~-8                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.4     | -1.1                     | -1.1                       | ~-7                              | ~-7                    | ~-7                    | ~-1.1                            | ~-7                    | ~-7                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.5     | -1.0                     | -1.0                       | ~-6                              | ~-6                    | ~-6                    | ~-1.0                            | ~-6                    | ~-6                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.6     | -0.9                     | -0.9                       | ~-5                              | ~-5                    | ~-5                    | ~-0.9                            | ~-5                    | ~-5                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.7     | -0.8                     | -0.8                       | ~-4                              | ~-4                    | ~-4                    | ~-0.8                            | ~-4                    | ~-4                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.8     | -0.7                     | -0.7                       | ~-3                              | ~-3                    | ~-3                    | ~-0.7                            | ~-3                    | ~-3                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 0.9     | -0.6                     | -0.6                       | ~-2                              | ~-2                    | ~-2                    | ~-0.6                            | ~-2                    | ~-2                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 1.0     | -0.5                     | -0.5                       | ~-1                              | ~-1                    | ~-1                    | ~-0.5                            | ~-1                    | ~-1                    | ~0                           | ~0                           | ~0                           | ~0                           |
+| 1.1     | -0.4                     | -0.4                       | >0                               | >0                     | >0                     | >-0                              | >0                     | >0                     | ~1                           | ~1                           | ~1                           | ~1                           |
+| 1.2     | -0.3                     | -0.3                       | >1                               | >1                     | >1                     | >-1                              | >1                     | >1                     | ~2                           | ~2                           | ~2                           | ~2                           |
+| 1.3     | -0.2                     | -0.2                       | >2                               | >2                     | >2                     | >2                               | >2                     | >2                     | ~3                           | ~3                           | ~3                           | ~3                           |
+| 1.4     | -0.1                     | -0.1                       | >3                               | >3                     | >3                     | >3                               | >3                     | >3                     | ~4                           | ~4                           | ~4                           | ~4                           |
+| 1.5     | 0                        | 0                          | >4                               | >4                     | >4                     | >4                               | >4                     | >4                     | ~5                           | ~5                           | ~5                           | ~5                           |
+Legend        A(0.5s)-prediction error
+      A(1s)-prediction error
+      B(0.5s)-prediction error
+      B(1s)-prediction error
+</details>
+
+Fig. 3. Results of trajectory prediction at different moments.
+
+2) Target Lateral Position Prediction of Surrounding Vehicles in Long Time Domain: Considering that the direct expression of the vehicle’s driving intention is its desired lateral position, the intention recognition part in the intention-planning prediction can be considered as a target lateral position prediction problem of vehicles. Meanwhile, since the driver or the intelligent system always tends to keep the vehicle running on the lane center line, the problem of predicting the target lateral position of vehicles can be further simplified to the selecting problem of the vehicle from lane i to lane $j .$ In this article, the lane-changing behavior is divided into three categories according to the different target lanes, namely, no lane changing $( | i - j | = 0 )$ , once lane changing $( | i - j | = 1 )$ , and twice lane changing $( | i - j | = 2 )$ . Among them, twice lane changing specifically refers to crossing two lanes without time lag between the end of first lane changing and the start of the second lane changing.
+
+Considering that the corresponding lateral velocity of vehicles under different lane-changing behaviors often has obvious differences, this article classifies the lane-changing behavior of vehicles by the lateral velocity. In addition, in order to represent the probability of different lane-changing behaviors, the SoftMax regression strategy is adopted in this article to classify the lane-changing behaviors of surrounding vehicles.
+
+Moreover, since the target lateral position prediction of vehicles is a typical Markov process [25], the state transition relationship between different lanes at moment t can be expressed as a Markov chain, and its state sequence $M S _ { t }$ is
+
+$$
+\left\{ \begin{array}{l} \boldsymbol {M} \boldsymbol {S} _ {t} = \left\{\dot {y} _ {t} ^ {1}, y _ {t} ^ {1}, P _ {t} ^ {1}; \dot {y} _ {t} ^ {2}, y _ {t} ^ {2}, P _ {t} ^ {2}; \dots ; \dot {y} _ {t} ^ {n a}, y _ {t} ^ {n a}, P _ {t} ^ {n a} \right\} \\ \sum_ {i} ^ {n a} P _ {t} ^ {i} = 1 \end{array} \right. \tag {15}
+$$
+
+where na is the number of lanes, $y _ { t } ^ { i }$ is the lateral position, $\dot { y } _ { t } ^ { i }$ is the lateral velocity, and $P _ { t } ^ { i }$ is the probability of the predicted vehicle on lane $i .$
+
+![](images/febe93a60c3e9f8e447f9d0ea8962f53d0ea22af7ef60c0c4a4385e4cc63f21b.jpg)
+
+<details>
+<summary>flowchart</summary>
+
+```mermaid
+graph TD
+    A["Input: Lateral position y"] --> B["Update the state transition matrix"]
+    C["Lateral velocity û"] --> B
+    D["State Transition Matrix: μ₀=0.165sgn(i-j),σ₀=0.161; μ₁=0.342sgn(i-j),σ₁=0.12; μ₂=0.517sgn(i-j),σ₂=0.114"] --> B
+    B --> E["Output State Transition Matrix: f(ŷ;μ₀,σₘ²)={f(ŷ;μ₀,σₘ²)},i-j=0; f(ŷ;μ₁,σ₁²),i-j=1; f(ŷ;μ₂,σ₂²),i-j=2"]
+```
+</details>
+
+Fig. 4. Update process of the state transition matrix.
+
+According to the predicted state of the vehicle at moment t, the state at moment t + 1 can be determined by the state transition matrix. Since the lateral velocity is directly related to the lane-changing behavior of the vehicle, the state transition matrix MT is set based on the lateral velocity in this article
+
+$$
+\boldsymbol {M} \boldsymbol {T} (\dot {\mathcal {Y}}) = \left[ \begin{array}{l l l} a _ {1 1} & a _ {1 2} & a _ {1 3} \\ a _ {2 1} & a _ {2 2} & a _ {2 3} \\ a _ {3 1} & a _ {3 2} & a _ {3 3} \end{array} \right] \tag {16}
+$$
+
+where $a _ { i j } \ ( i , \ j \ = \ 1 , 2 , 3 )$ represents the probability of the vehicle changing from lane i to lane j, which is expressed as
+
+$$
+a _ {i j} = P (\text { Lane } _ {t + 1} = j | \text { Lane } _ {t} = i). \tag {17}
+$$
+
+The state transition matrix in (16) is solved by using the SoftMax strategy. According to (16) and (17), a multiclassification model MC of lane-changing behavior is constructed
+
+$$
+M C _ {\varsigma} \left(\dot {y} ^ {i}\right) = \left[ \begin{array}{c} p \left(\text {Lane} ^ {i} = 1 \mid \dot {y}; \varsigma\right) \\ p \left(\text {Lane} ^ {i} = 2 \mid \dot {y}; \varsigma\right) \\ \vdots \\ p \left(\text {Lane} ^ {i} = n a \mid \dot {y}; \varsigma\right) \end{array} \right] = \frac {1}{\sum_ {j = 1} ^ {n a} e _ {j} ^ {r \dot {y} ^ {i}}} \left[ \begin{array}{c} e _ {1} ^ {\varsigma \dot {y} ^ {i}} \\ e _ {2} ^ {\varsigma \dot {y} ^ {i}} \\ \vdots \\ e _ {k} ^ {\varsigma \dot {y} ^ {i}} \end{array} \right] \tag {18}
+$$
+
+where $\varsigma$ is the parameter of the multiclassification model.
+
+In order to reduce the order of magnitude difference of calculation probability under different lane-changing behaviors, the exponential function in (18) is replaced by the Gaussian distribution function (GDF) and the Gaussian cumulative function (GCF) based on the lateral velocity y˙, which is expressed as
+
+$$
+f (\dot {y}, \mu , \sigma) = \frac {1}{\sigma \sqrt {2 \pi}} e ^ {- \frac {(\dot {y} - \mu) ^ {2}}{2 \sigma^ {2}}}
+$$
+
+$$
+F (\dot {y}, \mu , \sigma) = \frac {1}{\sigma \sqrt {2 \pi}} \int_ {- \infty} ^ {\dot {y}} e ^ {- \frac {(\dot {y} - \mu) ^ {2}}{2 \sigma^ {2}}} d \dot {y}. \tag {19}
+$$
+
+After determining MC and the initial state transition matrix, it is necessary to update the state transition matrix in every period to adapt to the dynamic environment, as shown in Fig. 4.
+
+To more accurately describe the transitional relationship between the two behaviors and ensure that the established MC model is more suitable for the actual driving situation. In this article, the trajectory data of no lane changing, once lane changing, and twice lane changing are extracted from the US-101 of NGSIM database. The dataset was collected on a straight expressway about 500 m long.
+
+![](images/ce503fb8de2f57fbc22572ddb0bbb102b87fa8f2ebbaa388a7137c0f4986e348.jpg)  
+Fig. 5. Lateral velocity distributions with different lane-changing behaviors. (a) No lane changing. (b) Once lane changing. (c) Twice lane changing.
+
+Then, GDF corresponding to different lane-changing behaviors can be obtained by statistics on the extracted trajectory data, as shown in Fig. 5. The update calculation of the state transition matrix can be expressed as
+
+$$
+\boldsymbol {M} \boldsymbol {T} _ {t + 1} (\dot {\mathbf {y}}) = \boldsymbol {M} \boldsymbol {T} _ {t} + f _ {t} \left(\dot {\mathbf {y}}; \mu_ {m}, \sigma_ {m} ^ {2}\right)
+$$
+
+$$
+a _ {i j} ^ {t + 1} (\dot {y}) = a _ {i j} ^ {t + 1} (\dot {y}) \Bigg / \sum_ {j = 1} ^ {n} a _ {i j} ^ {t + 1} (\dot {y})
+$$
+
+$$
+f _ {t} (\dot {y}; \mu_ {m}, \sigma_ {m} ^ {2}) = \left\{ \begin{array}{l l} f _ {t} (\dot {y}; \mu_ {0}, \sigma_ {0} ^ {2}), & | i - j | = 0 \\ f _ {t} (\dot {y}; \mu_ {1}, \sigma_ {1} ^ {2}), & | i - j | = 1 \\ f _ {t} (\dot {y}; \mu_ {2}, \sigma_ {2} ^ {2}), & | i - j | = 2 \end{array} \right. \tag {20}
+$$
+
+where MTt and $M T _ { t + 1 }$ are the state transition matrices at moment t and t +1, respectively, $\mu _ { m }$ and $\sigma _ { m } ^ { 2 }$ are the mean and variance of GDF, respectively, m is lane-changing behavior, and at +i j $a _ { i j } ^ { t + 1 }$ is the probability of the predicted vehicle changing from lane i to lane j at moment $t + 1$ .
+
+The state transition matrix is updated by using the obtained GDF. The input is the lateral velocity and position of surrounding vehicles, and the output is the corresponding probability of vehicle under different lane-changing behaviors. Assuming that the probability sequence of the vehicle on the lane i at moment t is $P S _ { t } ^ { i } .$ , the probability sequence that transforms to the lane j at moment t + 1 is
+
+$$
+\boldsymbol {P} \boldsymbol {S} _ {t + 1 | t} ^ {j} = a _ {i j} (\dot {\mathbf {y}}) \boldsymbol {P} \boldsymbol {S} _ {t} ^ {i}. \tag {21}
+$$
+
+Combining with the probability distribution result of lane-changing behavior at moment $t + 1$ obtained by (21) and the lateral position of the lane centerline corresponding to different target lanes, the target lateral position $y _ { t + 1 }$ of the predicted vehicle at moment t + 1 can be obtained
+
+$$
+y _ {t + 1} = \sum_ {j = 1} ^ {n} P S _ {t + 1 | t} ^ {j} \hat {y} ^ {j} \tag {22}
+$$
+
+where $\hat { y } ^ { j }$ is the lateral position of the lane centerline corresponding to lane $j .$
+
+3) Prediction Trajectory Generation Based on LSDF: According to the above, the target lateral position $y _ { e }$ of surrounding vehicles, the vehicle position $T r _ { S }$ in the next 1 s, and the initial state can be obtained, and the final predicted trajectory can be fit by fusing them. Considering that polynomial curves can generate smooth and continuous trajectories quickly and express the real trajectories better than Bezier and B-spline curves [26]. Thus, this article combines polynomial curves to generate the final predicted trajectories.
+
+4) Longitudinal Prediction: When generating the longitudinal trajectory, set the initial time $t _ { 0 } = 0$ , the process time node is $t _ { 1 } ~ \in ~ [ 1 , ~ 0 ]$ , and the end time $t _ { e } ~ \in ~ [ 1 , ~ t _ { \mathrm { m a x } } ] . ~ t _ { \mathrm { m a x } }$ is the maximum lane-changing time, mainly used to limit the execution time of the trajectory, usually set to $6 \mathrm { ~ s ~ } [ 2 6 ]$ . Then, the obtained long and short time-domain data are fused as constraints, and the quintic polynomial curve is used for fitting, which can be expressed as
+
+$$
+x (t) = \sum_ {i = 0} ^ {5} a _ {i} t ^ {i} \Leftarrow \left\{ \begin{array}{l l} x \left(t _ {0}\right) = x _ {0}, & v _ {x 0} = \frac {d x}{d t} \Big | _ {\left(t _ {0}, x _ {0}\right)} \\ a _ {0} = \left. \frac {d ^ {2} x}{d t ^ {2}} \right| _ {\left(t _ {0}, x _ {0}\right)}, & x \left(t _ {1}\right) = x _ {1} \\ v _ {x e} = \left. \frac {d x}{d t} \right| _ {\left(t _ {e}, x _ {e}\right)}, & a _ {x e} = 0 = \left. \frac {d ^ {2} x}{d t ^ {2}} \right| _ {\left(t _ {e}, x _ {e}\right)} \end{array} \right. \tag {23}
+$$
+
+where $a _ { i }$ is the polynomial coefficient, $i = ( 0 , 1 , 2 , \dots , 5 )$ . $x _ { 0 } , x _ { 1 }$ , and $x _ { e }$ are the longitudinal position of the vehicle at $t _ { 0 } ,$ $t _ { 1 } ,$ and $t _ { e } ,$ respectively. $v _ { x 0 } , \ v _ { x e }$ , and ax are the initial longitudinal velocity, endpoint longitudinal velocity, and endpoint longitudinal acceleration, respectively.
+
+5) Lateral Prediction: For lateral trajectory, it is necessary to change the constraints into corresponding lateral constraints by combining the obtained long and short time-domain data. Then, the quintic polynomial curve is also used for fitting
+
+$$
+y (t) = \sum_ {i = 0} ^ {5} b _ {i} t ^ {i} \Leftarrow \left\{ \begin{array}{l l} y \left(t _ {0}\right) = y _ {0}, & v _ {y 0} = \frac {d y}{d t} \Big | _ {\left(t _ {0}, y _ {0}\right)} \\ a _ {y 0} = \left. \frac {d ^ {2} y}{d t ^ {2}} \right| _ {\left(t _ {0}, y _ {0}\right)}, & y \left(t _ {1}\right) = y _ {1} \\ y \left(t _ {e}\right) = y _ {e}, & v _ {y e} = 0 = \left. \frac {d y}{d t} \right| _ {\left(t _ {e}, y _ {e}\right)} \end{array} \right. \tag {24}
+$$
+
+where $b _ { i }$ is the polynomial coefficient, $i = ( 0 , 1 , 2 , \ldots , 5 )$ . y0, $y _ { 1 }$ , and $y _ { e }$ are the lateral position of the vehicle at $t _ { 0 } , t _ { 1 } ,$ and $t _ { e } ,$ respectively. $v _ { y 0 } , \ v _ { y e } ,$ , and $a _ { y e }$ are the initial lateral velocity, endpoint lateral velocity, and endpoint lateral acceleration, respectively.
+
+6) Prediction Trajectory Selecting: According to (23) and (24), the motion states at the beginning, middle, and end can be defined in combination with the obtained long and short timedomain data. However, since the value of $t _ { e }$ is only constrained within a certain interval and cannot be further defined, the final result will be a series of candidate trajectories $\mathbf { \nabla } T r _ { L } \mathbf { \nabla } =$ $[ { \pmb T } { \pmb r } _ { L } ( 1 ) , { \pmb T } { \pmb r } _ { L } ( 2 ) , { \pmb T } { \pmb r } _ { L } ( 3 ) , \dots , { \pmb T } { \pmb r } _ { L } ( n ) ]$ , where n is the number of trajectories.
+
+In order to efficiently obtain the final predicted trajectory $T r ^ { * }$ and keep the future movement trend of the vehicle under the subjective driving intention of the driver. In this article, the obtained short time-domain prediction data $T r _ { S }$ are fused to select the final trajectory. First, the short time-domain data in the generated candidate prediction trajectories are extracted at a time interval of 0.1 s. Then, the extracted short time-domain trajectories $T r _ { L S }$ are compared with the $T r _ { S }$ . Finally, the predicted trajectory corresponding to the data sample with the lowest average deviation degree is selected as the final predicted trajectory Tr∗, as shown in Fig. 6. The final predicted trajectory can be expressed as
+
+![](images/f2f0c3058076c6677b7f70dacebe2550a76335e734c38a7b676b0cd2efd2c509.jpg)
+
+<details>
+<summary>line</summary>
+
+| x    | Candidate trajectory | Short time-domain trajectory | Prediction trajectory |
+| ---- | -------------------- | ---------------------------- | --------------------- |
+| 60   | 0.0                  | 0.0                          | 0.0                   |
+| 70   | 0.5                  | 0.5                          | 0.5                   |
+| 80   | 1.5                  | 1.5                          | 1.5                   |
+| 90   | 2.5                  | 2.5                          | 2.5                   |
+| 100  | 3.0                  | 3.0                          | 3.0                   |
+| 110  | 3.5                  | 3.5                          | 3.5                   |
+| 120  | 4.0                  | 4.0                          | 4.0                   |
+</details>
+
+Fig. 6. Screening process of the prediction trajectory.
+
+![](images/06afa63562ce9389176fbafbcc5f9ad2c1910a14cf3d1c2d75a0d285409702e8.jpg)  
+(a)
+
+![](images/5aec65b8bbd016088083e5b3ae38da8ad740df26be8dc5025786000293eb8164.jpg)
+
+![](images/00b09afe05dd1af08b6d59c9bbb8abcb5ec99917ec3802ee8058e51737f76473.jpg)
+
+![](images/51998bc547739aabd3dec333f152ffe40687bde41622f62d7ad87fb1f6bc17ca.jpg)  
+Fig. 7. Schematic of collision accident. (a) Frontal collision. (b) Rear-end collision. (c) Side collision. (d) Angular collision.
+
+$$
+\boldsymbol {T r} _ {L} = \left[ \boldsymbol {T r} _ {L} (1), \boldsymbol {T r} _ {L} (2), \boldsymbol {T r} _ {L} (3), \dots , \boldsymbol {T r} _ {L} (n) \right]
+$$
+
+$$
+\boldsymbol {T r} _ {L S} = \left[ \boldsymbol {T r} _ {L S} (1), \boldsymbol {T r} _ {L S} (2), \boldsymbol {T r} _ {L S} (3), \dots , \boldsymbol {T r} _ {L S} (n) \right]
+$$
+
+$$
+\boldsymbol {T r} ^ {*} = \boldsymbol {T r} _ {L} \left(\underset {i = 1, 2, \dots , n} {\arg \min} \frac {\sum_ {t _ {0}} ^ {t _ {0} + 1} \left| \boldsymbol {T r} _ {S} (t) - \boldsymbol {T r} _ {L S} (i) (t) \right|}{1 0}\right). \tag {25}
+$$
+
+# B. Omnidirectional Risk Assessment Model (ORA)
+
+After obtaining the future motion trajectory of surrounding vehicles, the driving risk of the ego vehicle can be expressed according to the relative position and relative speed of the ego vehicle and surrounding vehicles at each moment. In addition, considering that vehicle collision is the most common type of traffic accident, it is also the traffic accident with the highest mortality rate. Therefore, this article mainly considers the collision risk when establishing the risk model. At the same time, the existing literature shows that collision accidents between vehicles can be generally divided into four types according to the collision results after the accident [27], such as frontal collision, rear-end collision, side collision, and angular collision, as shown in Fig. 7.
+
+Existing collision risk models mainly include safety time model and safety distance model [28]. The safety time model determines the safety state of the vehicle by calculating the actual collision time between vehicles and comparing it with the determined threshold. A representative safety time model is the time to collision (TTC) model, which can be expressed as
+
+$$
+\mathrm{TTC} = \frac {\Delta X}{V _ {r}} = \frac {\Delta X}{V _ {e} - V _ {f}} \tag {26}
+$$
+
+where 1X is the longitudinal distance between vehicles, $V _ { r }$ is the relative speed between vehicles, $V _ { e }$ is the speed of the ego vehicle, and $V _ { f }$ is the vehicle speed of the vehicle ahead. It can be seen that (26) represents the collision time model between the ego vehicle and the vehicle ahead. To express the rear-end collision time model of the rear vehicle, it is only necessary to express $V _ { r }$ as $V _ { r } = V _ { f } - V _ { e }$ .
+
+![](images/abbdd7d135d9ab91ae54084b4e980be76232cc84ea96afe052d7c4f5ccf49ca7.jpg)
+
+<details>
+<summary>text_image</summary>
+
+Polar coordinates
+in relative space
+</details>
+
+Fig. 8. Polar coordinate system in relative space.
+
+However, it is not difficult to see from (26) that when the relative speed between vehicles is small, the model is difficult to express the actual collision risk.
+
+The safety distance model judges the safety state of the vehicle by comparing the actual distance between vehicles with the safety distance. A representative safety distance model is the time headway (THW) model, which can be expressed as
+
+$$
+\mathrm{THW} = \frac {\Delta X}{V _ {e}}. \tag {27}
+$$
+
+It can be seen from (27) that THW can solve the problem of collision risk expression when the relative vehicle speed is small. However, when the relative vehicle speed is high, the model cannot effectively express the collision risk.
+
+In addition, according to the above collision risk model, it is not difficult to find that TTC and THW mainly represent the types of frontal and rear collision and cannot effectively express the risks of side collision and angular collision. Meanwhile, they ignore the size information of the vehicle. Thus, it is necessary to expand and improve the above model so that it can effectively express collision accidents in different directions. Considering that the centroid distance between vehicles can largely represent the omnidirectional safety distance between vehicles, based on this, this article establishes a polar coordinate system in relative space with the ego vehicle centroid as the origin and the ego vehicle head orientation as the polar axis (as shown in Fig. 8). Then, the omnidirectional collision safety distance (OCSD) model is established based on the centroid distance between vehicles (28), as shown at the bottom of the next page, where O R is the centroid distance between the ego vehicle and surrounding vehicles. $O V _ { i }$ is the velocity of the surrounding vehicles in the direction connected to the centroid of the ego vehicle. $V _ { i }$ is the velocity of the surrounding vehicles, $V _ { e }$ is the velocity of the ego vehicle, and ϑ is the angle between the line connecting the surrounding vehicle’s centroid and the ego vehicle’s centroid and the polar axis (counterclockwise is positive). $( x _ { i } , \ y _ { i } )$ and $( x _ { e } , y _ { e } )$ are the centroid positions of the surrounding vehicle and the ego vehicle, respectively. $\varphi _ { i }$ and $\varphi _ { e }$ are the yaw angle of the surrounding vehicle and the ego vehicle, respectively. h is the selection function, and $g$ is the sign correction function. $L _ { e }$ and $W _ { e }$ are the length and width of the ego vehicle, respectively. $L _ { i }$ and $W _ { i }$ are the length and width of the surrounding vehicle, respectively.
+
+Similarly, based on the above polar coordinate system and the existing collision time model, an omnidirectional time to collision (OTTC) model can be established (29), as shown at the bottom of the next page, where $\Delta O V$ is the relative speed of the ego vehicle and surrounding vehicle on their centroid connection line.
+
+The above two models are expanded from the existing models. Although they can express the collision risks in different directions, they still retain the problems of the basic model. Thus, this article comprehensively uses OCSD and OTTC to build an ORA. Then, the collision risk is calculated by the predicted trajectory sequence of each surrounding vehicle in the predicted time domain $T _ { p }$ and the state sequence of the ego vehicle
+
+$$
+\xi \left(N _ {v}, T _ {p}\right) = \frac {1}{N _ {v}} \frac {\Delta T}{T _ {p}} \sum_ {k} ^ {N _ {v}} \sum_ {t} ^ {T _ {p}} \exp \left[ \rho^ {t} \left(\frac {\eta_ {\mathrm{OCSD}}}{\mathrm{OCSD} _ {k , t}} + \frac {\eta_ {\mathrm{OTTC}}}{\mathrm{OTTC} _ {k , t}}\right) \right] \tag {30}
+$$
+
+where $N _ { v }$ is the number of surrounding vehicles and $\Delta T$ is the sampling time. $\eta _ { \mathrm { O C S D } }$ and ηOTTC are weight factors. $\rho$ is the attenuation factor, which means that with the increase of the prediction time, the lower the reliability of the prediction point, the smaller the impact on the risk assessment of the current planning trajectory.
+
+In order to verify the effectiveness and superiority of the proposed ORA model, this article compares it with traditional SSMs, including TTC and THW, using typical cut-in scene as a reference. The speed of ego vehicle in the scene is 75 km/h, and the speed of environmental vehicle A is 65 km/h. It is worth noting that the ego vehicle brakes after vehicle A enters its lane for a period of time. The final result is shown in Fig. 9. It can be seen that traditional models have specific risk expressions only when vehicle A enters the lane, which makes the planned trajectory potentially risky. In addition, when the relative speed of the two cars before braking is relatively high, the risk expression of THW is relatively small. In the later stage of braking, the speed of the two cars is similar, and the distance between the cars is relatively close. At this time, the risk expression of TTC is too small. Based on the global performance, it can be seen that the proposed ORA not only effectively balances longitudinal and lateral risks but also has sensitivity to vehicle speed and distance.
+
+# III. PATH–SPEED DECOUPLING PLANNING BASED ONRISK COOPERATIVE GAME
+
+Based on fully understanding the changing trend of traffic environment, vehicle trajectory planning combined with future traffic risks can effectively improve the driving safety of autonomous vehicle. However, in the process of trajectory planning, it is also necessary to consider the path and speed coupling relationship of the trajectory and the need for the rationality of vehicle speed distribution. However, the interaction of path and speed may lose some computational efficiency, so it is necessary to ensure that the algorithm can support parallel computation to improve efficiency when implementing the interaction between the two. Therefore, in this section, the Frenet coordinate system is first used to decompose the position state of the intelligent vehicle into longitudinal displacement s parallel to the reference line and the lateral position offset $d$ perpendicular to the reference line. Then, aiming at the poor interaction and coordination of existing decoupling planning in a complex traffic environment, the planning problem in two directions is regarded as a cooperative game. The cooperative game planning is carried out with the environment risk as the cooperative optimization objective, and the coarse-grained path and speed set are obtained. Meanwhile, a path–speed coarse-grained decoupling planning method with time axis as the planning direction is proposed to realize parallel planning and reduce the solving time. Finally, the quadratic convex optimization method is used to optimize the coarse-grained trajectory and generate a fine-grained smooth trajectory that can be well executed and tracked by the vehicle.
+
+![](images/b4bd76b8e6c9f48fdb17476fed7baaa4efdcbddbd58c26a35a9660f650a1a94c.jpg)
+
+<details>
+<summary>line</summary>
+
+| X(m) | THW  | TTC  | ORA  | Ego vehicle | Vehicle A |
+|------|------|------|------|-------------|-----------|
+| 30   | 0.0  | 0.0  | 2.5  | 0.0         | 0.0       |
+| 40   | 0.0  | 0.0  | 3.5  | 0.0         | 0.0       |
+| 50   | 0.0  | 0.0  | 4.5  | 0.0         | 0.0       |
+| 60   | 0.0  | 0.0  | 5.5  | 0.0         | 0.0       |
+| 70   | 2.5  | 5.5  | 6.5  | 0.0         | 0.0       |
+| 80   | 3.5  | 6.5  | 7.5  | 0.0         | 0.0       |
+| 90   | 4.5  | 7.5  | 8.5  | 0.0         | 0.0       |
+| 100  | 5.5  | 8.5  | 9.5  | 0.0         | 0.0       |
+| 110  | 6.5  | 9.5  | 10.5 | 0.0         | 0.0       |
+</details>
+
+Fig. 9. Comparison of risk assessment models.
+
+# A. Coarse-Grained Path–Speed Decoupling Planning
+
+The trajectory planning problem in the traditional Cartesian coordinate system needs to consider about seven dimensions, which makes the planning problem very complicated. In the Frenet coordinate system, the lateral planning can be independent of the road shape only if the road reference line is determined. In longitudinal planning, the speed can also be reasonably allocated according to the discrete path sampling points and the predicted obstacle trajectory. The variable dimensions that need to be calculated in the planning process are greatly reduced [29].
+
+Hence, in this section, the Frenet coordinate system is used to decouple the lateral and longitudinal directions of the intelligent vehicle. The road geometry is considered to plan the path in the lateral direction. The speed is allocated based on each path point in the longitudinal direction.
+
+1) Lateral Path Planning: Considering that only one of the candidate trajectories will be selected for fine-grained optimization to get the final trajectory, it can be seen that in the process of generating candidate trajectories, fine-grained planning is unnecessary. Thus, in order to enhance planning efficiency, this section divides the initial state $\pmb { D } _ { s }$ and the end state $D _ { e }$ into a series of target points $\scriptstyle { \pmb { D } } _ { t }$ at equal intervals, and the planning period T is divided at an interval of 0.5s. $T = t _ { e } \ - \ t _ { s }$ is mainly used to constrain the execution time of the trajectory. Usually, the execution time of lane-changing trajectory is within $t _ { \mathrm { m a x } } ,$ but considering that the trajectory will be replanned at a fixed frequency (10 Hz), an excessively long planning period is not only detrimental to solving efficiency but also leads to missed lane-changing timing. Therefore, this article sets $T = t _ { \mathrm { m a x } } / 2$ to improve planning efficiency and lane-changing success rate. According to the state of each $\scriptstyle { \pmb { D } } _ { t }$ , the lateral path can be determined by planning from $\pmb { D } _ { s }$ to $D _ { e }$ . Considering the flatness of polynomial curves can increase the robustness of lane-changing trajectory [26]. Therefore, the quintic polynomial is used for path planning, and the path planning from $\pmb { D } _ { s }$ to the $p \mathrm { t h }$ target endpoint $\boldsymbol { D } _ { t , p }$ is expressed as
+
+$$
+d (t) = a _ {d _ {0}} + a _ {d _ {1}} t + a _ {d _ {2}} t ^ {2} + a _ {d _ {3}} t ^ {3} + a _ {d _ {4}} t ^ {4} + a _ {d _ {5}} t ^ {5}. \tag {31}
+$$
+
+According to the constraints between the initial state $\pmb { D } _ { s } =$ $[ d _ { s } , \dot { d } _ { s } , \ddot { d } _ { s } ]$ and the target state $\begin{array} { r } { \pmb { D } _ { t , p } = [ d _ { t , p } , \dot { d } _ { t , p } , \ddot { d } _ { t , p } ] . } \end{array}$ , the coefficients $[ { a _ { d } } _ { 0 } , { a _ { d } } _ { 1 } , { a _ { d } } _ { 2 } , { a _ { d } } _ { 3 } , { a _ { d } } _ { 4 } , { a _ { d } } _ { 5 } ]$ of the quintic polynomial can be solved
+
+$$
+\begin{array}{l} a _ {d _ {0}} = d _ {s}, \quad a _ {d _ {1}} = \dot {d} _ {s}, a _ {d _ {2}} = \ddot {d} _ {s} / 2 \\ \left[ \begin{array}{c c c} T ^ {3} & T ^ {4} & T ^ {5} \\ 3 T ^ {2} & 4 T ^ {3} & 5 T ^ {4} \\ 6 T & 1 2 T ^ {2} & 2 0 T ^ {3} \end{array} \right] \times \left[ \begin{array}{c} a _ {d _ {3}} \\ a _ {d _ {4}} \\ a _ {d _ {5}} \end{array} \right] \\ = \left[ \begin{array}{c} d _ {t, p} - \left(d _ {s} + \dot {d} _ {s} T + 0. 5 \ddot {d} _ {s} T ^ {2}\right) \\ \dot {d} _ {t, p} - \left(\dot {d} _ {s} + \ddot {d} _ {s} T\right) \\ \ddot {d} _ {t, p} - \ddot {d} _ {s} \end{array} \right]. \tag {32} \\ \end{array}
+$$
+
+2) Longitudinal Speed Planning: In the speed planning, the initial state $S _ { s }$ and the final state $S _ { e }$ are also divided into a series of target end points $S _ { t }$ at equal intervals. The target speed interval is obtained after the maximum acceleration and deceleration T s at the initial speed. The planning period T is also divided at an interval of 0.5 s. The difference with path planning is that the target state and polynomial coefficient
+
+$$
+\mathrm{OCSD} = \frac {O R}{O V _ {i}} = \frac {\sqrt {(x _ {i} - x _ {e}) ^ {2} + (y _ {i} - y _ {e}) ^ {2}} - \left(\sqrt {L _ {e} ^ {2} + W _ {e} ^ {2}} + \sqrt {L _ {i} ^ {2} + W _ {i} ^ {2}}\right) / 2}{h (x _ {i} - x _ {e}) \times V _ {e} \cos \vartheta + (1 - h (x _ {i} - x _ {e})) \times g (\vartheta) \times V _ {i} \cos (\vartheta + \varphi_ {e} - \varphi_ {i})}
+$$
+
+$$
+h \left(x _ {i} - x _ {e}\right) = \left\{ \begin{array}{l l} 0, & x _ {i} - x _ {e} <   0 \\ 1, & x _ {i} - x _ {e} \geq 0 \end{array} \quad g (\vartheta) = \left\{ \begin{array}{l l} 1, & \vartheta + \varphi_ {e} - \varphi_ {i} > p i / 2 \\ - 1, & \vartheta + \varphi_ {e} - \varphi_ {i} <   p i / 2 \end{array} \right. \right. \tag {28}
+$$
+
+$$
+\mathrm{OTTC} = \frac {O R}{\Delta O V} = \frac {\sqrt {(x _ {i} - x _ {e}) ^ {2} + (y _ {i} - y _ {e}) ^ {2}} - \left(\sqrt {L _ {e} ^ {2} + W _ {e} ^ {2}} + \sqrt {L _ {i} ^ {2} + W _ {i} ^ {2}}\right) / 2}{V _ {e} \cos (\vartheta) + g (\vartheta) \times V _ {i} \cos (\vartheta + \varphi_ {e} - \varphi_ {i})}
+$$
+
+$$
+g (\vartheta) = \left\{ \begin{array}{l l} 1, & \vartheta + \varphi_ {e} - \varphi_ {i} > p i / 2 \\ - 1, & \vartheta + \varphi_ {e} - \varphi_ {i} <   p i / 2 \end{array} \right. \tag {29}
+$$
+
+![](images/103a6771b95866330adfb7cd9bbb9f1051fb35fae31fc716c736b16611ad8d1b.jpg)
+
+<details>
+<summary>line</summary>
+
+| t(s) | d(m) - Line 1 | d(m) - Line 2 | d(m) - Line 3 | d(m) - Line 4 | d(m) - Line 5 | d(m) - Line 6 | d(m) - Line 7 | d(m) - Line 8 | d(m) - Line 9 | d(m) - Line 10 | s(m/s²) - Line 1 | s(m/s²) - Line 2 | s(m/s²) - Line 3 | s(m/s²) - Line 4 | s(m/s²) - Line 5 | s(m/s²) - Line 6 | s(m/s²) - Line 7 | s(m/s²) - Line 8 | s(m/s²) - Line 9 | s(m/s²) - Line 10 |
+|------|----------------|----------------|----------------|----------------|----------------|----------------|----------------|----------------|----------------|-----------------|-------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-------------------|-------------------|
+| 0.0  | 6.0            | 6.0            | 6.0            | 6.0            | 6.0            | 6.0            | 6.0            | 6.0            | 6.0            | 6.0             | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              | 25.0              |
+| 0.5  | 6.5            | 6.5            | 6.5            | 6.5            | 6.5            | 6.5            | 6.5            | 6.5            | 6.5            | 6.5             | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              | 24.0              |
+| 1.0  | 7.0            | 7.0            | 7.0            | 7.0            | 7.0            | 7.0            | 7.0            | 7.0            | 7.0            | 7.0             | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              | 23.0              |
+| 1.5  | 7.5            | 7.5            | 7.5            | 7.5            | 7.5            | 7.5            | 7.5            | 7.5            | 7.5            | 7.5             | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              | 22.0              |
+| 2.0  | 8.0            | 8.0            | 8.0            | 8.0            | 8.0            | 8.0            | 8.0            | 8.0            | 8.0            | 8.0             | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              | 21.0              |
+| 2.5  | 8.5            | 8.5            | 8.5            | 8.5            | 8.5            | 8.5            | 8.5            | 8.5            | 8.5            | 8.5             | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              | 19.5              |
+| 3.0  | 9.0            | 9.0            | 9.0            | 9.0            | 9.0            | 9.0            | 9.0            | 9.0            | 9.0            | 9.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             | -19.0             |
+| t(%) = .1, .2, .3, .4, .6, .8, .10, .12, .14, .16, .18, .2, .3, .4, .6, .8, .10, .12, .14, .16, .18, .2, .3, .4, .6, .8, .10, .14, .16, .18, .2, .3, .4, .6, .8, .14, .16, .18, .2, .3, .4, .6, .8, .14, .16, .18, .2, .3, .4, .6, .8, .14, .16, .18, .2, .3, .4, .6, .8, .14, .16, .18, .2, .3<nl>
+</details>
+
+Fig. 10. Coarse-grained candidate trajectories of path and speed.
+
+![](images/22bbc633656d98a708910eedd4944a7d74a5eb2d2171fa1120574150361ba88d.jpg)
+
+<details>
+<summary>flowchart</summary>
+
+```mermaid
+graph TD
+    A["Surrounding vehicle"] --> B["Ego vehicle"]
+    B --> C["Longitudinal speed s"]
+    C --> D["Lateral offset d"]
+    D --> E["Minimum safe distance S_safe"]
+    style A fill:#f9f,stroke:#333
+    style B fill:#ccf,stroke:#333
+    style C fill:#cff,stroke:#333
+    style D fill:#ffc,stroke:#333
+    style E fill:#cfc,stroke:#333
+```
+</details>
+
+Fig. 11. Path–speed decoupling planning diagram.
+
+solution matrix of velocity planning have changed
+
+$$
+a _ {s _ {0}} = s _ {s}, \quad a _ {s _ {1}} = \dot {s} _ {s}
+$$
+
+$$
+a _ {s _ {2}} = \ddot {s} _ {s} / 2, \quad a _ {s _ {3}} = s _ {t, q} / 6
+$$
+
+$$
+\left[ \begin{array}{c c} 4 T ^ {3} & 5 T ^ {4} \\ 1 2 T ^ {2} & 2 0 T ^ {3} \end{array} \right] \times \left[ \begin{array}{l} a _ {s _ {4}} \\ a _ {s _ {5}} \end{array} \right] = \left[ \begin{array}{c} \dot {s} _ {e} - \left(\dot {s} _ {s} + \ddot {s} _ {s} T + 0. 5 s _ {s} T ^ {2}\right) \\ \ddot {s} _ {e} - \left(\ddot {s} _ {s} + s _ {s} T\right) \end{array} \right]. \tag {33}
+$$
+
+The parameters of vehicle start state, end state, and different nodes are input into the path and speed planning model to generate coarse-grained candidate trajectories of path and speed, as shown in Fig. 10.
+
+# B. Coarse-Grained Trajectory Screening Based on Risk Cooperative Game
+
+The decoupling planning of path and speed in Section III-A can greatly reduce the solution dimension and improve the planning efficiency. However, in some complex environments, because decoupling planning only considers lateral and longitudinal individual constraints, it cannot be flexibly adjusted according to the driving environment. Therefore, decoupling planning often leads to the lack of safety or smoothness of the synthesized trajectory [16].
+
+As shown in Fig. 11, when the ego vehicle (red vehicle) is driving, the black vehicle in front of it is driving slowly, and the blue vehicle on the side is approaching. After judging the safe distance, the conditions for lane changing are met, and then, lane changing is carried out. According to the risk value and the minimum safety distance, the safe area of the lane-changing point is given in the figure. During the path–speed decoupling planning, the obstacle considered in the path planning is the black vehicle in front of the lane. According to the constraint conditions and safety requirements, the path planning should be away from the black vehicle as far as possible to ensure the safety constraints of the path. For the speed planning of the path, because the blue vehicle is approaching at this time, the appropriate deceleration avoidance is more appropriate. However, for the scenario in Fig. 11, deceleration will cause the lane-changing entry point to move back to point B, which makes the overall trajectory closer to the blue vehicle behind the side, and thus, the overall collision risk value is higher. However, in fact, if the subsequent speed allocation can be considered in the path planning, although the path may be closer to the black vehicle, it will be lower in terms of overall risk. At the same time, because the safety interval is larger, the ego vehicle may not need to perform uncomfortable deceleration action to complete the lane changing.
+
+In view of this, this article regards path and speed planning as a strategy adopted by two agents. They have independent goals and can coordinate with each other to control the time to reach the lane line. Thus, the trajectory screening problem can be regarded as a cooperative game process considering risk. Then, the interaction of path planning and speed planning is realized by means of the cooperative game between the two to make up for the shortcomings of the existing serial decoupling planning.
+
+According to the classification conditions of the existing game process, it can be seen that the game problem studied in this article belongs to the type of two-player static cooperative game [30], [31]. When selecting trajectories based on game theory, the trajectories combined with the obtained lateral position point set and the longitudinal speed point set should be regarded as a whole for cooperative game. Hence, the principle of game optimal solution is defined as that the planning tasks in two directions meet their respective constraints. At the same time, the two directions are required to cooperate with each other to ensure the minimum risk value of the synthesized trajectory.
+
+In view of this, the object of collaborative game strategy optimization is the objective priority sequence of the two planning modules. The final goal is to minimize the risk of the synthesized trajectory. Hence, the optimization function of lateral path planning is designed as follows:
+
+$$
+C _ {d, p} = \left\{ \begin{array}{l l} K _ {T} T + K _ {d} G (d) + K _ {\xi} \dot {d} _ {s}, & \xi_ {f} <   \xi_ {r} \\ K _ {T} T + K _ {d} G (d) + K _ {\xi} / \dot {d} _ {s}, & \xi_ {f} > \xi_ {r} \end{array} \right.
+$$
+
+$$
+G (d) = \rho \times \left(d - d _ {\text { goal }}\right) / \left\| d - d _ {\text { goal }} \right\| \tag {34}
+$$
+
+where $G ( d )$ represents the degree of proximity to the target endpoint $d _ { \mathrm { g o a l } }$ , which refers to the center position of the lane on the side with the lowest average risk value among all feasible trajectories. $\xi _ { f }$ and $\xi _ { r }$ are the front and side-rear collision risks, respectively. $K _ { T } , \ K _ { d } ,$ , and $K _ { \xi }$ are the weight values corresponding to different elements. Among them, $K _ { d }$ is a time function, which increases with the passage of time nodes to ensure that the trajectory finally reaches the target point. $K _ { \xi }$ is affected by both collision risk and time, and it is initially determined by the collision risk. At this time, adjusting the geometry of the trajectory is the main goal. However, as time goes on, the value of $K _ { \xi }$ decreases, and the main goal becomes to reach the target endpoint. The functional form of $K _ { d }$ and $K _ { \xi }$ is given as follows:
+
+$$
+K _ {d} = a _ {d} \cdot \exp (0. 5 m)
+$$
+
+$$
+K _ {\xi} = a _ {\xi} \cdot \exp (| \xi_ {f} - \xi_ {r} | / 0. 5 m) \tag {35}
+$$
+
+where $a _ { d }$ and $a _ { \xi }$ are the initial constant values and m is the node in the planning period, $m = 1 , 2 , \ldots , T / 0 . 5$ .
+
+![](images/4e63f9112ad68d8d0e58aa65d836ab9bd495a1f7791b2e80bef96f2128be36dd.jpg)
+
+<details>
+<summary>line</summary>
+
+| s(m) | d(m) - Solid Blue | d(m) - Dashed Black |
+|------|-------------------|---------------------|
+| 60   | 5.5               | 8.0                 |
+| 80   | 6.0               | 7.5                 |
+| 100  | 7.0               | 6.0                 |
+| 120  | 8.0               | 5.0                 |
+| 140  | 8.5               | 4.5                 |
+| 160  | 9.0               | 4.0                 |
+</details>
+
+![](images/6cb9b1138778fe34dcf88ca0521fb509bd8b2bd7ffe0ae8fb291ac308a9e4fce.jpg)
+
+<details>
+<summary>line</summary>
+
+| s(m) | d(m) - Series 1 | d(m) - Series 2 | d(m) - Series 3 | d(m) - Series 4 |
+|------|-----------------|-----------------|-----------------|-----------------|
+| 60   | 5.0             | 5.0             | 5.0             | 8.0             |
+| 80   | 6.0             | 6.0             | 6.0             | 8.0             |
+| 100  | 7.0             | 7.0             | 7.0             | 8.0             |
+| 120  | 8.0             | 8.0             | 8.0             | 8.0             |
+| 140  | 8.0             | 8.0             | 8.0             | 8.0             |
+| 160  | 8.0             | 8.0             | 8.0             | 8.0             |
+</details>
+
+![](images/aa96e04367984882e908b9bdb44ceb4516a206046d931fa051cc4ea0ac1304bc.jpg)
+
+<details>
+<summary>line</summary>
+
+| t(s) | s (m/s) - Series 1 | s (m/s) - Series 2 |
+|---|---|---|
+| 0.0 | 25 | 25 |
+| 0.5 | 24 | 26 |
+| 1.0 | 23 | 27 |
+| 1.5 | 22 | 28 |
+| 2.0 | 21 | 29 |
+| 2.5 | 20 | 30 |
+| 3.0 | 20 | 31 |
+</details>
+
+![](images/dd9df176599213f25dfcf094a1a97ce6a1baedd5fba32963c240b4f56a8fa1ae.jpg)
+
+<details>
+<summary>line</summary>
+
+| t(s) | ṡ (m/s) |
+|------|---------|
+| 0.0  | 25.0    |
+| 0.5  | 26.0    |
+| 1.0  | 28.0    |
+| 1.5  | 30.0    |
+| 2.0  | 31.0    |
+| 2.5  | 31.5    |
+| 3.0  | 32.0    |
+</details>
+
+![](images/3149de08a6fc0c744d8deb6d3af15c4efac4207d39e71aa1ced3aa156d653dce.jpg)
+
+<details>
+<summary>line</summary>
+
+| t(s) | s (m/s²) |
+|------|----------|
+| 0    | 0        |
+| 0.5  | -5       |
+| 1    | -5       |
+| 1.5  | 0        |
+| 2    | 0        |
+| 2.5  | 0        |
+| 3    | 0        |
+</details>
+
+![](images/9ccd0ec56aa13e7dbcd96419318a8b846c121ed9023416f39d4d9439c94a4efe.jpg)
+
+<details>
+<summary>line</summary>
+
+| t(s) | s̃ (m/s²) |
+|------|----------|
+| 0.0  | 0.0      |
+| 0.5  | 2.5      |
+| 1.0  | 4.0      |
+| 1.5  | 3.0      |
+| 2.0  | 0.0      |
+| 2.5  | 0.0      |
+| 3.0  | 0.0      |
+</details>
+
+Fig. 12. Screening results of candidate trajectories. (a) Selected coarse-grained trajectory in scenario where $\xi _ { f } > \xi _ { r } . ( \mathsf { b } )$ Longitudinal velocity in scenario where $\xi _ { f } > \xi _ { r }$ . (c) Longitudinal acceleration in scenario where $\xi _ { f } ~ > ~ \xi _ { r } . ~ ( \mathrm { d } )$ Selected coarse-grained trajectory in scenario where $\xi _ { f } ~ <$ < ξr . (e) Longitudinal velocity in scenario where $\xi _ { f } ~ < ~ \xi _ { r } . ~ ( \mathrm { f } )$ Longitudinal acceleration in scenario where $\xi _ { f } \ : < \xi _ { r }$ .
+
+Similarly, the optimization function corresponding to the speed planning is designed as
+
+$$
+C _ {s, p} = \left\{ \begin{array}{l l} K _ {T} T + K _ {d} G (s) + K _ {\xi} / \ddot {s} _ {s}, & \xi_ {f} <   \xi_ {r} \\ K _ {T} T + K _ {d} G (s) + K _ {\xi} \ddot {s} _ {s}, & \xi_ {f} > \xi_ {r} \end{array} \right.
+$$
+
+$$
+G (s) = \rho \times \frac {s _ {s} - s _ {e}}{\| s _ {s} - s _ {e} \|} \tag {36}
+$$
+
+where G(s) is the speed expectation, and in this article, it represents the speed change at the beginning and the end.
+
+Finally, the optimization functions in the two directions are integrated into the overall objective linked by the environmental risk value, which is used as the objective function to search for a safe coarse-grained trajectory, including path and speed
+
+$$
+\underset {s, d} {\arg \min} C = k _ {d} C _ {d, p} + k _ {s} C _ {s, p}. \tag {37}
+$$
+
+After obtaining coarse-grained candidate trajectories in Section III-A, the trajectories are screened by using the objective function (37). The trajectory with the smallest objective function value at time a is selected as the optimal trajectory.
+
+Fig. 12 shows the path–speed planning results of different scenarios. Fig. 12(a)–(c) represents the scenario where $\xi _ { f } >$ $\xi _ { r } ,$ , and Fig. 12(d)–(f) represents the scenario where $\xi _ { f } < \xi _ { r }$ . Among them, the blue curve represents the candidate trajectory set, the black dashed line represents the environmental vehicle trajectory, and the green and red curves are the planned trajectory under different situations of the ego vehicle. As shown by the red curve in Fig. 12(a)–(c), when the front collision risk is high, the planned trajectory will change to the target lane with a small longitudinal distance as far as possible. In this process, the deceleration lane-changing speed curve is selected to ensure safety. Meanwhile, in order to ensure efficiency, the minimum speed loss is selected while ensuring safety based on (36). As shown by the green trajectory in Fig. 12(d)–(f), when the rear collision risk is high, the final screened trajectory characteristics are just opposite to the red trajectory. In order to avoid collision with the rear vehicle, the planned trajectory tends to accelerate lane changing. It can be seen that the proposed method can well adjust the path geometry and speed according to the driving environment and improve the overall safety of the synthesized trajectory.
+
+# C. Fine-Grained Optimization of Coarse-Grained Trajectory
+
+The preliminary coarse-grained trajectory planning is completed in Section III-B, which can flexibly adapt to the surrounding environment by considering the cooperative relationship of risks in the longitudinal and lateral directions. However, to improve the calculation efficiency, the obtained path and speed point set at this time cannot be tracked. Moreover, the requirements of kinematics constraints, track smoothness, and comfort are not considered. It only obtains a feasible trajectory that meets certain requirements. Therefore, it is necessary to further optimize and adjust the trajectory in consideration of the above constraints to generate a smooth trajectory that can be well executed and tracked by the control module.
+
+1) Description of Trajectory Convex Optimization Problem: In this article, after the trajectory planning and screening in the previous text, the trajectory planning problem in this article has been transformed from a global nonconvex space to a local convex space. Then, the trajectory optimization problem can be transformed into a convex optimization problem. It refers to an optimization problem where the objective function and constraints are convex functions and the solution space is a convex set [32], [33]. Meanwhile, by adding the starting point, endpoint position and their derivative constraints, continuity constraints, and boundary conditions, the objective function can be reasonably constructed to optimize the path and speed point set of the coarse-grained trajectory. Thus, this article adopts the quadratic programming method in convex optimization to optimize the coarse-grained path and speed set selected in Section III-B.
+
+2) Design of Optimization Objectives and Constraints:
+
+Quadratic programming problem is a special form of convex optimization. When the objective function is quadratic and the constraint function is linear, the convex optimization problem can be transformed into a quadratic optimization problem. Its general form is
+
+$$
+\min \frac {1}{2} x ^ {T} \boldsymbol {P} x + \boldsymbol {q} ^ {T} x + r
+$$
+
+$$
+\text { s.t.   } l \_ \text { bound } \leq A x \leq u \_ \text { bound } \tag {38}
+$$
+
+where x is the optimization variable, P is the positive definite matrix, representing the coefficient matrix of the objective function, and A is the coefficient matrix of the constraint function. l\_bound and u\_bound are the upper and lower boundary, respectively, and q is the coefficient matrix.
+
+During trajectory smoothing, for the smoothing of the path point set, the optimization variable $x _ { d }$ is d and its first and second derivatives; for the smoothing of the speed point set, the optimization variable $x _ { s }$ is s and its first and second derivatives, which are expressed as
+
+$$
+\boldsymbol {x} _ {d} = \left[ \begin{array}{c c c c c c c c} x _ {d, 0} & \dots & x _ {d, n - 1} & \dot {x} _ {d, 0} & \dots & \dot {x} _ {d, n - 1} & \ddot {x} _ {d, 0} & \dots & \ddot {x} _ {d, n - 1} \end{array} \right] ^ {T}
+$$
+
+$$
+\boldsymbol {x} _ {s} = \left[ x _ {s, 0} \dots x _ {s, n - 1} \dot {x} _ {s, 0} \dots \dot {x} _ {s, n - 1} \ddot {x} _ {s, 0} \dots \ddot {x} _ {s, n - 1} \right] ^ {T} \tag {39}
+$$
+
+where n is the number of generated coarse-grained discrete points of path and speed, so the dimension of the optimization problem is 3n.
+
+The objective function is used to adjust the position of optimization variables in combination with constraints. Thus, the representation of the objective function is given as follows:
+
+$$
+\begin{array}{l} \min Z (x) = \omega_ {x} \sum_ {i = 0} ^ {n - 1} x _ {i} ^ {2} + \omega_ {d x} \sum_ {i = 0} ^ {n - 1} \dot {x} _ {i} ^ {2} + \omega_ {d d x} \sum_ {i = 0} ^ {n - 1} \ddot {x} _ {i} ^ {2} \\ + \omega_ {d d d x} \sum_ {i = 0} ^ {n - 1} x _ {i} ^ {2} + \omega_ {\text { ref }} \sum_ {i = 0} ^ {n - 1} (x _ {i} - x _ {\text { ref } _ {i}}) ^ {2} \tag {40} \\ \end{array}
+$$
+
+where $x _ { i } , ~ { \dot { x } } _ { i } , ~ { \ddot { x } } _ { i } ,$ and $x _ { i } .$ , respectively, represent the lateral (longitudinal) positions of vehicle and their first, second, and third derivatives. $x _ { i } \mathrm { ~ - ~ } x _ { \mathrm { r e f } \_ i }$ represent the deviation of the optimization variable from the coarse-grained trajectory. $\omega _ { x } , \omega _ { d x } , \omega _ { d d x }$ , and $\omega _ { d d d x }$ represent the weights of the corresponding optimization variable $x _ { i }$ and its first, second, and third derivatives, respectively. $\omega _ { \mathrm { r e f } }$ represents the weight of the deviation between the lateral (longitudinal) position and the coarse-grained trajectory in the objective function.
+
+In order to calculate the above quadratic programming problem and minimize the objective function, it is necessary to constrain the optimization variables. The constraint function mainly considers the following four aspects.
+
+1) Combined boundaries of lane lines and obstacles in the Frenet coordinate system
+
+$$
+l \_ \text { bound } _ {i} \leq x _ {i} \leq u \_ \text { bound } _ {i}. \tag {41}
+$$
+
+2) Kinematic constraints for speed and acceleration
+
+$$
+\dot {x} _ {i} \leq v _ {i, \max}, \quad - a _ {i, \max} \leq \ddot {x} _ {i} \leq a _ {i, \max} \tag {42}
+$$
+
+where $v _ { i , \mathrm { m a x } }$ and $a _ { i , \operatorname* { m a x } }$ are the upper boundary of speed and acceleration, respectively.
+
+3) Continuity constraints for path and speed point sets. For path optimization, the distance $\Delta s$ between adjacent points needs to be constrained
+
+$$
+\begin{array}{l} d _ {i + 1} - d _ {i} - \Delta s \cdot \dot {d} _ {i} - \frac {1}{3} \Delta s ^ {2} \cdot \ddot {d} _ {i} - \frac {1}{6} \Delta s ^ {2} \cdot \ddot {d} _ {i + 1} = 0 \\ \dot {d} _ {i + 1} - \dot {d} _ {i} - \frac {1}{2} \cdot \Delta s \cdot \ddot {d} _ {i} - \frac {1}{2} \cdot \Delta s \cdot \ddot {d} _ {i + 1} = 0. \tag {43} \\ \end{array}
+$$
+
+For speed optimization, the time interval $\Delta t$ for speed needs to be constrained
+
+$$
+\begin{array}{l} s _ {i + 1} - s _ {i} - \Delta t \cdot \dot {s} _ {i} - \frac {1}{3} \Delta t ^ {2} \cdot \ddot {s} _ {i} - \frac {1}{6} \Delta t ^ {2} \cdot \ddot {s} _ {i + 1} = 0 \\ \dot {s} _ {i + 1} - \dot {s} _ {i} - \frac {1}{2} \cdot \Delta t \cdot \ddot {s} _ {i} - \frac {1}{2} \cdot \Delta t \cdot \ddot {s} _ {i + 1} = 0. \tag {44} \\ \end{array}
+$$
+
+4) Initial point constraints for path and speed
+
+$$
+x _ {0} = \boldsymbol {x} _ {\text { init }} [ 0 ], \quad \dot {x} _ {0} = \boldsymbol {x} _ {\text { init }} [ 1 ], \ddot {x} _ {0} = \boldsymbol {x} _ {\text { init }} [ 2 ]. \tag {45}
+$$
+
+To solve the above convex optimization problem, the operator splitting quadratic program (OSQP) is chosen. OSQP is a quadratic programming numerical optimizer. Its input is the objective function coefficient matrix $P , q ,$ the coefficient matrix A of the constraint function, and the upper and lower boundary matrix l\_bound and u\_bound. Its output is the value of each optimization variable.
+
+According to the five optimization subobjectives in the objective function, the input coefficient matrix P of the OSQP solver is calculated as
+
+$$
+\boldsymbol {P} = 2 \left[ \begin{array}{c c c} \left(\omega_ {x} + \omega_ {\text {ref}}\right) \cdot \boldsymbol {I} _ {n \times n} & 0 & 0 \\ 0 & \omega_ {d x} \cdot \boldsymbol {I} _ {n \times n} & 0 \\ 0 & 0 & \boldsymbol {P} _ {0} \end{array} \right] \tag {46}
+$$
+
+where ${ \cal I } _ { n \times n }$ is the $n \times n$ unit matrix and $P _ { 0 }$ is the optimization weight corresponding to the optimization variable x¨, which can be expressed as (47), shown at the bottom of the next page.
+
+The coefficient matrix $\pmb q$ is
+
+$$
+\boldsymbol {q} = - 2 \left[ \begin{array}{c} \omega_ {\text { ref }} \cdot \boldsymbol {I} _ {n \times 1} \\ 0 \\ 0 \end{array} \right] _ {3 n \times 1}. \tag {48}
+$$
+
+Combined with the trajectory optimization problem in this article, A can be expressed as
+
+$$
+\boldsymbol {A} = \left[ \begin{array}{c c c c c c c c} \boldsymbol {I} _ {n \times n} & & & & \boldsymbol {A} _ {0} & \boldsymbol {A} _ {4} & & \\ & \boldsymbol {I} _ {n \times n} & & \boldsymbol {A} _ {0} & \boldsymbol {A} _ {2} & & \boldsymbol {A} _ {4} & \\ & & \boldsymbol {I} _ {n \times n} & \boldsymbol {A} _ {0} & \boldsymbol {A} _ {1} & \boldsymbol {A} _ {3} & & \boldsymbol {A} _ {4} \end{array} \right] ^ {T} \tag {49}
+$$
+
+where
+
+$$
+\boldsymbol {A} _ {0} = \left[ \begin{array}{c c c c c c} - 1 & 1 & 0 & \dots & 0 & 0 \\ 0 & - 1 & 1 & \ddots & 0 & 0 \\ 0 & 0 & 0 & \dots & - 1 & 1 \end{array} \right] _ {(n - 1) \times n}
+$$
+
+$$
+\boldsymbol {A} _ {1} = - \frac {\Delta s}{2} \left[ \begin{array}{c c c c c c} 1 & 1 & 0 & \dots & 0 & 0 \\ 0 & 1 & 1 & \ddots & 0 & 0 \\ 0 & 0 & 0 & \dots & 1 & 1 \end{array} \right] _ {(n - 1) \times n}
+$$
+
+$$
+\boldsymbol {A} _ {2} = - \Delta s \cdot \boldsymbol {I} _ {(n - 1) \times n}
+$$
+
+$$
+\boldsymbol {A} _ {3} = - \frac {(\Delta s) ^ {2}}{6} \left[ \begin{array}{c c c c c c} 2 & 1 & 0 & \dots & 0 & 0 \\ 0 & 2 & 1 & \ddots & 0 & 0 \\ 0 & 0 & 0 & \dots & 2 & 1 \end{array} \right] _ {(n - 1) \times n}, \quad \text { and }
+$$
+
+$$
+\boldsymbol {A} _ {4} = \left[ \begin{array}{c c c c} 1 & 0 & \dots & 0 \end{array} \right] _ {1 \times n}.
+$$
+
+# IV. SIMULATION AND ANALYSIS
+
+For verifying the effectiveness of the LSDF and DP-RCG proposed in this article, on the one hand, this section selects several real trajectory data to verify the trajectory prediction algorithm. On the other hand, this section analyzes the trajectory planning process of intelligent vehicles by setting different working conditions and compares it with existing trajectory planning methods.
+
+Meanwhile, consider that DP-RCG aims to generate an optimal trajectory that meets the requirements of real time, smoothness, and dynamic constraints in a high-speed and complex dynamic traffic environment. Thus, combined with the actual road scene, this article selects the multivehicle scene and the cut-in scene on the expressway as the simulation conditions. In addition, the proposed method is verified and analyzed by setting different initial vehicle speeds, longitudinal distances, and the initial states of surrounding vehicles. The main simulation parameters are shown in Table I.
+
+TABLE I MAIN SIMULATION PARAMETERS 
+
+<table><tr><td>Parameters</td><td>Value</td><td>Unit</td></tr><tr><td>Road width</td><td>3.5</td><td>m</td></tr><tr><td>Number of road lanes</td><td>3</td><td>/</td></tr><tr><td>Acceleration range</td><td>[-5 5]</td><td> $m/s^2$ </td></tr><tr><td>Prediction time-domain</td><td>3</td><td>s</td></tr><tr><td>Planning time-domain</td><td>3</td><td>s</td></tr><tr><td>Risk threshold</td><td>15</td><td>/</td></tr></table>
+
+# A. Verification of Trajectory Prediction Algorithm
+
+For verifying the effectiveness and accuracy of the proposed method, four left lane change trajectories are randomly selected from the extracted lane change trajectories for final validation in this article. At the same time, in order to compare the advantages of the algorithm, some samples are extracted to train the long short-term memory model (LSTM) as a comparison method [17].
+
+Moreover, to quantitatively analyze the prediction results, it is necessary to establish evaluation indicators. Considering that the main evaluation index in trajectory prediction is geometric measurement, the average displacement error (ADE) and the final displacement error (FDE) are selected as the evaluation indexes in this article. The expressions of both are
+
+$$
+\mathrm{ADE} = \frac {1}{k} \sum_ {i = 1} ^ {k} \sqrt {\left[ x _ {a} (i) - x _ {p} (i) \right] ^ {2} + \left[ y _ {a} (i) - y _ {p} (i) \right] ^ {2}}
+$$
+
+$$
+\mathrm{FDE} = \sqrt {\left[ x _ {a} (k) - x _ {p} (k) \right] ^ {2} + \left[ y _ {a} (k) - y _ {p} (k) \right] ^ {2}} \tag {50}
+$$
+
+where k is the number of discrete points on the trajectory, $( x _ { a } ,$ $y _ { a } )$ is the position of the actual trajectory, and $( x _ { p } , y _ { p } )$ is the position of the predicted trajectory.
+
+Fig. 13 shows the comparison results of LSDF and LSTM. As shown in Fig. 13(a), compared with the LSTM method, the predicted trajectories of the proposed LSDF method are almost consistent with the actual trajectories. According to Fig. 13(b), it can be seen that ADE and FDE of the proposed LSDF method remain at a relatively low level. The average ADE and FDE of the 100 predicted results are 0.981 and 1.148 m, respectively, which are reduced by 16.79% and 24.72% compared to the LSTM method. In addition, from the standard deviation of the prediction results, it can be seen that the proposed method not only improves the prediction accuracy to a certain extent but also improves its prediction stability by more than 50%. Hence, the results show that the proposed prediction method can accurately and effectively predict the motion trajectory of surrounding vehicles.
+
+![](images/94e62ff892ea34824aa4d712bd17782eac8df9e9a475ec636bd158200951bde0.jpg)
+
+<details>
+<summary>line</summary>
+
+| X(m) | Actual trajectory (Y(m)) | LSTM trajectory (Y(m)) | LSDF trajectory (Y(m)) |
+|------|---------------------------|------------------------|------------------------|
+| 60   | 0                         | 0                      | 0                      |
+| 70   | 0                         | 0                      | 0                      |
+| 80   | 2                         | 2                      | 2                      |
+| 90   | 4                         | 4                      | 4                      |
+| 100  | 5                         | 5                      | 5                      |
+| 110  | 0                         | 0                      | 0                      |
+| 120  | 0                         | 0                      | 0                      |
+| 130  | 0                         | 0                      | 0                      |
+| 140  | 0                         | 0                      | 0                      |
+| 150  | 1                         | 1                      | 1                      |
+| 160  | 2                         | 2                      | 2                      |
+| 170  | 3                         | 3                      | 3                      |
+| 180  | 4                         | 4                      | 4                      |
+| 190  | 5                         | 5                      | 5                      |
+| 200  | 5                         | 5                      | 5                      |
+| 210  | 5                         | 5                      | 5                      |
+| 220  | 5                         | 5                      | 5                      |
+</details>
+
+![](images/ea82464d5bec6cb6047f6b019cba12dd556d4b8cfd309847bcfd2d0674e055c8.jpg)
+
+<details>
+<summary>scatter</summary>
+
+| Model | Metric | μ (m) | σ (m) |
+|---|---|---|---|
+| LSDF | ADE | 0.981 | 0.214 |
+| LSTM | ADE | 1.179 | 0.522 |
+| LSDF | FDE | 1.148 | 0.259 |
+| LSTM | FDE | 1.525 | 0.649 |
+</details>
+
+Fig. 13. Comparison results of LSDF and LSTM. (a) Partial trajectory prediction results. (b) Comparison of ADE and FDE for all trajectory predictions.
+
+![](images/f68f605a86d218d0afd841d25af07cd07108222d131e11e6f31e7117379dd938.jpg)
+
+<details>
+<summary>bar_line</summary>
+
+| Chart | Label | Description |
+|-------|-------|-------------|
+| (a)   | A     | Vertical displacement in s-space |
+| (a)   | B     | Vertical displacement in s-space |
+| (a)   | C     | Vertical displacement in s-space |
+| (b)   | Vehicle A | Horizontal line at 10.5 m/s |
+| (b)   | Vehicle B | Horizontal line at 10.5 m/s |
+| (b)   | Vehicle C | Horizontal line at 10.5 m/s |
+| (c)   | Vehicle A | Horizontal line at 10.5 m/s |
+| (c)   | Vehicle B | Horizontal line at 10.5 m/s |
+| (c)   | Vehicle C | Horizontal line at 10.5 m/s |
+| (d)   | Vehicle A | Horizontal line at 10.5 m/s |
+| (d)   | Vehicle B | Horizontal line at 10.5 m/s |
+| (d)   | Vehicle C | Horizontal line at 10.5 m/s |
+| (e)   | Vehicle A | Horizontal line at 10.5 m/s |
+| (e)   | Vehicle B | Horizontal line at 10.5 m/s |
+| (e)   | Vehicle C | Horizontal line at 10.5 m/s |
+| (f)   | Coarse-grained longitudinal velocity | Linear trend from 20 to 28 m/s |
+| (g)   | Fine-grained longitudinal acceleration | Linear trend from 0 to 5 m/s² |
+| (h)   | Coarse-grained longitudinal acceleration | Linear trend from 0 to 5 m/s² |
+| (i)   | Fine-grained longitudinal acceleration | Linear trend from 0 to 5 m/s² |
+</details>
+
+Fig. 14. Simulation results of multivehicle scene. (a) Scene diagram. (b) Candidate trajectory. (c) Average risk of trajectory meeting safety constraint. (d) Coarse-grained trajectory planning result. (e) Fine-grained trajectory optimization result. (f) Longitudinal velocity. (g) Longitudinal acceleration.
+
+# B. Verification of Trajectory Planning Algorithm in Multivehicle Scenario
+
+As shown in Fig. 14(a), it is a scene diagram of multivehicle scene. The ego vehicle runs normally in the middle lane at a speed of 20 m/s, and its initial position is (55 m, 5.25 m) in the Frenet coordinate system. Meanwhile, there are vehicles
+
+$$
+\boldsymbol {P} _ {0} = \left[ \begin{array}{c c c c c} \frac {- 2 \cdot \omega_ {d d d x}}{(\Delta s) ^ {2}} & \omega_ {d d x} + \frac {\omega_ {d d d x}}{(\Delta s) ^ {2}} & 0 & \dots & 0 \\ 0 & \frac {- 2 \cdot \omega_ {d d d x}}{(\Delta s) ^ {2}} & \vdots & \vdots & \vdots \\ \vdots & 0 & \ddots & \ddots & \vdots \\ 0 & \dots & \dots & \frac {- 2 \cdot \omega_ {d d d x}}{(\Delta s) ^ {2}} & \omega_ {d d x} + \frac {\omega_ {d d d x}}{(\Delta s) ^ {2}} \end{array} \right] \tag {47}
+$$
+
+![](images/557ae0b14b4cadfc94226bd264b52db82a2ef65e0e3876835615e768974bbff2.jpg)  
+Fig. 15. Planning results of different planning methods under the mutivehicle scene.
+
+running in the front left, front right, and rear right of the ego vehicle, which are recorded as A, B, and C. The initial speeds of the three vehicles are 15, 18, and 20 m/s, respectively, and the initial positions are (60 m, 8.75 m), (80 m, 5.25 m), and (50 m, 1.75 m). At this time, the ego vehicle can perform left lane changing, following, or right lane changing.
+
+As shown in Fig. 14(b)–(g), the trajectory planning results in the normal multivehicle scene. It can be seen from Fig. 14(b) and (c) that the generated candidate trajectories include different left lane-changing, lane keeping, and right lane-changing trajectories, but only a small number of trajectories meet the safety requirements under risk constraints. In addition, the overall objective function values of the left lane-changing candidate trajectories and the lane keeping candidate trajectories are higher than those of the right lane-changing candidate trajectories. It can be seen that the right lane changing will achieve the best benefits at this time. According to Fig. 14(d)–(g), the coarse-grained trajectory (red curve in the figure) finally selected is one of the candidate trajectories for right lane changing, and acceleration planning is selected. It can also be seen from the scene that accelerating to change lane to the right can not only improve the traffic efficiency but also ensure that collision with other vehicles can be avoided in this process. It can be seen that the proposed DP-RCG method can select the optimal driving trajectory according to the scene.
+
+Moreover, according to the red curves in Fig. 14(e)–(g), compared with the screened coarse-grained trajectory, the optimized path, speed, and acceleration trajectory are smoother and can meet the needs of control modules.
+
+In order to further verify the advantages of the proposed DP-RCG, this article selects the traditional coupled trajectory planning method (CP) [11] and the decoupling planning method (DP) [13] as the comparison methods and simulates the proposed method and the two comparison methods under multivehicle working conditions. The final planning results of different planning methods are shown in Fig. 15. In addition, it is worth noting that the cost functions of the different methods here are not the objective functions of this article but are formulated according to important trajectory performance. Generally, safety, traffic efficiency, and comfort are the most important factors for trajectory planning, so a unified cost function CF is formulated in this article by combining trajectory risk, speed loss, and trajectory jerk. For CF, the smaller the value, the higher the quality of the trajectory solved. CF can be expressed as
+
+$$
+C F = w _ {1} \xi + w _ {2} G (s) + w _ {3} \sum_ {t} ^ {T} \ddot {s} _ {t} / T. \tag {51}
+$$
+
+![](images/2523aa169f01dbde4252e244b20be1c0b9bae419b55689959649b00fe1aac820.jpg)  
+Fig. 16. Simulation results of cut-in scene. (a) Scene diagram. (b) Candidate trajectory. (c) Average risk of trajectory meeting safety constraint. (d) Coarse– grained trajectory planning result. (e) Fine-grained trajectory optimization result. (f) Longitudinal velocity. (g) Longitudinal acceleration.
+
+It can be seen from Fig. 15 that different planning methods can ultimately obtain a relatively safe trajectory, in which the CF value of CP is 2.573, DP is 5.7721, and DP-RCG is 0.6139. Compared with CP, the CF value of the proposed DP-RCG is only 1/4 of it, which means that the income of DP-RCG is four times that of CP. Compared with DP, the CF value of the proposed DP-RCG is only 1/9 of it, which means that the income of DP-RCG is nine times that of DP. According to the comparison of different planning methods, the proposed DP-RCG can obtain the best planning income under the same scenario, with lower risk and better traffic efficiency and comfort. In addition, it is worth noting that the objective functions of DP and CP methods are not adjusted in this article. The cost during comparison is calculated by substituting the trajectory parameters after their planning into CF, which not only retains the characteristics of the comparison algorithm but also enables the comparison experiment to be quantified.
+
+# C. Verification of Trajectory Planning Algorithm in Cut-In Scenario
+
+As shown in Fig. 16(a), it is a scene diagram of cut-in scene. The ego vehicle runs normally in the middle lane at a speed of 25 m/s, and its initial position is (60 m, 5.25 m) in the Frenet coordinate system. Meanwhile, there are vehicles running in the front left and front right of the ego vehicle, which are recorded as C and D. The initial speeds of the two vehicles are 20 m/s, and the initial positions are (70 m, 8.75 m) and (90 m, 1.75 m). It is worth noting that vehicle D is changing lanes to the lane where the ego vehicle is located. According to the scene, if the ego vehicle does not take action, it may collide with vehicle D. At this time, the ego vehicle can choose to change lanes or slow down to avoid collision.
+
+As shown in Fig. 16(b)–(g), the trajectory planning results under the cut-in scene. According to Fig. 16(b) and (c), different driving trajectories are also included in the generated candidate trajectories. After risk constraint, the objective function value of most of the left lane-changing candidate trajectories in the remaining few safety trajectories is at a very low level, which means that the benefit of left lane changing is the highest. According to Fig. 16(d)–(g), the coarse-grained trajectory (red curve in the figure) finally selected is one of the candidate trajectories for left lane changing, and deceleration planning is selected. It can also be seen from the scene that although part of the vehicle speed is lost when decelerating to change lanes on the left, the overall income is better, and the traffic efficiency is better, which is consistent with the expected trajectory of most drivers in this scene. Moreover, according to the red curves in Fig. 16(e)–(g), the optimized path, speed, and acceleration trajectory are smoother and can meet the needs of control modules. This further verifies the effectiveness of the proposed DP-RCG method.
+
+![](images/d710860350aff6a6517c08388c8edf413e12ab4a48d0dfaa13163f39b64eb73e.jpg)
+
+<details>
+<summary>line</summary>
+
+| Method   | s(m)  | d(m)  |
+| -------- | ----- | ----- |
+| CP       | 100   | 1.75  |
+| CP       | 150   | 5.25  |
+| CP       | 200   | 8.75  |
+| DP       | 100   | 1.75  |
+| DP       | 150   | 5.25  |
+| DP       | 200   | 8.75  |
+| DP-RCG   | 100   | 1.75  |
+| DP-RCG   | 150   | 5.25  |
+| DP-RCG   | 200   | 8.75  |
+</details>
+
+Fig. 17. Planning results of different planning methods under the cut-in scene.
+
+![](images/fae2f31173b302e938e8dad678c6056d6846da443cf4bc230e3ce72466a2e8ea.jpg)
+
+<details>
+<summary>line</summary>
+
+| Number of running | CP   | DP   | DP-RCG |
+| ----------------- | ---- | ---- | ------ |
+| 0                 | 134  | 80   | 60     |
+| 5                 | 120  | 90   | 70     |
+| 10                | 130  | 85   | 65     |
+| 15                | 125  | 95   | 60     |
+| 20                | 130  | 110  | 75     |
+</details>
+
+Fig. 18. Actual running time of different planning methods under the same working condition.
+
+Similar to the multivehicle working condition, this study compared different planning methods, and the results are shown in Fig. 17. It can be seen that different planning methods adopt different driving trajectories in the same scene. They are all effective, but the proposed DP-RCG has the lowest CF value, which means that it can achieve the best gain.
+
+In addition, in order to verify the advantages of DP-RCG in planning efficiency. In this article, different planning methods are run for many times under the same equipment and working conditions, and their average running time is recorded, which is used as an evaluation index to compare the planning efficiency of different methods. The final running results are shown in Fig. 18. According to Fig. 18, the average running time of CP is 134 ms, DP is 95 ms, and DP-RCG is 65 ms. Compared with the existing CP and DP methods, the DP-RCG improves the planning efficiency by 51.5% and 31.6%, respectively, with obvious efficiency advantages.
+
+# V. CONCLUSION
+
+In this study, a path–speed DP-RCG is proposed. To obtain the future motion state of surrounding vehicles, a vehicle trajectory prediction method based on LSDF is proposed. It ensures the accuracy of trajectory prediction in a long time domain and also solves the problem of high-speed misalignment of kinematic model. Aiming at the problem of risk assessment, an ORA is established. The collision model is extended in all directions, which improves the accuracy of environmental risk expression. After obtaining the environmental risk, this article carries out coarse-grained decoupling planning for the path and speed in the Frenet coordinate system, which reduces the complexity of the planning module. Meanwhile, in view of the poor interactivity of path–speed decoupling planning in a complex environment, the two planning modules of path and speed are regarded as independent agents in this article, and the collaborative game planning method considering the risk of the environment is designed, which reduces the risk of the synthesized trajectory. After the coarse-grained trajectory is selected, the multiconstraint optimization method is used to optimize the coarse-grained trajectory, which ensures the smoothness, comfort, and executability of the final trajectory. The simulation results show that DP-RCG can plan the optimal driving trajectory according to the environment. At the same time, compared with the existing CP and DP, DP-RCG can obtain better planning benefits, and the planning efficiency is improved by 51.5% and 31.6%, respectively.
+
+In the future, the subsequent trajectory tracking control will be implemented, and the proposed DP-RCG will be backward optimized according to the actual vehicle tracking performance to ensure the reliability and stability of the method in practical applications.
+
+# REFERENCES
+
+[1] C. You, J. Lu, D. Filev, and P. Tsiotras, “Autonomous planning and control for intelligent vehicles in traffic,” IEEE Trans. Intell. Transp. Syst., vol. 21, no. 6, pp. 2339–2349, Jun. 2020.   
+[2] S. Li, Z. Li, Z. Yu, B. Zhang, and N. Zhang, “Dynamic trajectory planning and tracking for autonomous vehicle with obstacle avoidance based on model predictive control,” IEEE Access, vol. 7, pp. 132074–132086, 2019.   
+[3] N. M. Negash and J. Yang, “Anticipation-based autonomous platoon control strategy with minimum parameter learning adaptive radial basis function neural network sliding mode control,” SAE Int. J. Vehicle Dyn., Stability, NVH, vol. 6, no. 3, pp. 247–266, Apr. 2022.   
+[4] H. Zhang, C. Liu, and W. Zhao, “Segmented trajectory planning strategy for active collision avoidance system,” Green Energy Intell. Transp., vol. 1, no. 1, Jun. 2022, Art. no. 100002.   
+[5] S. A. Goll, S. S. Luksha, V. S. Leushkin, and A. G. Borisov, “Unmanned ground vehicle local trajectory planning algorithm,” in Proc. 5th Medit. Conf. Embedded Comput. (MECO), Bar, Bar, Montenegro, Jun. 2016, pp. 317–321.   
+[6] F. Bounini, D. Gingras, H. Pollart, and D. Gruyer, “Modified artificial potential field method for online path planning applications,” in Proc. IEEE Intell. Vehicles Symp. (IV), Jun. 2017, pp. 180–185.   
+[7] S. J. Anderson, S. B. Karumanchi, and K. Iagnemma, “Constraint-based planning and control for safe, semi-autonomous operation of vehicles,” in Proc. IEEE Intell. Vehicles Symp., Jun. 2012, pp. 383–388.   
+[8] B. Paden, M. Cáp, S. Z. Yong, D. Yershov, and E. Frazzoli, “A survey of motion planning and control techniques for self-driving urban vehicles,” IEEE Trans. Intell. Vehicles, vol. 1, no. 1, pp. 33–55, Mar. 2016.   
+[9] X. Qu, D. Pi, L. Zhang, and C. Lv, “Advancements on unmanned vehicles in the transportation system,” Green Energy Intell. Transp., vol. 2, no. 3, Jun. 2023, Art. no. 100091.   
+[10] N. Wahid, H. Zamzuri, M. A. A. Rahman, S. Kuroda, and P. Raksincharoensak, “Study on potential field based motion planning and control for automated vehicle collision avoidance systems,” in Proc. IEEE Int. Conf. Mechatronics (ICM), Feb. 2017, pp. 208–213.   
+[11] A. Vinayak, M. A. Zakaria, K. Baarath, and A. P. P. A. Majeed, “A novel Bezier curve control point search algorithm for autonomous navigation using N-order polynomial search with boundary conditions,” in Proc. IEEE Int. Intell. Transp. Syst. Conf. (ITSC), Sep. 2021, pp. 3884–3889.   
+[12] D. Zhao and W. Huang, “Improved path planning algorithm based on RRT algorithm and quintic B-spline curve,” in Proc. IEEE 11th Data Driven Control Learn. Syst. Conf. (DDCLS), Chengdu, China, Aug. 2022, pp. 183–188.   
+[13] W. Lim, S. Lee, M. Sunwoo, and K. Jo, “Hybrid trajectory planning for autonomous driving in on-road dynamic scenarios,” IEEE Trans. Intell. Transp. Syst., vol. 22, no. 1, pp. 341–355, Jan. 2021.
+
+[14] Y. Meng, Y. Wu, Q. Gu, and L. Liu, “A decoupled trajectory planning framework based on the integration of lattice searching and convex optimization,” IEEE Access, vol. 7, pp. 130530–130551, 2019.   
+[15] Y. Liu et al., “Dynamic lane-changing trajectory planning for autonomous vehicles based on discrete global trajectory,” IEEE Trans. Intell. Transp. Syst., vol. 23, no. 7, pp. 8513–8527, Jul. 2022.   
+[16] C. Miller, C. Pek, and M. Althoff, “Efficient mixed-integer programming for longitudinal and lateral motion planning of autonomous vehicles,” in Proc. IEEE Intell. Vehicles Symp. (IV), Changshu, China, Jun. 2018, pp. 1954–1961.   
+[17] M. Schreier, V. Willert, and J. Adamy, “An integrated approach to maneuver-based trajectory prediction and criticality assessment in arbitrary road environments,” IEEE Trans. Intell. Transp. Syst., vol. 17, no. 10, pp. 2751–2766, Oct. 2016.   
+[18] Y. Jiang, B. Zhu, S. Yang, J. Zhao, and W. Deng, “Vehicle trajectory prediction considering driver uncertainty and vehicle dynamics based on dynamic Bayesian network,” IEEE Trans. Syst. Man, Cybern. Syst., vol. 53, no. 2, pp. 689–703, Feb. 2023.   
+[19] J. Kong, M. Pfeiffer, G. Schildbach, and F. Borrelli, “Kinematic and dynamic vehicle models for autonomous driving control design,” in Proc. IEEE Intell. Vehicles Symp. (IV), Jun. 2015, pp. 1094–1099.   
+[20] Z. Hao, X. Huang, K. Wang, M. Cui, and Y. Tian, “Attention-based GRU for driver intention recognition and vehicle trajectory prediction,” in Proc. 4th CAA Int. Conf. Veh. Control Intell. (CVCI), Hangzhou, China, Dec. 2020, pp. 86–91.   
+[21] H. Peng and X. Chen, “Active safety control of X-by-wire electric vehicles: A survey,” SAE Int. J. Vehicle Dyn., Stability, NVH, vol. 6, no. 2, pp. 115–133, Jan. 2022.   
+[22] G. Xie, H. Gao, L. Qian, B. Huang, K. Li, and J. Wang, “Vehicle trajectory prediction by integrating physics- and maneuver-based approaches using interactive multiple models,” IEEE Trans. Ind. Electron., vol. 65, no. 7, pp. 5999–6008, Jul. 2018.   
+[23] H. Huang, Y. Song, X. Peng, S. X. Ding, W. Zhong, and W. Du, “A sparse nonstationary trigonometric Gaussian process regression and its application on nitrogen oxide prediction of the diesel engine,” IEEE Trans. Ind. Informat., vol. 17, no. 12, pp. 8367–8377, Dec. 2021.   
+[24] E. Schulz, M. Speekenbrink, and A. Krause, “A tutorial on Gaussian process regression: Modelling, exploring, and exploiting functions,” J. Math. Psychol., vol. 85, pp. 1–16, Aug. 2018.   
+[25] S. A. Goli, B. H. Far, and A. O. Fapojuwo, “Vehicle trajectory prediction with Gaussian process regression in connected vehicle environment⋆,” in Proc. IEEE Intell. Vehicles Symp. (IV), Suzhou, China, Jun. 2018, pp. 550–555.   
+[26] Y. Wang, C. Wang, W. Zhao, and C. Xu, “Decision-making and planning method for autonomous vehicles based on motivation and risk assessment,” IEEE Trans. Veh. Technol., vol. 70, no. 1, pp. 107–120, Jan. 2021.   
+[27] H. Suzuki, T. Ishikura, and Y. Marumo, “Mitigation of rear-end collision risk based on intent inference of preceding car’s deceleration behavior,” in Proc. 2nd IEEE Int. Conf. Intell. Transp. Eng. (ICITE), Singapore, Sep. 2017, pp. 194–197.   
+[28] T. Kondoh, T. Yamamura, S. Kitazaki, N. Kuge, and E. R. Boer, “Identification of visual cues and quantification of drivers’ perception of proximity risk to the lead vehicle in car-following situations,” J. Mech. Syst. Transp. Logistics, vol. 1, no. 2, pp. 170–180, 2008.   
+[29] S. Khaitan, Q. Lin, and J. M. Dolan, “Safe planning and control under uncertainty for self-driving,” IEEE Trans. Veh. Technol., vol. 70, no. 10, pp. 9826–9837, Oct. 2021.   
+[30] S. Pan, Y. Wang, and K. Wang, “A game theory-based model predictive controller for mandatory lane change of multiple vehicles,” in Proc. 4th CAA Int. Conf. Veh. Control Intell. (CVCI), Hangzhou, China, Dec. 2020, pp. 731–736.   
+[31] M. Garzón and A. Spalanzani, “Game theoretic decision making for autonomous vehicles’ merge manoeuvre in high traffic scenarios,” in Proc. IEEE Intell. Transp. Syst. Conf. (ITSC), Oct. 2019, pp. 3448–3453.   
+[32] Y. Zha, X. Quan, F. Ma, G. Liu, X. Zheng, and M. Yu, “Stability control for a four-wheel-independent-drive electric vehicle based on model predictive control,” SAE Int. J. Vehicle Dyn., Stability, NVH, vol. 5, no. 2, pp. 191–204, Mar. 2021.   
+[33] P. Scheffe, T. M. Henneken, M. Kloock, and B. Alrifaee, “Sequential convex programming methods for real-time optimal trajectory planning in autonomous vehicle racing,” IEEE Trans. Intell. Vehicles, vol. 8, no. 1, pp. 661–672, Jan. 2023, doi: 10.1109/TIV.2022.3168130.
+
+![](images/863bdd16f8eb02771ec4b5f0231f9f101d7b9c1e79f0cea7b930ecfc71240c80.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait photo of a young man in a light blue collared shirt against a solid blue background (no text or symbols visible)
+</details>
+
+Ziyu Zhang received the B.S. degree in vehicle engineering from the Nanjing University of Aeronautics and Astronautics, Nanjing, China, in 2019, where he is currently pursuing the Ph.D. degree with the Department of Vehicle Engineering.
+
+His research interests include man–machine cooperative driving and vehicle system dynamics.
+
+![](images/dfb4a41d3d1fc0f65b045652fda60365b0142af546cfe58ac00b223274d3dd89.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait of a woman with short black hair and glasses against a blue background (no text or symbols visible)
+</details>
+
+Chunyan Wang received the Ph.D. degree in mechanical engineering from Jilin University, Changchun, China, in 2008.
+
+She is currently a Professor with the Department of Vehicle Engineering, Nanjing University of Aeronautics and Astronautics, Nanjing, China. Her research interests include vehicle system dynamics.
+
+![](images/811c2365206d9c862df12fc1fa4f527b168fe99f89cded2b169afe29fd57b16f.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait of a man wearing glasses and a suit against a blue background (no text or symbols visible)
+</details>
+
+Wanzhong Zhao received the Ph.D. degree in vehicle engineering from the Beijing Institute of Technology, Beijing, China, in 2009.
+
+He is currently a Professor with the Department of Vehicle Engineering, Nanjing University of Aeronautics and Astronautics, Nanjing, China. His research interests include vehicle system dynamics.
+
+![](images/34f63c1e8cface90d243201ba37b9bf5b11ebb35e1c6d30c1d32eae735b124d6.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait of a woman in formal attire against a blue background (no visible text or symbols)
+</details>
+
+Mingchun Cao received the B.S. degree in vehicle engineering from the Nanjing University of Aeronautics and Astronautics, Nanjing, China, in 2021, where she is currently pursuing the Ph.D. degree with the Department of Vehicle Engineering.
+
+Her research interests include motion prediction and trajectory planning of intelligent vehicle.
+
+![](images/fb4124fa5e8eafad429b9a1aa67d48bde2357fad4195317bdc370da01c25bedb.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait photo of a man in formal suit and tie against blue background (no text or symbols visible)
+</details>
+
+Jinqiang Liu received the B.S. degree in aerocraft power engineering from the Nanjing University of Aeronautics and Astronautics, Nanjing, China, in 2019, where he is currently pursuing the Ph.D. degree in mechanical engineering.
+
+He is interested in intelligent control and intelligent transportation systems.
+
+![](images/7c23164d4847f8ca020f93f7635c2739ccf1d97f048eaf5acd26eef05e42d187.jpg)
+
+<details>
+<summary>natural_image</summary>
+
+Portrait of a young man in formal attire against a blue gradient background (no text or symbols visible)
+</details>
+
+Kunhao Xu received the B.S. degree in vehicle engineering from the Shandong University of Technology, Zibo, China, in 2020. He is currently pursuing the Ph.D. degree with the Department of Vehicle Engineering, Nanjing University of Aeronautics and Astronautics, Nanjing, China.
+
+His research interests include vehicle system dynamics.
