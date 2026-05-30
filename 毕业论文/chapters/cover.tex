@@ -1,4 +1,6 @@
 % ==================== 封面 ====================
+% 签名图片叠在下划线上：\makebox 宽度不变，图片用 \smash 不撑高行盒，居中压在横线上方
+\newcommand{\SignBox}[3]{\underline{\makebox[#1]{\smash{\raisebox{-0.1ex}{\includegraphics[height=#2]{#3}}}}}}
 \begin{titlepage}
 
 % 顶部：届次与存档编号
@@ -94,7 +96,7 @@
 
 \vspace{0.8cm}
 \setlength{\parindent}{0pt}
-\hfill 论文作者（签名）：\underline{\makebox[3.0cm]{}}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{}}年\underline{\makebox[0.7cm]{}}月\underline{\makebox[0.7cm]{}}日
+\hfill 论文作者（签名）：\SignBox{3.0cm}{0.85cm}{\thesisAuthorSign}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{\thesisSignYear}}年\underline{\makebox[0.7cm]{\thesisSignMonth}}月\underline{\makebox[0.7cm]{\thesisSignDay}}日
 }
 
 \vspace{0.6cm}
@@ -119,8 +121,8 @@
 
 \vspace{0.7cm}
 \setlength{\parindent}{0pt}
-\hfill 授权人（学生签名）：\underline{\makebox[2.8cm]{}}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{}}年\underline{\makebox[0.7cm]{}}月\underline{\makebox[0.7cm]{}}日
+\hfill 授权人（学生签名）：\SignBox{2.8cm}{0.85cm}{\thesisAuthorSign}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{\thesisSignYear}}年\underline{\makebox[0.7cm]{\thesisSignMonth}}月\underline{\makebox[0.7cm]{\thesisSignDay}}日
 
 \vspace{0.5cm}
-\hfill 指导教师（签名）：\underline{\makebox[3.0cm]{}}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{}}年\underline{\makebox[0.7cm]{}}月\underline{\makebox[0.7cm]{}}日
+\hfill 指导教师（签名）：\SignBox{3.0cm}{0.7cm}{\thesisAdvisorSign}\hspace{0.6em}日期：\underline{\makebox[0.9cm]{\thesisSignYear}}年\underline{\makebox[0.7cm]{\thesisSignMonth}}月\underline{\makebox[0.7cm]{\thesisSignDay}}日
 }
