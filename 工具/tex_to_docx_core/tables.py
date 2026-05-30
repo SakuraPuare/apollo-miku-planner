@@ -26,8 +26,9 @@ def _is_code_block_table(tbl) -> bool:
     # 段数 >= 2 或 br 数 >= 2
     if len(ps) < 2 and len(brs) < 2:
         return False
-    # 代码特征
-    code_markers = ("//", "/*", "#include", "{", "}", ";", "==", "->", "← ", "←")
+    # 代码特征（含算法伪代码关键词）
+    code_markers = ("//", "/*", "#include", "{", "}", ";", "==", "->", "← ", "←",
+                    "输入：", "输出：", "if ", "while ", "foreach ", "for ", "end", "返回")
     return any(m in all_t for m in code_markers)
 
 
@@ -151,15 +152,23 @@ def apply_three_line_tables(doc) -> None:
 
 
 def center_all_images(doc) -> None:
-    """图片所在段落一律居中（regardless of 样式名）。"""
+    """图片所在段落一律居中（regardless of 样式名）。签名图随签名行排版，跳过。"""
     for p in doc.paragraphs:
         drawings = p._element.findall(".//" + qn("w:drawing"))
-        if drawings:
+        if drawings and not any(_is_signature_drawing(d) for d in drawings):
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
 
 _WP_NS = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 _A_NS = "http://schemas.openxmlformats.org/drawingml/2006/main"
+
+
+def _is_signature_drawing(drawing) -> bool:
+    """docPr name 以 sig: 开头的为签名图，不参与栏宽缩放/居中。"""
+    for dp in drawing.iter(f"{{{_WP_NS}}}docPr"):
+        if (dp.get("name") or "").startswith("sig:"):
+            return True
+    return False
 
 
 def resize_all_images_to_width(
@@ -183,6 +192,8 @@ def resize_all_images_to_width(
     target_cx = int(round(width_cm * 360000))  # 1 cm = 360000 EMU
     max_cy = int(round(max_height_cm * 360000)) if max_height_cm else None
     for drawing in doc.element.iter(qn("w:drawing")):
+        if _is_signature_drawing(drawing):
+            continue
         wp_extent = None
         for c in drawing.iter(f"{{{_WP_NS}}}extent"):
             wp_extent = c

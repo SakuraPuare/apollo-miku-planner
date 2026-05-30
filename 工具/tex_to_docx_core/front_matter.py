@@ -348,11 +348,30 @@ def fill_cover_info(doc) -> None:
 
     # 修正签名行：用制表符（tab stops）排版，代替空格硬拉
     # 底层逻辑：空格在不同字号/字体下对不齐，tab stops 绝对定位才是正解
-    # 布局：签名前缀 [TAB→pos1] 日期： [TAB→pos2]      年   月   日
-    sign_prefixes = ["论文作者（签名）：", "授权人（学生签名）：", "指导教师（签名）："]
+    # 布局：签名前缀 [签名图] [TAB→pos1] 日期： [TAB→pos2] 2026 年 5 月 20 日
+    from docx.shared import Cm
+
+    def _resolve_sign(rel: str):
+        if not rel:
+            return None
+        path = (THESIS_DIR / rel).resolve()
+        return path if path.exists() else None
+
+    sign_year = info.get("thesisSignYear", "")
+    sign_month = info.get("thesisSignMonth", "")
+    sign_day = info.get("thesisSignDay", "")
+    date_text = f"{sign_year} 年 {sign_month} 月 {sign_day} 日"
+    # 前缀 → 签名图：论文作者 / 授权人 = 学生本人；指导教师 = 导师
+    author_sign = _resolve_sign(info.get("thesisAuthorSign", ""))
+    advisor_sign = _resolve_sign(info.get("thesisAdvisorSign", ""))
+    sign_map = {
+        "论文作者（签名）：": (author_sign, 0.8),
+        "授权人（学生签名）：": (author_sign, 0.8),
+        "指导教师（签名）：": (advisor_sign, 0.65),
+    }
     for p in doc.paragraphs[:60]:
         txt = p.text or ""
-        for pref in sign_prefixes:
+        for pref, (sign_path, sign_h_cm) in sign_map.items():
             if txt.startswith(pref) and "日期" in txt:
                 p_el = p._element
                 # 清空 run
@@ -376,53 +395,35 @@ def fill_cover_info(doc) -> None:
                     tabs.append(tab)
                 pPr.append(tabs)
 
-                # 构造 run 序列
-                def _mk_run(text):
-                    r_el = OxmlElement("w:r")
-                    rPr = OxmlElement("w:rPr")
-                    sz = OxmlElement("w:sz")
-                    sz.set(qn("w:val"), "24")
-                    rPr.append(sz)
-                    szCs = OxmlElement("w:szCs")
-                    szCs.set(qn("w:val"), "24")
-                    rPr.append(szCs)
-                    rF = OxmlElement("w:rFonts")
-                    rF.set(qn("w:ascii"), "Times New Roman")
-                    rF.set(qn("w:hAnsi"), "Times New Roman")
-                    rF.set(qn("w:eastAsia"), "宋体")
-                    rPr.append(rF)
-                    r_el.append(rPr)
-                    t_el = OxmlElement("w:t")
-                    t_el.text = text
-                    t_el.set(qn("xml:space"), "preserve")
-                    r_el.append(t_el)
-                    return r_el
+                def _text_run(text: str):
+                    run = p.add_run(text)
+                    run.font.size = Pt(12)
+                    _set_rfonts(run, ascii_="Times New Roman", cjk="宋体")
+                    run._element.get_or_add_rPr().set(qn("xml:space"), "preserve")
+                    t = run._element.find(qn("w:t"))
+                    if t is not None:
+                        t.set(qn("xml:space"), "preserve")
+                    return run
 
-                def _mk_tab_run():
-                    r_el = OxmlElement("w:r")
-                    rPr = OxmlElement("w:rPr")
-                    sz = OxmlElement("w:sz")
-                    sz.set(qn("w:val"), "24")
-                    rPr.append(sz)
-                    szCs = OxmlElement("w:szCs")
-                    szCs.set(qn("w:val"), "24")
-                    rPr.append(szCs)
-                    rF = OxmlElement("w:rFonts")
-                    rF.set(qn("w:ascii"), "Times New Roman")
-                    rF.set(qn("w:hAnsi"), "Times New Roman")
-                    rF.set(qn("w:eastAsia"), "宋体")
-                    rPr.append(rF)
-                    r_el.append(rPr)
-                    tab_el = OxmlElement("w:tab")
-                    r_el.append(tab_el)
-                    return r_el
+                def _tab_run():
+                    run = p.add_run()
+                    run._element.append(OxmlElement("w:tab"))
+                    return run
 
-                # 序列：前缀 + [TAB] + "日期：" + [TAB] + "年   月   日"
-                p_el.append(_mk_run(pref))
-                p_el.append(_mk_tab_run())
-                p_el.append(_mk_run("日期："))
-                p_el.append(_mk_tab_run())
-                p_el.append(_mk_run("年   月   日"))
+                # 序列：前缀 + [签名图] + [TAB] + "日期：" + [TAB] + 已填日期
+                _text_run(pref)
+                if sign_path is not None:
+                    img_run = p.add_run()
+                    img_run.add_picture(str(sign_path), height=Cm(sign_h_cm))
+                    # 标记签名图，使后续 resize/center 跳过
+                    for dp in img_run._element.iter(
+                        "{http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing}docPr"
+                    ):
+                        dp.set("name", "sig:" + (dp.get("name") or ""))
+                _tab_run()
+                _text_run("日期：")
+                _tab_run()
+                _text_run(date_text)
                 break
 
     # "目  录"段前的分页由 setup_page_numbers_and_sections 的 sectPr(nextPage) 处理，
