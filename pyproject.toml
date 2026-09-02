@@ -19,4 +19,5 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
-testpaths = ["工具/tests"]
+testpaths = ["tests", "工具/tests"]
+pythonpath = ["可视化"]

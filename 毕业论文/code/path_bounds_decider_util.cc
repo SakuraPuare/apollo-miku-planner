@@ -292,11 +292,14 @@ MikuGroupDecision CalculateOptimalNudgeDirection(
 
     std::vector<double> gaps;
     gaps.reserve(static_cast<size_t>(k + 1));
-    gaps.push_back(infos[decision.ordered_indices.front()].u - road_lower);
+    double prefix_max_v = road_lower;
+    gaps.push_back(std::min(road_upper, infos[decision.ordered_indices.front()].u) - prefix_max_v);
     for (int p = 1; p < k; ++p) {
-        gaps.push_back(infos[decision.ordered_indices[p]].u - infos[decision.ordered_indices[p - 1]].v);
+        prefix_max_v = std::max(prefix_max_v, infos[decision.ordered_indices[p - 1]].v);
+        gaps.push_back(std::min(road_upper, infos[decision.ordered_indices[p]].u) - prefix_max_v);
     }
-    gaps.push_back(road_upper - infos[decision.ordered_indices.back()].v);
+    prefix_max_v = std::max(prefix_max_v, infos[decision.ordered_indices.back()].v);
+    gaps.push_back(road_upper - prefix_max_v);
 
     if (enable_max_gap) {
         decision.p_star = static_cast<int>(std::distance(gaps.begin(), std::max_element(gaps.begin(), gaps.end())));

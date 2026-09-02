@@ -44,6 +44,7 @@ import numpy as np
 import osqp
 import scipy.sparse as sp
 from matplotlib.patches import Circle, Polygon, Rectangle
+from miku_geometry import ForbiddenInterval, solve_max_gap
 
 warnings.filterwarnings("ignore")
 
@@ -254,7 +255,7 @@ def compute_threat(obs: Obstacle, scn: Scenario) -> float:
 
 
 def compute_delta(obs: Obstacle, scn: Scenario) -> float:
-    """论文第五章第四节 式(5.10)：δ_i = δ_min + (δ_max - δ_min) · Θ_i"""
+    """返回障碍物外侧附加缓冲（不含自车半宽）。"""
     theta = compute_threat(obs, scn)
     return scn.delta_min + (scn.delta_max - scn.delta_min) * theta
 
@@ -722,15 +723,16 @@ def _miku_path_bounds(
         scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0
     )
 
-    road_buffer = scn.delta_min  # 路边裕度退化为最小裕度（无威胁）
-    l_min = np.full_like(s_arr, eff_l_min + road_buffer + e.W / 2)
-    l_max = np.full_like(s_arr, eff_l_max - road_buffer - e.W / 2)
+    road_buffer = scn.delta_min  # 道路物理边界内缩半车宽与路侧安全裕度
+    center_road_min = eff_l_min + road_buffer + e.W / 2
+    center_road_max = eff_l_max - road_buffer - e.W / 2
+    l_min = np.full_like(s_arr, center_road_min)
+    l_max = np.full_like(s_arr, center_road_max)
 
     # —— 步骤1+2：对每个障碍物在其 s_i^- 处计算 SL 投影（τ-shifted 动态位置）+ 差异化 δ_i
     obs_proj = []
     for obs in scn.obstacles:
         s_minus_static = obs.s0 - obs.L / 2
-        s_plus_static = obs.s0 + obs.L / 2
         # 动态障碍物：用 τ(s_i^-) 时刻的预测位置；C1 关闭时退化为 t=0 快照
         if obs.is_static or not flags.tau_shift:
             tau = 0.0
@@ -741,8 +743,9 @@ def _miku_path_bounds(
         s_plus = os_ + obs.L / 2
         # C4：差异化 δ_i 关闭时退化为统一 delta_baseline
         delta = compute_delta(obs, scn) if flags.threat_delta else scn.delta_baseline
-        u = ol_ - obs.W / 2 - delta  # 右侧通行边（自车从右过则 ego 中心 ≤ u - W/2）
-        v = ol_ + obs.W / 2 + delta  # 左侧通行边（自车从左过则 ego 中心 ≥ v + W/2）
+        center_buffer = e.W / 2 + delta
+        u = ol_ - obs.W / 2 - center_buffer
+        v = ol_ + obs.W / 2 + center_buffer
         obs_proj.append(
             {
                 "obs": obs,
@@ -773,48 +776,47 @@ def _miku_path_bounds(
     # —— 步骤4-5：组内 max-gap 求解，得到分组的 [l^-, l^+]
     group_decisions = []
     for grp in groups:
-        # 剔除已完全越出有效路面的障碍物（论文第六章第四节边界情形）
-        active = [r for r in grp if r["u"] < eff_l_max and r["v"] > eff_l_min]
+        # 完全位于中心可行区间外的障碍物不收紧当前道路截面。
+        active = [
+            r for r in grp if r["u"] < center_road_max and r["v"] > center_road_min
+        ]
         if not active:
             group_decisions.append(
                 {
                     "grp": grp,
-                    "l_minus": eff_l_min,
-                    "l_plus": eff_l_max,
+                    "l_minus": center_road_min,
+                    "l_plus": center_road_max,
                     "p_star": None,
-                    "g_star": eff_l_max - eff_l_min,
+                    "g_star": center_road_max - center_road_min,
                     "ordered": [],
                 }
             )
             continue
-        # 按 u_i 升序（u 相同时按 v 降序——论文第六章第四节第三条）
-        ordered = sorted(active, key=lambda r: (r["u"], -r["v"]))
+        solution = solve_max_gap(
+            [ForbiddenInterval(r["u"], r["v"]) for r in active],
+            center_road_min,
+            center_road_max,
+        )
+        ordered = [active[i] for i in solution.ordered_indices]
         k = len(ordered)
-        # 计算 k+1 个间隙
-        gaps = []
-        # g_0 = u_(1) - l_road^-（自车走最右通道，所有障碍均右绕）
-        gaps.append(ordered[0]["u"] - eff_l_min)
-        for p in range(1, k):
-            gaps.append(ordered[p]["u"] - ordered[p - 1]["v"])
-        # g_k = l_road^+ - v_(k)
-        gaps.append(eff_l_max - ordered[-1]["v"])
+        gaps = list(solution.candidate_gaps)
         # C3 关闭：退化为「整组绕一侧」二元决策，比较 g_0 与 g_k
         if flags.max_gap:
-            p_star = int(np.argmax(gaps))
+            p_star = solution.split_index
         else:
             p_star = k if gaps[k] >= gaps[0] else 0
         # 分配 L/R：i ≤ p* → 左绕（在通道左侧 → ego 走通道右侧 → ego l ≤ u_(p*+1)）
         # 论文记号：L_p = {(1)..(p)}，R_p = {(p+1)..(k)}；通行带 l^+ = min_{R} u, l^- = max_{L} v
         if p_star == 0:
-            l_minus = eff_l_min
-            l_plus = ordered[0]["u"]
+            l_minus = center_road_min
+            l_plus = min(center_road_max, ordered[0]["u"])
         elif p_star == k:
-            l_minus = ordered[-1]["v"]
-            l_plus = eff_l_max
+            l_minus = max(center_road_min, max(r["v"] for r in ordered))
+            l_plus = center_road_max
         else:
             # 0 < p* < k：L = {(1)..(p*)}, R = {(p*+1)..(k)}
-            l_minus = max(r["v"] for r in ordered[:p_star])
-            l_plus = min(r["u"] for r in ordered[p_star:])
+            l_minus = max(center_road_min, max(r["v"] for r in ordered[:p_star]))
+            l_plus = min(center_road_max, ordered[p_star]["u"])
         group_decisions.append(
             {
                 "grp": grp,
@@ -857,8 +859,9 @@ def _miku_path_bounds(
                     continue
 
                 delta = r_orig["delta"]
-                u_t = ol_t - obs.W / 2 - delta
-                v_t = ol_t + obs.W / 2 + delta
+                center_buffer = e.W / 2 + delta
+                u_t = ol_t - obs.W / 2 - center_buffer
+                v_t = ol_t + obs.W / 2 + center_buffer
                 if idx < p_star:
                     left_v.append(v_t)
                 else:
@@ -868,10 +871,8 @@ def _miku_path_bounds(
             if not left_v and not right_u:
                 continue
 
-            l_minus_s = max(left_v, default=eff_l_min)
-            l_plus_s = min(right_u, default=eff_l_max)
-            l_lo_ego = l_minus_s + e.W / 2
-            l_hi_ego = l_plus_s - e.W / 2
+            l_lo_ego = max(left_v, default=center_road_min)
+            l_hi_ego = min(right_u, default=center_road_max)
 
             # 取多组重叠时的并集收紧（保守）
             l_min[i] = max(l_min[i], l_lo_ego)
@@ -1170,16 +1171,16 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
         ub[3 * j + 2] = a_max
 
     A = sp.vstack([A_eq, sp.eye(n, format="csc")], format="csc")
-    l = np.concatenate([b_eq, lb])
-    u = np.concatenate([b_eq, ub])
+    constraint_lower = np.concatenate([b_eq, lb])
+    constraint_upper = np.concatenate([b_eq, ub])
 
     prob = osqp.OSQP()
     prob.setup(
         sp.csc_matrix(P),
         q,
         A,
-        l,
-        u,
+        constraint_lower,
+        constraint_upper,
         verbose=False,
         polish=True,
         max_iter=60000,
