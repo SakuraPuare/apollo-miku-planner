@@ -36,7 +36,7 @@ import os
 import time
 import warnings
 from dataclasses import dataclass
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -45,6 +45,7 @@ import osqp
 import scipy.sparse as sp
 from matplotlib.patches import Circle, Polygon, Rectangle
 from miku_geometry import ForbiddenInterval, solve_max_gap
+from miku_time import OccupancyInterval, TimeWindow, safe_time_windows, select_time_window
 
 warnings.filterwarnings("ignore")
 
@@ -79,6 +80,7 @@ MIN_BORROW_WIDTH = 2.0
 PLANNING_TIME_RANGE_MIN = 6.0
 PLANNING_TIME_RANGE_MAX = 15.0
 PATH_BOUNDARY_STEP = 0.5
+PATH_GAP_EPSILON = 1e-6
 ABLATION_FAIL_PENALTY_S = 5
 
 
@@ -697,7 +699,11 @@ def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
 
 
 def _miku_path_bounds(
-    scn: Scenario, s_arr: np.ndarray, flags: Optional[AblationFlags] = None, debug=False
+    scn: Scenario,
+    s_arr: np.ndarray,
+    flags: Optional[AblationFlags] = None,
+    debug=False,
+    tau_fn: Optional[Callable[[float], float]] = None,
 ):
     """MIKU PathBoundsDecider — 论文第六章算法\\ref{alg:optimal_band}：
 
@@ -715,6 +721,11 @@ def _miku_path_bounds(
     """
     if flags is None:
         flags = AblationFlags.full()
+    if tau_fn is None:
+        def default_tau(s: float) -> float:
+            return arrival_time(s, scn)
+
+        tau_fn = default_tau
     e = scn.ego
     eff_l_max = scn.l_road_max + (
         scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0
@@ -737,7 +748,7 @@ def _miku_path_bounds(
         if obs.is_static or not flags.tau_shift:
             tau = 0.0
         else:
-            tau = arrival_time(s_minus_static, scn)
+            tau = tau_fn(s_minus_static)
         os_, ol_ = obs.position_at(tau)
         s_minus = os_ - obs.L / 2
         s_plus = os_ + obs.L / 2
@@ -792,11 +803,38 @@ def _miku_path_bounds(
                 }
             )
             continue
+        temporal_only = []
         solution = solve_max_gap(
             [ForbiddenInterval(r["u"], r["v"]) for r in active],
             center_road_min,
             center_road_max,
         )
+        # A dynamic obstacle that occupies the entire lateral cross-section is a
+        # temporal conflict, not a permanent path blockage.  Keep its occupancy
+        # for ST mapping and solve the path decision using the static subset.
+        # If even the static subset has no gap, the ordinary blocked logic remains.
+        if solution.gap < PATH_GAP_EPSILON:
+            temporal_only = [r for r in active if not r["obs"].is_static]
+            if temporal_only:
+                active = [r for r in active if r["obs"].is_static]
+                if not active:
+                    group_decisions.append(
+                        {
+                            "grp": grp,
+                            "l_minus": center_road_min,
+                            "l_plus": center_road_max,
+                            "p_star": None,
+                            "g_star": center_road_max - center_road_min,
+                            "ordered": [],
+                            "temporal_only": temporal_only,
+                        }
+                    )
+                    continue
+                solution = solve_max_gap(
+                    [ForbiddenInterval(r["u"], r["v"]) for r in active],
+                    center_road_min,
+                    center_road_max,
+                )
         ordered = [active[i] for i in solution.ordered_indices]
         k = len(ordered)
         gaps = list(solution.candidate_gaps)
@@ -826,6 +864,7 @@ def _miku_path_bounds(
                 "g_star": gaps[p_star],
                 "ordered": ordered,
                 "gaps": gaps,
+                "temporal_only": temporal_only,
             }
         )
 
@@ -846,7 +885,7 @@ def _miku_path_bounds(
             if p_star is None:
                 continue
 
-            tau_s = arrival_time(float(s), scn) if flags.tau_shift else 0.0
+            tau_s = tau_fn(float(s)) if flags.tau_shift else 0.0
             left_v = []
             right_u = []
             for idx, r_orig in enumerate(ordered):
@@ -881,7 +920,11 @@ def _miku_path_bounds(
     return l_min, l_max, eff_l_min, eff_l_max, group_decisions
 
 
-def path_bounds_decider(scn: Scenario, mode_or_flags):
+def path_bounds_decider(
+    scn: Scenario,
+    mode_or_flags,
+    tau_fn: Optional[Callable[[float], float]] = None,
+):
     """Apollo PathBoundsDecider 入口（支持字符串 mode 与 AblationFlags 两种调用）。
 
     - 'baseline' / AblationFlags.baseline()：Apollo IsStatic 过滤 + 逐障碍物贪心 nudge
@@ -898,7 +941,9 @@ def path_bounds_decider(scn: Scenario, mode_or_flags):
     if flags.all_off():
         l_min, l_max, _, _ = _baseline_path_bounds(scn, s_arr)
     else:
-        l_min, l_max, _, _, group_decisions = _miku_path_bounds(scn, s_arr, flags)
+        l_min, l_max, _, _, group_decisions = _miku_path_bounds(
+            scn, s_arr, flags, tau_fn=tau_fn
+        )
 
     # ego 起点位置硬约束
     l_min[0] = l_max[0] = e.l0
@@ -999,7 +1044,13 @@ def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
             s_hi = os_ + obs.L / 2 + e.L / 2
             intervals.append((float(t), float(s_lo), float(s_hi)))
         boundaries.append(
-            {"name": obs.name, "intervals": intervals, "is_static": obs.is_static}
+            {
+                "name": obs.name,
+                "intervals": intervals,
+                "is_static": obs.is_static,
+                "vs": obs.vs,
+                "vl": obs.vl,
+            }
         )
     return boundaries
 
@@ -1082,8 +1133,11 @@ def build_st_bounds(
     s_dp,
     ts,
     corridor: Optional[List[Tuple[float, float]]] = None,
+    safe_window_mode: bool = False,
+    tau_fn: Optional[Callable[[float], float]] = None,
+    decision_log: Optional[list[dict]] = None,
 ):
-    """重建 s_j^ub / s_j^lb；动态障碍物默认 YIELD（Apollo DP 失败时的兜底逻辑）。"""
+    """重建 ``s_j^ub / s_j^lb``，可选择占用补集导出的安全时窗。"""
     dt = ts[1] - ts[0]
     nt = len(ts)
     # 默认 s_ub 设大（视化用）：让 ego 在没障碍/没 trim 时可以匀速跑到 t_max
@@ -1096,14 +1150,80 @@ def build_st_bounds(
             s_block = min(s for (_, s, _) in b["intervals"])
             s_ub[:] = np.minimum(s_ub, s_block)
 
-    # 动态障碍物：默认 YIELD（s_ub 压到 s_lo）。DP 仅用于可视化粗解。
+    if decision_log is None:
+        decision_log = []
+
+    # 动态障碍物：基线保持 YIELD；MIKU 从预测占用的补集中选择
+    # 先通过/后通过同伦类。tau 只排序候选窗，不定义安全边界。
     for b in st_bounds:
-        if b["is_static"]:
+        if b["is_static"] or not b["intervals"]:
             continue
-        for t, s_lo, _s_hi in b["intervals"]:
-            ti = int(round(t / dt))
-            if 0 <= ti < nt:
-                s_ub[ti] = min(s_ub[ti], s_lo)
+        # A single arrival window is meaningful for a localized crossing region.
+        # Longitudinally moving obstacles instead retain pointwise ST following
+        # bounds; collapsing their swept tube to one station would over-constrain.
+        localized_crossing = abs(float(b.get("vl", 0.0))) >= 0.2 and abs(
+            float(b.get("vs", 0.0))
+        ) <= 1.0
+        if not safe_window_mode or not localized_crossing:
+            for t, s_lo, _s_hi in b["intervals"]:
+                ti = int(round(t / dt))
+                if 0 <= ti < nt:
+                    s_ub[ti] = min(s_ub[ti], s_lo)
+            continue
+
+        occupancy_times = sorted(float(item[0]) for item in b["intervals"])
+        occupancies = []
+        enter = occupancy_times[0]
+        previous = enter
+        for current in occupancy_times[1:]:
+            if current - previous > 0.075:
+                occupancies.append(OccupancyInterval(enter, previous))
+                enter = current
+            previous = current
+        occupancies.append(OccupancyInterval(enter, previous))
+
+        conflict_s_lo = min(float(item[1]) for item in b["intervals"])
+        conflict_s_hi = max(float(item[2]) for item in b["intervals"])
+        distance = max(conflict_s_hi - scn.ego.s0, 0.0)
+        earliest = (
+            (-scn.ego.v0 + np.sqrt(scn.ego.v0**2 + 4.0 * distance)) / 2.0
+            if distance > 0.0
+            else 0.0
+        )
+        horizon = TimeWindow(0.0, float(scn.t_max))
+        safe = safe_time_windows(occupancies, horizon, safety_guard=0.10)
+        reachable = TimeWindow(min(max(earliest, 0.0), scn.t_max), scn.t_max)
+        nominal = (
+            tau_fn(0.5 * (conflict_s_lo + conflict_s_hi))
+            if tau_fn is not None
+            else arrival_time(0.5 * (conflict_s_lo + conflict_s_hi), scn)
+        )
+        selection = select_time_window(safe, nominal, reachable)
+        if selection.status == "stop" or selection.window is None:
+            s_ub[:] = np.minimum(s_ub, conflict_s_lo)
+            decision_log.append({"name": b["name"], "status": "stop"})
+            continue
+
+        window = selection.window
+        has_lower_boundary = window.start > horizon.start + 1e-9
+        has_upper_boundary = window.end < horizon.end - 1e-9
+        if has_lower_boundary:
+            s_ub[ts < window.start] = np.minimum(
+                s_ub[ts < window.start], conflict_s_lo
+            )
+        if has_upper_boundary:
+            s_lb[ts >= window.end] = np.maximum(
+                s_lb[ts >= window.end], conflict_s_hi
+            )
+        decision_log.append(
+            {
+                "name": b["name"],
+                "status": "selected",
+                "window": (window.start, window.end),
+                "target_arrival": selection.target_arrival,
+                "candidate_count": selection.candidate_count,
+            }
+        )
 
     if corridor:
         for s_k, tau_k in corridor:
@@ -1199,30 +1319,30 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
 # ============================ 全链路执行 ============================
 
 
-def run_pipeline(mode_or_flags, scn: Scenario):
+def run_pipeline(
+    mode_or_flags,
+    scn: Scenario,
+    tau_fn: Optional[Callable[[float], float]] = None,
+):
     flags = AblationFlags.from_mode(mode_or_flags)
-    s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(scn, flags)
+    s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(
+        scn, flags, tau_fn=tau_fn
+    )
     l_path, path_qp_ms = path_optimizer(s_arr, l_min, l_max)
     st_bounds = st_boundary_mapper(scn, s_arr, l_path)
     ts, s_dp, forbidden, ss = speed_dp(scn, st_bounds)
 
     corridor = None
-    if flags.corridor_inject and group_decisions:
-        # 论文第六章步骤7：仅对"依赖动态障碍物移开"的位置注入 (s_k, τ_k)
-        # — 即：连通分量内含动态障碍物，且其 SL 投影是 ego 路径在该 s 段的活跃约束
-        corridor = []
-        for gd in group_decisions:
-            grp = gd["grp"]
-            dynamic = [r for r in grp if not r["obs"].is_static]
-            if not dynamic:
-                continue
-            # 取组内最早出现的动态障碍物作为走廊顶点（避免重复注入同一组）
-            r = min(dynamic, key=lambda r: r["s_minus"])
-            s_k = r["s_minus"] - scn.ego.L / 2
-            tau_k = arrival_time(s_k, scn)
-            corridor.append((s_k, tau_k))
-
-    s_ub, s_lb = build_st_bounds(scn, st_bounds, s_dp, ts, corridor)
+    time_window_decisions: list[dict] = []
+    s_ub, s_lb = build_st_bounds(
+        scn,
+        st_bounds,
+        s_dp,
+        ts,
+        safe_window_mode=flags.corridor_inject,
+        tau_fn=tau_fn,
+        decision_log=time_window_decisions,
+    )
 
     # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
     # 避免全程匀速穿透终点后再用 t_max 尾段掩盖减速行为。
@@ -1271,6 +1391,7 @@ def run_pipeline(mode_or_flags, scn: Scenario):
         a_qp=a_qp,
         a_y=a_y,
         corridor=corridor,
+        time_window_decisions=time_window_decisions,
         qp_solve_ms={
             "path": path_qp_ms,
             "speed": speed_qp_ms,

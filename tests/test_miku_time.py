@@ -13,6 +13,9 @@ from miku_time import (
     safe_time_windows,
     select_time_window,
 )
+from apollo_pipeline import Ego, Scenario, build_st_bounds
+
+import numpy as np
 
 
 def test_single_conflict_has_before_and_after_candidates() -> None:
@@ -92,3 +95,52 @@ def test_random_safe_windows_match_pointwise_occupancy_oracle(seed: int) -> None
 def test_invalid_guard_is_rejected() -> None:
     with pytest.raises(ValueError):
         safe_time_windows([], TimeWindow(0.0, 1.0), -0.1)
+
+
+def test_st_bounds_encode_reachable_before_pass_window() -> None:
+    scenario = Scenario(Ego(v0=5.0), [], s_max=20.0, t_max=6.0)
+    ts = np.linspace(0.0, 6.0, 61)
+    boundary = {
+        "name": "crossing",
+        "is_static": False,
+        "vs": 0.0,
+        "vl": 1.0,
+        "intervals": [(t, 8.0, 10.0) for t in np.arange(3.0, 4.01, 0.05)],
+    }
+    decisions = []
+    upper, lower = build_st_bounds(
+        scenario,
+        [boundary],
+        np.zeros_like(ts),
+        ts,
+        safe_window_mode=True,
+        decision_log=decisions,
+    )
+    assert decisions[0]["window"][1] == pytest.approx(2.9)
+    assert np.all(lower[ts >= 2.9] >= 10.0)
+    window_start = decisions[0]["window"][0]
+    assert np.all(upper[ts >= window_start] == 1e4)
+
+
+def test_st_bounds_encode_after_pass_window_when_before_is_unreachable() -> None:
+    scenario = Scenario(Ego(v0=1.0), [], s_max=20.0, t_max=6.0)
+    ts = np.linspace(0.0, 6.0, 61)
+    boundary = {
+        "name": "crossing",
+        "is_static": False,
+        "vs": 0.0,
+        "vl": 1.0,
+        "intervals": [(t, 8.0, 10.0) for t in np.arange(2.0, 4.01, 0.05)],
+    }
+    decisions = []
+    upper, lower = build_st_bounds(
+        scenario,
+        [boundary],
+        np.zeros_like(ts),
+        ts,
+        safe_window_mode=True,
+        decision_log=decisions,
+    )
+    assert decisions[0]["window"] == pytest.approx((4.1, 6.0))
+    assert np.all(upper[ts < 4.1] <= 8.0)
+    assert np.all(lower == 0.0)
