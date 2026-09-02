@@ -41,13 +41,18 @@
 \addlegendentry{MIKU}
 
 
-% 障碍物 行人
-\fill[dangerred, opacity=0.95] (axis cs:12.000,-0.600) circle [radius=5pt];
-\fill[dangerred, opacity=0.55] (axis cs:12.000,0.225) circle [radius=5pt];
-\fill[dangerred, opacity=0.35] (axis cs:12.000,1.050) circle [radius=5pt];
-\fill[dangerred, opacity=0.20] (axis cs:12.000,1.900) circle [radius=5pt];
-\draw[->, dangerred, very thick, opacity=0.85] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.900);
-\node[anchor=south, font=\tiny, color=dangerred] at (axis cs:12.000,0.150) {行人 $v=(+0.0,+1.2)$};
+% 障碍物 行人：t=0 起点淡出扫掠 + τ(12) 到达时刻高亮位置
+\fill[dangerred, opacity=0.30] (axis cs:12.000,-0.600) circle [radius=4pt];
+\fill[dangerred, opacity=0.22] (axis cs:12.000,0.225) circle [radius=4pt];
+\fill[dangerred, opacity=0.18] (axis cs:12.000,1.050) circle [radius=4pt];
+\draw[->, dangerred, thick, opacity=0.55] (axis cs:12.000,-0.600) -- (axis cs:12.000,1.700);
+\node[anchor=west, font=\tiny, color=dangerred, opacity=0.7] at (axis cs:12.15,-0.600) {$t{=}0$};
+% τ(12)=1.5s 自车到达时刻行人实际位置 l=+1.275（上侧）
+\fill[dangerred, opacity=0.95] (axis cs:12.000,1.275) circle [radius=5pt];
+\draw[dangerred, thick] (axis cs:12.000,1.275) circle [radius=6.5pt];
+\node[anchor=south west, font=\tiny\bfseries, color=dangerred] at (axis cs:12.15,1.275) {行人@$\tau{=}1.5$s};
+% 自车贴下侧窄缝通过
+\node[anchor=north, font=\tiny, color=vibrantgreen!60!black] at (axis cs:12.000,-0.72) {自车贴下侧过};
 \node[rectangle, fill=deepblue!75, draw=deepblue, thick, minimum width=18pt, minimum height=8pt, inner sep=0pt] (egobox) at (axis cs:0.000,0.000) {};
 \fill[white] ([xshift=0pt]egobox.east) -- ([xshift=-3pt,yshift=2.5pt]egobox.east) -- ([xshift=-3pt,yshift=-2.5pt]egobox.east) -- cycle;
 \node[anchor=south west, font=\tiny\bfseries, color=deepblue] at (axis cs:0.20,1.10) {EGO};

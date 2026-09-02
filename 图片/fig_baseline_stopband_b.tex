@@ -1,0 +1,26 @@
+% Baseline 时间盲：行人物理通过后并集投影不再覆盖，停止带才转绿（子图 b）
+% 相较时间感知投影，Baseline 直到行人整段扫掠离开才放行，通行滞后
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
+  \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
+  \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
+  \draw[deepblue, dashed, thin] (0,0.3) -- (6.8,0.3);
+
+  % 原停止带区域转绿色通行带
+  \fill[bandok] (5.35,-1.3) rectangle (6.45,1.8);
+  \node[font=\scriptsize, lightgreen!45!black] at (5.9,-0.9) {通行带};
+
+  % 行人已穿至对侧，浅黄 buffer 随之上移
+  \fill[inputyellow] (5.45,1.2) rectangle (6.35,1.8);
+  \fill[obsdyn] (5.7,1.35) rectangle (6.1,1.75);
+  \node[font=\scriptsize, dangerred!70!black, anchor=east] at (5.4,1.55) {已穿过};
+  \draw[-Stealth, thin, dangerred!50] (5.9,1.3) -- (5.9,0.95);
+
+  % 自车沿中线通过原阻塞区
+  \fill[egopt] (5.55,0) rectangle (6.4,0.6);
+  \node[white, font=\scriptsize\bfseries] at (5.975,0.3) {ADC};
+  \draw[-Stealth, thick, deepblue] (5.25,0.3) -- (5.5,0.3);
+
+  % 时刻标
+  \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}\PedExampleTau$ s};
+\end{tikzpicture}

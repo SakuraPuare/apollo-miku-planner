@@ -1,0 +1,36 @@
+% 图6(c) 动态障碍·MIKU：到达时间感知使障碍 ST 占据在 t 维度收窄，
+% 障碍仅在窄 t 窗有效，s(t) 在该窗内待于障碍下方，窗口过后即刻爬升，
+% 让行时间远短于 Baseline，全程不切入障碍占据。
+\begin{tikzpicture}[scale=1.0, transform shape, arr/.style={-Stealth, thick}]
+  \useasboundingbox (-0.75,-0.95) rectangle (5.85,4.75);
+
+  % τ(s) 左下沿（楔形）：t≥τ(s) 为可达，左上淡灰不可达
+  \fill[gray!12] (0,0) -- (2.9,4.2) -- (0,4.2) -- cycle;
+  \draw[deepblue, very thick, densely dashed] (0,0) -- (2.9,4.2);
+  \node[font=\tiny, gray!55!black, align=center] at (0.65,3.75) {$t{<}\tau(s)$\\不可达};
+
+  % 障碍 ST 占据：收窄 → t 维度窄（t∈[1.8,2.6]），仍锁 s∈[2.0,3.0]
+  \fill[dangerred!35, draw=dangerred, thick]
+    (1.8,2.0) rectangle (2.6,3.0);
+  \node[font=\scriptsize\bfseries, dangerred!85!black, align=center] at (2.2,2.5) {窄\\占据};
+  \draw[<->, dangerred!75!black, thin] (1.8,3.25) -- (2.6,3.25);
+  \node[font=\tiny, dangerred!80!black] at (2.2,3.45) {窄 $t$ 窗};
+
+  % 坐标轴
+  \draw[arr] (0,0) -- (5.6,0) node[right, font=\scriptsize] {$t$/s};
+  \draw[arr] (0,0) -- (0,4.5) node[above, font=\scriptsize] {$s$/m};
+  \node[font=\tiny, left=2pt] at (0,0) {$0$};
+
+  % MIKU s(t)：窄窗内待于障碍下方 s=1.7（留间隙），t>2.6 障碍清空后即刻爬升穿过
+  \draw[deeppink, very thick, -Stealth]
+    (0,0) .. controls (0.5,1.1) and (1.0,1.65) .. (1.35,1.7)
+    -- (2.6,1.7)
+    .. controls (3.2,2.7) and (3.9,3.7) .. (4.6,4.1);
+  \fill[deeppink] (1.35,1.7) circle (1.6pt);
+  \fill[deeppink] (2.6,1.7) circle (1.6pt);
+  \node[font=\tiny, deeppink, anchor=north] at (2.0,1.65) {短暂让行（障碍下方）};
+  \node[font=\tiny, deeppink, anchor=west] at (3.5,3.3) {窗口过即穿过};
+  % 间隙指示
+  \draw[<->, gray!60, thin] (0.35,1.7) -- (0.35,2.0);
+  \node[font=\tiny, gray!55!black, anchor=east] at (0.33,1.85) {间隙};
+\end{tikzpicture}

@@ -1,66 +1,35 @@
-% 本文方法统一时空可通行走廊（子图 b）
-% 走廊几何忠实反映：τ(s) 楔形左下沿 + 水平禁行切片，离散为 s_j^{ub} 直送 QP
-\begin{tikzpicture}[scale=1.2, transform shape, arr/.style={-Stealth, thick}]
+% 图6(b) 车道汇入·MIKU：按到达时间 τ(s) 摆放同一汇入车 ST 平行四边形，
+% 其左沿右移至真实进入时刻，左下方让出三角通行区，自车得以争取一段前进。
+\begin{tikzpicture}[scale=1.0, transform shape, arr/.style={-Stealth, thick}]
+  \useasboundingbox (-0.75,-1.05) rectangle (5.85,4.75);
+
+  % τ(s) 左下沿（楔形）：t≥τ(s) 可达
+  \draw[deepblue, very thick, densely dashed] (0,0) -- (2.6,4.2);
+  \node[font=\tiny, gray!55!black, align=center] at (0.55,3.75) {$t{<}\tau(s)$\\不可达};
+
+  % 汇入车 ST 轨迹：同一平行四边形，左沿右移至 t=1.5（真实进入时刻）
+  \fill[dangerred!35, draw=dangerred, thick]
+    (1.5,1.2) -- (5.0,3.0) -- (5.0,4.0) -- (1.5,2.2) -- cycle;
+  \node[font=\scriptsize\bfseries, dangerred!85!black, rotate=22] at (3.3,2.9) {汇入车 ST 轨迹};
+  \draw[<-, dangerred!75!black, thin] (0.4,1.7) -- (1.45,1.7);
+  \node[font=\tiny, dangerred!80!black, anchor=east, align=right] at (0.4,1.7) {左沿\\按 $\tau$\\右移};
+
+  % 争取出的三角通行区（左下方）
+  \fill[lightgreen!35] (0,0) -- (1.5,1.2) -- (1.5,0) -- cycle;
+  \node[font=\tiny\bfseries, lightgreen!45!black, align=center] at (0.95,0.45) {通行区};
 
   % 坐标轴
-  \draw[arr, thick] (0,0) -- (5.7, 0) node[right, font=\scriptsize] {$t$/s};
-  \draw[arr, thick] (0,0) -- (0, 4.6) node[above, font=\scriptsize] {$s$/m};
+  \draw[arr] (0,0) -- (5.6,0) node[right, font=\scriptsize] {$t$/s};
+  \draw[arr] (0,0) -- (0,4.5) node[above, font=\scriptsize] {$s$/m};
   \node[font=\tiny, left=2pt] at (0,0) {$0$};
 
-  % 障碍 ST boundary（淡化背景，作为定位参考）
-  \fill[dangerred!25, opacity=0.55]
-    (0.3, 2.4) -- (2.0, 3.0) -- (4.2, 3.8) -- (4.2, 3.2) -- (2.0, 2.4) -- (0.3, 1.8) -- cycle;
-  \fill[lightorange!50, opacity=0.55]
-    (1.0, 0.6) -- (3.2, 1.6) -- (3.2, 1.0) -- (1.0, 0.0) -- cycle;
-  \node[font=\scriptsize\bfseries, dangerred!80!black]  at (2.1, 2.85) {A};
-  \node[font=\scriptsize\bfseries, lightorange!70!black] at (2.1, 0.65) {B};
-
-  % τ(s) 左下边界（楔形左沿）
-  \draw[deepblue, very thick, densely dashed] (0, 0) -- (4.4, 4.0);
-
-  % 走廊 Ω：t≥τ(s) 右下方区域，扣除水平禁行切片 s∈[2.7, 3.4]
-  \fill[lightgreen!35]
-    (0, 0) -- (1.5, 1.36) -- (2.97, 2.7) -- (5.0, 2.7)
-    -- (5.0, 0) -- cycle;
-  \fill[lightgreen!35]
-    (3.74, 3.4) -- (4.4, 4.0) -- (5.0, 4.0)
-    -- (5.0, 3.4) -- cycle;
-
-  % 禁行切片 s ∈ [2.7, 3.4]
-  \fill[dangerred!22]
-    (0, 2.7) rectangle (5.0, 3.4);
-  \draw[dangerred, thick, dashed] (0, 2.7) -- (5.0, 2.7);
-  \draw[dangerred, thick, dashed] (0, 3.4) -- (5.0, 3.4);
-
-  % QP 最优轨迹：从 (0,0) 紧贴 τ(s) 右下，抵达禁行切片下沿截止
+  % MIKU s(t)：沿通行区争取前进，随后与平行四边形下沿平行前进但保持间隙、不贴合
   \draw[deeppink, very thick, -Stealth]
-    (0.05, 0.05)
-    .. controls (0.4, 0.45) and (0.7, 0.85) ..
-    (1.1, 1.1)
-    .. controls (1.5, 1.4) and (1.9, 1.7) ..
-    (2.4, 2.1)
-    .. controls (2.7, 2.4) and (2.85, 2.6) ..
-    (2.93, 2.69);
-
-  % 标注
-  \node[font=\scriptsize\bfseries, lightgreen!50!black] at (3.6, 1.6) {走廊 $\Omega$};
-  \node[font=\tiny, dangerred!80!black, anchor=west] at (5.05, 3.05) {禁行切片};
-  \node[font=\tiny, gray!55!black, align=center] at (0.65, 3.85) {$t{<}\tau(s)$\\不可达};
-  \node[font=\tiny\bfseries, deeppink, anchor=west] at (0.4, 1.85) {贴 $\tau$ 抵 $s{=}2.7$};
-
-  % ===== 图例（轴下方横向一行，无边框，与 (a) 子图统一风格） =====
-  \begin{scope}[shift={(0,-0.85)}]
-    % 第 1 项: 走廊 Ω
-    \fill[lightgreen!35] (0.10, -0.06) rectangle (0.40, 0.07);
-    \node[font=\tiny, anchor=west] at (0.45, 0.00) {走廊 $\Omega$};
-
-    % 第 2 项: τ(s) 楔形
-    \draw[deepblue, very thick, densely dashed] (1.85, 0.00) -- (2.15, 0.00);
-    \node[font=\tiny, anchor=west] at (2.20, 0.00) {$\tau(s)$ 楔形};
-
-    % 第 3 项: QP 最优 s*(t)
-    \draw[deeppink, very thick, -Stealth] (3.55, 0.00) -- (3.85, 0.00);
-    \node[font=\tiny, anchor=west] at (3.90, 0.00) {QP 最优 $s^*(t)$};
-  \end{scope}
-
+    (0,0) .. controls (0.7,0.7) and (1.1,0.85) .. (1.4,0.9)
+    .. controls (2.6,1.35) and (3.8,1.95) .. (5.0,2.45);
+  \fill[deeppink] (1.4,0.9) circle (1.6pt);
+  \node[font=\tiny, deeppink, anchor=north west] at (1.55,0.85) {争取前进后平行跟行};
+  % 与下沿的间隙指示
+  \draw[<->, gray!60, thin] (3.5,1.72) -- (3.5,2.28);
+  \node[font=\tiny, gray!55!black, anchor=west] at (3.55,2.0) {间隙};
 \end{tikzpicture}

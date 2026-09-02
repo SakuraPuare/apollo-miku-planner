@@ -1,6 +1,7 @@
 % 动态障碍物排除 t=0.625 s（子图 b）
 % 自车前进 5 m，行人横移 0.75 m，碰撞窗口形成
 \begin{tikzpicture}[scale=0.95, transform shape]
+  \useasboundingbox (0,-1.4) rectangle (6.8,2.2);
   \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
   \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
   \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
@@ -23,7 +24,8 @@
 
   % 距离标尺：行人横移
   \draw[<->, thin, gray] (6.25,0.4) -- (6.25,0.85);
-  \node[font=\tiny, gray, anchor=west] at (6.3, 0.625) {$\Delta l{=}\PedExampleMidLatShift$};
+  \node[font=\tiny, gray, anchor=east] at (6.75, -0.7) {$\Delta l{=}\PedExampleMidLatShift$};
+  \draw[thin, gray!60] (6.25,0.4) -- (6.4,-0.55);
 
   % 时刻标
   \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}\PedExampleMidTau$ s};

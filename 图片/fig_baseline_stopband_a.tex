@@ -1,0 +1,33 @@
+% Baseline 时间盲：t=0 检测到前方行人即封死（子图 a）
+% 行人全时刻并集投影被当作静止足迹，横向扫过整条车道，路径层判定阻塞
+% 视觉锚点：道路、红色停止带（覆盖行人纵向区间的整条车道宽）、被迫停车的自车、行人 + 浅黄 buffer
+\begin{tikzpicture}[scale=0.95, transform shape]
+  \fill[bglight] (0,-1.3) rectangle (6.8,1.8);
+  \draw[deepblue, thick] (0,-1.3) -- (6.8,-1.3);
+  \draw[deepblue, thick] (0, 1.8) -- (6.8, 1.8);
+  \draw[deepblue, dashed, thin] (0,0.3) -- (6.8,0.3);
+
+  % 红色停止带：Baseline 把行人并集投影当静止足迹，封死整条车道宽
+  \fill[bandbad] (5.35,-1.3) rectangle (6.45,1.8);
+  \node[font=\scriptsize, dangerred!70!black] at (5.9,-0.9) {停止带};
+
+  % 行人浅黄 buffer（半车宽膨胀）
+  \fill[inputyellow] (5.45,-0.45) rectangle (6.35,0.55);
+  \node[font=\tiny, dangerred!60!black, anchor=south] at (6.6,-0.5) {buffer};
+  \draw[obsbuf] (5.45,-0.45) rectangle (6.35,0.55);
+
+  % 行人本体 + 横向速度
+  \fill[obsdyn] (5.7,-0.2) rectangle (6.1,0.3);
+  \node[font=\scriptsize, dangerred!70!black, anchor=north] at (5.9,-0.5) {行人};
+  \draw[-Stealth, thick, dangerred] (5.9,0.35) -- (5.9,1.4);
+  \node[font=\scriptsize, dangerred!70!black] at (5.4,1.1) {$v_{lat}{=}\PedExampleLatVel$};
+
+  % 自车被迫停在停止带前
+  \fill[egopt] (2.6,0) rectangle (3.45,0.6);
+  \node[white, font=\scriptsize\bfseries] at (3.025,0.3) {ADC};
+  \draw[dangerred, ultra thick] (5.3,-1.3) -- (5.3,1.8);
+  \node[font=\scriptsize, deepblue!70!black] at (2.1,0.85) {被迫停车};
+
+  % 时刻标
+  \node[font=\scriptsize\bfseries, deepblue!70!black, anchor=south west] at (0.05, 1.85) {$t{=}0$};
+\end{tikzpicture}
