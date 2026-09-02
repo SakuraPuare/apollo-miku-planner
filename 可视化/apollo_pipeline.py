@@ -80,7 +80,6 @@ MIN_BORROW_WIDTH = 2.0
 PLANNING_TIME_RANGE_MIN = 6.0
 PLANNING_TIME_RANGE_MAX = 15.0
 PATH_BOUNDARY_STEP = 0.5
-PATH_GAP_EPSILON = 1e-6
 ABLATION_FAIL_PENALTY_S = 5
 
 
@@ -803,38 +802,11 @@ def _miku_path_bounds(
                 }
             )
             continue
-        temporal_only = []
         solution = solve_max_gap(
             [ForbiddenInterval(r["u"], r["v"]) for r in active],
             center_road_min,
             center_road_max,
         )
-        # A dynamic obstacle that occupies the entire lateral cross-section is a
-        # temporal conflict, not a permanent path blockage.  Keep its occupancy
-        # for ST mapping and solve the path decision using the static subset.
-        # If even the static subset has no gap, the ordinary blocked logic remains.
-        if solution.gap < PATH_GAP_EPSILON:
-            temporal_only = [r for r in active if not r["obs"].is_static]
-            if temporal_only:
-                active = [r for r in active if r["obs"].is_static]
-                if not active:
-                    group_decisions.append(
-                        {
-                            "grp": grp,
-                            "l_minus": center_road_min,
-                            "l_plus": center_road_max,
-                            "p_star": None,
-                            "g_star": center_road_max - center_road_min,
-                            "ordered": [],
-                            "temporal_only": temporal_only,
-                        }
-                    )
-                    continue
-                solution = solve_max_gap(
-                    [ForbiddenInterval(r["u"], r["v"]) for r in active],
-                    center_road_min,
-                    center_road_max,
-                )
         ordered = [active[i] for i in solution.ordered_indices]
         k = len(ordered)
         gaps = list(solution.candidate_gaps)
@@ -864,7 +836,6 @@ def _miku_path_bounds(
                 "g_star": gaps[p_star],
                 "ordered": ordered,
                 "gaps": gaps,
-                "temporal_only": temporal_only,
             }
         )
 
@@ -1323,6 +1294,7 @@ def run_pipeline(
     mode_or_flags,
     scn: Scenario,
     tau_fn: Optional[Callable[[float], float]] = None,
+    safe_window_mode: bool = False,
 ):
     flags = AblationFlags.from_mode(mode_or_flags)
     s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(
@@ -1333,13 +1305,27 @@ def run_pipeline(
     ts, s_dp, forbidden, ss = speed_dp(scn, st_bounds)
 
     corridor = None
+    if flags.corridor_inject and group_decisions and not safe_window_mode:
+        # 论文中的可选接口只保留原有的保守“不早于”上界。占用补集
+        # 安全时窗是独立实验功能，必须由调用方显式启用，不能改变既有
+        # 8 场景和消融中 ``miku`` 的默认语义。
+        corridor = []
+        for gd in group_decisions:
+            dynamic = [r for r in gd["grp"] if not r["obs"].is_static]
+            if not dynamic:
+                continue
+            r = min(dynamic, key=lambda item: item["s_minus"])
+            s_k = r["s_minus"] - scn.ego.L / 2
+            tau_k = tau_fn(s_k) if tau_fn is not None else arrival_time(s_k, scn)
+            corridor.append((s_k, tau_k))
+
     time_window_decisions: list[dict] = []
     s_ub, s_lb = build_st_bounds(
         scn,
         st_bounds,
         s_dp,
         ts,
-        safe_window_mode=flags.corridor_inject,
+        safe_window_mode=safe_window_mode,
         tau_fn=tau_fn,
         decision_log=time_window_decisions,
     )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from apollo_pipeline import COMPARABLE_SCENARIOS, PRESSURE_SCENARIOS
+from apollo_pipeline import COMPARABLE_SCENARIOS, PRESSURE_SCENARIOS, run_pipeline
 from experiment_methods import METHODS, method_by_key, run_method
 
 
@@ -31,3 +31,13 @@ def test_pure_dynamic_full_width_conflict_is_deferred_to_speed_stage():
     run = run_method(method_by_key("MIKU"), scenario)
     assert run.result["blocked_idx"] == -1
     assert run.result["st_bounds"][0]["intervals"]
+
+
+def test_default_miku_keeps_the_paper_conservative_corridor_semantics():
+    scenario = COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"]
+
+    result = run_pipeline("miku", scenario)
+
+    assert result["corridor"]
+    assert result["time_window_decisions"] == []
+    assert result["s_qp"][-1] >= scenario.s_max - 1.0 - 1.0e-6
