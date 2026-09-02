@@ -1,4 +1,4 @@
-% 多障碍物统一规划算法总流程
+% MIKU 多障碍物统一规划算法总流程
 \begin{tikzpicture}[
     scale=1.0, transform shape,
     stepimp/.style={rectangle, rounded corners=3pt, draw=deeppink, fill=improvedpink, minimum width=5.4cm, minimum height=1.0cm, font=\small, align=center},
@@ -19,12 +19,12 @@
 \node[stepimp] (s3) at (0, 2.1)  {\textbf{Step 3} 动态安全裕度 $\delta_i$ 与边界 $u_i,v_i$};
 \node[stepimp] (s4) at (0, 0.4)  {\textbf{Step 4} 扫描线重叠分组 $\mathcal{G}_1,\ldots,\mathcal{G}_m$};
 \node[stepimp] (s5) at (0,-1.3)  {\textbf{Step 5} 组内最大间隙 $g^\star_j=\max_k g_{j,k}$};
-\node[stepimp] (s6) at (0,-3.0)  {\textbf{Step 6} 合并全局 path\_boundary};
+\node[stepimp] (s6) at (0,-3.0)  {\textbf{Step 6} 合并全局路径横向边界};
 \node[stepimp] (s7) at (0,-4.7)  {\textbf{Step 7} ST 时空可通行走廊 $\Omega$};
 
 % 输出（左侧）与跨接口的速度 QP
-\node[outnode] (o1) at (-5.8,-3.0) {path\_boundary};
-\node[outnode] (o2) at (-5.8,-4.7) {st\_corridor};
+\node[outnode] (o1) at (-5.8,-3.0) {路径横向边界};
+\node[outnode] (o2) at (-5.8,-4.7) {时空可通行走廊};
 \node[qpnode]  (qp) at (-5.8,-6.4) {速度 QP（求解器不变）};
 
 % 输入箭头
@@ -44,15 +44,6 @@
 \draw[arr] (s7.west) -- (o2.east);
 
 % 走廊注入速度 QP（跨解耦接口）
-\draw[injarr] (o2.south) -- node[right, font=\footnotesize, deeppink] {\texttt{STDrivableBoundary} 注入上界} (qp.north);
-
-% 复杂度标注（右侧）
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4, 5.5)  {$O(n N_s)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4, 3.8)  {$O(n)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4, 2.1)  {$O(n)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4, 0.4)  {$O(n\log n)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4,-1.3)  {$O(n)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4,-3.0)  {$O(m)$};
-\node[font=\footnotesize, deeppink, anchor=west] at (4.4,-4.7)  {$O(n N_s)$};
+\draw[injarr] (o2.south) -- node[right, font=\footnotesize, deeppink] {逐时间步纵向上界} (qp.north);
 
 \end{tikzpicture}
