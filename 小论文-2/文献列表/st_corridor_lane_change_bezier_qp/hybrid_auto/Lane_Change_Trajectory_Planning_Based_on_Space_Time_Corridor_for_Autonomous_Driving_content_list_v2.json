@@ -1,0 +1,2934 @@
+[
+    [
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "Lane Change Trajectory Planning Based on Space Time Corridor for Autonomous Driving "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                102,
+                69,
+                897,
+                140
+            ]
+        },
+        {
+            "type": "table",
+            "content": {
+                "image_source": {
+                    "path": "images/20b6ac583d1487221fcf9cfc51adbd74ed6b1019e1265ab153d961a82a1aa7a1.jpg"
+                },
+                "table_caption": [],
+                "table_footnote": [],
+                "html": "<table><tr><td rowspan=\"2\">Zhenxin WuINTELLIGENT AND CONNECTED INSTITUTE Integration &amp; Validation Dept. CHINA FAW GROUP CO., LTD.Changchun, China wuzhenxin@faw.com.cn</td><td rowspan=\"2\">Kuo Li *National Key Laboratory of Automotive Chassis Integration and BionicsJilin UniversityChangchun, China edwardlikuo@163.com</td><td>Guoping YouChina Merchants Testing Vehicle Technology Research Institute Co., Ltd.</td><td>Junwei LiangHAINAN CHANG GUANG SATELLITE INFORMATION TECHNOLOGY CO,LTD.</td></tr><tr><td>Chongqing, Chinayouguoping@cmhk.com</td><td>Hainan, China979090915@qq.com</td></tr></table>",
+                "table_type": "complex_table",
+                "table_nest_level": 1
+            },
+            "bbox": [
+                68,
+                176,
+                916,
+                273
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Zhiwei Meng "
+                    }
+                ]
+            },
+            "bbox": [
+                346,
+                297,
+                431,
+                311
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "National Key Laboratory of "
+                    }
+                ]
+            },
+            "bbox": [
+                305,
+                311,
+                475,
+                324
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Automotive Chassis Integration "
+                    }
+                ]
+            },
+            "bbox": [
+                295,
+                324,
+                483,
+                337
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "and Bionics "
+                    }
+                ]
+            },
+            "bbox": [
+                352,
+                337,
+                424,
+                348
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Jilin University "
+                    }
+                ]
+            },
+            "bbox": [
+                341,
+                349,
+                437,
+                363
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Changchun, China "
+                    }
+                ]
+            },
+            "bbox": [
+                333,
+                363,
+                444,
+                376
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "mengzw20@mails.jlu.edu.cn"
+                    }
+                ]
+            },
+            "bbox": [
+                303,
+                377,
+                475,
+                388
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Abstract—This paper presents a spatiotemporal-corridorbased trajectory planning method for intelligent vehicle lane changes, designed to enhance maneuver safety, comfort, and feasibility. The proposed approach constructs a collision-free drivable space using a voxel-based representation in the Frenet coordinate system. To account for dynamic interactions with surrounding vehicles, the lane-change process is segmented into three phases: pre-lane-change, mid-lane-change, and post-lanechange. Each phase is associated with a dedicated spatiotemporal corridor, generated through dynamic filtering and bounded by temporal feasibility using a trapezoidal velocity model. Within the constructed corridor, a smooth and dynamically feasible lanechange trajectory is formulated as a quadratic programming problem, utilizing segmented Bézier curves with constraints on jerk, velocity, acceleration, and continuity. Simulation results in a highway scenario demonstrate that the proposed method effectively generates collision-free, dynamically consistent, and comfort-optimized trajectories, thereby improving lane-change efficiency and overall driving safety. "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                421,
+                486,
+                672
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Keywords—Lane change, trajectory planning, autonomous driving, quadratic programming "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                681,
+                486,
+                710
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "I. INTRODUCTION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                210,
+                720,
+                339,
+                734
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Automobiles as a fundamental mode of transportation in modern society, offer undeniable convenience and efficiency. However, the rapid growth in vehicle ownership has led to a sharp increase in traffic accidents, with unsafe lane-changing maneuvers emerging as a major concern. Improper lane changes can not only result in severe collisions but also exacerbate traffic congestion, thereby reducing overall road efficiency and increasing travel inconvenience [1]. "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                739,
+                486,
+                852
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To mitigate accidents caused by improper lane changes, researchers in the field of intelligent driving are actively developing Advanced Lane Change Assistance (ALCA) systems and Autonomous Lane Change (ALC) systems. These technologies aim to provide more precise and intelligent support for lane-changing maneuvers, thereby improving driving safety and reducing accident risk [2]. Currently, lane-change trajectory planning methods for intelligent vehicles can be broadly categorized into two types: decoupled path–speed planning and spatiotemporal joint planning approaches [3]. The decoupled method separates the lane-change process into independent path and speed planning stages, which simplifies the problem and improves computational efficiency. However, this approach often overlooks the coupling between position and velocity, making it less effective in handling dynamic obstacles. In contrast, spatiotemporal planning integrates spatial positioning and temporal dynamics, enabling a more comprehensive optimization of velocity, acceleration, and lane-change timing, while ensuring driving safety. Lane-change trajectory planning is a common scenario in vehicle motion planning, characterized by the need to precisely coordinate spatial position changes with temporal speed adjustments. In this study, a spatiotemporal planning approach is adopted to design the lane-change trajectory, and a corresponding trajectory tracking control algorithm is developed to ensure accurate execution of the planned maneuvers. "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                857,
+                486,
+                901
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                506,
+                420,
+                926,
+                739
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "II. RELATED WORK "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                647,
+                750,
+                782,
+                762
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Trajectory planning methods can generally be categorized into two groups: path–speed decoupled planning and spatiotemporal joint planning. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                768,
+                926,
+                813
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Path–Speed Decoupled Lane-Change Trajectory Planning "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                508,
+                819,
+                921,
+                835
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "The path–speed decoupling method reduces the complexity of 3D lane-change planning by dividing it into a 2D path search and a 1D speed profile. Baidu Apollo’s EM planner [4] exemplifies this strategy, solving path and speed sub-problems iteratively using DP+QP. Function-based methods are also widely used, modeling trajectories with polynomials [5], Bézier curves [6], and B-splines [7] to ensure smoothness. Werling et al. [8] projected the environment into the Frenet frame and fitted quintic polynomials between initial and goal points. Yan et al. [9] optimized lane-change trajectories by minimizing curvature and path length. Mehdi et al. [10] proposed a segmented Bézier curve method for real-time obstacle avoidance, and Chen L. [11] extended this with 3D Bézier curves and speed planning to improve tracking safety. Liang Z. [12] used Bézier-based paths to handle obstacle risks in parking scenarios, while Yang K. [13] introduced curvature smoothing via cubic Bézier curves for continuous, stable trajectory generation. While path–speed decoupling simplifies planning, it overlooks the strong coupling between position and speed by handling dynamic obstacles solely in the speed profile. This can lead to unsmooth or unsafe trajectories, particularly in lane changes or re-planning under dynamic conditions. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                837,
+                926,
+                907
+            ]
+        },
+        {
+            "type": "page_aside_text",
+            "content": {
+                "page_aside_text_content": [
+                    {
+                        "type": "text",
+                        "content": "2025 9th CAA International Conference on Vehicular Control and Intelligence (CVCI) | 979-8-3315-6906-8/25/$31.00 ©2025 IEEE | DOI: 10.1109/CVCI66304.2025.11348592 "
+                    }
+                ]
+            },
+            "bbox": [
+                9,
+                215,
+                31,
+                925
+            ]
+        },
+        {
+            "type": "page_header",
+            "content": {
+                "page_header_content": [
+                    {
+                        "type": "text",
+                        "content": "Proceedings of the 2025 9th CAA International Conference on Vehicular Control and Intelligence (CVCI), Qingdao, China, October 24-26, 2025 "
+                    }
+                ]
+            },
+            "bbox": [
+                76,
+                13,
+                614,
+                46
+            ]
+        },
+        {
+            "type": "page_footnote",
+            "content": {
+                "page_footnote_content": [
+                    {
+                        "type": "text",
+                        "content": "*. Corresponding author "
+                    }
+                ]
+            },
+            "bbox": [
+                89,
+                910,
+                223,
+                922
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "979-8-3315-6906-8/25/$31.00 ©2025 IEEE "
+                    }
+                ]
+            },
+            "bbox": [
+                75,
+                944,
+                370,
+                958
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                124,
+                960,
+                867,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                66,
+                66,
+                486,
+                303
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Spatiotemporal Lane-Change Trajectory Planning "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                68,
+                310,
+                429,
+                325
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Spatiotemporal planning jointly optimizes position, speed, and acceleration under space–time constraints, enabling effective avoidance of static and dynamic obstacles. Unlike decoupled methods, it searches directly in higher-dimensional space, offering better optimality at the cost of higher computation. Pivtoraiko et al. proposed a discrete state lattice integrating kinematics and time [14], which Kushleyev et al. leveraged for graph-based lane-change planning [15]. Choi J introduced a dynamic corridor using a velocity obstacle framework for collision-free velocity selection [16]. Altché et al. partitioned spatiotemporal free space into convex regions and constructed transition graphs for dynamic planning [17]. Luo et al. projected obstacle influence over time into 2D, merged feasible areas into trapezoidal prisms, and performed convex optimization within corridors [18]. Deolasee et al. improved this by convexifying 3D regions and optimizing segmented Bézier curves within them [19]. While these methods offer structured spatiotemporal safety regions, many lack fine-grained temporal characterization, often overlooking dynamic attributes like velocity, acceleration, and jerk—limiting the expressiveness of spatiotemporal representations. "
+                    }
+                ]
+            },
+            "bbox": [
+                71,
+                327,
+                488,
+                618
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "III. PROPOSED ALGORITHM "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                179,
+                628,
+                364,
+                642
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "A. Generation of Drivable Space Based on Voxels "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                68,
+                650,
+                406,
+                665
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This study adopts a Frenet coordinate system constructed using the reference lane centerline to perform lane-change trajectory planning. A volumetric element in the 3D spatiotemporal domain is referred to as a voxel. Fig. 1 illustrates a voxel on the center lane at a specific moment. During its time interval ∆t, both the longitudinal and lateral boundaries remain constant. The voxel can be defined as "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "V ="
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "( s ^ { m i n } , s ^ { m a x } , l ^ { m i n } , l ^ { m a x } , s ^ { m i n } , t ^ { m a x } )"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s ^ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the start and end positions in the longitudinal direction, "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l ^ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the lateral boundaries, and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", ???????? define the time span of the voxel. "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                667,
+                486,
+                823
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/9f3e1aa4a9aed74a665b47234a35db73c8811e69c5e060b63e5dac115a914b56.jpg"
+                },
+                "content": "| S (m) | L (m) |\n|-------|-------|\n| 40    | 3     |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 1. Voxel schematic diagram "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "bar",
+            "bbox": [
+                596,
+                71,
+                841,
+                224
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 2 illustrates the process of removing collision-risk regions along the longitudinal axis. In Fig. 2(a), a voxel and the predicted trajectory of a preceding vehicle within its lateral bounds are shown for a given time interval. Fig. 2 (b) highlights in red the region deemed at risk of collision. Considering the rigid body characteristics of vehicles, an additional longitudinal buffer equivalent to half the vehicle length plus a safety margin ?????? "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\dot { f } e r _ { s }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is removed. To simplify computation, any feasible green regions within the red area are also excluded from the drivable space. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                258,
+                926,
+                398
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/a37b2966dc0e7090cf5222138bcf31c24ebfa221908a7c50a30589fcd3a9cbc0.jpg"
+                },
+                "content": "Δt",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "(a) "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "text_image",
+            "bbox": [
+                598,
+                402,
+                836,
+                458
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/6745fd3380ba6940da7119231e658fc8325e505f6e5319516ccae9bb2565ee0b.jpg"
+                },
+                "content": "Diagram showing a stepped stepwise pattern with a vertical dimension labeled Δt",
+                "image_caption": [],
+                "image_footnote": []
+            },
+            "sub_type": "text_image",
+            "bbox": [
+                591,
+                478,
+                844,
+                537
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/d490e03390077f01fcc4d1c45301a60a5363cb4e0c15b4da97f4a0adec0da08b.jpg"
+                },
+                "content": "Two geometric shapes: a stepped line and a rectangle with a vertical dimension labeled 'd' (no text or symbols beyond basic geometry)",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "(b) "
+                    },
+                    {
+                        "type": "text",
+                        "content": "(c) "
+                    },
+                    {
+                        "type": "text",
+                        "content": "Fig. 2. Collision risk area elimination process "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "natural_image",
+            "bbox": [
+                588,
+                561,
+                849,
+                623
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This study employs Time to Collision (TTC) as the safety distance model, formulated as follows: "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                674,
+                926,
+                702
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "b u f f e r _ {s} = \\left\\{ \\begin{array}{c} \\left(v _ {r} - v _ {f}\\right) t _ {T T C} + \\delta , v _ {f} \\leq v _ {r} \\\\ \\delta , v _ {f} > v _ {r} \\end{array} \\right. \\tag {1}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/49c911774be1eb37df3e9469c618e92bab750e11b651c4c0da2d8c1d9fdbbe30.jpg"
+                }
+            },
+            "bbox": [
+                580,
+                703,
+                926,
+                739
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { r }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "represents the velocity of the rear vehicle, and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { f }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denotes the velocity of the leading vehicle; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { T T C }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the TTC threshold, set to 3 seconds in this work; ??is the minimum static following distance required when both vehicles travel at the same speed, set to 2 meters. Prior to generating the drivable free space, the temporal planning horizon—i.e., the maximum lanechange duration—must be determined. Since lane-change maneuvers influence vehicles on both the original and target lanes, it is essential to complete the maneuver efficiently to maintain traffic flow. This paper adopts a 5-second window as the planning horizon for lane changes. Each voxel’s initial width is set to match the width of the original lane. The voxel generation and expansion process is performed iteratively, based on the vehicle’s current longitudinal position "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and longitudinal speed "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { 0 } ,"
+                    },
+                    {
+                        "type": "text",
+                        "content": "using a fixed time step t. Assuming the starting time of the j‑th voxel "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "V _ { j }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is known as "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { j } ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", the start and end times of the "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "( \\mathrm { j } { + } 1 )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "‑th voxel "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "V _ { j + 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "—i.e., "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { j + 1 } ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { j + 1 } ^ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "— can be calculated using the fixed step size ∆t. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                744,
+                928,
+                900
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                125,
+                960,
+                867,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                66,
+                66,
+                486,
+                172
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "t _ {j + 1} ^ {\\text { min }} = t _ {j} ^ {\\text { max }} \\tag {2}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/e1e3f60cca4fbbdec4597f17453c0a4161291797088a1134a3eb31d1800d8c6e.jpg"
+                }
+            },
+            "bbox": [
+                232,
+                178,
+                485,
+                196
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "t _ {j + 1} ^ {\\text { max }} = t _ {j + 1} ^ {\\text { min }} + \\Delta t \\tag {3}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/aeb56d9bb9ad9230da65cdc6895a137f819f68e42d03ab3f6dfd09d717ba0e99.jpg"
+                }
+            },
+            "bbox": [
+                215,
+                198,
+                485,
+                215
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Then the longitudinal starting position "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s _ { j + 1 } ^ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "of the j+1 voxel "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "V _ { j + 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "1 can be determined. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                215,
+                485,
+                248
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "T _ {t o v _ {m i n}} = \\frac {v _ {m i n} - v _ {0}}{a _ {m i n}} \\tag {4}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/63003ee04f234259c69ec976492c967a1afe33df7a4046a71a4b78bbd1b83082.jpg"
+                }
+            },
+            "bbox": [
+                202,
+                247,
+                485,
+                277
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "s _ {j + 1} ^ {m i n} = \\left\\{ \\begin{array}{c} s _ {0} + v _ {0} t _ {t + 1} ^ {m i n} + \\frac {1}{2} a _ {m i n} (t _ {j + 1} ^ {m i n}) ^ {2}, t _ {j + 1} ^ {m i n} <   T _ {t o _ {V _ {m i n}}} \\\\ s _ {0} + v _ {0} T _ {t o _ {V _ {m i n}}} + \\frac {1}{2} a _ {m i n} (T _ {t o _ {V _ {m i n}}}) ^ {2} + \\\\ (t _ {t + 1} ^ {m i n} - T _ {t o _ {V _ {m i n}}}) \\cdot v _ {m i n}, t _ {j + 1} ^ {m i n} \\geq T _ {t o _ {V _ {m i n}}} \\end{array} \\right. \\tag {5}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/106d59afa6b61c878a7dd1cbdb41cdbb00e2d8786f7f717e65aa4eda74760dbe.jpg"
+                }
+            },
+            "bbox": [
+                89,
+                277,
+                485,
+                362
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "are the longitudinal position and longitudinal speed of the starting point of lane change of the vehicle respectively; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "are the minimum speed and maximum deceleration respectively; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T _ { t o \\_ V _ { m i n } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the time required for the maximum deceleration degree "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "to decelerate from "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". The vertical termination position is "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                361,
+                486,
+                463
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "s _ {j + 1} ^ {\\text { max }} = \\left\\{ \\begin{array}{c} s _ {0} + v _ {0} t _ {t + 1} ^ {\\text { max }} + \\frac {1}{2} a _ {\\text { max }} \\left(t _ {j + 1} ^ {\\text { max }}\\right) ^ {2}, t _ {j + 1} ^ {\\text { max }} <   T _ {t o _ {V _ {\\text { max }}}} \\\\ s _ {0} + v _ {0} T _ {t o _ {V _ {\\text { max }}}} + \\frac {1}{2} a _ {\\text { max }} \\left(T _ {t o _ {V _ {\\text { max }}}}\\right) ^ {2} + \\\\ \\left(t _ {t + 1} ^ {\\text { max }} - T _ {t o _ {V _ {\\text { max }}}}\\right) v _ {\\text { max }}, t _ {j + 1} ^ {\\text { max }} \\geq T _ {t o _ {V _ {\\text { max }}}} \\end{array} \\right. \\tag {6}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/babaa3946f4968456fcb98b9122b21535bd2e48e6f82fa323b8f7312402b062d.jpg"
+                }
+            },
+            "bbox": [
+                75,
+                465,
+                485,
+                550
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "are the maximum vehicle speed and acceleration respectively; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T _ { t o \\_ V _ { m i n } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the time required for the maximum acceleration "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "to decelerate from "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m a x } ."
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                551,
+                486,
+                597
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "The generation and expansion results of the voxel sequence on the original lane are illustrated in Fig. 3. Each voxel is determined based on the initial longitudinal position "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "s _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "of the ego vehicle. Under the constraints of minimum velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", maximum deceleration "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", maximum velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and maximum acceleration "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { m a x } ,"
+                    },
+                    {
+                        "type": "text",
+                        "content": "all positions within each voxel are reachable along the longitudinal axis. This approach effectively excludes unreachable regions within the planning horizon, thereby reducing the computational cost of subsequent trajectory generation. "
+                    }
+                ]
+            },
+            "bbox": [
+                66,
+                597,
+                486,
+                758
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/7fe9d0feae6367417e132d215b7e0b7f7d40ce5c6b9a30ec5b1e5b42578d83d7.jpg"
+                },
+                "content": "| S (m) | L (m) |\n|-------|-------|\n| 0     | 120   |\n| 3.75  | 100   |\n| 60    | 80    |\n| 80    | 60    |\n| 100   | 40    |\n| 120   | 20    |\n| 140   | 0     |",
+                "chart_caption": [],
+                "chart_footnote": []
+            },
+            "sub_type": "bar",
+            "bbox": [
+                78,
+                772,
+                240,
+                878
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/46e118a4330ed3516234dfe48615b2acd0117254bd23a806e1ce044903c8ae1d.jpg"
+                },
+                "content": "| S (m) | T (s) |\n|---|---|\n| 120 | 5 |\n| 100 | 4 |\n| 80 | 3 |\n| 60 | 2 |\n| 40 | 1 |\n| 20 | 1 |\n| 0 | 1 |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 3. Generation and expansion results of voxel sequence on original Lane "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "bar",
+            "bbox": [
+                256,
+                770,
+                475,
+                878
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "The voxel sequence on the target lane is derived by extending the original lane’s voxel sequence. During this process, the only distinction lies in the lateral position of the voxels at each time step, while all other parameters remain unchanged. The width of voxels on the left lane is set to the width of the corresponding lane. Fig. 4 shows the extension from the original lane to the left lane voxel sequence. In this work, the combined set of voxel sequences from the original lane (in blue) and the target lane (in brown) is defined as the passable space, denoted by "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "O _ { p a s s a b l e }"
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                90,
+                926,
+                238
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/c0a7423fae162882f7cc130f78203fd2bd0a42d9902b5b4059857cbccedae4d5.jpg"
+                },
+                "content": "| S (m) | L (m) |\n|-------|-------|\n| 0     | 120   |\n| 40    | 100   |\n| 80    | 80    |\n| 120   | 60    |\n| 160   | 40    |\n| 200   | 20    |\n| 240   | 0     |\n| 280   | -20   |\n| 320   | -40   |\n| 360   | -60   |\n| 400   | -80   |\n| 440   | -100  |\n| 480   | -120  |\n| 520   | -140  |\n| 560   | -160  |\n| 600   | -180  |\n| 640   | -200  |\n| 680   | -220  |\n| 720   | -240  |\n| 760   | -260  |\n| 800   | -280  |\n| 840   | -300  |\n| 880   | -320  |\n| 920   | -340  |\n| 960   | -360  |\n| 1000  | -380  |\n| 1040  | -400  |\n| 1080  | -420  |\n| 1120  | -440  |\n| 1160  | -460  |\n| 1200  | -480  |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 4. Voxel sequence extending from original lane to left lane "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "area_stacked",
+            "bbox": [
+                647,
+                239,
+                813,
+                368
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "B. Generation of the Spatiotemporal Lane-Change Corridor "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                509,
+                398,
+                916,
+                414
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "The previously constructed passable space "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "O _ { p a s s a b l e }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "includes all collision-free positions but lacks temporal continuity and explicit collision-risk filtering, limiting its suitability for trajectory generation. This section introduces a spatiotemporal corridor construction method to ensure continuity, feasibility, and safety. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                416,
+                926,
+                502
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Considering the dynamic interaction between the ego vehicle and surrounding traffic during an active lane change, the entire maneuver is divided into three sequential phases: prelane-change, mid-lane-change, and post-lane-change. Based on this division, a three-stage spatiotemporal corridor structure is proposed. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                508,
+                926,
+                592
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/05b2178c6811c65378f70d2a222fe7c489ad4bfde5f690d6f5bb679418a58492.jpg"
+                },
+                "content": "Early stage\nMiddle stage\nLate stage",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 5. Three stages of lane change "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "text_image",
+            "bbox": [
+                531,
+                597,
+                908,
+                694
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Voxel filtering is then performed accordingly. In the longitudinal direction, voxels corresponding to potential collisions with front or rear vehicles are removed. In the lateral direction, only the current lane’s space is retained during the preand post-phases, while both lanes are preserved during the midphase. The resulting corridor is illustrated in the Fig. 6 as a threestage spatiotemporal structure. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                724,
+                926,
+                824
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                125,
+                960,
+                867,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/717b5fcc9b47edb5c38fed773d2903b805f7aba807f33a98fec79abcf7f3a8e1.jpg"
+                },
+                "content": "| S (m) | L (m) | (s) |\n|-------|-------|-----|\n| 0     | -3.75 | 1   |\n| 20    | 0     | 2   |\n| 40    | 0.00  | 3   |\n| 60    | 0.00  | 4   |\n| 80    | 0.00  | 5   |\n| 100   | 0.00  | 5   |\n| 120   | 0.00  | 5   |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 6. Lane changing space time corridor "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "bar",
+            "bbox": [
+                189,
+                74,
+                390,
+                217
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To ensure feasibility and temporal consistency, a trapezoidal velocity profile estimates the minimum duration for each lanechange phase, enforcing lateral velocity and acceleration limits. This guarantees phase durations exceed minimum thresholds, maintaining lateral dynamic constraints throughout the corridor. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                248,
+                486,
+                319
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "As illustrated in Fig. 7, the trapezoidal velocity profile divides the lateral lane-change process into three phases: uniform acceleration, constant velocity, and uniform deceleration, with acceleration remaining constant within each phase. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                325,
+                486,
+                395
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/f8171226487e0214e24eb0109703e5d7406931fb83bbfaddb5aea1a20b510ca0.jpg"
+                },
+                "content": "| t     | V       |\n|-------|---------|\n| 0     | 0       |\n| 1.5   | V₁,max  |\n| 1.5   | Decelerate |\n| 1.5   | Uniform  |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 7. The lane change process is divided into three stages of speed change "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                147,
+                411,
+                421,
+                541
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "In scenarios where the constant-velocity phase is absent, the lane change is completed using only the acceleration and deceleration phases. In this case, the maximum lateral velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { f }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is reached at the midpoint, and the durations of the acceleration and deceleration phases are equal: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                579,
+                486,
+                652
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "v _ {f} = \\sqrt {\\frac {2 a _ {l , m a x} a _ {l , m i n} (l _ {e n d} - l _ {0}) - a _ {l , m a x} v _ {l , e n d} ^ {2} + a _ {l , m i n} v _ {l , 0} ^ {2}}{a _ {l , m i n} - a _ {l , m a x}}} (7)",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/badb329d5a74ac2546fd7c54acb5d7e40aee4f3ce80a9bafdc06f383d4cc7794.jpg"
+                }
+            },
+            "bbox": [
+                68,
+                657,
+                490,
+                718
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { l , 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { l , 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the initial and final lateral velocities of the lane change; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l _ { e n d }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the initial and final lateral positions; "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { l , m i n }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { l , m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "represent the minimum and maximum allowable lateral accelerations, set to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "0 . 4 \\mathrm { g }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "in this work [20]. By comparing the calculated "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { f }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "with the maximum allowed lateral velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { l , m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", the presence of a constantvelocity phase can be determined. If "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { f } \\le v _ { l , m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", then no constant-velocity phase exists, and the profile consists only of acceleration and deceleration stages. The time–position relationships for each phase can be described by the following equations. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                723,
+                488,
+                883
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\begin{array}{l} l (t) \\\\ = \\left\\{ \\begin{array}{c} l _ {0} + v _ {l, 0} t + \\frac {1}{2} a _ {l, m a x} t ^ {2}, t \\in [ 0, T _ {a} ] \\\\ l _ {0} + l _ {a} + v _ {v} (t - T _ {a}) + \\frac {1}{2} a _ {l, m i n} (t - T _ {a}) ^ {2}, t \\in [ T _ {a}, T _ {a} + T _ {d} ] \\end{array} \\right. \\tag {8} \\\\ \\end{array}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/a941a1a9656a62f6ac7764c06c7d6f63df29b56febea442e42ab8df38e083df5.jpg"
+                }
+            },
+            "bbox": [
+                509,
+                66,
+                950,
+                157
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\begin{array} { r } { T _ { a } = \\frac { v _ { v } - v _ { l , 0 } } { a _ { l , m a x } } } \\end{array}"
+                    },
+                    {
+                        "type": "text",
+                        "content": "????−????,0 is the time of acceleration phase, ???? = "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "T _ { d } ="
+                    },
+                    {
+                        "type": "text",
+                        "content": "????,??????−???? is the time of deceleration phase. ???? = ????,0???? + "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\frac { v _ { l , e n d } - v _ { v } } { a _ { l , m i n } }"
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l _ { a } = v _ { l , 0 } T _ { a } +"
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\textstyle \\frac { 1 } { 2 } a _ { l , m a x } ( T _ { a } ) ^ { 2 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the displacement in acceleration phase. "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l _ { d } ="
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { v } T _ { d } + \\frac { 1 } { 2 } a _ { l , m i n } ( T _ { d } ) ^ { 2 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the displacement in deceleration phase. If "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { f } > v _ { l , m a x } ,"
+                    },
+                    {
+                        "type": "text",
+                        "content": "the lateral velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { v }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "in the constant velocity section is the maximum lateral velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { l , m a x }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "allowed in the lane changing process. At this time, there is a constant velocity section in the velocity curve, and the position time of each stage in the trapezoidal velocity curve can be described by the following formula: "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                162,
+                928,
+                335
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\begin{array}{l} l (t) \\\\ = \\left\\{ \\begin{array}{c} l _ {0} + v _ {l, 0} + \\frac {1}{2} a _ {l, m a x} t ^ {2}, t \\in [ 0, T _ {a} ] \\\\ l _ {0} + l _ {a} + v _ {v} (t - T _ {a}), t \\in [ T _ {a}, T _ {a} + T _ {v} ] \\\\ l _ {0} + l _ {a} + l _ {v} + v _ {v} (t - T _ {a} - T _ {v}) + \\frac {1}{2} a _ {l, m i n} (t - T _ {a} - T _ {v}) ^ {2}, \\\\ t \\in [ T _ {a} + T _ {v}, T _ {a} + T _ {v} + T _ {d} ] \\end{array} \\right. \\tag {9} \\\\ \\end{array}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/3c88ce90f486debb14c3fa3c38b7f2ba3830086d368a1ad7606e3fceb7afdc09.jpg"
+                }
+            },
+            "bbox": [
+                509,
+                343,
+                937,
+                472
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Where "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\begin{array} { r } { T _ { v } = \\frac { l _ { e n d } - l _ { 0 } - l _ { a } - l _ { d } } { v _ { v } } } \\end{array}"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the time of uniform velocity stage, and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "l _ { v } = v _ { v } T _ { v }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is the displacement of uniform velocity stage. "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                474,
+                926,
+                513
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "C. Lane-Change Trajectory Generation "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                509,
+                520,
+                779,
+                535
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "To ensure the smoothness and dynamic feasibility of the trajectory, the generation problem is formulated as a quadratic programming (QP) problem. The objective function is designed to minimize the trajectory’s jerk (i.e., the derivative of acceleration), which enhances vehicle stability and ride comfort. The QP problem is solved using the OOQP solver to optimize the Bézier control points, yielding a safe and dynamically consistent lane-change trajectory. "
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                537,
+                928,
+                654
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "A Bézier curve "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "B ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is a parametric curve defined over the interval "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t \\in [ 0 , 1 ]"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", determined by a set of control points "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "p _ { i } ( i ="
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "0 , 1 \\ldots , m )"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", where ?? is the degree of the curve [21]. The general form of an ??-th order Bézier curve based on Bernstein polynomials is: "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                654,
+                926,
+                727
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "B (t) = \\sum_ {i = 0} ^ {m} P _ {i} \\cdot b _ {m} ^ {i} (t), t \\in [ 0, 1 ] \\tag {10}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/bfcc7e199b0f76e4669ac373be12481846d9900eff79aa5f8f053b2fb1941280.jpg"
+                }
+            },
+            "bbox": [
+                609,
+                727,
+                926,
+                768
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Where in "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "b _ { m } ^ { i } ( t ) = \\binom { m } { i } t ^ { i } ( 1 - t ) ^ { m - i }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". In this work, Bézier curves are employed to represent both the lateral and longitudinal components of each trajectory segment. To ensure that each segment conforms to its respective time interval "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "[ t _ { j - 1 } , t _ { j } ]"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", a scaling factor "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\alpha _ { j }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is introduced to map the original domain [0,1] to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "[ t _ { j - 1 } , t _ { j } ]"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". Additionally, a numerical scaling coefficient "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\beta _ { j }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is introduced to enhance stability during the optimization process. The resulting time-scaled Bézier curve is expressed as: "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                768,
+                928,
+                880
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                125,
+                960,
+                867,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                68,
+                66,
+                486,
+                95
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "f (t) = \\beta_ {j} \\sum_ {i = 0} ^ {m} p _ {i} \\cdot b _ {m} ^ {i} \\left(\\frac {t - t _ {j - 1}}{\\alpha_ {j}}\\right), [ t _ {j - 1}, t _ {j} ] \\tag {11}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/707b4b7fbb3811cd5dae32a6dae3e51a947308173579958ac796d485ce1fba01.jpg"
+                }
+            },
+            "bbox": [
+                133,
+                95,
+                485,
+                138
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "D. Cost function "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                68,
+                145,
+                187,
+                159
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "In this work, the cost function formulation focuses on minimizing the longitudinal and lateral jerks (i.e., the derivatives of acceleration). Jerk is a critical factor influencing both ride comfort and vehicle stability. A lower jerk implies smoother acceleration transitions, resulting in a more comfortable and stable lane-change maneuver. For the j-th trajectory segment, let "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f ^ { \\sigma } ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "denote the scaled Bézier curve in the ?? direction. The corresponding jerk cost function is defined as: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                164,
+                486,
+                294
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "J _ {j} ^ {\\sigma} = \\int_ {t _ {j - 1}} ^ {t _ {j}} \\left(\\frac {d ^ {3} f _ {j} ^ {\\sigma} (t)}{d t ^ {3}}\\right) ^ {2} d t = \\frac {1}{(\\alpha_ {j}) ^ {3}} \\int_ {0} ^ {1} \\left(\\frac {d ^ {3} f _ {j} ^ {\\sigma} (t)}{d t ^ {3}}\\right) ^ {2} d t \\tag {12}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/e58665f7c1c3e2fa7acf07043fac74d9de7051e45171656ba484f2f38115334a.jpg"
+                }
+            },
+            "bbox": [
+                81,
+                295,
+                485,
+                335
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Position Constraints for Lane-Change Trajectories: Since each voxel within the spatiotemporal lane-change corridor has been preprocessed to exclude regions with potential collision risks (e.g., obstacles and road boundaries), it is sufficient to ensure that each trajectory segment remains fully contained within its corresponding voxel to guarantee safety and collision avoidance. To achieve this, both the longitudinal and lateral Bézier curves of each trajectory segment must be constrained within the bounds of the corresponding voxel. For the longitudinal direction, this can be enforced by constraining all control points of the Bézier curve to lie within the voxel’s longitudinal bounds. The inequality constraint of the following formula needs to be imposed on dimension s: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                335,
+                485,
+                523
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "s _ {j} ^ {\\text { min }} \\leq \\left(\\alpha_ {j}\\right) ^ {1 - k} \\cdot q _ {j, i} ^ {s} \\leq s _ {j} ^ {\\text { max }}, (k = 0, i = [ 0, 5 ]) \\tag {13}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/bbdec110231e7f8c39b26c264399881ae25327fca76b4c72ab5827b185696cce.jpg"
+                }
+            },
+            "bbox": [
+                99,
+                525,
+                483,
+                546
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "On Dimension l, the inequality constraint of the following formula needs to be applied: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                546,
+                485,
+                575
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "l _ {j} ^ {\\text { min }} \\leq \\left(\\alpha_ {j}\\right) ^ {1 - k} \\cdot q _ {j, i} ^ {s} \\leq l _ {j} ^ {\\text { max }}, (k = 0, i = [ 0, 5 ]) \\tag {14}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/ebd2cb69fa71d9b19e8f6aaed30a59484c697dbbc456c6bba5ed8bf2cfa44f6b.jpg"
+                }
+            },
+            "bbox": [
+                102,
+                575,
+                483,
+                595
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Dynamic constraint of lane change trajectory: the application of dynamic constraint is similar to the application of position constraint of lane change trajectory above. In order to make the speed of the scaled Bezier curve "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f _ { j } ^ { \\sigma } ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "of segment j on the σ dimension at "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "[ v _ { j , - } ^ { \\sigma } , v _ { j , + } ^ { \\sigma } ]"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", the inequality constraint of the following formula is applied: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                595,
+                486,
+                686
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "v _ {j, -} ^ {\\sigma} \\leq \\left(\\alpha_ {j}\\right) ^ {1 - k} \\cdot q _ {j, i} ^ {\\sigma , (k)} \\leq v _ {j, +} ^ {\\sigma}, (k = 1, i = [ 0, 4 ]) \\tag {15}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/e02ee55aca6e583fed3992cea2cdae589735b7b9525aa8f8828da330e97f5018.jpg"
+                }
+            },
+            "bbox": [
+                99,
+                686,
+                483,
+                709
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "In order to make the acceleration of the scaled Bezier curve of the j segment in the σ dimension within the range of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "[ a _ { j , - } ^ { \\sigma } , a _ { j , + } ^ { \\sigma } ] ."
+                    },
+                    {
+                        "type": "text",
+                        "content": "it is necessary to impose control constraints on the second derivative of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f _ { j } ^ { \\sigma } ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": ": "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                709,
+                486,
+                771
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "a _ {j, -} ^ {\\sigma} \\leq \\left(\\alpha_ {j}\\right) ^ {1 - k} \\cdot q _ {j, i} ^ {\\sigma , (k)} \\leq a _ {j, +} ^ {\\sigma}, (k = 2, i = [ 0, 3 ]) \\tag {16}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/344f9c6b354c287bad27d924056227f1a15b4f3697f8fa8342b3caf60259a40d.jpg"
+                }
+            },
+            "bbox": [
+                99,
+                771,
+                483,
+                792
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Continuity constraint of lane change trajectory: in order to ensure that the position, speed, acceleration and acceleration of the generated lane change trajectory "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "are continuous, the position, speed, acceleration and acceleration of the longitudinal curve "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f ^ { s } ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and the transverse curve "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f ^ { l } ( t )"
+                    },
+                    {
+                        "type": "text",
+                        "content": "of the lane change trajectory must be continuous, so continuity constraint needs to be imposed: "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                792,
+                488,
+                896
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "\\frac {d ^ {k} f _ {j} ^ {\\sigma} (t _ {j})}{d t ^ {k}} = \\frac {d ^ {k} f _ {j + 1} ^ {\\sigma} (t _ {j})}{d t ^ {k}}, (k = 0, 1, 2, 3) \\tag {17}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/76f8d026dc13fdb0e6ed18318e5570efa6b933dfc5f1360c6a961bf0a7c6907d.jpg"
+                }
+            },
+            "bbox": [
+                586,
+                66,
+                924,
+                101
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Wher "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\cdot \\frac { d ^ { k } f _ { j } ^ { \\sigma } ( t _ { j } ) } { d t ^ { k } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "and "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\frac { d ^ { k } f _ { j + 1 } ^ { \\sigma } ( t _ { j } ) } { d t ^ { k } }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "are the last control point of the jth curve and the first control point of the j+1 curve on the σ dimension, respectively. "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                99,
+                926,
+                155
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Constraints on the end point of lane change planning: since each Bezier curve must pass through its last control point, it is only necessary to constrain the state of the last control point of the scaled Bezier curveplanning start poin "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "f _ { n } ^ { \\sigma } ( t )"
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "[ \\sigma _ { t _ { n } } ^ { ( 0 ) } , \\sigma _ { t _ { n } } ^ { ( 1 ) } , \\sigma _ { t _ { n } } ^ { ( 2 ) } ]"
+                    },
+                    {
+                        "type": "text",
+                        "content": "?????? , ?????? mension to the state of the , and then the constraints on the planning end point can be imposed: "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                155,
+                926,
+                247
+            ]
+        },
+        {
+            "type": "equation_interline",
+            "content": {
+                "math_content": "(\\alpha_ {n}) ^ {1 - k} \\cdot q _ {n, m - k} ^ {\\sigma , (k)} = \\sigma_ {t _ {n}} ^ {(k)}, (k = 0, 1, 2) \\tag {18}",
+                "math_type": "latex",
+                "image_source": {
+                    "path": "images/29a59ffa0674a5567d15425d16c8b5b0a22a574bcf05fd8269bca582f7662bea.jpg"
+                }
+            },
+            "bbox": [
+                593,
+                247,
+                924,
+                268
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "So far, the trajectory generation problem is transformed into a quadratic programming (QP) problem, and the ooqp solver is used to solve the horizontal and vertical curves at the same time. "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                268,
+                926,
+                311
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "IV. EXPERIMENT "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                653,
+                321,
+                772,
+                334
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Based on the proposed method, a typical highway lanechange scenario was constructed to validate the effectiveness of the trajectory planning algorithm. As illustrated in Fig. 8, the ego vehicle operates in a dual-lane same-direction highway environment. The road surface friction coefficient is set to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\varphi ="
+                    },
+                    {
+                        "type": "text",
+                        "content": "0.8 and remains constant. The road is straight, without ramps or intersections, ensuring a simplified traffic setting. The ego vehicle starts in the right lane at an initial speed of "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { M } ="
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "8 0 k m / h ,"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", The leading vehicle in the same lane "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { 0 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is 23 meters ahead and travels at 70 km/h. In the target lane, the preceding vehicle "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "F _ { 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is 20 meters ahead at 85km/h, while the rear vehicle "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "R _ { 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": "is 22 meters behind traveling at 80km/h. "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                340,
+                928,
+                508
+            ]
+        },
+        {
+            "type": "image",
+            "content": {
+                "image_source": {
+                    "path": "images/a1564c436dd0a26b3a92ea5ffa3c856992506b9e5e30c5f7bd60a9b78e0dd6f0.jpg"
+                },
+                "content": "R₁\n80km/h\n22m\nR₀\n70km/h\n10m\nM\n20m\nF₁\n85km/h\n23m\n80km/h\nF₀\n70km/h",
+                "image_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 8. Schematic diagram of lane changing conditions "
+                    }
+                ],
+                "image_footnote": []
+            },
+            "sub_type": "text_image",
+            "bbox": [
+                511,
+                515,
+                926,
+                618
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Simulation parameters are set as follows: maximum lateral acceleration "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "a _ { l , m a x } { = } 0 . 4 \\mathrm { g }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", maximum lateral velocity "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "v _ { l , m a x } ="
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "2 . 5 m / s"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", time step "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "\\Delta t = 0 . 1 s"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and lateral safety "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "b u f f e r _ { L } ="
+                    },
+                    {
+                        "type": "text",
+                        "content": "0.5?? . The optimized phase timing for the lane-change maneuver is: middle phase starting at "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { c _ { 1 } } = 1 . 6 s"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", ending at "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { c _ { 2 } } = 2 . 8 \\mathrm { s }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", and post-change phase ending at "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "t _ { c _ { 3 } } = 4 . 6 s"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", with the corresponding spatiotemporal corridor shown in the Fig. 10. "
+                    }
+                ]
+            },
+            "bbox": [
+                508,
+                648,
+                926,
+                752
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/26ab941c8b4f9344ea9b4e3956fd8424eb7bac70b9b3bb7ecfae50fa34c0b243.jpg"
+                },
+                "content": "| S(m) | T(s) |\n|------|------|\n| 0    | 5    |\n| 20   | 4    |\n| 40   | 3    |\n| 60   | 2    |\n| 80   | 1    |\n| 100  | 0    |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "Fig. 9. Lane changing space time corridor "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "area",
+            "bbox": [
+                661,
+                760,
+                820,
+                882
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                125,
+                962,
+                867,
+                974
+            ]
+        }
+    ],
+    [
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "Using the optimized corridor, the trajectory is generated by solving a quadratic programming problem. To balance comfort in both longitudinal and lateral directions, the cost weights are set to "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "w _ { s } = w _ { l } = 0 . 5"
+                    },
+                    {
+                        "type": "text",
+                        "content": ". The resulting trajectory is shown in the accompanying figures. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                66,
+                486,
+                138
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/64bfd8002dd66ad598c0f02b08c05ec71e2316c27e927d51577a6a16b5e467f0.jpg"
+                },
+                "content": "| Longitudinal displacement (m) | Lateral displacement (m) |\n| ---------------------------- | ------------------------ |\n| 0                            | 0.0                      |\n| 10                           | 0.1                      |\n| 20                           | 0.5                      |\n| 30                           | 1.0                      |\n| 40                           | 1.8                      |\n| 50                           | 2.5                      |\n| 60                           | 3.0                      |\n| 70                           | 3.3                      |\n| 80                           | 3.5                      |\n| 90                           | 3.6                      |\n| 100                          | 3.7                      |\n| 110                          | 3.7                      |",
+                "chart_caption": [],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                129,
+                157,
+                433,
+                284
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/236f4fbc50f94afcf8203b2b4855a2367508758547a4d3d9f724c549a14f39c4.jpg"
+                },
+                "content": "| Time (s) | Longitudinal velocity (km/h) |\n| -------- | ---------------------------- |\n| 0        | 80                           |\n| 0.5      | 80                           |\n| 1        | 80.2                         |\n| 1.5      | 80.6                         |\n| 2        | 81                           |\n| 2.5      | 81.6                         |\n| 3        | 82.4                         |\n| 3.5      | 83.2                         |\n| 4        | 84                           |\n| 4.5      | 84.7                         |\n| 5        | 85                           |",
+                "chart_caption": [],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                127,
+                306,
+                433,
+                435
+            ]
+        },
+        {
+            "type": "chart",
+            "content": {
+                "image_source": {
+                    "path": "images/f3918e52f9bf97105cb3138c9a8adc5bdfd53d7bba520d159cc7ae6d6b553252.jpg"
+                },
+                "content": "| x    | Curvature (l/m) |\n| ---- | --------------- |\n| 0    | 0.0             |\n| 20   | 2.0             |\n| 40   | 1.0             |\n| 60   | -1.0            |\n| 80   | -2.0            |\n| 100  | -1.0            |\n| 110  | 0.0             |",
+                "chart_caption": [
+                    {
+                        "type": "text",
+                        "content": "(b) "
+                    },
+                    {
+                        "type": "text",
+                        "content": "(c) "
+                    },
+                    {
+                        "type": "text",
+                        "content": "Fig. 10. Change of parameters related to lane change trajectory "
+                    }
+                ],
+                "chart_footnote": []
+            },
+            "sub_type": "line",
+            "bbox": [
+                133,
+                455,
+                429,
+                575
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "From Fig. 10(a) and (b), the lane-change trajectory is smooth and continuous. The vehicle gradually accelerates to match the target lane’s speed of 85km/h, achieving a rapid transition to a car-following state and enhancing efficiency in the target lane. Fig. 10(c) presents the curvature variation along the path, with a maximum curvature of only "
+                    },
+                    {
+                        "type": "equation_inline",
+                        "content": "0 . 0 0 2 m ^ { - 1 }"
+                    },
+                    {
+                        "type": "text",
+                        "content": ", indicating excellent ride comfort and dynamic smoothness. These results confirm the feasibility and effectiveness of the proposed spatiotemporal corridor-based lane-change trajectory planning method. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                617,
+                486,
+                743
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "V. CONCLUSION "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                215,
+                753,
+                333,
+                766
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": [
+                    {
+                        "type": "text",
+                        "content": "This paper presents a spatiotemporal-corridor-based lanechange trajectory planning method for intelligent vehicles, including corridor construction and trajectory generation. A voxel-based structure in the Frenet frame defines a collision-free drivable space, with the lane-change process divided into preparation, execution, and completion phases. Each phase has a dedicated spatiotemporal corridor formed by voxels filtered based on traffic interactions. Phase durations are constrained using a trapezoidal velocity model and planning horizon, establishing lateral feasibility. A multi-objective optimization model generates an optimal corridor balancing safety, comfort, and efficiency. Finally, segmented Bézier curves and quadratic programming yield a dynamically feasible trajectory. Simulations in highway scenarios validate the method’s effectiveness and smoothness. "
+                    }
+                ]
+            },
+            "bbox": [
+                68,
+                771,
+                486,
+                882
+            ]
+        },
+        {
+            "type": "paragraph",
+            "content": {
+                "paragraph_content": []
+            },
+            "bbox": [
+                506,
+                66,
+                926,
+                162
+            ]
+        },
+        {
+            "type": "title",
+            "content": {
+                "title_content": [
+                    {
+                        "type": "text",
+                        "content": "REFERENCES "
+                    }
+                ],
+                "level": 1
+            },
+            "bbox": [
+                674,
+                175,
+                764,
+                186
+            ]
+        },
+        {
+            "type": "list",
+            "content": {
+                "list_type": "reference_list",
+                "list_items": [
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[1] MA Y, YIN B, JIANG X, et al. Psychological and environmental factors affecting driver's frequent lane‐changing behaviour: A national sample of drivers in China[J]. IET Intelligent Transport Systems, 2020, 14(8): 825-33. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[2] GONZáLEZ D, PéREZ J, MILANéS V, et al. A review of motion planning techniques for automated vehicles[J]. IEEE Transactions on intelligent transportation systems, 2015, 17(4): 1135-45. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[3] ZHANG T, SONG W, FU M, et al. A unified framework integrating decision making and trajectory planning based on spatio-temporal voxels for highway autonomous driving[J]. IEEE Transactions on Intelligent Transportation Systems, 2021, 23(8): 10365-79. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[4] FAN H, ZHU F, LIU C, et al. Baidu apollo em motion planner[J]. arXiv preprint arXiv:180708048, 2018. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[5] MINH V T, PUMWA J. Feasible path planning for autonomous vehicles[J]. Mathematical Problems in Engineering, 2014, 2014(1): 317494. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[6] CHEN Cheng, HE Yu-Qing, BU Chun-Guang, et al. Feasible Trajectory Generation for Autonomous Vehicles Based on Quartic B´ezier Curve [J]. ACTA AUTOMATICA SINICA, 2015, 41(3): 486-96. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[7] ELBANHAWI M, SIMIC M, JAZAR R. Improved manoeuvring of autonomous passenger vehicles: Simulations and field results[J]. Journal of Vibration and Control, 2017, 23(12): 1954-83. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[8] WERLING M, ZIEGLER J, KAMMEL S, et al. Optimal trajectory generation for dynamic street scenarios in a frenet frame[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[9] YAN Yao, LI Chun-shu, TANG Feng-min. Lane-changing trajectory planning of the autonomous vehicle based on the quintic polynomial model [J]. Journal of Machine Design, 2019, 000(8): 6. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[10] MEHDI S B, CHOE R, HOVAKIMYAN N. Avoiding multiple collisions through trajectory replanning using piecewise Bézier curves[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[11] CHEN L, QIN D, XU X, et al. A path and velocity planning method for lane changing collision avoidance of intelligent vehicle based on cubic 3- D Bezier curve[J]. Advances in Engineering Software, 2019, 132: 65-73. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[12] LIANG Z, ZHENG G, LI J. Automatic parking path optimization based on bezier curve fitting[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[13] YANG K, SUKKARIEH S. An analytical continuous-curvature pathsmoothing algorithm[J]. IEEE Transactions on Robotics, 2010, 26(3): 561-8. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[14] PIVTORAIKO M, KNEPPER R A, KELLY A. Differentially constrained mobile robot motion planning in state lattices[J]. Journal of Field Robotics, 2009, 26(3): 308-33. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[15] KUSHLEYEV A, LIKHACHEV M. Time-bounded lattice for efficient planning in dynamic environments[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[16] CHOI J. Kinodynamic motion planning for autonomous vehicles[J]. International journal of advanced robotic systems, 2014, 11(6): 90. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[17] ALTCHé F, DE LA FORTELLE A. Partitioning of the free space-time for on-road navigation of autonomous ground vehicles[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[18] LUO J, YUAN M, PU H, et al. Trajectory planning for autonomous driving based on spatio-temporal corridor[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[19] DEOLASEE S, LIN Q, LI J, et al. Spatio-temporal motion planning for autonomous vehicles with trapezoidal prism corridors and Bézier curves[C. IEEE. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[20] SHIM T, ADIREDDY G, YUAN H. Autonomous vehicle collision avoidance system using path planning and model-predictive-control-based active front steering and wheel torque control[J]. Proceedings of the Institution of Mechanical Engineers, Part D: Journal of automobile engineering, 2012, 226(6): 767-78. "
+                            }
+                        ]
+                    },
+                    {
+                        "item_type": "text",
+                        "item_content": [
+                            {
+                                "type": "text",
+                                "content": "[21] MNIH V, KAVUKCUOGLU K, SILVER D, et al. Human-level control through deep reinforcement learning[J]. nature, 2015, 518(7540): 529-33. "
+                            }
+                        ]
+                    }
+                ]
+            },
+            "bbox": [
+                506,
+                190,
+                926,
+                872
+            ]
+        },
+        {
+            "type": "page_footer",
+            "content": {
+                "page_footer_content": [
+                    {
+                        "type": "text",
+                        "content": "Authorized licensed use limited to: BEIHANG UNIVERSITY. Downloaded on May 17,2026 at 09:18:24 UTC from IEEE Xplore. Restrictions apply. "
+                    }
+                ]
+            },
+            "bbox": [
+                125,
+                962,
+                867,
+                974
+            ]
+        }
+    ]
+]

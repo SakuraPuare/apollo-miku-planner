@@ -1,0 +1,2575 @@
+[
+    {
+        "type": "text",
+        "text": "doi：10.19562/j.chinasae.qcgc.2023.07.003 ",
+        "bbox": [
+            90,
+            87,
+            329,
+            101
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "基于改进混合A\\*的智能汽车时空联合规划方法 ",
+        "text_level": 1,
+        "bbox": [
+            147,
+            118,
+            850,
+            145
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "胡 杰 1，2，3 ，张志豪 1，2，3 ，陈瑞楠 1，2，3 ，陈锐鹏 1，2，3 ，刘昊岩 1，2，3 ，朱 琪 1，2，3 ，陈 晖 4",
+        "bbox": [
+            208,
+            165,
+            789,
+            181
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "（1. 武汉理工大学，现代汽车零部件技术湖北省重点实验室，武汉 430070；",
+        "bbox": [
+            278,
+            183,
+            715,
+            198
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "武汉理工大学，汽车零部件技术湖北省协同创新中心，武汉 ；",
+        "bbox": [
+            290,
+            200,
+            707,
+            214
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "3. 武汉理工大学，新能源与智能网联汽车湖北省工程技术中心，武汉 430070；",
+        "bbox": [
+            268,
+            216,
+            727,
+            230
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "东风汽车股份有限公司商品研发院，武汉 ）",
+        "bbox": [
+            341,
+            232,
+            657,
+            246
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "［摘要］ 运动规划是自动驾驶系统生成轨迹的关键模块，现有运动规划多采用路径和速度解耦的方法，但解耦的规划方法在复杂动态场景下易陷入轨迹次优。本文提出了一种基于搜索和数值优化结合的时空联合运动规划方法，直接求解可行驶轨迹。首先使用改进混合A\\*在时空范围内进行轨迹粗搜索获得初始轨迹，然后以初始轨迹为参考构建可行驶时空走廊，并综合考虑车辆动力学和轨迹连续性约束等条件，使用数值优化的方法进一步平滑初始轨迹。选取换道超车和旁车切入两类典型复杂动态场景进行仿真测试，结果表明，所提时空联合规划方法相较于传统时空解耦规划方法更加灵活、规划结果更加合理，同时具有较好的计算实时性。",
+        "bbox": [
+            122,
+            268,
+            873,
+            370
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "关键词：时空联合规划；改进混合A\\*；时空走廊；数值优化",
+        "bbox": [
+            126,
+            375,
+            561,
+            390
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Spatio-temporal Joint Planning Method of Intelligent Vehicles Based on Improved Hybrid A\\* ",
+        "text_level": 1,
+        "bbox": [
+            208,
+            409,
+            784,
+            453
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Hu Jie1，2，3 ，Zhang Zhihao1，2，3 ，Chen Ruinan1，2，3 ，Chen Ruipeng1，2，3 ，Liu Haoyan1，2，3 ，Zhu Qi1，2，3 & Chen Hui4",
+        "bbox": [
+            169,
+            470,
+            826,
+            504
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "1. Wuhan University of Technology， Hubei Key Laboratory of Modern Auto Parts Technology， Wuhan 430070；",
+        "bbox": [
+            203,
+            509,
+            796,
+            522
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "2. Wuhan University of Technology， Auto Parts Technology Hubei Collaborative Innovation Center， Wuhan 430070； ",
+        "bbox": [
+            186,
+            525,
+            811,
+            537
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "3. Wuhan University of Technology， Hubei Technology Research Center of New Energy and Intelligent Connected Vehicle Engineering， ",
+        "bbox": [
+            144,
+            541,
+            853,
+            555
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Wuhan 430070；4. Commercial Product R&D Institute， Dongfeng Automobile Co. ， Ltd. ， Wuhan 430000",
+        "bbox": [
+            203,
+            557,
+            796,
+            569
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "［Abstract］ Motion planning is the critical module of trajectory generation in autopilot system. The existing motion planning mostly adopts path-velocity decomposition method， which is easy to fall into trajectory suboptimal in complex dynamic scenarios. In this paper， a spatio-temporal joint motion planning method based on the combination of search and numerical optimization is proposed to solve the drivable trajectory directly. Firstly， the improved hybrid A\\* is used to search for the initial rough trajectory in the spatio-temporal range. Secondly， a drivable spatiotemporal corridor is constructed based on the initial trajectory， and considering vehicle dynamics and trajectory continuity constraints， the numerical optimization method is used to further smooth the initial trajectory. Finally， two typical complex dynamic scenarios of lane change overtaking and side-vehicle cut-in are selected for simulation test. The results show that the proposed planning method is more flexible and more reasonable than the traditional spatiotemporal decoupling planning method， and has better real-time computing performance. ",
+        "bbox": [
+            87,
+            594,
+            910,
+            795
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "Keywords：spatio-temporal joint planning； improved hybrid A\\*； spatio-temporal corridor；numerical optimization",
+        "bbox": [
+            122,
+            799,
+            907,
+            835
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            100,
+            58,
+            270,
+            72
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            445,
+            42,
+            557,
+            56
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "Automotive Engineering ",
+        "bbox": [
+            428,
+            60,
+            576,
+            74
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "header",
+        "text": "2023 （ Vol.45 ）No.7",
+        "bbox": [
+            781,
+            58,
+            902,
+            71
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "湖北省科技重大专项（ ， ）资助。",
+        "bbox": [
+            122,
+            876,
+            504,
+            890
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "原稿收到日期为 年 月 日，修改稿收到日期为 年 月 日。",
+        "bbox": [
+            124,
+            894,
+            621,
+            909
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "page_footnote",
+        "text": "通信作者：胡杰，教授，博士，E-mail：auto\\_hj@163. com。",
+        "bbox": [
+            124,
+            912,
+            478,
+            927
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            833,
+            977
+        ],
+        "page_idx": 0
+    },
+    {
+        "type": "text",
+        "text": "前言",
+        "text_level": 1,
+        "bbox": [
+            90,
+            104,
+            139,
+            123
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "运动规划模块作为自动驾驶系统的关键组成部分，其主要任务是基于地图、感知和定位等信息生成一条安全、高效和舒适的可行驶轨迹［1］ 。当前智能汽车已在低速、简单道路场景下实现落地，但在中高速的复杂动态场景下，由于规划方法问题导致智能汽车的行驶表现还有所欠缺。",
+        "bbox": [
+            89,
+            144,
+            485,
+            257
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "根据是否进行时空解耦，轨迹规划方法可分为时空解耦规划和时空联合规划。时空解耦规划将三维的轨迹规划解耦为二维的路径规划和一维的速度规划［2-3］ ，其核心思想是首先考虑静态障碍物规划一条可行驶路径，然后在路径的基础上考虑动态障碍物进行速度规划。常用时空解耦规划方法有采样法、搜索法和数值优化方法［4］ 等。这种先求解路径再求解速度的规划方式，可以显著降低轨迹求解的难度，实现轨迹规划在线高效求解。但由于轨迹在路径与速度层面存在强耦合，时空解耦顺序求解的方式极大限制了所生成轨迹的灵活性和适应性，只能处理静态绕障、路口让行等纵横向运动较为解耦的一般场景［5-6］ ，在换道超车、邻车切入等多目标复杂动态场景下容易陷入轨迹次优［7］ ，制约了当前智能汽车的实际运行表现。",
+        "bbox": [
+            87,
+            259,
+            485,
+            547
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "时空联合规划直接在三维时空范围内求解可行驶轨迹，相比时空解耦规划，尽管由于问题维度增加导致求解效率降低，但这种时空联合同时求解的规划方法具有更大的求解空间和求解灵活性，在各类场景下具有更接近于熟练驾驶员的表现。目前时空联合规划方法主要可分为基于采样［8］、基于搜索［9］和基于数值优化［10］ 的 种方法。与时空解耦规划方法存在的问题相似，单一基于采样或搜索的时空联合规划方法难以平衡轨迹的求解质量和求解耗时，单一基于数值优化的时空联合规划方法在三维时空范围内建模难度大，最优解收敛速度慢且易陷入局部最优［6，11］ 。因此有研究者提出将采样或搜索方法与数值优化方法相结合的时空联合规划方法。",
+        "bbox": [
+            87,
+            550,
+            485,
+            797
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "文献［ ］中提出了一种基于搜索和优化结合的时空联合规划方法，首先引入三维时空栅格地图对车辆的运动环境进行建模，然后在三维栅格地图中使用A\\*搜索自定义的车辆动作空间获得初始轨迹，最后使用模型预测控制的方法对初始轨迹进行平滑处理。但该方法对车辆的实际可行驶状态空间简化过多，导致轨迹完备性和轨迹质量很差。文献［6］中采用 在时空范围内进行采样获得初始轨迹，然后使用数值优化的方法对初始轨迹进行平滑后处理。但 的搜索鲁棒性和一致性较差，导致相邻周期之间的轨迹不连续，无法满足结构化道路上对轨迹求解质量和实时性的要求。文献［7］中首先获取时空范围内的初始轨迹作为参考轨迹，然后基于参考轨迹构建梯形棱柱体时空走廊，在可行驶走廊内使用分段贝塞尔曲线进行轨迹优化获得精细轨迹，但其没有提出具体的初始轨迹计算方法。",
+        "bbox": [
+            87,
+            801,
+            485,
+            914
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            512,
+            85,
+            910,
+            276
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "综上，针对传统时空解耦规划方法在多目标复杂动态场景下易陷入轨迹次优，而现有时空联合规划方法难以平衡轨迹求解质量和求解耗时的问题。为此，本文提出了一种采用分层架构的智能汽车时空联合规划方法，首先使用改进混合 在三维时空范围内进行轨迹粗搜索获得初始轨迹，通过合理设计混合 的节点扩展方式以及启发函数和代价函数，提升轨迹的直接搜索效率和行为的合理性，然后基于初始轨迹构建安全可行驶时空走廊，并综合考虑车辆动力学约束、路径及速度连续性约束等条件，构建以安全、舒适和高效为优化目标的数值优化模型对初始轨迹进行平滑后处理获得最终轨迹。",
+        "bbox": [
+            512,
+            279,
+            910,
+            507
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "本文中首先介绍时空轨迹粗搜索过程，然后介绍时空轨迹后处理过程，最后进行仿真分析，验证所提规划方法相较于传统时空解耦规划方法具有更高的灵活性和规划结果合理性，同时验证所提方法计算的实时性。",
+        "bbox": [
+            512,
+            511,
+            910,
+            604
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1　时空轨迹粗搜索",
+        "text_level": 1,
+        "bbox": [
+            514,
+            625,
+            719,
+            645
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "时空轨迹粗搜索包括两个步骤。第一步，构建时空栅格地图，以描述未来一段时间内自车与障碍物的位置关系及相对运动关系。第二步，基于时空栅格地图使用改进的混合 直接搜索初始粗轨迹。为提高轨迹搜索效率，本文基于轨迹的时空属性提出了一种新的子节点扩展方法，并通过合理设计启发函数和代价函数对可行驶节点进行代价排序，避免了节点沿着不必要的方向进行无效拓展。",
+        "bbox": [
+            512,
+            665,
+            910,
+            816
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "1. 1　时空栅格地图构建",
+        "text_level": 1,
+        "bbox": [
+            514,
+            819,
+            705,
+            835
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "二维x y栅格地图只具有几何属性，因此传统混合 ［12］ 无法直接搜索带有时间属性的可行驶轨迹。轨迹的直接搜索需要构建三维x y t栅格地图，考虑到本文研究场景为具有车道线指引的结构化道路，为降低运动建模的难度，本文使用Frenet坐标系进行统一的场景描述［13］，构建三维s - l - t时空栅格地图。其中s表示沿道路指引线的纵向位置，l表示相对于道路指引线的横向位置，t表示时间。首先构建二维s l栅格地图，然后将二维栅格地图沿离散化的时间轴t进行扩展，离散时间间隔为 t，得到离散形式的三维s l t时空栅格地图，如图所示。",
+        "bbox": [
+            512,
+            839,
+            910,
+            914
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1124 ",
+        "bbox": [
+            112,
+            61,
+            161,
+            72
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            448,
+            60,
+            559,
+            73
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            724,
+            60,
+            892,
+            73
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            835,
+            977
+        ],
+        "page_idx": 1
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            485,
+            237
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/1d7e3a125aafe2c78eed0b9bc419b9630d052bf56789ec587a25ee60022a1958.jpg",
+        "image_caption": [
+            "图 　时空栅格地图"
+        ],
+        "image_footnote": [],
+        "content": "静止物体\n障碍物车轴V2\n自车\n障碍物车轴V1\n三维s-l-t栅格地图\n沿时间轴t扩展\n二维s-l栅格地图\nl/m\ns/m\nt/s",
+        "sub_type": "text_image",
+        "bbox": [
+            105,
+            250,
+            473,
+            460
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "在三维s l t时空栅格地图中，静止物体表现为沿时间轴t占据相同的s l区域，如图 绿色部分所示；移动物体在不同时间点的s l位置状态如图蓝色和黄色部分所示，表现为倾斜向上。其中动态障碍物在未来一段时间内的位置应由预测模块［14］给出。因此相较于二维栅格地图，使用时空栅格地图可以清晰地描述未来一段时间内自车与障碍物的位置关系及相对运动关系。",
+        "bbox": [
+            89,
+            507,
+            485,
+            658
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "1. 2　时空节点扩展",
+        "text_level": 1,
+        "bbox": [
+            90,
+            662,
+            245,
+            677
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "时空节点状态空间表示",
+        "text_level": 1,
+        "bbox": [
+            90,
+            681,
+            332,
+            696
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "传统混合 的节点状态空间为（s，l，θ，d ，其中s，l 表示车辆的纵向位置和横向位置，θ表示航向角，d表示车辆前进或后退行驶方向，相邻节点之间保持空间状态连续，节点扩展方式如图 （）所示。",
+        "bbox": [
+            87,
+            700,
+            485,
+            774
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "本文提出的三维时空混合 节点状态空间增加了时间维度信息，同时考虑到结构化道路行车过程中不允许倒车，因此时空混合 对应的车辆状态空间为（s，l，θ，v，t 。其中前 项与传统混合 相同，第 项v为速度状态量，第 项t为节点相对于当前自车位置所在节点的时间，定义规划时域T表示一次规划考虑的未来时间范围，则节点的相对时间t取值范围为[ ，T]。",
+        "bbox": [
+            87,
+            776,
+            485,
+            930
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/cb8b882cfa339dc7dc4d0438be79a55a64698ba23a0450c895b781fc3c956052.jpg",
+        "image_caption": [
+            "（a)传统混合A\\*"
+        ],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph TD\n    A[\"•\"] --> B[\"Np\"]\n    C[\"•\"] --> B\n    D[\"•\"] --> B\n    E[\"•\"] --> B\n    F[\"•\"] --> B\n    G[\"•\"] --> B\n    H[\"•\"] --> B\n    I[\"•\"] --> B\n    J[\"•\"] --> B\n    K[\"•\"] --> B\n    L[\"•\"] --> B\n    M[\"•\"] --> B\n    N[\"•\"] --> B\n    O[\"•\"] --> B\n    P[\"•\"] --> B\n    Q[\"•\"] --> B\n    R[\"•\"] --> B\n    S[\"•\"] --> B\n    T[\"•\"] --> B\n    U[\"•\"] --> B\n    V[\"•\"] --> B\n    W[\"•\"] --> B\n    X[\"•\"] --> B\n    Y[\"•\"] --> B\n    Z[\"•\"] --> B\n    AA[\"•\"] --> B\n    AB[\"•\"] --> B\n    AC[\"•\"] --> B\n    AD[\"•\"] --> B\n    AE[\"•\"] --> B\n    AF[\"•\"] --> B\n    AG[\"•\"] --> B\n    AH[\"•\"] --> B\n    AI[\"•\"] --> B\n    AJ[\"•\"] --> B\n    AK[\"•\"] --> B\n    AL[\"•\"] --> B\n    AM[\"•\"] --> B\n    AN[\"•\"] --> B\n    AO[\"•\"] --> B\n    AP[\"•\"] --> B\n    AQ[\"•\"] --> B\n    AR[\"•\"] --> B\n    AS[\"•\"] --> B\n    AT[\"•\"] --> B\n    AU[\"•\"] --> B\n    AV[\"•\"] --> B\n    AW[\"•\"] --> B\n    AX[\"•\"] --> B\n    AY[\"•\"] --> BA[\"Ni\"]\n    BA --> BB[\"Ni\"]\n    BB --> BC[\"Ni\"]\n    BC --> BD[\"Ni\"]\n    BD --> BE[\"Ni\"]\n    BE --> BF[\"Ni\"]\n    BF --> BG[\"Ni\"]\n    BG --> BH[\"Ni\"]\n    BH --> BI[\"Ni\"]\n    BI --> BJ[\"Ni\"]\n    BJ --> BK[\"Ni\"]\n    BK --> BL[\"Ni\"]\n    BL --> BM[\"Ni\"]\n    BM --> BN[\"Ni\"]\n    BN --> BO[\"Ni\"]\n    BO --> BP[\"Ni\"]\n    BP --> BQ[\"Ni\"]\n    BA --> BR[\"Np\"]\n    BB --> BS[\"Np\"]\n    BC --> BT[\"Np\"]\n    BD --> BU[\"Np\"]\n    BE --> BV[\"Np\"]\n    BF --> BW[\"Np\"]\n    BG --> BX[\"Np\"]\n    BH --> BY[\"Np\"]\n    BI --> BZ[\"Np\"]\n    BJ --> CA[\"Np\"]\n    BK --> CB[\"Np\"]\n    BL --> CC[\"Np\"]\n    BM --> CD[\"Np\"]\n    BN --> CE[\"Np\"]\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            519,
+            96,
+            665,
+            202
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/23defd1c1f1cce9f0c0a626d99ec4b51c80ceb3740a8b7ed8668d11de45b3498.jpg",
+        "image_caption": [
+            "（b)时空混合A\\*",
+            "图 　传统混合 与时空混合 节点扩展方式对比"
+        ],
+        "image_footnote": [],
+        "content": "t\ns\nl\nNp\nNi",
+        "sub_type": "text_image",
+        "bbox": [
+            673,
+            104,
+            899,
+            202
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "时空子节点扩展过程",
+        "text_level": 1,
+        "bbox": [
+            514,
+            283,
+            741,
+            297
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "基于时空节点的状态空间特征，本文采用前轮转角δ和加速度a作为具有非完整性约束车辆的控制变量，基于如图 所示的车辆运动学模型进行子节点扩展，节点扩展方式如图 （）所示，时空子节点扩展过程如下。",
+        "bbox": [
+            512,
+            302,
+            910,
+            395
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "image",
+        "img_path": "images/07f6de8ce85c2b846147290579a3023fc4b83a7ffe1beb67676ef895bb189c71.jpg",
+        "image_caption": [
+            "图 　车辆运动学模型"
+        ],
+        "image_footnote": [],
+        "content": "O\nδ\nR\nv\nL\nθ\n(s, l)\nδ",
+        "sub_type": "text_image",
+        "bbox": [
+            576,
+            406,
+            850,
+            563
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "（）离散前轮转角δ和加速度a",
+        "text_level": 1,
+        "bbox": [
+            549,
+            612,
+            786,
+            628
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "基 于 车 辆 运 动 学 约 束 将 前 轮 转 角 δ 在$\\left[ \\mathbf { \\Phi } - \\delta _ { \\mathrm { m a x } } , \\delta _ { \\mathrm { m a x } } \\right]$ 进行均匀离散化，为保证子节点的扩展能够沿着车辆航向角方向进行，前轮转角离散数量N需要选取为奇数，得到离散前轮转角集Δ，表达式如下：",
+        "bbox": [
+            512,
+            631,
+            910,
+            725
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\Delta = \\left\\{\\delta_ {i} | - \\delta_ {\\max} + (i - 1) \\times \\frac {\\delta_ {\\max} - (- \\delta_ {\\max})}{N - 1} \\right\\} \\tag {1}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            729,
+            907,
+            767
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "式中 $i = 1 , 2 , \\cdots , N _ { \\circ }$ 。",
+        "bbox": [
+            514,
+            772,
+            670,
+            787
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "为平衡节点的扩展效率和扩展质量，采用变间隔离散化车辆加速度 a，离散加速度分布以 为基准，基于车辆动力学参数确定加速度上下限$\\left[ \\mathbf { \\Phi } - a _ { \\operatorname* { m a x } } , a _ { \\operatorname* { m a x } } \\right]$ ，在 $\\left[ \\mathbf { \\Phi } - a _ { \\operatorname* { m a x } } , a _ { \\operatorname* { m a x } } \\right]$ 区间内向左右两侧以逐渐加大的间隔采样加速度，得到离散加速度集A，表达式如下：",
+        "bbox": [
+            512,
+            791,
+            910,
+            905
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "equation",
+        "text": "$$\nA = \\left\\{- a _ {\\max}, \\dots , 0, \\dots , a _ {\\max} \\right\\} \\tag {2}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            909,
+            907,
+            927
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "2023（ Vol.45） No.7",
+        "bbox": [
+            100,
+            60,
+            221,
+            73
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "header",
+        "text": "胡杰，等：基于改进混合 的智能汽车时空联合规划方法",
+        "bbox": [
+            314,
+            60,
+            685,
+            73
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1125 ",
+        "bbox": [
+            835,
+            61,
+            887,
+            72
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            963,
+            835,
+            977
+        ],
+        "page_idx": 2
+    },
+    {
+        "type": "text",
+        "text": "（）基于运动学模型的时空子节点扩展",
+        "text_level": 1,
+        "bbox": [
+            124,
+            85,
+            426,
+            102
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "传统混合 $\\mathrm { A ^ { * } }$ 采用固定步长的方式扩展节点，如图 （）所示，轨迹搜索效果受搜索步长的影响很大，搜索步长过小将降低搜索效率，步长过大将降低搜索结果质量。本文所提出的时空混合 基于加速度采样获得空间变步长，如图 （）所示，从每个父节点 $N _ { { P } } \\big ( s _ { p } , l _ { p } , \\theta _ { p } , v _ { p } , t _ { p } \\big )$ 开始，基于前述离散前轮转角 δ 和 加 速 度 a 和 进 行 子 节 点 扩 展 ，子 节 点$N _ { i } \\left( s _ { i } , l _ { i } , \\theta _ { i } , v _ { i } , t _ { i } \\right)$ 的时空扩展过程表示如下：",
+        "bbox": [
+            87,
+            105,
+            485,
+            262
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l} s _ {i} = s _ {p} + v _ {p} \\times \\mathrm{d} t \\times \\cos \\theta_ {i} \\\\ l _ {i} = l _ {p} + v _ {p} \\times \\mathrm{d} t \\times \\sin \\theta_ {i} \\\\ \\theta_ {i} = \\theta_ {p} + v _ {i} \\times \\mathrm{d} t \\times \\tan \\delta_ {i} / L \\\\ v _ {i} = v _ {p} + a _ {i} \\times \\mathrm{d} t \\\\ t _ {i} = t _ {p} + \\mathrm{d} t \\end{array} \\right. \\tag {3}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            124,
+            265,
+            482,
+            360
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "式中：L为车辆轴距；t为相邻节点的时间步长；$a _ { i } \\in A ; \\delta _ { i } \\in \\Delta$ 。",
+        "bbox": [
+            87,
+            363,
+            482,
+            400
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "为保证子节点与障碍物安全无碰撞，将上述时间步长 t按照更小的时间步长 $t _ { \\mathrm { s t e p } }$ 均匀划分为M段，则基于式（）可获得由父节向子节点扩展过程中的一组中间过渡节点 $\\left[ N _ { i 1 } , N _ { i 2 } . . . N _ { i M } \\right]$ 。若子节点及中间过渡节点与障碍物均无碰撞发生，则认为该子节点安全。此外，对子节点还应进行道路边界约束检查，以确保子节点处于道路边界内。若子节点同时通过碰撞检查和道路边界约束检查，则进行下一步的节点代价评估，否则丢弃该扩展节点。",
+        "bbox": [
+            87,
+            403,
+            484,
+            575
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "遍历离散前轮转角集Δ和离散加速度集A，即可基于父节点扩展得到一系列子节点。",
+        "bbox": [
+            89,
+            579,
+            482,
+            613
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "1. 3　时空节点启发函数设计",
+        "text_level": 1,
+        "bbox": [
+            89,
+            618,
+            314,
+            633
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "合适的启发函数可以引导混合 的搜索沿着最接近目标点的方向进行。传统混合 多采用 $\\mathrm { A ^ { * } }$ 搜索结果和 曲线作为启发式函数，选择两者的最大值作为最终启发信息。但使用 $\\mathrm { A ^ { * } }$ 和曲线作为启发函数存在耗时严重的问题［15］ ，因此传统混合 一般应用于对于算法计算实时性要求不高的低速非结构化场景，无法满足实时性要求较高的复杂动态场景。",
+        "bbox": [
+            87,
+            636,
+            485,
+            787
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "本文研究对象为具有明确指引线的结构化道路，并基于 坐标系进行环境和运动建模，因此道路的几何形状对混合 搜索过程的影响很小，同时考虑到在线求解的实时性，因此可以使用当前点到目标点的距离作为启发项。本文采用时空欧式距离作为混合 粗搜索过程的启发函数，满足条件的子节点 $N _ { i } \\left( s _ { i } , l _ { i } , \\theta _ { i } , v _ { i } , t _ { i } \\right)$ 启发函数H 计算如下：",
+        "bbox": [
+            87,
+            791,
+            485,
+            922
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nH _ {i} = w _ {H 1} \\times \\sqrt {\\left(s _ {\\text { goal }} - s _ {i}\\right) ^ {2} + \\left(l _ {\\text { goal }} - l _ {i}\\right) ^ {2}} +\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            88,
+            836,
+            115
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nw _ {H 2} \\times \\left(t _ {\\text { goal }} - t _ {i}\\right) \\tag {4}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            586,
+            118,
+            907,
+            140
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "式中：第1项为平面欧式距离启发项 ${ \\ ; s _ { \\mathrm { g o a l } } } \\setminus { l _ { \\mathrm { g o a l } } }$ 分别为目标节点的纵向位置和横向位置；第2项为时间距离启发项； $t _ { \\mathrm { g o a l } }$ 为目标节点对应的相对时间，作用于避免混合 $\\mathrm { A ^ { * } }$ 陷入不必要的时间停滞，加快搜索过程； $; w _ { H 1 }$ 和 $w _ { H 2 }$ 分别为对应启发项的权重。",
+        "bbox": [
+            512,
+            143,
+            910,
+            237
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "1. 4　时空节点代价函数设计",
+        "text_level": 1,
+        "bbox": [
+            514,
+            240,
+            739,
+            254
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "子节点代价指从搜索起始节点到当前节点$N _ { { \\scriptscriptstyle i } } ( s _ { { \\scriptscriptstyle i } } , l _ { i } , \\theta _ { { \\scriptscriptstyle i } } , v _ { { \\scriptscriptstyle i } } , t _ { i } )$ 的累积代价，由父节点 $N _ { { P } }$ 的代价$G _ { p }$ 、父节点 $N _ { p }$ 与子节点 $N _ { i }$ 之间的过渡代价两部分组成，可表示为",
+        "bbox": [
+            512,
+            258,
+            907,
+            332
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nG _ {i} = G _ {p} + w _ {g 1} \\times E _ {i} + w _ {g 2} \\times C _ {i} + w _ {g 3} \\times S _ {i} \\tag {5}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            566,
+            337,
+            907,
+            354
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "式中： $G _ { i }$ 为子节点舒适性代价项，通过子节点与车道中心线 $\\left( s _ { \\mathrm { c e n t e r l i n e } } , l _ { \\mathrm { c e n t e r l i n e } } \\right)$ 的横向偏移衡量（式（6））； $G _ { p }$ 为父节点代价； $w _ { g 1 } \\setminus w _ { g 2 } \\setminus w _ { g 3 }$ 为权重系数； $E _ { i }$ 为子节点目标代价项，通过子节点的速度与期望车速 $v _ { \\mathrm { { e x p e c t e d } } }$ 的偏差衡量（式（））； $S _ { i }$ 为子节点安全性代价项，节点与障碍物的相对距离可以衡量碰撞风险。",
+        "bbox": [
+            512,
+            355,
+            910,
+            470
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nC _ {i} = \\left| l _ {i} - l _ {\\text { centerline }} \\right| \\tag {6}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            473,
+            907,
+            492
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nE _ {i} = \\left| v _ {i} - v _ {\\text { expected }} \\right| \\tag {7}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            496,
+            907,
+            515
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "为提高混合 $\\mathrm { A } ^ { * }$ 节点搜索的高效性和轨迹行为的拟人性，本文参照文献［ ］中在时空栅格地图中建立风险场，该理论将障碍物视为风险源中心，给予障碍物周围的节点赋予不同的碰撞风险惩罚值，风险场方向由风险源中心向四周辐射，自车与风险源中心距离越近则碰撞风险越大，反之，碰撞风险越小。风险场分布模型表达式为",
+        "bbox": [
+            512,
+            519,
+            910,
+            651
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\nR (s, l) = \\exp \\left[ - \\frac {1}{2} \\times \\left(\\frac {\\left(s - u _ {s}\\right) ^ {2}}{\\sigma_ {s g} ^ {2}} + \\frac {\\left(l - u _ {l}\\right) ^ {2}}{\\sigma_ {l g} ^ {2}}\\right) \\right] \\tag {8}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            654,
+            907,
+            719
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "式中： $\\textstyle { \\binom { s , l } { s } }$ 和 $\\left( u _ { s } , u _ { l } \\right)$ 分别表示节点和障碍物风险源中心的位置坐标； $\\sigma _ { s g }$ 和 $\\sigma _ { l g }$ 分别表示障碍物在s向和l向的分布因子，分布因子与障碍物的轮廓以及障碍物在s向和l向的速度和加速度相关。",
+        "bbox": [
+            512,
+            721,
+            910,
+            797
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "结构化道路行车过程中，静态障碍物的风险场分布具有各向同性，动态障碍物的风险场分布具有各向异性，相应的基于风险场的子节点安全代价值可表示为",
+        "bbox": [
+            512,
+            801,
+            910,
+            875
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l} S _ {i} = R (s, l) \\times \\exp (\\cos \\theta_ {r}) \\\\ r = (s - u _ {s}, l - u _ {l}) \\end{array} \\right. \\tag {9}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            879,
+            907,
+            920
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1126 ",
+        "bbox": [
+            114,
+            61,
+            163,
+            72
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            448,
+            60,
+            559,
+            73
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            724,
+            60,
+            892,
+            73
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            833,
+            977
+        ],
+        "page_idx": 3
+    },
+    {
+        "type": "text",
+        "text": "式中 $: r$ 为节点相对风险源中心的位置向量； $\\theta _ { r }$ 为向量r与障碍物速度v之间的夹角，由于静态障碍物的风险场具有各向同性，因此其θ 始终为 。",
+        "bbox": [
+            87,
+            85,
+            485,
+            140
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "1. 5　时空混合A\\*算法流程",
+        "text_level": 1,
+        "bbox": [
+            90,
+            145,
+            305,
+            159
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "以当前自车所在位置 $( s _ { 1 } , l _ { 1 } , \\theta _ { 1 } , v _ { 1 } , t _ { 1 } )$ ）为搜索起始节点 $N _ { \\mathrm { s t a r t } }$ ，基于式（3）进行时空节点扩展，扩展过程中综合考虑节点无碰撞和道路边界约束进行节点合理性检查，并基于式（）和式（）进行节点代价评估以寻找最优扩展节点，直至搜索至目标节点 $N _ { \\mathrm { e n d } } .$ ，完成时空混合A\\*搜索过程，得到由离散节点表示的初始粗轨迹。算法流程如表 所示。",
+        "bbox": [
+            87,
+            164,
+            484,
+            295
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "table",
+        "img_path": "images/f0a28acb2d489ac4b7dae47505a22305ae4ae12108474d26ee21ef0dd26cef33.jpg",
+        "table_caption": [
+            "表1　时空混合A\\*算法伪代码"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>算法1时空混合A*算法流程</td></tr><tr><td>输入:车辆配置参数,道路环境信息,障碍物信息</td></tr><tr><td>输出:初始粗轨迹</td></tr><tr><td>1. Initialize the open set and closed set with the  $N_{start}$ ;</td></tr><tr><td>2. while the open set is not empty</td></tr><tr><td>3. Estimate the nodes’ cost in the open set according to equation (4)and (5) and take the node with the lowest cost as current node;</td></tr><tr><td>4. Add the current node to the closed set;</td></tr><tr><td>5. if the current node is the destination node  $N_{end}$  break;</td></tr><tr><td>6. else</td></tr><tr><td>7. Remove the current node from the open set;</td></tr><tr><td>8. Generate the neighboring nodes with the time step (dt) accordingto equation(3);</td></tr><tr><td>9. for each neighboring node</td></tr><tr><td>10. if it is in the closed set or doesn’t pass the reasonability check</td></tr><tr><td>11. continue;</td></tr><tr><td>12. else</td></tr><tr><td>13. if it is not in the open set, add it to the open set;</td></tr><tr><td>14. end</td></tr><tr><td>15. end</td></tr><tr><td>16. end</td></tr><tr><td>17. end</td></tr><tr><td>18. Trajectory = Back track nodes in the closed set from the  $N_{end}$  to $N_{start}$  by the lowest cost;</td></tr><tr><td>19. return coarse trajectory;</td></tr></table>",
+        "bbox": [
+            94,
+            327,
+            484,
+            754
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "时空轨迹后处理",
+        "text_level": 1,
+        "bbox": [
+            89,
+            792,
+            295,
+            811
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "基于改进混合 直接搜索出的轨迹不够平滑，无法满足控制模块跟踪执行的需要，故本文采用数值优化的方法对初始轨迹进行平滑后处理。所提时空轨迹后处理方案分为两步：第一步，创建可行驶时空走廊，三维时空范围的移动障碍物将导致自车可",
+        "bbox": [
+            87,
+            832,
+            485,
+            926
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "行驶区域严重非 $\\ntrianglerighteq$ ，因此本文引入可行驶时空走廊［13］ 将自车与周围障碍物分离开，以构建优化问题的凸可行集，保证轨迹优化后处理过程的实时性；第二步，创建轨迹优化模型，在可行驶时空走廊内，综合考虑车辆动力学约束、路径及速度连续性约束等条件，构造以安全、舒适和高效为优化目标的轨迹优化模型，求解优化模型获得最终轨迹。",
+        "bbox": [
+            512,
+            85,
+            910,
+            220
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "2. 1　可行驶时空走廊创建",
+        "text_level": 1,
+        "bbox": [
+            512,
+            224,
+            722,
+            238
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "上述轨迹粗搜索过程获得的离散轨迹点时空分布较为稀疏，需要减小相邻轨迹点之间的间隔以便于控制执行。本文利用前述节点扩展过程中获得的一系列严格无碰撞且符合车辆运动学约束的中间过渡节点进行轨迹等价重构，获得一组由扩展节点 $N _ { i }$ 及其对应的中间过渡节点 $\\left[ N _ { i 1 } , N _ { i 2 } , \\ldots , N _ { i M } \\right]$ 构成的时空节点集Λ，节点个数为 $\\boldsymbol { N } _ { c } , \\boldsymbol { \\varLambda }$ 表达式为",
+        "bbox": [
+            512,
+            243,
+            910,
+            379
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\Lambda = \\left\\{P _ {j} (s _ {j}, l _ {j}) \\mid j = 1, \\dots , N _ {c} \\right\\} \\tag {10}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            547,
+            383,
+            907,
+            406
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "沿时空节点集Λ表示的轨迹铺设可行驶时空走廊，具体过程如下。",
+        "bbox": [
+            512,
+            410,
+            907,
+            446
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "从 当 前 自 车 所 在 位 置 对 应 的 节 点$P _ { 1 } ( s _ { 1 } , l _ { 1 } , \\theta _ { 1 } , v _ { 1 } , t _ { 1 } )$ 开始，获取相对时间 $t _ { 1 }$ 时刻障碍物及道路边界的空间占据状态。使用有向矩形框描述$t _ { 1 }$ 时刻的自车及障碍物实际外轮廓，如图 所示，并沿坐标系的s向和l向构建自车有向矩形框的最小包络框。",
+        "bbox": [
+            512,
+            450,
+            910,
+            564
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "image",
+        "img_path": "images/db572305eb51bc7a3020c0496c65546fefd0d2c8edf907eb5349793fcce0a315.jpg",
+        "image_caption": [
+            "图 t时刻自车及障碍物的矩形框表示"
+        ],
+        "image_footnote": [],
+        "content": "自车有向矩形框\n障碍物有向矩形框\n最小包络框\nl\ns",
+        "sub_type": "text_image",
+        "bbox": [
+            524,
+            578,
+            900,
+            689
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "text",
+        "text": "如图 所示，以连续的扩展量 $\\Delta s$ ，沿d方向顺序对 上 述 最 小 包 络 框 进 行 增 量 式 膨 胀 ，其 中$d \\in \\left\\{ \\frac { \\pi } { 2 } , 0 , \\ - \\frac { \\pi } { 2 } , \\pi \\right\\}$ ，增量式膨胀过程如图 序号，， ， 所示。当某一方向的膨胀与障碍物发生碰撞、超出道路边界或累计膨胀量达到设定上限时，终止该方向膨胀并记录此时该方向上的累计膨胀量$I _ { d } ,$ ，直至 个方向全部扩展结束。基于累计膨胀量$I _ { d }$ ，可以确定 $t _ { 1 }$ 时刻节点在s和l方向的上下边界限值，如式（ ）所示。",
+        "bbox": [
+            512,
+            736,
+            910,
+            926
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "2023（ Vol.45） No.7",
+        "bbox": [
+            100,
+            60,
+            221,
+            73
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "header",
+        "text": "胡杰，等：基于改进混合 的智能汽车时空联合规划方法",
+        "bbox": [
+            314,
+            60,
+            685,
+            73
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1127 ",
+        "bbox": [
+            836,
+            61,
+            887,
+            72
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            963,
+            833,
+            977
+        ],
+        "page_idx": 4
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l} s _ {j} ^ {\\text { upper }} = s _ {j} + I _ {d = 0} \\\\ s _ {j} ^ {\\text { lower }} = s _ {j} - I _ {d = \\pi} \\\\ l _ {j} ^ {\\text { upper }} = l _ {j} + I _ {d = \\pi / 2} \\\\ l _ {j} ^ {\\text { lower }} = l _ {j} - I _ {d = - \\pi / 2} \\end{array} \\right. \\tag {11}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            124,
+            85,
+            482,
+            166
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "由上述最小包络框的扩展过程可知，节点在上述边界限值内可以确保严格无碰撞，因此基于边界限值可构造该节点的可行驶走廊。以相同的方式对时空节点集Λ中剩余节点 $P _ { j } ( s _ { j } , l _ { j } , \\theta _ { j } , v _ { j } , t _ { j } )$ 依次执行上述过程，完成可行驶时空走廊的开辟过程。",
+        "bbox": [
+            89,
+            170,
+            485,
+            264
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "image",
+        "img_path": "images/f9c4b732594a79ace77cf4a74ef4d1fda063b0e434be959360027606f17908e8.jpg",
+        "image_caption": [
+            "图 t时刻节点可行驶走廊开辟过程"
+        ],
+        "image_footnote": [],
+        "content": "Δs\nl\n10\n8\n4\nπ/2\n-π/2\n0\n2\n6\n碰撞-终止\n7\n越界-终止\ns",
+        "sub_type": "text_image",
+        "bbox": [
+            102,
+            278,
+            475,
+            411
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "2. 2　轨迹优化模型构建 ",
+        "text_level": 1,
+        "bbox": [
+            89,
+            466,
+            280,
+            482
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "优化模型的目标函数定义如式（12）所示，由 $J _ { l }$ 和 $J _ { s }$ 两部分构成。目标函数第 项为轨迹点相对于初始粗轨迹的偏离惩罚项，第 项为轨迹点的横纵向速度与期望速度的偏差惩罚项，第 项和第 项分别为轨迹点的横纵向加速度和加速度变化率惩罚项，目标函数 $J _ { l }$ 的第 项为轨迹点相对于车道中心线的偏离惩罚项。",
+        "bbox": [
+            87,
+            486,
+            485,
+            618
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l} J = J _ {l} + J _ {s} \\\\ J _ {l} = w _ {l 1} \\times \\sum_ {j = 1} ^ {N _ {c}} \\left(l _ {j} - l _ {j} ^ {\\mathrm{r}}\\right) ^ {2} + w _ {l 2} \\times \\sum_ {j = 1} ^ {N _ {c}} \\left(\\dot {l} _ {j} - 0\\right) ^ {2} + \\\\ w _ {l 3} \\times \\sum_ {j = 1} ^ {N _ {c}} \\ddot {l} _ {j} ^ {2} + w _ {l 4} \\times \\sum_ {j = 1} ^ {N _ {c}} \\ddot {l} _ {j} ^ {2} + w _ {l 5} \\times \\sum_ {j = 1} ^ {N _ {c}} l _ {j} ^ {2} \\\\ J _ {s} = w _ {s 1} \\times \\sum_ {j = 1} ^ {N _ {c}} \\left(s _ {j} - s _ {j} ^ {\\mathrm{r}}\\right) ^ {2} + w _ {s 2} \\times \\sum_ {j = 1} ^ {N _ {c}} \\left(\\dot {s} _ {j} - v _ {j} ^ {\\mathrm{r}}\\right) ^ {2} + \\\\ w _ {s 3} \\times \\sum_ {j = 1} ^ {N _ {c}} \\ddot {s} _ {j} ^ {2} + w _ {s 4} \\times \\sum_ {j = 1} ^ {N _ {c}} \\ddot {s} _ {j} ^ {2} \\end{array} \\right. \\tag {12}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            124,
+            621,
+            482,
+            811
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "式中： $\\ddot { l } _ { j } \\setminus \\ddot { l } _ { j } \\setminus \\ddot { l } _ { j }$ 和 ${ \\dot { s } } _ { j } , { \\ddot { s } } _ { j } { \\ddot { s } } _ { j } ^ { * }$ 分别表示优化轨迹点的横向和纵向速度、加速度和加速度变化率 $\\vdots { l } _ { j } ^ { \\mathrm { r } }$ 和 $\\boldsymbol { s } _ { j } ^ { \\mathrm { r } }$ 分别表示上述时空节点集Λ对应的初始轨迹点横向位置和纵向位置 ${ \\ ; { v } _ { j } ^ { \\mathrm { r } } }$ 表示纵向期望车速。",
+        "bbox": [
+            87,
+            814,
+            484,
+            889
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "基于前述可行驶时空走廊计算出的节点边界限值，构造轨迹点边界安全性约束为",
+        "bbox": [
+            89,
+            892,
+            485,
+            928
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l l} l _ {j} ^ {\\text { lower }} \\leqslant l _ {j} \\leqslant l _ {j} ^ {\\text { upper }}, & j = 1, \\dots , N _ {c} \\\\ s _ {j} ^ {\\text { lower }} \\leqslant s _ {j} \\leqslant s _ {j} ^ {\\text { upper }}, & j = 1, \\dots , N _ {c} \\end{array} \\right. \\tag {13}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            85,
+            907,
+            125
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "考虑车辆动力学约束，构造轨迹点横向和纵向速度、加速度约束为",
+        "bbox": [
+            512,
+            129,
+            907,
+            164
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l l} \\dot {l} _ {\\text { lower }} \\leqslant \\dot {l} _ {j} \\leqslant \\dot {l} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} \\\\ \\ddot {l} _ {\\text { lower }} \\leqslant \\ddot {l} _ {j} \\leqslant \\ddot {l} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} - 1 \\\\ \\dot {s} _ {\\text { lower }} \\leqslant \\dot {s} _ {j} \\leqslant \\dot {s} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} \\\\ \\ddot {s} _ {\\text { lower }} \\leqslant \\ddot {s} _ {j} \\leqslant \\ddot {s} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} - 1 \\end{array} \\right. \\tag {14}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            167,
+            907,
+            250
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "式中： $\\big [ \\dot { l } _ { \\mathrm { l o w e r } } , \\dot { l } _ { \\mathrm { u p p e r } } \\big ] \\sqrt { \\ddot { l } _ { \\mathrm { l o w e r } } } , \\ddot { l } _ { \\mathrm { u p p e r } } \\big ]$ 分别为车辆横向速度和加速度上下限； $\\mathbf { \\hat { s } } \\Big [ \\dot { s } _ { \\mathrm { l o w e r } } , \\dot { s } _ { \\mathrm { u p p e r } } \\Big ] \\sqrt { \\ddot { s } _ { \\mathrm { l o w e r } } } , \\ddot { s } _ { \\mathrm { u p p e r } } \\Big ]$ 分别为车辆纵向速度和加速度上下限；加速度变化率 $\\ddot { l } _ { \\mathrm { j } }$ 和 $\\dddot { s _ { j } }$ 分别描述车辆横向加速度和纵向加速度的变化率，可表示为",
+        "bbox": [
+            512,
+            254,
+            910,
+            356
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l} \\dddot {l} _ {j} = \\frac {\\ddot {l} _ {j + 1} - \\ddot {l} _ {j}}{\\Delta t}, j = 1, \\dots , N _ {c} - 1 \\\\ \\dddot {s} _ {j} = \\frac {\\ddot {s} _ {j + 1} - \\ddot {s} _ {j}}{\\Delta t}, j = 1, \\dots , N _ {c} - 1 \\end{array} \\right. \\tag {15}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            362,
+            907,
+            428
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "轨迹点横向和纵向的加速度变化率边界约束为",
+        "bbox": [
+            547,
+            433,
+            907,
+            449
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{l l} \\dddot {l} _ {\\text { lower }} \\leqslant \\dddot {l} _ {j} \\leqslant \\dddot {l} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} - 1 \\\\ \\dddot {s} _ {\\text { lower }} \\leqslant \\dddot {s} _ {j} \\leqslant \\dddot {s} _ {\\text { upper }}, & j = 1, \\dots , N _ {c} - 1 \\end{array} \\right. \\tag {16}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            453,
+            907,
+            491
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "式中 $\\left[ \\ddot { l } _ { \\mathrm { l o w e r } } , \\ddot { l } _ { \\mathrm { u p p e r } } \\right]$ 和 $\\left[ \\overleftrightarrow { s } _ { \\mathrm { l o w e r } } , \\overleftrightarrow { s } _ { \\mathrm { u p p e r } } \\right]$ 分别为车辆横向和纵向的加速度变化率上下限值。",
+        "bbox": [
+            512,
+            496,
+            907,
+            535
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "为保证轨迹的高阶连续性，本文参照文献［ ］中所提出的分段加速度变化率优化理论，使用常量加速度变化率连接相邻两点，则轨迹点横向 $l , \\ i , \\ i _ { i }$ 的连续性约束可表示为",
+        "bbox": [
+            512,
+            539,
+            909,
+            613
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "equation",
+        "text": "$$\n\\left\\{ \\begin{array}{c} \\ddot {l} _ {j + 1} = \\ddot {l} _ {j} + \\dddot {l} _ {j} \\times \\Delta t \\\\ \\dot {l} _ {j + 1} = \\dot {l} _ {j} + \\ddot {l} _ {j} \\times \\Delta t + \\frac {1}{2} \\times \\dddot {l} _ {j} \\times \\Delta t ^ {2} \\\\ l _ {j + 1} = l _ {j} + \\dot {l} _ {j} \\times \\Delta t + \\frac {1}{2} \\times \\ddot {l} _ {j} \\times \\Delta t ^ {2} + \\\\ \\frac {1}{6} \\times \\dddot {l} _ {j} \\times \\Delta t ^ {3} \\end{array} \\right. \\tag {17}\n$$",
+        "text_format": "latex",
+        "bbox": [
+            549,
+            618,
+            907,
+            732
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "式中 $j = 1 , \\cdots , N _ { c } - 1$ 。",
+        "bbox": [
+            514,
+            737,
+            685,
+            753
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "同理，可以定义轨迹点纵向 $s _ { i \\setminus i } \\setminus \\ddot { s } _ { i \\setminus i }$ 的连续性约束。",
+        "bbox": [
+            512,
+            757,
+            907,
+            792
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "上述目标函数是二次函数，约束条件为线性约束，因此可将上述数值优化模型转化为经典的二次规划问题，求解二次规划问题获得最终轨迹。",
+        "bbox": [
+            512,
+            796,
+            909,
+            850
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "3　仿真分析",
+        "text_level": 1,
+        "bbox": [
+            514,
+            871,
+            648,
+            890
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "为充分验证本文所提时空联合规划方法的有效性和优越性，搭建 和 、联合仿真平台，在换道超车和旁车切入两类典型复杂动态场景下进行实验验证，如图 所示。",
+        "bbox": [
+            549,
+            912,
+            907,
+            927
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1128 ",
+        "bbox": [
+            114,
+            61,
+            163,
+            72
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            448,
+            60,
+            559,
+            73
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            724,
+            60,
+            892,
+            73
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            833,
+            977
+        ],
+        "page_idx": 5
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            87,
+            485,
+            142
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/71083e99503ee2786a19e8e33bfaa57cd72427e7b0c5eff7fb1c36cea20640b7.jpg",
+        "image_caption": [
+            "图6　联合仿真平台"
+        ],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph TD\n    A[\"Prescan8.5.0 仿真场景搭建\"] --> B[\"CarSim2019.0 车辆动力学模型\"]\n    B --> C[\"运行环境信息\"]\n    C --> D[\"MATLAB/SimuLink2020a 算法实现\"]\n    D --> E[\"SIMULINK\"]\n    E --> F[\"自车状态信息\"]\n    F --> G[\"横/纵向控制\"]\n    G --> H[\"Dynamics, UserSpecified\"]\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            94,
+            151,
+            478,
+            325
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "规划时域 T选取为8 s；障碍物轨迹预测时长 $T _ { p }$ 应与规划时域T一致［14］ ，故 $T _ { \\rho } = 8 ~ \\mathrm { s }$ 。本文假设障碍物轨迹预测结果为已知；本文规划轨迹的跟踪控制采用常用的LQR算法和PID算法。实验其它相关参数见表2。",
+        "bbox": [
+            87,
+            370,
+            485,
+            463
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "table",
+        "img_path": "images/fa14827216a35d41f691bca6336ceb6bac251dba736f931803d9699fa4533451.jpg",
+        "table_caption": [
+            "表2　仿真实验相关参数"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td>参数</td><td>数值</td></tr><tr><td>车长 $L_V$ /m</td><td>4.79</td></tr><tr><td>车宽 $W$ /m</td><td>1.92</td></tr><tr><td>轴距 $L$ /m</td><td>2.91</td></tr><tr><td>前轮转角范围 $\\delta$ /(°)</td><td>[-22, 22]</td></tr><tr><td>速度范围 $v$ /(m·s-1)</td><td>[0, 20]</td></tr><tr><td>加速度范围 $a$ /(m·s-2)</td><td>[-3, 2]</td></tr><tr><td>离散加速度集 $A$ </td><td>{-3,-1,-0.2, 0, 0.1, 0.3,0.6,1,1.5,2}</td></tr><tr><td>前轮转角离散数量 $N$ </td><td>11</td></tr></table>",
+        "bbox": [
+            90,
+            492,
+            485,
+            649
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "3. 1　换道超车场景",
+        "text_level": 1,
+        "bbox": [
+            89,
+            665,
+            245,
+            680
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "如图7和图8所示，初始状态自车位置为（5 m，），纵向速度 $v _ { \\mathrm { s } } \\left( 0 \\right) = 1 5 . 0 ~ \\mathrm { m / s }$ ，纵向加速度$a _ { \\mathrm { s } } ( 0 ) = 0 ~ \\mathrm { m / s } ^ { 2 }$ ，横向速度和加速度均为 。自车行驶方向前方有一辆低速移动的同向行驶障碍物车辆影响自车正常通行，相邻车道有一辆对向行驶障碍物车辆 ，为获得满意的驾驶空间，自车需要进行换道以超越前方障碍物车辆。根据障碍物不同的分布情况和运动状态，换道超车场景可分为以下两类。",
+        "bbox": [
+            87,
+            683,
+            485,
+            855
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "（1）换道超车场景一",
+        "text_level": 1,
+        "bbox": [
+            124,
+            859,
+            284,
+            875
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "车辆 V1 从初始位置（30 m，1. 75 m）处以 5 m/s的车速做匀速直线运动，车辆V2从初始位置（110 m，）处以 的车速做匀速直线运动。",
+        "bbox": [
+            89,
+            878,
+            485,
+            912
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/02643fa1945d18461e04bc15e00aeaf7d275404564672da54a325ac64e0cebce.jpg",
+        "image_caption": [
+            "图 　换道超车场景一"
+        ],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph LR\n    A[\"Host\"] --> B[\"V1\"]\n    B --> C[\"V2\"]\n    style A fill:#f9f,stroke:#333\n    style B fill:#ccf,stroke:#333\n    style C fill:#cfc,stroke:#333\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            519,
+            89,
+            905,
+            122
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "image",
+        "img_path": "images/435c5ffddf1ee3e95856053d0f0741c7a79ddee83a5de126610d21f05a02d6c1.jpg",
+        "image_caption": [
+            "图 　换道超车场景二"
+        ],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph LR\n    A[\"Host\"] --> B[\"V1\"]\n    B --> C[\"V2\"]\n    C --> D[\"Downward arrow\"]\n    style A fill:#f9f,stroke:#333\n    style B fill:#ccf,stroke:#333\n    style C fill:#cfc,stroke:#333\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            519,
+            172,
+            905,
+            208
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            512,
+            259,
+            858,
+            274
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "图 和图 展示了本文所提方法在换道超车过程中的完整行驶轨迹。 $t = 1 . 1 3 \\mathrm { s }$ 时，由于车辆距离自车较远，综合考虑通行效率和碰撞风险，自车选择进行换道并适当加速以超越前车 $\\mathrm { V } 1 ; t = 3 . 7 1 \\mathrm { s }$ 时，自车超越前车 ，此时由于车辆 驶近碰撞风险增大，自车选择并回原车道 $; t = 4 . 9 6 \\mathrm { s }$ 时，完成并道；此后车速逐渐降低至期望车速 ，完成换道超车。图 展示了本方法在其中一个规划周期的轨迹规划结果对比。可以看出，本方法在轨迹粗搜索阶段得到的路径、速度和加速度不够平滑，经过时空轨迹后处理过程可以有效提升规划路径和速度、加速度的质量，同时严格符合车辆动力学约束，有利于控制模块进行轨迹跟踪。",
+        "bbox": [
+            512,
+            278,
+            910,
+            526
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/5f7aa392dd069775f22ecf99457443b7638fda2cd782ce410d7e323e5fea69e2.jpg",
+        "content": "| l/m | t/s (自车行驶轨迹) | t/s (自车时空占据状态) | t/s (障碍物时空占据状态) |\n| --- | --- | --- | --- |\n| 73.5 | 0 | 0 | 10 |\n| 0 | 2 | 2 | 10 |\n| 20 | 4 | 4 | 10 |\n| 40 | 6 | 6 | 10 |\n| 60 | 8 | 8 | 10 |\n| 80 | 10 | 10 | 10 |\n| 100 | 12 | 12 | 10 |\n| 120 | 14 | 14 | 10 |\n| 140 | 16 | 16 | 10 |\n| 160 | 18 | 18 | 10 |\n| 180 | 20 | 20 | 10 |\n| 200 | 22 | 22 | 10 |",
+        "chart_caption": [
+            "图 　换道超车过程三维行驶轨迹（场景一）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            526,
+            540,
+            900,
+            716
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "text",
+        "text": "图 还展示了另外两种对比方法在换道超车过程中的车辆行驶轨迹。蓝色曲线为传统解耦规划方法 ［18］ ，自车选择减速跟随低速运动的前车行驶，在相邻车道车辆 完全驶离后再进行换道超车。相比本文所提方法， 方法的行为过于保守，降低了自车通行效率。这是因为解耦的方法分别由路径规划和速度规划处理静态和动态障碍物，然后合并路径和速度的求解结果生成轨迹。这种解耦处理的方式极大地限制了轨迹的求解空间和求解灵活性，导致复杂动态场景下容易出现轨迹次优。绿色曲线为前言部分所述时空联合规划方法［6］时空RRT\\*，轨迹行为表现与本方法相近，灵活性相较 均有明显提升，这是由于时空 与本方法的可行驶轨迹求解空间近似。但其在相邻规划周期之间的轨迹连续性很差，车辆行驶路径和速度频繁抖动，原因在于时空 本质上仍是一种随机采样方法，导致轨迹规划结果的不确定度很高。本文所提方法在三维时空范围内统一处理障碍物，具有更加完备的轨迹求解空间。同时采用基于搜索的时空混合 进行轨迹直接求解，在提升求解灵活性的同时，有效兼顾了相邻周期之间轨迹的连续性，因此行为表现更加灵活，结果更加合理。",
+        "bbox": [
+            512,
+            761,
+            910,
+            912
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "header",
+        "text": "2023（ Vol.45） No.7",
+        "bbox": [
+            100,
+            60,
+            221,
+            73
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "header",
+        "text": "胡杰，等：基于改进混合 的智能汽车时空联合规划方法",
+        "bbox": [
+            314,
+            60,
+            685,
+            73
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1129 ",
+        "bbox": [
+            836,
+            61,
+            887,
+            72
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            963,
+            833,
+            977
+        ],
+        "page_idx": 6
+    },
+    {
+        "type": "chart",
+        "img_path": "images/5c276f0efba2013e097c028ecfa6f83a581ef0b05d43c494cc746ce6bf24bc78.jpg",
+        "content": "| 纵向位置 s/m | 本文方法行驶路径 (横向位置 l/m) | Lattice行驶路径 (横向位置 l/m) | 时空RRT*行驶路径 (横向位置 l/m) |\n| ------------ | ----------------------------- | ----------------------------- | ----------------------------- |\n| 0            | 2.0                           | 2.0                           | 2.0                           |\n| 20           | 2.0                           | 2.0                           | 2.0                           |\n| 40           | 4.5                           | 2.0                           | 4.0                           |\n| 60           | 3.0                           | 2.0                           | 3.0                           |\n| 80           | 1.5                           | 2.0                           | 1.5                           |\n| 100          | 1.5                           | 4.5                           | 1.5                           |\n| 120          | 1.5                           | 3.0                           | 1.5                           |\n| 140          | 1.5                           | 2.0                           | 1.5                           |\n| 160          | 1.5                           | 2.0                           | 1.5                           |\n| 180          | 1.5                           | 2.0                           | 1.5                           |\n| 200          | 1.5                           | 2.0                           | 1.5                           |",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            97,
+            88,
+            480,
+            193
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/c8911145a9d51e7ebcc81df6734c74eac194b63f71cd17c5fcd0b205b6ef9702.jpg",
+        "content": "| 时间t/s | 本文方法行驶路径 | Lattice行驶速度 | 时空RRT*行驶速度 |\n| ------- | --------------- | -------------- | ---------------- |\n| 0       | 15              | 15             | 15               |\n| 1       | 15              | 14             | 16               |\n| 2       | 15              | 12             | 17               |\n| 3       | 17              | 8              | 18               |\n| 4       | 18              | 5              | 18               |\n| 5       | 17              | 5              | 17               |\n| 6       | 16              | 5              | 16               |\n| 7       | 15              | 6              | 15               |\n| 8       | 15              | 10             | 15               |\n| 9       | 15              | 14             | 15               |\n| 10      | 15              | 15             | 15               |\n| 11      | 15              | 15             | 15               |\n| 12      | 15              | 15             | 15               |",
+        "chart_caption": [
+            "图 　换道超车过程不同规划方法对比（场景一）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            99,
+            193,
+            478,
+            297
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/39da60a515c932921cfc272334e8251262aadd2ce896937a6a8a20bd9ede03b7.jpg",
+        "content": "| 时间 t/s | 横向位置 l/m (初始规划路径) | 横向位置 l/m (平滑规划路径) | 纵向位置 s/m | 纵向速度 v(m·s⁻¹) (初始规划速度) | 纵向速度 v(m·s⁻¹) (平滑规划速度) |\n| -------- | --------------------------- | --------------------------- | ------------ | ------------------------------- | ------------------------------- |\n| 0        | 2                           | 2                           | 0            | 15                              | 15                              |\n| 20       | 2                           | 2                           | 2            | 15                              | 15                              |\n| 40       | 5                           | 5                           | 3            | 18                              | 18                              |\n| 60       | 4                           | 4                           | 4            | 20                              | 20                              |\n| 80       | 2                           | 2                           | 5            | -3                              | -3                              |\n| 100      | 2                           | 2                           | 6            | -2                              | -2                              |\n| 120      | 2                           | 2                           | 7            | -1                              | -1                              |\n| 140      | 2                           | 2                           | 8            | 0                               | 0                               |\n| 160      | 2                           | 2                           |              |                               |                               |",
+        "chart_caption": [
+            "图 　换道超车路径及速度、加速度规划结果（场景一）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            95,
+            346,
+            480,
+            551
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            87,
+            602,
+            485,
+            870
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "（2）换道超车场景二",
+        "text_level": 1,
+        "bbox": [
+            124,
+            875,
+            285,
+            889
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "车辆 从初始位置（ ， ）处以的车速做匀速直线运动；车辆V2从初始位置（40 m，）处以 的初始车速做变加速直线运动。",
+        "bbox": [
+            89,
+            893,
+            485,
+            928
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            512,
+            85,
+            907,
+            121
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "仿真结果如图 和图 所示，初始时刻由于相邻车道的车辆 距离自车较近且车速较高，综合考虑碰撞风险和通行效率，自车适当减速避让前车$\\mathrm { V } 1 ; t = 1 . 4 5 \\mathrm { s }$ 时，旁车V2开始逐渐驶离，自车选择换道并适当加速以超越前车 $\\mathrm { V } 1 ; t = 2 . 9 3 \\mathrm { s }$ 时，超越前车 ，自车选择并回原车道，同时车速逐渐降低，在 $t = 4 . 6 2 \\mathrm { s }$ 时完成并道，换道超车完成。图 蓝色曲线Lattice与本文所提方法的行为表现相近，但本文所提方法的换道开始时间更早，速度波动更小，具有更高的通行效率和乘坐舒适性。图 绿色曲线所示为时空RRT\\* 行驶轨迹，同样存在由于周期之间轨迹连续性差导致的行驶抖动问题。图 展示了本文方法在轨迹平滑后处理前后的路径及速度、加速度的规划结果对比。",
+        "bbox": [
+            512,
+            125,
+            910,
+            392
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/28d77b514cab96680816d0dad52ee6e1b29e9d648ef5cbd02056c6a35e33889c.jpg",
+        "content": "| l/m | t/s (自车行驶轨迹) | t/s (自车时空占据状态) | t/s (障碍物时空占据状态) |\n| --- | --- | --- | --- |\n| 73.5 | 0 | 0 | 0 |\n| 0 | 2 | 2 | 4 |\n| 20 | 6 | 6 | 8 |\n| 40 | 10 | 10 | 12 |\n| 60 | 12 | 12 | 14 |\n| 80 | 14 | 14 | 16 |\n| 100 | 16 | 16 | 18 |\n| 120 | 18 | 18 | 20 |\n| 140 | 20 | 20 | 22 |\n| 160 | 22 | 22 | 24 |\n| 180 | 24 | 24 | 26 |\n| 200 | 26 | 26 | 28 |",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            524,
+            404,
+            900,
+            584
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/28ef10cad71af6a00076e65febc837fcf74ae5e53aa3f64e970a7326e5175029.jpg",
+        "content": "| 纵向位置/s/m | 本文方法行驶路径 (l/m) | Lattice行驶路径 (l/m) | 时空RRT*行驶路径 (l/m) |\n| ------------ | --------------------- | --------------------- | ---------------------- |\n| 0            | 2.0                   | 2.0                   | 2.0                    |\n| 20           | 1.5                   | 1.8                   | 1.7                    |\n| 40           | 5.0                   | 2.5                   | 5.5                    |\n| 60           | 3.0                   | 4.5                   | 3.5                    |\n| 80           | 1.5                   | 5.0                   | 2.0                    |\n| 100          | 1.8                   | 3.0                   | 2.2                    |\n| 120          | 1.5                   | 2.0                   | 2.0                    |\n| 140          | 1.5                   | 1.8                   | 1.8                    |\n| 160          | 1.5                   | 1.8                   | 1.8                    |\n| 180          | 1.5                   | 1.8                   | 1.8                    |\n| 200          | 1.5                   | 1.8                   | 1.8                    |",
+        "chart_caption": [
+            "图 　换道超车过程三维行驶轨迹（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            517,
+            629,
+            904,
+            736
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/750b0513393f0c1902fd5e4a9b0869a17f88e20ad781aeead60f3cfd97a033cc.jpg",
+        "content": "| 时间 t/s | 本文方法行驶路径 (m·s⁻¹) | Lattice行驶速度 (m·s⁻¹) | 时空RRT*行驶速度 (m·s⁻¹) |\n| -------- | ------------------------ | ---------------------- | ----------------------- |\n| 0        | 15                       | 15                     | 15                      |\n| 1        | 14                       | 14                     | 14                      |\n| 2        | 16                       | 12                     | 17                      |\n| 3        | 17                       | 8                      | 18                      |\n| 4        | 16                       | 7                      | 16                      |\n| 5        | 15                       | 7                      | 15                      |\n| 6        | 15                       | 10                     | 15                      |\n| 7        | 15                       | 13                     | 15                      |\n| 8        | 15                       | 15                     | 15                      |\n| 9        | 15                       | 15                     | 15                      |\n| 10       | 15                       | 15                     | 15                      |\n| 11       | 15                       | 15                     | 15                      |\n| 12       | 15                       | 15                     | 15                      |",
+        "chart_caption": [
+            "图 　换道超车过程不同规划方法对比（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            519,
+            738,
+            902,
+            846
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "3. 2　旁车切入场景",
+        "text_level": 1,
+        "bbox": [
+            512,
+            894,
+            670,
+            909
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "text",
+        "text": "如图 和图 所示，初始状态自车位置为（ ，），纵向速度 $v _ { \\mathrm { s } } ( 0 ) = 1 5 . 0 ~ \\mathrm { m / s }$ ，纵向加速度$a _ { \\mathrm { s } } ( 0 ) = 0$ ，横向速度和加速度均为 。自车相邻车道上有两辆同向行驶的障碍物车辆 和 ，由于车辆V2行驶车速较低，车辆V1选择切入自车所在车道以寻求超越车辆 。根据障碍物不同的分布情况和运动状态，旁车切入场景主要可分为以下两类，如图 和图 所示。",
+        "bbox": [
+            549,
+            912,
+            907,
+            928
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1130 ",
+        "bbox": [
+            112,
+            61,
+            161,
+            72
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            450,
+            60,
+            559,
+            73
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            724,
+            60,
+            892,
+            73
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            835,
+            977
+        ],
+        "page_idx": 7
+    },
+    {
+        "type": "chart",
+        "img_path": "images/58fd80902d029f168eef4e9a5e156d73986b6148604f7871b13415ff37364a22.jpg",
+        "content": "| 纵向位置/s/m | 初始规划路径 (m) | 平滑规划路径 (m) | 初始规划加速度 (m·s⁻¹) | 平滑规划加速度 (m·s⁻¹) | 初始规划速度 (m·s⁻²) | 平滑规划速度 (m·s⁻²) |\n| ------------ | ---------------- | ---------------- | ---------------------- | ---------------------- | --------------------- | --------------------- |\n| 0            | 2.0              | 2.0              | 10.0                   | 10.0                   | 1.5                   | 1.5                   |\n| 20           | 2.5              | 2.5              | -4.0                   | -4.0                   | 1.0                   | 1.0                   |\n| 40           | 6.0              | 6.0              | 17.0                   | 17.0                   | 1.5                   | 1.5                   |\n| 60           | 4.0              | 4.0              | 16.0                   | 16.0                   | 1.0                   | 1.0                   |\n| 80           | 2.0              | 2.0              | -4.0                   | -4.0                   | 1.5                   | 1.5                   |\n| 100          | 2.0              | 2.0              | 10.0                   | 10.0                   | 1.0                   | 1.0                   |\n| 120          | 2.0              | 2.0              | 12.0                   | 12.0                   | 1.0                   | 1.0                   |\n| 140          | 2.0              | 2.0              | 12.0                   | 12.0                   | 1.0                   | 1.0                   |\n| 160          | 2.0              | 2.0              | 12.0                   | 12.0                   | 1.0                   | 1.0                   |\n\n| 时间 t/s   | 初始规划速度 (m/s) | 平滑规划速度 (m/s) |\n| ---------- | ------------------ | ------------------ |\n| 0          | 15                 | 15                 |\n| 2          | 17                 | 17                 |\n| 4          | 16                 | 16                 |\n| 6          | 15                 | 15                 |\n| 8          | 14                 | 14                 |\n| 10         | 13                 | 13                 |\n| 12         | 12                 | 12                 |\n| 14         | 11                 | 11                 |\n| 16         | 10                 | 10                 |\n| 18         | 9                  | 9                    |\n| 20         | 8                  | 8                    |\n| 22         | 7                  | 7                    |\n| 24         | 6                  | 6                    |\n| 26         | 5                  | 5                    |\n| 28         | 4                  | 4                    |\n| 30         | 3                  | 3                    |\n| 32         | 2                  | 2                    |\n| 34         | 1                  | 1                    |\n| 36         | 0                  | 0                    |\n| 38         | -1                 | -1                   |\n| 40         | -2                 | -2                   |\n| 42         | -3                 | -3                   |\n| 44         | -4                 | -4                   |\n| 46         | -5                 | -5                   |\n| 48         | -6                 | -6                   |\n| 50         | -7                 | -7                   |\n| 52         | -8                 | -8                   |\n| 54         | -9                 | -9                   |\n| 56         | -10                | -10                  |\n| 58         | -11                | -11                  |\n| 60         | -12                | -12                  |\n| 62         | -13                | -13                  |\n| 64         | -14                | -14                  |\n| 66         | -15                | -15                  |\n| 68         | -16                | -16                  |\n| 70         | -17                | -17                  |\n| 72         | -18                | -18                  |\n| 74         | -19                | -19                  |\n| 76         | -20                | -20                  |\n| 78         | -21                | -21                  |\n| 80         | -22                | -22                  |\nThe chart displays two subplots: the top subplot shows horizontal position in meters for the plan and forward path, while the bottom subplot shows vertical position in meters for the plan and forward path, respectively; the bottom subplot shows right-hand side wave acceleration a in m·s⁻² for the plan and forward path; the bottom subplot shows right-hand side wave acceleration a in m·s⁻² for the plan and forward path; the bottom subplot shows right-hand side wave acceleration a in m·s⁻² for the plan and forward path.",
+        "chart_caption": [
+            "图14　换道超车路径及速度、加速度规划结果（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            95,
+            88,
+            480,
+            292
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            341,
+            485,
+            474
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/74d195afe397992127463b89121e7a0b90ec2384bba44d51487bfeb57ea85d7f.jpg",
+        "image_caption": [],
+        "image_footnote": [],
+        "content": "```mermaid\ngraph LR\n    A[\"Host\"] --> B[\"V1\"]\n    B --> C[\"V2\"]\n```",
+        "sub_type": "flowchart",
+        "bbox": [
+            95,
+            486,
+            480,
+            522
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "image",
+        "img_path": "images/50d013ac6abd7c1998dde2ba485c5c3cbe9d7a847d6d48cd78be0ea367c9b1f1.jpg",
+        "image_caption": [
+            "图 　旁车切入场景一",
+            "图 　旁车切入场景二"
+        ],
+        "image_footnote": [],
+        "content": "V1\nHost\nV2",
+        "sub_type": "text_image",
+        "bbox": [
+            95,
+            568,
+            480,
+            607
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "（1）旁车切入场景一",
+        "text_level": 1,
+        "bbox": [
+            126,
+            655,
+            284,
+            670
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "车辆 从初始位置（ ， ）处以的车速匀速切入自车车道；障碍物车辆 从初始位置（ ， ）处以 的车速匀速运动。",
+        "bbox": [
+            89,
+            674,
+            485,
+            727
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "图 和图 展示了本文所提方法在旁车切入自车车道过程中的完整行驶轨迹。由于旁车 切入车速较低，综合考虑通行效率和碰撞风险，t时，自车选择纵向加速以超越切入车辆 ，同时在车辆 切入点附近向右进行轻微避让以降低碰撞风险。值得说明的是，这种横纵向联合处理横向方向上突然出现障碍物的行为与人类驾驶员的驾驶习惯是一致的。 $t = 5 . 4 7 \\mathrm { ~ s ~ }$ 时，超越车辆V1完成，自车返回车道线附近居中行驶，同时车速逐渐降低到期望车速。",
+        "bbox": [
+            87,
+            732,
+            485,
+            921
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "chart",
+        "img_path": "images/a97f3e6ed5581e041136c2b131c3d5241a204130f110babe23a8f4c6708a863e.jpg",
+        "content": "| l/m | s/m | t/s (自车行驶轨迹) | t/s (自车时空占据状态) | t/s (障碍物时空占据状态) |\n| --- | --- | --- | --- | --- |\n| 73.5 | 0 | 0 | 0 | 0 |\n| 0 | 20 | 4 | 4 | 6 |\n| 20 | 40 | 8 | 8 | 10 |\n| 40 | 60 | 12 | 12 | 12 |\n| 60 | 80 | 16 | 16 | 16 |\n| 80 | 100 | 20 | 20 | 20 |\n| 100 | 120 | 24 | 24 | 24 |\n| 120 | 140 | 28 | 28 | 28 |\n| 140 | 160 | 32 | 32 | 32 |\n| 160 | 180 | 36 | 36 | 36 |\n| 180 | 200 | 40 | 40 | 40 |",
+        "chart_caption": [
+            "图 　旁车切入过程三维行驶轨迹（场景一）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            529,
+            88,
+            904,
+            265
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "chart",
+        "img_path": "images/a1fd92b7ec9bdf15a2707c50f573d0fdf895a02139be9e0598f4ea901440e190.jpg",
+        "content": "",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            519,
+            311,
+            904,
+            524
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "chart",
+        "img_path": "images/58f2afab6673dbe8f44a41ade409cff1dee8acb80c699854fc1376aa609161be.jpg",
+        "content": "| 时间 t/s | 初始规划路径 (m) | 平滑规划路径 (m) | 初始规划速度 (m·s⁻¹) | 平滑规划速度 (m·s⁻¹) | 初始规划加速度 (m·s⁻¹) | 平滑规划加速度 (m·s⁻¹) |\n| -------- | ---------------- | ---------------- | --------------------- | --------------------- | ---------------------- | ---------------------- |\n| 0        | 2.0              | 2.0              | 15.0                  | 15.0                  | 10.0                   | 10.0                   |\n| 2        | 1.8              | 1.8              | 15.0                  | 15.0                  | 9.5                    | 9.5                    |\n| 4        | 1.5              | 1.5              | 15.0                  | 15.0                  | 9.0                    | 9.0                    |\n| 6        | 1.7              | 1.7              | 15.0                  | 15.0                  | -3.0                   | -3.0                   |\n| 8        | 2.0              | 2.0              | 15.0                  | 15.0                  | 10.0                   | 10.0                   |",
+        "chart_caption": [
+            "图 　旁车切入过程不同规划方法对比（场景一）",
+            "图 　旁车切入路径及速度、加速度规划结果（场景一）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            519,
+            571,
+            904,
+            779
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "图 绿色曲线所示的时空 行驶轨迹与本方法相近，但其同样存在路径和速度频繁抖动，且规划结果没有本文方法合理。图 蓝色曲线所示的方法选择纵向加速超越切入车辆 ，但与本文方法不同的是，其行驶路径在横向上无任何避让行为。这是由于解耦规划方法无法在路径规划中考虑具有时间属性的动态障碍物，只能由速度规划进行处理，因此以 为代表的解耦方法很难灵活应对这类需要进行横纵向联合处理的动态场景，行为表现过于机械，规划结果不够合理。",
+        "bbox": [
+            512,
+            828,
+            910,
+            922
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "header",
+        "text": "2023（ Vol.45） No.7",
+        "bbox": [
+            100,
+            61,
+            221,
+            73
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "header",
+        "text": "胡杰，等：基于改进混合 的智能汽车时空联合规划方法",
+        "bbox": [
+            314,
+            60,
+            685,
+            74
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1131 ",
+        "bbox": [
+            835,
+            61,
+            885,
+            72
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            963,
+            835,
+            977
+        ],
+        "page_idx": 8
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            89,
+            85,
+            485,
+            178
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "（2）旁车切入场景二",
+        "text_level": 1,
+        "bbox": [
+            126,
+            183,
+            285,
+            199
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "车辆 从初始位置（ ， ）处以的初始车速加速切入自车车道（切入完成后车速达到 ）；车辆 从初始位置（ ， ）处以的初始车速做匀速直线运动。",
+        "bbox": [
+            89,
+            202,
+            485,
+            276
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "仿真实验结果如图 和图 所示，由于旁车切入车速较高，综合考虑碰撞风险和通行效率，t 时，自车选择减速避让切入车辆 ，同时在车辆 切入点附近向右进行轻微避让以降低碰撞风险。在t 时，车辆 切入过程完成，此时由于相邻车道仍被车辆 占据，自车选择跟随前车V1行驶。图21中 Lattice方法的结果与本文相似，自车选择纵向减速避让切入车辆 ，然后跟随前车 行驶，但其行驶路径仍旧没有类似本文所提方法的横向轻微避让行为。",
+        "bbox": [
+            87,
+            279,
+            485,
+            469
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "chart",
+        "img_path": "images/c34ee9c45a9967695549f5514d94e687ee5a848ce1f38daa879570ee402b764f.jpg",
+        "content": "| l/m | t/s (自车行驶轨迹) | t/s (自车时空占据状态) | t/s (障碍物时空占据状态) |\n| --- | --- | --- | --- |\n| 0 | 0 | 0 | 0 |\n| 20 | 4 | 4 | 4 |\n| 40 | 8 | 8 | 8 |\n| 60 | 12 | 12 | 12 |\n| 80 | 16 | 16 | 16 |\n| 100 | 20 | 20 | 20 |\n| 120 | 24 | 24 | 24 |\n| 140 | 28 | 28 | 28 |\n| 160 | 32 | 32 | 32 |\n| 180 | 36 | 36 | 36 |\n| 200 | 40 | 40 | 40 |",
+        "chart_caption": [
+            "图 　旁车切入过程三维行驶轨迹（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            97,
+            481,
+            470,
+            659
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "图 和图 分别展示了本方法在其中一个规划周期的轨迹规划结果对比，同样可以看出，经过上述时空轨迹后处理的平滑过程，可使规划出的最终路径、速度及加速度更加平滑，轨迹舒适性更好，且有利于控制模块进行轨迹跟踪。",
+        "bbox": [
+            89,
+            704,
+            485,
+            797
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "3. 3　算法实时性分析",
+        "text_level": 1,
+        "bbox": [
+            89,
+            801,
+            263,
+            816
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "仿真电脑配置为 ，版本为 。使用 优化工具箱中 的 quadprog 求 解 器 进 行 二 次 规 划 求 解 ，并 将MATLAB程序转成C代码执行以提升运行速度。",
+        "bbox": [
+            89,
+            819,
+            484,
+            894
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "基于前述设计的换道超车和旁车切入两类典型场景，随机设置障碍物的初始位置及运动状态，每类场景重复实验 次，统计本文所提方法及另外两种规划方法的平均耗时情况，结果如表 所示。",
+        "bbox": [
+            89,
+            897,
+            485,
+            932
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "chart",
+        "img_path": "images/398279656a11026c41fd26d1527ed7d2a0dda189a62762bc7ee841e7388b5748.jpg",
+        "content": "| 纵向位置/s/m | 本文方法行驶路径 (m) | Lattice行驶路径 (m) | 时空RRT*行驶路径 (m) |\n| ------------ | ------------------ | ------------------ | ------------------- |\n| 0            | 2.0                | 2.0                | 2.0                 |\n| 20           | 2.0                | 2.0                | 2.0                 |\n| 40           | 1.5                | 1.5                | 1.0                 |\n| 60           | 1.5                | 1.5                | 1.0                 |\n| 80           | 2.0                | 2.0                | 2.0                 |\n| 100          | 2.0                | 2.0                | 2.0                 |\n| 120          | 2.0                | 2.0                | 2.0                 |\n| 140          | 2.0                | 2.0                | 2.0                 |\n| 160          | 2.0                | 2.0                | 2.0                 |\n| 180          | 2.0                | 2.0                | 2.0                 |\n| 200          | 2.0                | 2.0                | 2.0                 |",
+        "chart_caption": [],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            521,
+            88,
+            904,
+            193
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "chart",
+        "img_path": "images/9ca038d1682dc50d841e2f2d1d1dabd7ed3b49c509be8e289530cb6d177c6a15.jpg",
+        "content": "| 时间 t/s | 本文方法行驶路径 (m·s⁻¹) | Lattice行驶速度 (m·s⁻¹) | 时空RRT*行驶速度 (m·s⁻¹) |\n| -------- | ------------------------ | ---------------------- | ----------------------- |\n| 0        | 15.0                     | 15.0                   | 15.0                    |\n| 1        | 15.0                     | 15.0                   | 15.0                    |\n| 2        | 15.0                     | 15.0                   | 15.0                    |\n| 3        | 14.0                     | 13.0                   | 14.0                    |\n| 4        | 13.0                     | 11.0                   | 13.0                    |\n| 5        | 14.0                     | 12.0                   | 14.0                    |\n| 6        | 15.0                     | 13.0                   | 15.0                    |\n| 7        | 15.0                     | 14.0                   | 15.0                    |\n| 8        | 15.0                     | 15.0                   | 15.0                    |\n| 9        | 15.0                     | 15.0                   | 15.0                    |\n| 10       | 15.0                     | 15.0                   | 15.0                    |\n| 11       | 15.0                     | 15.0                   | 15.0                    |\n| 12       | 15.0                     | 15.0                   | 15.0                    |",
+        "chart_caption": [
+            "图 　旁车切入过程不同规划方法对比（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            521,
+            194,
+            904,
+            300
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "chart",
+        "img_path": "images/47f3b5e024fed166a622fca078a655bf5ac9f66b194b0a1e865f837950b4982c.jpg",
+        "content": "",
+        "chart_caption": [
+            "图 　旁车切入路径及速度、加速度规划结果（场景二）"
+        ],
+        "chart_footnote": [],
+        "sub_type": "line",
+        "bbox": [
+            522,
+            357,
+            907,
+            564
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "",
+        "bbox": [
+            512,
+            617,
+            909,
+            654
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "table",
+        "img_path": "images/78a43a670ca73dd44b0f8887fa04f67f33f627db6747872ca7bbc4037ebdf151.jpg",
+        "table_caption": [
+            "表3　算法实时性分析"
+        ],
+        "table_footnote": [],
+        "table_body": "<table><tr><td rowspan=\"2\">场景</td><td colspan=\"3\">平均耗时/ms</td></tr><tr><td>本文方法</td><td> $Lattice^{[18]}$ </td><td>时空  $RRT^{*[6]}$ </td></tr><tr><td>换道超车</td><td>117</td><td>57</td><td>683</td></tr><tr><td>旁车切入</td><td>76</td><td>35</td><td>410</td></tr></table>",
+        "bbox": [
+            515,
+            683,
+            910,
+            765
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "本文所提方法的计算耗时相较于传统解耦规划方法 有所增加，但显著低于时空联合规划方法时空 ，同时本文方法的灵活性和规划结果合理性显著提升，因此较好地平衡了轨迹求解效率和求解质量。此外，值得说明的是，若将本文所提方法直接用 进行实现，同时使用 等求解效率更高的优化求解器，可进一步提升本文方法的计算实时性表现。",
+        "bbox": [
+            512,
+            781,
+            910,
+            932
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1132 ",
+        "bbox": [
+            112,
+            61,
+            161,
+            72
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "header",
+        "text": "汽 车 工 程",
+        "bbox": [
+            450,
+            60,
+            559,
+            73
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "header",
+        "text": "年（第 卷）第 期",
+        "bbox": [
+            724,
+            60,
+            892,
+            73
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            963,
+            835,
+            977
+        ],
+        "page_idx": 9
+    },
+    {
+        "type": "text",
+        "text": "4　结论",
+        "text_level": 1,
+        "bbox": [
+            89,
+            104,
+            176,
+            123
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "本文提出了一种基于分层架构的智能汽车时空联合规划方法，在三维时空范围内统一处理静态和动态障碍物并进行轨迹直接求解，有效提升了轨迹规划质量。首先使用改进混合 进行轨迹粗搜索获得初始轨迹，在保证轨迹搜索效率的同时，显著提升了轨迹规划的灵活性和结果的合理性。然后使用数值优化的方法对初始轨迹进行平滑后处理，通过引入安全可行驶时空走廊简化时空避碰约束，保证了轨迹优化过程的实时性。仿真结果表明，本文所提方法相较于传统时空解耦规划方法，灵活性更高、规划结果更加合理，同时具有较好的计算实时性。未来将对障碍物轨迹预测的不确定性进行建模，以适应实际复杂驾驶场景的需要。",
+        "bbox": [
+            87,
+            143,
+            485,
+            390
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "text",
+        "text": "参考文献",
+        "text_level": 1,
+        "bbox": [
+            250,
+            405,
+            324,
+            420
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "［ 1 ］ HU J， CHEN R， XU W， et al. An event-triggered real-time motion planning strategy for autonomous vehicles[J].Proceedings of the Institution of Mechanical Engineers， Part C： Journal of Mechanical Engineering Science，2022:09544062221098548. ",
+            "［ 2 ］ FAN H， ZHU F， LIU C， et al. Baidu apollo em motion planner［J］. arXiv preprint arXiv：1807.08048， 2018.",
+            "［ 3 ］ LIM W， LEE S， SUNWOO M， et al. Hierarchical trajectory planning of an autonomous car based on the integration of a sampling and an optimization method［J］. IEEE Transactions on Intelligent Transportation Systems，2018,19(2):613-626. ",
+            "［ 4 ］ GONZÁLEZ D， PÉREZ J， MILANÉS V， et al. A review of mo⁃tion planning techniques for automated vehicles［J］. IEEE Trans⁃actions on Intelligent Transportation Systems，2015，17（4）：1135-1145.",
+            "［ 5 ］ MILLER C， PEK C， ALTHOFF M. Efficient mixed-integer pro⁃gramming for longitudinal and lateral motion planning of autono⁃mous vehicles［C］. 2018 IEEE Intelligent Vehicles Symposium（ ） ， ：",
+            "［ 6 ］ LI B， KONG Q， ZHANG Y， et al. On-road trajectory planning with spatio-temporal RRT\\* and always-feasible quadratic program［C］. 2020 IEEE 16th International Conference on Automation Science and Engineering(CASE).IEEE,2020:942-947. ",
+            "［ 7 ］ DEOLASEE S， LIN Q， LI J， et al. Spatio-temporal motion planning for autonomous vehicles with trapezoidal prism corridors and Bézier curves[J].arXiv preprint arXiv:2209.15150,2022. "
+        ],
+        "bbox": [
+            85,
+            428,
+            490,
+            839
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "list",
+        "sub_type": "ref_text",
+        "list_items": [
+            "［ 8 ］ ZIEGLER J， STILLER C. Spatiotemporal state lattices for fast trajectory planning in dynamic on-road driving scenarios［C］. 2009 IEEE/RSJ International Conference on Intelligent Robots and Systems.IEEE,2009：1879-1884. ",
+            "［ 9 ］ CHANG Y， LIANG H， ZHAO P， et al. On-road trajectory planning with spatio-temporal informed RRT［C］. 2022 IEEE International Conference on Mechatronics and Automation （ICMA）. IEEE,2022:1425-1431. ",
+            "[10］AJANOVIC Z，LACEVIC B，SHYROKAU B，et al. Searchbased optimal motion planning for automated driving［C］. 2018 IEEE/RSJ International Conference on Intelligent Robots and Sys⁃（ ） ， ： ",
+            "［ 11］ XIN L， KONG Y， LI S E， et al. Enable faster and smoother spa⁃tio-temporal trajectory planning for autonomous vehicles in con⁃strained dynamic environment［J］. Proceedings of the Institutionof Mechanical Engineers， Part D： Journal of Automobile Engi⁃neering， 2021， 235（4）： 1101-1112.",
+            "［ 12 ］ KURZER K. Path planning in unstructured environments： a realtime hybrid A\\* implementation for fast and deterministic path generation for the KTH research concept vehicle[J].2016. ",
+            "［ 13 ］ DING W， ZHANG L， CHEN J， et al. Safe trajectory generationfor complex urban environments using spatio-temporal semanticcorridor[J].IEEE Robotics and Automation Letters，2019，4（3）： 2997-3004.",
+            "［ 14 ］ 李建平. 面向智能驾驶的交通车辆运动预测方法研究［D］.长春：吉林大学，2018.LI J P. Study on motion prediction of traffic vehicles for intelligentdriving[D].Changchun：Jilin University,2018.",
+            "[15］SEDIGHI S,NGUYENDV,KUHNERTKD.Guided hybrid Astar path planning algorithm for valet parking applications［C］. 2019 5th International Conference on Control，Automation and Robotics(ICCAR).IEEE,2019:570-575. ",
+            "［ ］ 王明强，王震坡，张雷 基于碰撞风险评估的智能汽车局部路径规划方法研究［］机械工程学报， ，（ ）：WANG MQ，WANG ZP，ZHANGL.Research on local pathplanning method of intelligent vehicle based on collision risk as⁃sessment ［J］. Journal of Mechanical Engineering， 2021， 57（10）： 28-41.",
+            "[17] ZHANG Y,SUN H, ZHOU J,et al. Optimal vehicle path planning using quadratic optimization for baidu apollo open platform ［C］. 2020 IEEE Intelligent Vehicles Symposium （IV）. IEEE， 2020： 978-984. ",
+            "［ 18 ］ HU X， CHEN L， TANG B， et al. Dynamic path planning for autonomous driving on various roads with avoidance of static and moving obstacles[J]. Mechanical Systems and Signal Processing, 2018，100:482-500. "
+        ],
+        "bbox": [
+            507,
+            80,
+            915,
+            839
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "header",
+        "text": "2023（ Vol.45） No.7",
+        "bbox": [
+            100,
+            60,
+            221,
+            73
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "header",
+        "text": "胡杰，等：基于改进混合 的智能汽车时空联合规划方法",
+        "bbox": [
+            314,
+            60,
+            685,
+            73
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "page_number",
+        "text": "·· 1133 ",
+        "bbox": [
+            836,
+            61,
+            885,
+            72
+        ],
+        "page_idx": 10
+    },
+    {
+        "type": "footer",
+        "text": "",
+        "bbox": [
+            28,
+            962,
+            833,
+            977
+        ],
+        "page_idx": 10
+    }
+]
