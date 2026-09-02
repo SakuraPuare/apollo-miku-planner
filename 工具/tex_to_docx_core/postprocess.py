@@ -26,7 +26,6 @@ from .front_matter import (
 from .page_setup import _set_page_margins_a4, setup_page_numbers_and_sections
 from .style import (
     bolden_abstract_prefixes,
-    enable_latin_word_break,
     fold_abstract_heading_into_body,
     justify_body_paragraphs,
     normalize_bibliography_text,
@@ -190,7 +189,6 @@ def _apply_alignment_markers(doc) -> None:
         m = _ALIGN_MARKER_RE.match(full_text)
         if not m:
             continue
-        clean_text = m.group(1)
         align = m.group(2)
         # 设置对齐
         _set_jc(_ensure_pPr(p._element), align)
@@ -376,7 +374,6 @@ def _style_figure_notes(doc) -> None:
     """将【图注】标记段转为 "注：xxx" 格式（宋体五号1.5倍行距首行缩进，"注："加粗）。"""
     from docx.oxml import OxmlElement as _El
     from docx.oxml.ns import qn as _q
-    from docx.shared import Pt
 
     MARKER = "【图注】"
     for p in doc.paragraphs:
@@ -408,9 +405,11 @@ def _style_figure_notes(doc) -> None:
         def _mk_run(text, bold=False):
             r = _El("w:r")
             rPr = _El("w:rPr")
-            sz = _El("w:sz"); sz.set(_q("w:val"), "21")
+            sz = _El("w:sz")
+            sz.set(_q("w:val"), "21")
             rPr.append(sz)
-            szCs = _El("w:szCs"); szCs.set(_q("w:val"), "21")
+            szCs = _El("w:szCs")
+            szCs.set(_q("w:val"), "21")
             rPr.append(szCs)
             rF = _El("w:rFonts")
             rF.set(_q("w:ascii"), "Times New Roman")
@@ -665,8 +664,6 @@ def _normalize_for_inspector(doc) -> None:
     """
     from docx.oxml import OxmlElement as _OxmlElement
     from docx.oxml.ns import qn as _qn
-
-    WNS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
 
     def _ensure(child, tag):
         el = child.find(_qn(tag))
@@ -930,7 +927,6 @@ def _normalize_for_inspector(doc) -> None:
 
     # 中文段落英文半角逗号 → 全角（跨 run 映射）
     cjk_re = re.compile(r"[一-鿿]")
-    half_comma_re = re.compile(r"[一-鿿]\s*,\s*[一-鿿]")
 
     def _has_cjk(s):
         return bool(cjk_re.search(s))
@@ -998,7 +994,6 @@ def _normalize_for_inspector(doc) -> None:
     # OMML 数学对象字号统一小四 24 半磅（12pt）
     M = "{http://schemas.openxmlformats.org/officeDocument/2006/math}"
     for mr in body.iter(f"{M}r"):
-        rPr = mr.find(f"{M}rPr")
         # 在 OMML 里字号用 w:sz 挂在 w:rPr 下，而不是 m:rPr；要插一个 w:rPr
         w_rPr = None
         for child in mr:
@@ -1027,7 +1022,6 @@ def _normalize_for_inspector(doc) -> None:
 
     # 目录段：添加前导符（tab leader = dot）
     for p in doc.paragraphs:
-        t = (p.text or "").strip()
         style_name = (p.style.name if p.style else "").lower()
         if "toc" in style_name or "目录" in style_name or style_name.startswith("contents"):
             pPr = p._element.find(_qn("w:pPr"))
@@ -1133,7 +1127,6 @@ from .docx_common import (  # noqa: E402
     _pstyle,
     _ptext,
     _run_clear_bold,
-    _run_is_bold,
     _run_set_bold,
     _set_indent,
     _set_jc,
@@ -1167,19 +1160,6 @@ def _identify_blocks(p_children):
         txt = _ptext(p).strip()
         style = _pstyle(p)
         is_h1 = style == "Heading1"
-        is_center_16 = False
-        pPr_c = p.find(_qn_("w:pPr"))
-        if pPr_c is not None:
-            jc_c = pPr_c.find(_qn_("w:jc"))
-            if jc_c is not None and jc_c.get(_qn_("w:val")) == "center":
-                for r_el in p.findall(_qn_("w:r")):
-                    rPr_r = r_el.find(_qn_("w:rPr"))
-                    if rPr_r is None:
-                        continue
-                    sz = rPr_r.find(_qn_("w:sz"))
-                    if sz is not None and sz.get(_qn_("w:val")) == "32":
-                        is_center_16 = True
-                        break
         if idx_toc_title is None and txt in ("目录", "目 录", "目  录"):
             idx_toc_title = i
         if idx_zh_abs_body is None and txt.startswith(_ABSTRACT_ZH_PFX):

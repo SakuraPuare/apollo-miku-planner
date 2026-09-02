@@ -5,7 +5,7 @@ import re
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 
-from .docx_common import _ensure_pPr, _ensure_child, _set_rfonts, _set_spacing, _set_indent
+from .docx_common import _ensure_pPr, _set_rfonts, _set_spacing
 
 
 def bolden_abstract_prefixes(doc) -> None:

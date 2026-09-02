@@ -158,7 +158,6 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> list[tuple[str, str]]:
     ego = meta["ego"]
     ego_s0 = ego["s0"]
     ego_l0 = ego["l0"]
-    ego_L = ego["L"]
     ego_W = ego["W"]
 
     # 判断是否有借道（扩展 y 范围 + 子图高度按比例放大，避免 7.8m 范围被压成扁条）
@@ -174,13 +173,7 @@ def gen_sl(scn: str, meta: dict, obs_list: list) -> list[tuple[str, str]]:
     obs_tikz = obs_sl_tikz(obs_list, t_max)
 
     # ego 车辆：矩形 + 车头三角 + 文字
-    ego_half_l = ego_L / 2.0
     ego_half_w = ego_W / 2.0
-    # 车头三角顶点（朝+s方向）
-    tri_front_x = ego_s0 + ego_half_l
-    tri_base_x = ego_s0 + ego_half_l - min(ego_L * 0.25, 0.6)
-    tri_top_y = ego_l0 + ego_W * 0.45
-    tri_bot_y = ego_l0 - ego_W * 0.45
     # ego 用绝对单位的 node，避免 axis 拉伸导致比例失真。L:W 由 meta.json 写入。
     ego_tikz = (
         rf"\node[rectangle, fill=deepblue!75, draw=deepblue, thick, "
@@ -476,11 +469,6 @@ def gen_va(scn: str, meta: dict) -> list[tuple[str, str]]:
     s_end_g = _fmt_metric(mg.get("s_end"), ".1f")
 
     v_max_axis = v0 * 1.3
-    # 指标框放在 v_max_axis - 0.5 处
-    box_y = v_max_axis - 0.5
-
-    scn_nn = scn[:2]
-
     v_sub = rf"""\begin{{subfigure}}[b]{{\textwidth}}
 \centering
 \begin{{tikzpicture}}

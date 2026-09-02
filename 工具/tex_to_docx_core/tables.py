@@ -5,10 +5,6 @@ import re
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
-from docx.shared import Pt, RGBColor
-
-from .config import FONT_SIZE
-from .docx_common import _set_rfonts
 
 
 def _is_code_block_table(tbl) -> bool:

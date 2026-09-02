@@ -9,7 +9,7 @@ import re
 
 import pytest
 from docx.oxml.ns import qn
-from docx.shared import Cm, Pt, Emu
+from docx.shared import Cm, Emu
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -398,7 +398,7 @@ class TestBody:
             if rule and rule != "auto":
                 violations.append(f"'{p.text[:30]}' rule={rule}")
         assert not violations, \
-            f"Body line spacing wrong:\n" + "\n".join(violations[:10])
+            "Body line spacing wrong:\n" + "\n".join(violations[:10])
 
     def test_caption_center_bold(self, doc):
         """图/表 caption 居中加粗。"""
@@ -461,7 +461,7 @@ class TestBibliography:
             if line != "400" or rule != "exact":
                 violations.append(f"'{p.text[:30]}' line={line} rule={rule}")
         assert not violations, \
-            f"Bib spacing wrong:\n" + "\n".join(violations[:5])
+            "Bib spacing wrong:\n" + "\n".join(violations[:5])
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -478,7 +478,7 @@ class TestInspectorRules:
             if cap_re.match(text):
                 violations.append(text[:40])
         assert not violations, \
-            f"Caption prefix has space:\n" + "\n".join(violations[:10])
+            "Caption prefix has space:\n" + "\n".join(violations[:10])
 
     def test_code_caption_no_indent(self, doc):
         """代码/算法 caption 段无首行缩进 (§5.2)。
