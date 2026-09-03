@@ -1,16 +1,17 @@
 {
-  "protocol": "miku-joint-reference-v1",
+  "protocol": "miku-joint-reference-v2",
   "case_kinds": [
     "crossing_pedestrian",
     "vehicle_cut_in",
     "parked_and_oncoming",
     "narrow_multi_obstacle",
     "interleaved_dynamic",
-    "prediction_noise"
+    "prediction_noise",
+    "delayed_crossing"
   ],
   "seed_start": 0,
-  "seed_count_per_kind": 5,
-  "paired_case_count": 30,
+  "seed_count_per_kind": 10,
+  "paired_case_count": 70,
   "grid": {
     "dt": 0.5,
     "ds": 0.5,
@@ -19,70 +20,85 @@
     "max_speed": 13.0,
     "max_lateral_speed": 0.5,
     "max_lateral_acceleration": 1.0,
-    "safety_guard": 0.1,
     "beam_width": 20000
   },
   "scope": "Deterministic beam search on a coarse joint grid; not a continuous global optimum.",
   "summaries": [
     {
       "method": "B3",
-      "n": 30,
-      "success_rate": 0.8333333333333334,
-      "collision_rate": 0.13333333333333333,
-      "min_clearance_mean_m": 0.15930569682357623,
-      "progress_ratio_mean": 0.9893617021276596,
-      "penalized_travel_time_mean_s": 8.783333333333333,
-      "runtime_p50_ms": 873.4492225012218,
-      "runtime_p95_ms": 2468.3484135999597
+      "n": 70,
+      "success_rate": 0.8,
+      "collision_rate": 0.014285714285714285,
+      "min_clearance_mean_m": 0.8222737710562116,
+      "progress_ratio_mean": 0.9152933729477579,
+      "penalized_travel_time_mean_s": 8.614285714285714,
+      "runtime_p50_ms": 1835.4308630005107,
+      "runtime_p95_ms": 13363.833576203615
     },
     {
       "method": "MIKU",
-      "n": 30,
-      "success_rate": 0.7,
+      "n": 70,
+      "success_rate": 0.7714285714285715,
       "collision_rate": 0.0,
-      "min_clearance_mean_m": 2.321153143467053,
-      "progress_ratio_mean": 0.8095443732719612,
-      "penalized_travel_time_mean_s": 12.333333333333334,
-      "runtime_p50_ms": 8.084413995675277,
-      "runtime_p95_ms": 91.59026909946988
+      "min_clearance_mean_m": 1.8652583653722505,
+      "progress_ratio_mean": 0.8371923876641069,
+      "penalized_travel_time_mean_s": 11.704285714285714,
+      "runtime_p50_ms": 10.437255499709863,
+      "runtime_p95_ms": 44.863871396228205
     }
   ],
   "paired_statistics": [
     {
       "comparison": "MIKU-B3",
       "metric": "success",
-      "n": 30,
-      "mean_difference": -0.13333333333333333,
-      "ci_low": -0.3,
-      "ci_high": 0.03333333333333333,
-      "cohen_dz": -0.3070976116635082
+      "n": 70,
+      "mean_difference": -0.02857142857142857,
+      "ci_low": -0.11428571428571428,
+      "ci_high": 0.05714285714285714,
+      "cohen_dz": -0.07526635789342985,
+      "candidate_only": 4,
+      "reference_only": 6,
+      "discordant": 10,
+      "mcnemar_exact_p": 0.75390625
     },
     {
       "comparison": "MIKU-B3",
       "metric": "collision",
-      "n": 30,
-      "mean_difference": -0.13333333333333333,
-      "ci_low": -0.26666666666666666,
-      "ci_high": -0.03333333333333333,
-      "cohen_dz": -0.38563966175427117
+      "n": 70,
+      "mean_difference": -0.014285714285714285,
+      "ci_low": -0.04285714285714286,
+      "ci_high": 0.0,
+      "cohen_dz": -0.11952286093343935,
+      "candidate_only": 0,
+      "reference_only": 1,
+      "discordant": 1,
+      "mcnemar_exact_p": 1.0
     },
     {
       "comparison": "MIKU-B3",
       "metric": "min_clearance_m",
-      "n": 30,
-      "mean_difference": 2.1618474466434776,
-      "ci_low": 0.8970815050038705,
-      "ci_high": 3.669172844583956,
-      "cohen_dz": 0.5439400927817415
+      "n": 70,
+      "mean_difference": 1.0429845943160394,
+      "ci_low": 0.47448579742749486,
+      "ci_high": 1.6711671265967754,
+      "cohen_dz": 0.3989614857840374,
+      "candidate_only": null,
+      "reference_only": null,
+      "discordant": null,
+      "mcnemar_exact_p": null
     },
     {
       "comparison": "MIKU-B3",
       "metric": "penalized_travel_time_s",
-      "n": 30,
-      "mean_difference": 3.55,
-      "ci_low": 2.35,
-      "ci_high": 4.75,
-      "cohen_dz": 1.0066287541455528
+      "n": 70,
+      "mean_difference": 3.0900000000000003,
+      "ci_low": 2.3785,
+      "ci_high": 3.734285714285714,
+      "cohen_dz": 1.0497761820028737,
+      "candidate_only": null,
+      "reference_only": null,
+      "discordant": null,
+      "mcnemar_exact_p": null
     }
   ]
 }

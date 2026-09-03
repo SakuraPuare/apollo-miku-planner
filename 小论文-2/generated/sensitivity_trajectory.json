@@ -24,8 +24,8 @@
       "trial": 0,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6894972032140616
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -33,8 +33,8 @@
       "trial": 1,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6688938432220282
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -42,8 +42,8 @@
       "trial": 2,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.682252026293764
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -51,8 +51,8 @@
       "trial": 3,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6817944380573066
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -60,8 +60,8 @@
       "trial": 4,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6785979472766198
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -69,8 +69,8 @@
       "trial": 5,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.687675476521823
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -78,8 +78,8 @@
       "trial": 6,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6846492902291182
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -87,8 +87,8 @@
       "trial": 7,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6839055771158473
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -96,8 +96,8 @@
       "trial": 8,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6824494267214404
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -105,8 +105,8 @@
       "trial": 9,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6948906556335255
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -114,8 +114,8 @@
       "trial": 10,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.675627194237945
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -123,8 +123,8 @@
       "trial": 11,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6839768518811132
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -132,8 +132,8 @@
       "trial": 12,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.680960931671257
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -141,8 +141,8 @@
       "trial": 13,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6809306281526469
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -150,8 +150,8 @@
       "trial": 14,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6861217284672624
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -159,8 +159,8 @@
       "trial": 15,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6840153562882093
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -168,8 +168,8 @@
       "trial": 16,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6881567171712409
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -177,8 +177,8 @@
       "trial": 17,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6733483997913071
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -186,8 +186,8 @@
       "trial": 18,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6884749463604466
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
@@ -195,196 +195,196 @@
       "trial": 19,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6738589417687436
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 0,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.668809371461623
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5208190159950818
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 1,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6585737813734774
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5125672640687504
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 2,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6692406708239688
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5164035470108227
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 3,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6639680148528508
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5158513679739587
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 4,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6587987715268253
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5114709075138392
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 5,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6565303890574635
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.51735925593387
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 6,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6709633243595203
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5234206754917955
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 7,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6642173009780239
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5246109463902701
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 8,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6583901613212523
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5044123120961461
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 9,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6551270145136601
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5121295715239055
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 10,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6517956606893089
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5032709819436267
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 11,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6630893056106258
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5200790322769779
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 12,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6593963880565764
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5103045849486347
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 13,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6670814265436126
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5150225505623282
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 14,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6534415771326035
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5113624193401515
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 15,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6692935202452314
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5223772832694007
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 16,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6615266053664541
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.507689227150577
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 17,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6588577507365437
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5188107594303033
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 18,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.650709564063508
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5101249415156588
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "threat_weights",
       "trial": 19,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.6607395318161383
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5157080045908669
     },
     {
       "scenario": "03_narrow_cones",
       "variant": "threat_weights",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -392,8 +392,8 @@
       "variant": "threat_weights",
       "trial": 1,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -401,8 +401,8 @@
       "variant": "threat_weights",
       "trial": 2,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -410,8 +410,8 @@
       "variant": "threat_weights",
       "trial": 3,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -419,8 +419,8 @@
       "variant": "threat_weights",
       "trial": 4,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -428,8 +428,8 @@
       "variant": "threat_weights",
       "trial": 5,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -437,8 +437,8 @@
       "variant": "threat_weights",
       "trial": 6,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -446,8 +446,8 @@
       "variant": "threat_weights",
       "trial": 7,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -455,8 +455,8 @@
       "variant": "threat_weights",
       "trial": 8,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -464,8 +464,8 @@
       "variant": "threat_weights",
       "trial": 9,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -473,8 +473,8 @@
       "variant": "threat_weights",
       "trial": 10,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -482,8 +482,8 @@
       "variant": "threat_weights",
       "trial": 11,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -491,8 +491,8 @@
       "variant": "threat_weights",
       "trial": 12,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -500,8 +500,8 @@
       "variant": "threat_weights",
       "trial": 13,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -509,8 +509,8 @@
       "variant": "threat_weights",
       "trial": 14,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -518,8 +518,8 @@
       "variant": "threat_weights",
       "trial": 15,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -527,8 +527,8 @@
       "variant": "threat_weights",
       "trial": 16,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -536,8 +536,8 @@
       "variant": "threat_weights",
       "trial": 17,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -545,8 +545,8 @@
       "variant": "threat_weights",
       "trial": 18,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -554,8 +554,8 @@
       "variant": "threat_weights",
       "trial": 19,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -563,8 +563,8 @@
       "variant": "threat_weights",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.841359377177306
     },
     {
@@ -572,8 +572,8 @@
       "variant": "threat_weights",
       "trial": 1,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.836653770015114
     },
     {
@@ -581,8 +581,8 @@
       "variant": "threat_weights",
       "trial": 2,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.831687781643072
     },
     {
@@ -590,8 +590,8 @@
       "variant": "threat_weights",
       "trial": 3,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8361582962114666
     },
     {
@@ -599,8 +599,8 @@
       "variant": "threat_weights",
       "trial": 4,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8336591967479943
     },
     {
@@ -608,8 +608,8 @@
       "variant": "threat_weights",
       "trial": 5,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8364232852158535
     },
     {
@@ -617,8 +617,8 @@
       "variant": "threat_weights",
       "trial": 6,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.838518022774688
     },
     {
@@ -626,8 +626,8 @@
       "variant": "threat_weights",
       "trial": 7,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8377769802261836
     },
     {
@@ -635,8 +635,8 @@
       "variant": "threat_weights",
       "trial": 8,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.841000531266279
     },
     {
@@ -644,8 +644,8 @@
       "variant": "threat_weights",
       "trial": 9,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8367888694130405
     },
     {
@@ -653,8 +653,8 @@
       "variant": "threat_weights",
       "trial": 10,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8271440530130625
     },
     {
@@ -662,8 +662,8 @@
       "variant": "threat_weights",
       "trial": 11,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.833680805138396
     },
     {
@@ -671,8 +671,8 @@
       "variant": "threat_weights",
       "trial": 12,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.835594687744666
     },
     {
@@ -680,8 +680,8 @@
       "variant": "threat_weights",
       "trial": 13,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8352852081088558
     },
     {
@@ -689,8 +689,8 @@
       "variant": "threat_weights",
       "trial": 14,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.833257614125645
     },
     {
@@ -698,8 +698,8 @@
       "variant": "threat_weights",
       "trial": 15,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.843632228259999
     },
     {
@@ -707,8 +707,8 @@
       "variant": "threat_weights",
       "trial": 16,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8317970479132284
     },
     {
@@ -716,8 +716,8 @@
       "variant": "threat_weights",
       "trial": 17,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8304286694175365
     },
     {
@@ -725,8 +725,8 @@
       "variant": "threat_weights",
       "trial": 18,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8428849956020192
     },
     {
@@ -734,17 +734,17 @@
       "variant": "threat_weights",
       "trial": 19,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.837024571960959
     },
     {
       "scenario": "01_crossing_ped",
       "variant": "tau_-20pct",
       "trial": 0,
-      "success": 0,
-      "s_end": 19.38961983389144,
-      "jerk_rms": 2.0432923012217676,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
       "l_max_dev": 0.0
     },
     {
@@ -753,16 +753,16 @@
       "trial": 0,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.36320596103752306
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
       "variant": "obstacle_speed_-0.5mps",
       "trial": 0,
-      "success": 0,
-      "s_end": 0.0,
-      "jerk_rms": 0.0,
+      "success": 1,
+      "s_end": 23.99999999999916,
+      "jerk_rms": 4.013478464467515,
       "l_max_dev": 0.0
     },
     {
@@ -771,16 +771,16 @@
       "trial": 0,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.6024492113937824
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "01_crossing_ped",
       "variant": "obstacle_lateral_-0.2m",
       "trial": 0,
-      "success": 0,
-      "s_end": 0.0,
-      "jerk_rms": 0.0,
+      "success": 1,
+      "s_end": 23.999999999999893,
+      "jerk_rms": 3.608737435959668,
       "l_max_dev": 0.0
     },
     {
@@ -789,26 +789,26 @@
       "trial": 0,
       "success": 1,
       "s_end": 24.0,
-      "jerk_rms": 0.6039644109694743,
-      "l_max_dev": 0.47881119616976503
+      "jerk_rms": 2.4316457921611807,
+      "l_max_dev": 0.0
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "tau_-20pct",
       "trial": 0,
-      "success": 0,
-      "s_end": 0.0,
-      "jerk_rms": 0.0,
-      "l_max_dev": 0.0
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "tau_+20pct",
       "trial": 0,
       "success": 1,
-      "s_end": 30.99999999998246,
-      "jerk_rms": 0.5191666145045568,
-      "l_max_dev": 0.5062808657484122
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
     },
     {
       "scenario": "02_ped_plus_parked",
@@ -817,42 +817,42 @@
       "success": 0,
       "s_end": 0.0,
       "jerk_rms": 0.0,
-      "l_max_dev": 0.0
+      "l_max_dev": 0.5145750781116654
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "obstacle_speed_+0.5mps",
       "trial": 0,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.5631184425593544
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "obstacle_lateral_-0.2m",
       "trial": 0,
-      "success": 0,
-      "s_end": 0.0,
-      "jerk_rms": 0.0,
-      "l_max_dev": 0.0
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.7200000000000009
     },
     {
       "scenario": "02_ped_plus_parked",
       "variant": "obstacle_lateral_+0.2m",
       "trial": 0,
       "success": 1,
-      "s_end": 31.0,
-      "jerk_rms": 0.40012187547720895,
-      "l_max_dev": 0.4458297450459678
+      "s_end": 31.000001,
+      "jerk_rms": 2.236532660734774,
+      "l_max_dev": 0.29606746880503476
     },
     {
       "scenario": "03_narrow_cones",
       "variant": "tau_-20pct",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -860,8 +860,8 @@
       "variant": "tau_+20pct",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -869,8 +869,8 @@
       "variant": "obstacle_speed_-0.5mps",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -878,8 +878,8 @@
       "variant": "obstacle_speed_+0.5mps",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.0
     },
     {
@@ -887,8 +887,8 @@
       "variant": "obstacle_lateral_-0.2m",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.10070385564396099
     },
     {
@@ -896,8 +896,8 @@
       "variant": "obstacle_lateral_+0.2m",
       "trial": 0,
       "success": 1,
-      "s_end": 49.0,
-      "jerk_rms": 0.03316550594537274,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
       "l_max_dev": 0.17248983550815133
     },
     {
@@ -905,8 +905,8 @@
       "variant": "tau_-20pct",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8346054096397455
     },
     {
@@ -914,8 +914,8 @@
       "variant": "tau_+20pct",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8346054096397455
     },
     {
@@ -923,8 +923,8 @@
       "variant": "obstacle_speed_-0.5mps",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8346054096397455
     },
     {
@@ -932,8 +932,8 @@
       "variant": "obstacle_speed_+0.5mps",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.8346054096397455
     },
     {
@@ -941,8 +941,8 @@
       "variant": "obstacle_lateral_-0.2m",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 3.6303773740373457
     },
     {
@@ -950,8 +950,8 @@
       "variant": "obstacle_lateral_+0.2m",
       "trial": 0,
       "success": 1,
-      "s_end": 84.0,
-      "jerk_rms": 0.02511318747575181,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
       "l_max_dev": 4.0388333293029195
     }
   ]

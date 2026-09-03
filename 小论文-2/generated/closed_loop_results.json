@@ -6,132 +6,78 @@
     "parked_and_oncoming",
     "narrow_multi_obstacle",
     "interleaved_dynamic",
-    "prediction_noise"
+    "prediction_noise",
+    "delayed_crossing"
   ],
   "seed_start": 0,
-  "seed_count_per_kind": 10,
-  "paired_case_count": 60,
+  "seed_count_per_kind": 100,
+  "paired_case_count": 700,
   "methods": [
     "B0",
-    "B1",
-    "B2",
     "MIKU"
   ],
   "config": {
     "replan_period_s": 0.5,
     "minimum_cycle_horizon_s": 2.0,
-    "target_tolerance_m": 1.0
+    "target_tolerance_m": 1.0,
+    "terminal_lookahead_m": 3.0
   },
   "execution": "Execute the first 0.5 s segment, update ego/obstacles, and replan until arrival or scenario horizon.",
   "noise": "The initial observation biases are held fixed across replans; execution applies planned increments to truth state.",
   "summaries": [
     {
       "method": "B0",
-      "n": 60,
-      "success_rate": 0.18333333333333332,
-      "collision_rate": 0.0,
-      "degraded_stop_rate": 0.8166666666666667,
-      "min_clearance_mean_m": 2.492647118258222,
-      "progress_ratio_mean": 0.539402357150312,
-      "penalized_travel_time_mean_s": 14.84,
-      "planning_cycles_mean": 21.616666666666667,
-      "episode_runtime_p50_ms": 346.093602511246,
-      "episode_runtime_p95_ms": 1250.6410789414076
-    },
-    {
-      "method": "B1",
-      "n": 60,
-      "success_rate": 0.23333333333333334,
-      "collision_rate": 0.0,
-      "degraded_stop_rate": 0.7666666666666667,
-      "min_clearance_mean_m": 2.516781688735025,
-      "progress_ratio_mean": 0.5574726639194866,
-      "penalized_travel_time_mean_s": 14.533333333333333,
-      "planning_cycles_mean": 21.516666666666666,
-      "episode_runtime_p50_ms": 318.9913630085357,
-      "episode_runtime_p95_ms": 1246.365235041958
-    },
-    {
-      "method": "B2",
-      "n": 60,
-      "success_rate": 0.21666666666666667,
-      "collision_rate": 0.0,
-      "degraded_stop_rate": 0.7833333333333333,
-      "min_clearance_mean_m": 2.5275620753012995,
-      "progress_ratio_mean": 0.5389383286483013,
-      "penalized_travel_time_mean_s": 14.593333333333332,
-      "planning_cycles_mean": 21.466666666666665,
-      "episode_runtime_p50_ms": 930.151147502329,
-      "episode_runtime_p95_ms": 3320.0749761439506
+      "n": 700,
+      "success_rate": 0.6228571428571429,
+      "collision_rate": 0.012857142857142857,
+      "degraded_stop_rate": 0.37,
+      "min_clearance_mean_m": 1.2830149968775268,
+      "progress_ratio_mean": 0.8255343764534869,
+      "penalized_travel_time_mean_s": 12.058142857142858,
+      "planning_cycles_mean": 20.554285714285715,
+      "episode_runtime_p50_ms": 181.94716398284072,
+      "episode_runtime_p95_ms": 827.2001565892415
     },
     {
       "method": "MIKU",
-      "n": 60,
-      "success_rate": 0.25,
-      "collision_rate": 0.016666666666666666,
-      "degraded_stop_rate": 0.75,
-      "min_clearance_mean_m": 2.1620850629881616,
-      "progress_ratio_mean": 0.6375154701738246,
-      "penalized_travel_time_mean_s": 14.456666666666667,
-      "planning_cycles_mean": 21.533333333333335,
-      "episode_runtime_p50_ms": 164.61692149823648,
-      "episode_runtime_p95_ms": 1282.2788038014548
+      "n": 700,
+      "success_rate": 0.7228571428571429,
+      "collision_rate": 0.012857142857142857,
+      "degraded_stop_rate": 0.26857142857142857,
+      "min_clearance_mean_m": 1.2003908648480648,
+      "progress_ratio_mean": 0.9025475654259452,
+      "penalized_travel_time_mean_s": 11.379571428571428,
+      "planning_cycles_mean": 20.142857142857142,
+      "episode_runtime_p50_ms": 163.55582903634058,
+      "episode_runtime_p95_ms": 1361.509155471867
     }
   ],
   "paired_statistics": [
     {
       "comparison": "MIKU-B0",
       "metric": "success",
-      "n": 60,
-      "mean_difference": 0.06666666666666667,
-      "ci_low": 0.016666666666666666,
-      "ci_high": 0.13333333333333333,
-      "cohen_dz": 0.26502470684465484
+      "n": 700,
+      "mean_difference": 0.1,
+      "ci_low": 0.07571428571428572,
+      "ci_high": 0.12571428571428572,
+      "cohen_dz": 0.29745758127542804,
+      "candidate_only": 78,
+      "reference_only": 8,
+      "discordant": 86,
+      "mcnemar_exact_p": 1.5235832099273424e-15
     },
     {
       "comparison": "MIKU-B0",
       "metric": "collision",
-      "n": 60,
-      "mean_difference": 0.016666666666666666,
-      "ci_low": 0.0,
-      "ci_high": 0.05,
-      "cohen_dz": 0.12909944487358055
-    },
-    {
-      "comparison": "MIKU-B1",
-      "metric": "success",
-      "n": 60,
-      "mean_difference": 0.016666666666666666,
-      "ci_low": -0.03333333333333333,
-      "ci_high": 0.08333333333333333,
-      "cohen_dz": 0.07411802958204411
-    },
-    {
-      "comparison": "MIKU-B1",
-      "metric": "collision",
-      "n": 60,
-      "mean_difference": 0.016666666666666666,
-      "ci_low": 0.0,
-      "ci_high": 0.05,
-      "cohen_dz": 0.12909944487358055
-    },
-    {
-      "comparison": "MIKU-B2",
-      "metric": "success",
-      "n": 60,
-      "mean_difference": 0.03333333333333333,
-      "ci_low": 0.0,
-      "ci_high": 0.08333333333333333,
-      "cohen_dz": 0.18414137497317518
-    },
-    {
-      "comparison": "MIKU-B2",
-      "metric": "collision",
-      "n": 60,
-      "mean_difference": 0.016666666666666666,
-      "ci_low": 0.0,
-      "ci_high": 0.05,
-      "cohen_dz": 0.12909944487358055
+      "n": 700,
+      "mean_difference": 0.0,
+      "ci_low": -0.005714285714285714,
+      "ci_high": 0.005714285714285714,
+      "cohen_dz": 0.0,
+      "candidate_only": 2,
+      "reference_only": 2,
+      "discordant": 4,
+      "mcnemar_exact_p": 1.0
     }
   ]
 }
