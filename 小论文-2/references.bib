@@ -1,875 +1,282 @@
-@online{apollo2024,
-    author = {{百度Apollo团队}},
-    title = {Apollo开源自动驾驶平台},
-    url = {https://github.com/ApolloAuto/apollo},
-    year = {2024},
-    urldate = {2025-03-15},
+% Curated references for the MIKU paper. Metadata was checked against
+% publisher pages, Crossref records, or the cited official repository.
+
+@article{kant1986pvd,
+  author = {Kant, Kamal and Zucker, Steven W.},
+  title = {Toward Efficient Trajectory Planning: The Path-Velocity Decomposition},
+  journal = {The International Journal of Robotics Research},
+  volume = {5}, number = {3}, pages = {72--89}, year = {1986},
+  doi = {10.1177/027836498600500304},
 }
 
 @inproceedings{werling2010,
-    author = {Werling, Moritz and Ziegler, Julius and Kammel, S{\"o}ren and Thrun, Sebastian},
-    title = {Optimal trajectory generation for dynamic street scenarios in a {Frenet} frame},
-    booktitle = {2010 IEEE International Conference on Robotics and Automation},
-    pages = {987--993},
-    year = {2010},
-    organization = {IEEE},
-    doi = {10.1109/ROBOT.2010.5509799},
+  author = {Werling, Moritz and Ziegler, Julius and Kammel, S{"o}ren and Thrun, Sebastian},
+  title = {Optimal Trajectory Generation for Dynamic Street Scenarios in a {Frenet} Frame},
+  booktitle = {2010 IEEE International Conference on Robotics and Automation},
+  pages = {987--993}, year = {2010}, doi = {10.1109/ROBOT.2010.5509799},
 }
 
 @article{dolgov2010,
-    author = {Dolgov, Dmitri and Thrun, Sebastian and Montemerlo, Michael and Diebel, James},
-    title = {Path planning for autonomous vehicles in unknown semi-structured environments},
-    journal = {The International Journal of Robotics Research},
-    volume = {29},
-    number = {5},
-    pages = {485--501},
-    year = {2010},
-    doi = {10.1177/0278364909359210},
-}
-
-@article{kessler2023,
-    author = {Kessler, Tobias and Esterle, Klemens and Knoll, Alois},
-    title = {Mixed-integer motion planning on {German} roads within the {Apollo} driving stack},
-    journal = {IEEE Transactions on Intelligent Vehicles},
-    volume = {8},
-    number = {1},
-    pages = {851--867},
-    year = {2023},
-    doi = {10.1109/TIV.2022.3162671},
-}
-
-@article{li2023quant,
-    author = {Li, Hexuan and De Cristofaro, Francesco and Orucevic, Faris and Gu, Zhengguo and Eichberger, Arno},
-    title = {Quantitative analysis of the impact of {Baidu Apollo} parameterization on trajectory planning in a critical scenario},
-    journal = {Transportation Research Procedia},
-    volume = {73},
-    pages = {102--109},
-    year = {2023},
-    doi = {10.1016/j.trpro.2023.11.897},
-}
-
-@article{li2023valid,
-    author = {Li, Hexuan and Makkapati, Vamsi Prakash and Wan, Li and Tomasch, Ernst and Hoschopf, Heinz and Eichberger, Arno},
-    title = {Validation of automated driving function based on the {Apollo} platform},
-    journal = {Vehicles},
-    volume = {5},
-    number = {2},
-    pages = {718--731},
-    year = {2023},
-    doi = {10.3390/vehicles5020039},
-}
-
-@inproceedings{guo2024survey,
-    author = {Ren, Hongping and Gao, Hui and Chen, He and Liu, Guangzhen},
-    title = {A survey of autonomous driving scenarios and scenario databases},
-    booktitle = {2022 9th International Conference on Dependable Systems and Their Applications (DSA)},
-    pages = {754--762},
-    year = {2022},
-    organization = {IEEE},
-    doi = {10.1109/DSA56465.2022.00107},
-}
-
-@inproceedings{li2022frenet,
-    author = {Zhang, Dongxue and Zhao, Jiaao and Jiao, Xiaohong},
-    title = {Trajectory planning of autonomous vehicle based on {Frenet} frame system},
-    booktitle = {2021 China Automation Congress (CAC)},
-    pages = {7973--7977},
-    year = {2021},
-    organization = {IEEE},
-    doi = {10.1109/CAC53003.2021.9727338},
-}
-
-@article{chen2019em,
-    author = {Chen, Jianyu and Zhan, Wei and Tomizuka, Masayoshi},
-    title = {Autonomous driving motion planning with constrained iterative {LQR}},
-    journal = {IEEE Transactions on Intelligent Vehicles},
-    volume = {4},
-    number = {2},
-    pages = {244--254},
-    year = {2019},
-    doi = {10.1109/TIV.2019.2904385},
-}
-
-@article{sun2022robust,
-    author = {Sun, Yuchen and Ren, Dongchun and Lian, Shiqi and Fu, Sheng and Teng, Xiangyi and Fan, Mingyu},
-    title = {Robust path planner for autonomous vehicles on roads with large curvature},
-    journal = {IEEE Robotics and Automation Letters},
-    volume = {7},
-    number = {2},
-    pages = {2503--2510},
-    year = {2022},
-    doi = {10.1109/LRA.2022.3143294},
-}
-
-@misc{fan2018baidu,
-    author = {Fan, Haoyang and Zhu, Fan and Liu, Changchun and Zhang, Liangliang and Zhuang, Li and Li, Dong and Zhu, Weicheng and Hu, Jiangtao and Li, Hongye and Kong, Qi},
-    title = {Baidu {Apollo} {EM} motion planner},
-    eprinttype = {arxiv},
-    eprint = {1807.08048},
-    year = {2018},
-}
-
-@article{ziegler2014,
-    author = {Ziegler, Julius and Bender, Philipp and Schreiber, Markus and others},
-    title = {Making {Bertha} drive---an autonomous journey on a historic route},
-    journal = {IEEE Intelligent Transportation Systems Magazine},
-    volume = {6},
-    number = {2},
-    pages = {8--20},
-    year = {2014},
-    doi = {10.1109/MITS.2014.2306552},
-}
-
-@article{gonzalez2016,
-    author = {Gonz{\'a}lez, David and P{\'e}rez, Joshu{\'e} and Milan{\'e}s, Vicente and Nashashibi, Fawzi},
-    title = {A review of motion planning techniques for automated vehicles},
-    journal = {IEEE Transactions on Intelligent Transportation Systems},
-    volume = {17},
-    number = {4},
-    pages = {1135--1145},
-    year = {2016},
-    doi = {10.1109/TITS.2015.2498841},
-}
-
-@article{paden2016,
-    author = {Paden, Brian and {\v{C}}{\'a}p, Michal and Yong, Sze Zheng and Yershov, Dmitry and Frazzoli, Emilio},
-    title = {A survey of motion planning and control techniques for self-driving urban vehicles},
-    journal = {IEEE Transactions on Intelligent Vehicles},
-    volume = {1},
-    number = {1},
-    pages = {33--55},
-    year = {2016},
-    doi = {10.1109/TIV.2016.2578706},
-}
-
-@mastersthesis{sun2023urban,
-    author = {汪先伟},
-    title = {面向城市工况的自动驾驶运动规划方法研究},
-    school = {南京信息工程大学},
-    address = {南京},
-    year = {2024},
-    doi = {10.27248/d.cnki.gnjqc.2024.001039},
-}
-
-@mastersthesis{chen2024avoid,
-    author = {孙钦葆},
-    title = {复杂道路环境下智能车辆横纵向避障问题研究},
-    school = {燕山大学},
-    address = {秦皇岛},
-    year = {2024},
-    doi = {10.27440/d.cnki.gysdu.2024.001334},
-}
-
-@article{gao2024apollo,
-    author = {郑竹安 and 朱乃宣 and 谢双健},
-    title = {基于百度Apollo平台的高校自动驾驶教学创新},
-    journal = {汽车实用技术},
-    volume = {50},
-    number = {20},
-    pages = {134--138},
-    year = {2025},
-    issn = {1671-7988},
-    doi = {10.16638/j.cnki.1671-7988.2025.020.025},
-}
-
-@article{ma2023parking,
-    author = {于蕾艳 and 侯泽宇 and 蔡永鹏 and 陈苏雨 and 胡淄华},
-    title = {智能算法优化的泊车路径规划及跟踪控制方法},
-    journal = {江苏大学学报(自然科学版)},
-    volume = {46},
-    number = {06},
-    pages = {621--630},
-    year = {2025},
-    issn = {1671-7775},
-}
-
-@techreport{lavalle1998rrt,
-    author = {LaValle, Steven M},
-    title = {Rapidly-exploring random trees: A new tool for path planning},
-    institution = {Computer Science Department, Iowa State University},
-    year = {1998},
-    url = {https://lavalle.pl/papers/Lav98c.pdf},
-}
-
-@article{karaman2011sampling,
-    author = {Karaman, Sertac and Frazzoli, Emilio},
-    title = {Sampling-based algorithms for optimal motion planning},
-    journal = {The International Journal of Robotics Research},
-    volume = {30},
-    number = {7},
-    pages = {846--894},
-    year = {2011},
-    doi = {10.1177/0278364911406761},
-}
-
-@article{hart1968astar,
-    author = {Hart, Peter E and Nilsson, Nils J and Raphael, Bertram},
-    title = {A formal basis for the heuristic determination of minimum cost paths},
-    journal = {IEEE Transactions on Systems Science and Cybernetics},
-    volume = {4},
-    number = {2},
-    pages = {100--107},
-    year = {1968},
-    doi = {10.1109/TSSC.1968.300136},
-}
-
-@article{stellato2020osqp,
-    author = {Stellato, Bartolomeo and Banjac, Goran and Goulart, Paul and Bemporad, Alberto and Boyd, Stephen},
-    title = {{OSQP}: An operator splitting solver for quadratic programs},
-    journal = {Mathematical Programming Computation},
-    volume = {12},
-    number = {4},
-    pages = {637--672},
-    year = {2020},
-    doi = {10.1007/s12532-020-00179-2},
-}
-
-@inproceedings{xu2012realtime,
-    author = {Xu, Wenda and Wei, Junqing and Dolan, John M and Zhao, Huijing and Zha, Hongbin},
-    title = {A real-time motion planner with trajectory optimization for autonomous vehicles},
-    booktitle = {2012 IEEE International Conference on Robotics and Automation},
-    pages = {2061--2067},
-    year = {2012},
-    organization = {IEEE},
-    doi = {10.1109/ICRA.2012.6225063},
-}
-
-@article{borrelli2005mpc,
-    author = {Borrelli, Francesco and Falcone, Paolo and Keviczky, Tamas and Asgari, Jahan and Hrovat, Davor},
-    title = {{MPC}-based approach to active steering for autonomous vehicle systems},
-    journal = {International Journal of Vehicle Autonomous Systems},
-    volume = {3},
-    number = {2-4},
-    pages = {265--291},
-    year = {2005},
-    doi = {10.1504/IJVAS.2005.008237},
-}
-
-@inproceedings{zhang2018autonomous,
-    author = {Zhang, Yi and Sun, Ping and Yin, Yuhan and Lin, Lin and Wang, Xuesong},
-    title = {Human-like autonomous vehicle speed control by deep reinforcement learning with double {Q}-learning},
-    booktitle = {2018 IEEE Intelligent Vehicles Symposium (IV)},
-    pages = {1251--1256},
-    year = {2018},
-    organization = {IEEE},
-    doi = {10.1109/IVS.2018.8500630},
-}
-
-@article{li2024decision,
-    author = {李升波 and 李弘扬 and 赵行 and 蔡英凤 and 朱冰 and 陶吉 and 汪建球 and 帅斌 and 陈晨 and 郜嘉鑫 and 赵菲 and 李杰 and 刘擎超 and 张培兴 and 李克强},
-    title = {面向端到端自动驾驶系统的多模态协同优化与训练技术演进路径},
-    journal = {中国科学:技术科学},
-    volume = {55},
-    number = {10},
-    pages = {1638--1658},
-    year = {2025},
-    issn = {1674-7259},
-}
-
-@inproceedings{liu2017speed,
-    author = {Liu, Changliu and Zhan, Wei and Tomizuka, Masayoshi},
-    title = {Speed profile planning in dynamic environments via temporal optimization},
-    booktitle = {2017 IEEE Intelligent Vehicles Symposium},
-    pages = {154--159},
-    year = {2017},
-    organization = {IEEE},
-    doi = {10.1109/IVS.2017.7995713},
-}
-
-@article{zhou2021dliaps,
-    author = {Zhou, Jinyun and He, Runxin and Wang, Yu and Jiang, Shu and Zhu, Zhenguang and Hu, Jiangtao and Miao, Jinghao and Luo, Qi},
-    title = {Autonomous driving trajectory optimization with dual-loop iterative anchoring path smoothing and piecewise-jerk speed optimization},
-    journal = {IEEE Robotics and Automation Letters},
-    volume = {6},
-    number = {2},
-    pages = {439--446},
-    year = {2021},
-    doi = {10.1109/LRA.2020.3045925},
-}
-
-@inproceedings{zhou2021pathqp,
-    author = {Zhang, Yajia and Sun, Hongyi and Zhou, Jinyun and Pan, Jiacheng and Hu, Jiangtao and Miao, Jinghao},
-    title = {Optimal vehicle path planning using quadratic optimization for {Baidu Apollo} open platform},
-    booktitle = {2020 IEEE Intelligent Vehicles Symposium (IV)},
-    pages = {978--984},
-    year = {2020},
-    organization = {IEEE},
-    doi = {10.1109/IV47402.2020.9304787},
-}
-
-@inproceedings{dolgov2008hybrid,
-    author = {Dolgov, Dmitri and Thrun, Sebastian and Montemerlo, Michael and Diebel, James},
-    title = {Practical search techniques in path planning for autonomous driving},
-    booktitle = {Proceedings of the First International Symposium on Search Techniques in Artificial Intelligence and Robotics (STAIR-08)},
-    publisher = {AAAI},
-    year = {2008},
-}
-
-@article{kant1986pvd,
-    author = {Kant, Kamal and Zucker, Steven W.},
-    title = {Toward efficient trajectory planning: The path-velocity decomposition},
-    journal = {The International Journal of Robotics Research},
-    volume = {5},
-    number = {3},
-    pages = {72--89},
-    year = {1986},
-    doi = {10.1177/027836498600500304},
-}
-
-@article{wachter2006ipopt,
-    author = {W{\"a}chter, Andreas and Biegler, Lorenz T.},
-    title = {On the implementation of an interior-point filter line-search algorithm for large-scale nonlinear programming},
-    journal = {Mathematical Programming},
-    volume = {106},
-    number = {1},
-    pages = {25--57},
-    year = {2006},
-    doi = {10.1007/s10107-004-0559-y},
-}
-
-@inproceedings{rosmann2012teb,
-    author = {R{\"o}smann, Christoph and Feiten, Wendelin and W{\"o}sch, Thomas and Hoffmann, Frank and Bertram, Torsten},
-    title = {Trajectory modification considering dynamic constraints of autonomous robots},
-    booktitle = {Proceedings of ROBOTIK 2012, 7th German Conference on Robotics},
-    pages = {74--79},
-    year = {2012},
-}
-
-@inproceedings{dosovitskiy2017carla,
-    author = {Dosovitskiy, Alexey and Ros, German and Codevilla, Felipe and Lopez, Antonio and Koltun, Vladlen},
-    title = {{CARLA}: An open urban driving simulator},
-    booktitle = {Proceedings of the 1st Annual Conference on Robot Learning (CoRL)},
-    pages = {1--16},
-    year = {2017},
-    url = {https://proceedings.mlr.press/v78/dosovitskiy17a.html},
-}
-
-@inproceedings{mellinger2011minsnap,
-    author = {Mellinger, Daniel and Kumar, Vijay},
-    title = {Minimum snap trajectory generation and control for quadrotors},
-    booktitle = {2011 IEEE International Conference on Robotics and Automation},
-    pages = {2520--2525},
-    year = {2011},
-    organization = {IEEE},
-    doi = {10.1109/ICRA.2011.5980409},
-}
-
-@article{liu2017sfc,
-    author = {Liu, Sikang and Watterson, Michael and Mohta, Kartik and Sun, Ke and Bhattacharya, Subhrajit and Taylor, Camillo J. and Kumar, Vijay},
-    title = {Planning dynamically feasible trajectories for quadrotors using safe flight corridors in 3-{D} complex environments},
-    journal = {IEEE Robotics and Automation Letters},
-    volume = {2},
-    number = {3},
-    pages = {1688--1695},
-    year = {2017},
-    doi = {10.1109/LRA.2017.2663526},
-}
-
-@article{katrakazas2015realtime,
-    author = {Katrakazas, Christos and Quddus, Mohammed and Chen, Wen-Hua and Deka, Lipika},
-    title = {Real-time motion planning methods for autonomous on-road driving: State-of-the-art and future research directions},
-    journal = {Transportation Research Part C: Emerging Technologies},
-    volume = {60},
-    pages = {416--442},
-    year = {2015},
-    doi = {10.1016/j.trc.2015.09.011},
-}
-
-@article{schwarting2018planning,
-    author = {Schwarting, Wilko and Alonso-Mora, Javier and Rus, Daniela},
-    title = {Planning and decision-making for autonomous vehicles},
-    journal = {Annual Review of Control, Robotics, and Autonomous Systems},
-    volume = {1},
-    number = {1},
-    pages = {187--210},
-    year = {2018},
-    doi = {10.1146/annurev-control-060117-105157},
-}
-
-@inproceedings{mcnaughton2011lattice,
-    author = {McNaughton, Matthew and Urmson, Chris and Dolan, John M. and Lee, Jin-Woo},
-    title = {Motion planning for autonomous driving with a conformal spatiotemporal lattice},
-    booktitle = {2011 IEEE International Conference on Robotics and Automation},
-    pages = {4889--4895},
-    year = {2011},
-    organization = {IEEE},
-    doi = {10.1109/ICRA.2011.5980223},
-}
-
-@article{urmson2008boss,
-    author = {Urmson, Chris and Anhalt, Joshua and Bagnell, Drew and Baker, Christopher and Bittner, Robert and Clark, M. N. and Dolan, John and others},
-    title = {Autonomous driving in urban environments: {Boss} and the {Urban Challenge}},
-    journal = {Journal of Field Robotics},
-    volume = {25},
-    number = {8},
-    pages = {425--466},
-    year = {2008},
-    doi = {10.1002/rob.20255},
-}
-
-@inproceedings{rong2020lgsvl,
-    author = {Rong, Guodong and Shin, Byung Hyun and Tabatabaee, Hadi and Lu, Qiang and Lemke, Steve and Mo{\v{z}}eiko, Martins and Boise, Eric and Uhm, Geehoon and Gerow, Mark and Mehta, Shalin and others},
-    title = {{LGSVL} simulator: A high fidelity simulator for autonomous driving},
-    booktitle = {2020 IEEE 23rd International Conference on Intelligent Transportation Systems (ITSC)},
-    pages = {1--6},
-    year = {2020},
-    organization = {IEEE},
-    doi = {10.1109/ITSC45102.2020.9294422},
-}
-
-@inproceedings{vandenberg2008rvo,
-    author = {van den Berg, Jur and Lin, Ming and Manocha, Dinesh},
-    title = {Reciprocal velocity obstacles for real-time multi-agent navigation},
-    booktitle = {2008 IEEE International Conference on Robotics and Automation},
-    pages = {1928--1935},
-    year = {2008},
-    organization = {IEEE},
-    doi = {10.1109/ROBOT.2008.4543489},
+  author = {Dolgov, Dmitri and Thrun, Sebastian and Montemerlo, Michael and Diebel, James},
+  title = {Path Planning for Autonomous Vehicles in Unknown Semi-Structured Environments},
+  journal = {The International Journal of Robotics Research},
+  volume = {29}, number = {5}, pages = {485--501}, year = {2010},
+  doi = {10.1177/0278364909359210},
 }
 
 @article{kuwata2009rrt,
-    author = {Kuwata, Yoshiaki and Teo, Justin and Karaman, Sertac and Frazzoli, Emilio and Fiore, Gaston and How, Jonathan P.},
-    title = {Real-time motion planning with applications to autonomous urban driving},
-    journal = {IEEE Transactions on Control Systems Technology},
-    volume = {17},
-    number = {5},
-    pages = {1105--1118},
-    year = {2009},
-    doi = {10.1109/TCST.2008.2012116},
+  author = {Kuwata, Yoshiaki and Teo, Justin and Karaman, Sertac and Frazzoli, Emilio and Fiore, Gaston and How, Jonathan P.},
+  title = {Real-Time Motion Planning With Applications to Autonomous Urban Driving},
+  journal = {IEEE Transactions on Control Systems Technology},
+  volume = {17}, number = {5}, pages = {1105--1118}, year = {2009},
+  doi = {10.1109/TCST.2008.2012116},
 }
 
-@inproceedings{alahi2016social,
-    author = {Alahi, Alexandre and Goel, Kratarth and Ramanathan, Vignesh and Robicquet, Alexandre and Fei-Fei, Li and Savarese, Silvio},
-    title = {Social {LSTM}: Human trajectory prediction in crowded spaces},
-    booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
-    pages = {961--971},
-    year = {2016},
-    doi = {10.1109/CVPR.2016.110},
+@inproceedings{mcnaughton2011lattice,
+  author = {McNaughton, Matthew and Urmson, Chris and Dolan, John M. and Lee, Jin-Woo},
+  title = {Motion Planning for Autonomous Driving With a Conformal Spatiotemporal Lattice},
+  booktitle = {2011 IEEE International Conference on Robotics and Automation},
+  pages = {4889--4895}, year = {2011}, doi = {10.1109/ICRA.2011.5980223},
 }
 
-@misc{shalevshwartz2017rss,
-    author = {Shalev-Shwartz, Shai and Shammah, Shaked and Shashua, Amnon},
-    title = {On a formal model of safe and scalable self-driving cars},
-    eprinttype = {arxiv},
-    eprint = {1708.06374},
-    year = {2017},
+@article{ziegler2014,
+  author = {Ziegler, Julius and Bender, Philipp and Schreiber, Markus and others},
+  title = {Making {Bertha} Drive---An Autonomous Journey on a Historic Route},
+  journal = {IEEE Intelligent Transportation Systems Magazine},
+  volume = {6}, number = {2}, pages = {8--20}, year = {2014},
+  doi = {10.1109/MITS.2014.2306552},
 }
 
-@inproceedings{kuffner2000rrtconnect,
-    author = {Kuffner, James J. and LaValle, Steven M.},
-    title = {{RRT}-connect: An efficient approach to single-query path planning},
-    booktitle = {Proceedings 2000 IEEE International Conference on Robotics and Automation},
-    volume = {2},
-    pages = {995--1001},
-    year = {2000},
-    organization = {IEEE},
-    doi = {10.1109/ROBOT.2000.844730},
+@article{katrakazas2015realtime,
+  author = {Katrakazas, Christos and Quddus, Mohammed and Chen, Wen-Hua and Deka, Lipika},
+  title = {Real-Time Motion Planning Methods for Autonomous On-Road Driving: State-of-the-Art and Future Research Directions},
+  journal = {Transportation Research Part C: Emerging Technologies},
+  volume = {60}, pages = {416--442}, year = {2015}, doi = {10.1016/j.trc.2015.09.011},
 }
 
-@inproceedings{caesar2020nuscenes,
-    author = {Caesar, Holger and Bankiti, Varun and Lang, Alex H. and Vora, Sourabh and Liong, Venice Erin and Xu, Qiang and Krishnan, Anush and Pan, Yu and Baldan, Giancarlo and Beijbom, Oscar},
-    title = {nu{S}cenes: A multimodal dataset for autonomous driving},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    pages = {11618--11628},
-    year = {2020},
-    doi = {10.1109/CVPR42600.2020.01164},
+@article{gonzalez2016,
+  author = {Gonz{\'a}lez, David and P{\'e}rez, Joshu{\'e} and Milan{\'e}s, Vicente and Nashashibi, Fawzi},
+  title = {A Review of Motion Planning Techniques for Automated Vehicles},
+  journal = {IEEE Transactions on Intelligent Transportation Systems},
+  volume = {17}, number = {4}, pages = {1135--1145}, year = {2016},
+  doi = {10.1109/TITS.2015.2498841},
 }
 
-@article{yang2025stcorridor,
-    author = {杨秀建 and 冯旭磊 and 张生斌 and 白永瑞},
-    title = {基于时空走廊的非结构化环境智能车辆轨迹规划},
-    journal = {汽车工程},
-    volume = {47},
-    number = {07},
-    pages = {1357--1368},
-    year = {2025},
-    issn = {1000-680X},
-    doi = {10.19562/j.chinasae.qcgc.2025.07.013},
+@article{paden2016,
+  author = {Paden, Brian and {\v{C}}{\'a}p, Michal and Yong, Sze Zheng and Yershov, Dmitry and Frazzoli, Emilio},
+  title = {A Survey of Motion Planning and Control Techniques for Self-Driving Urban Vehicles},
+  journal = {IEEE Transactions on Intelligent Vehicles},
+  volume = {1}, number = {1}, pages = {33--55}, year = {2016},
+  doi = {10.1109/TIV.2016.2578706},
 }
 
-@mastersthesis{qiao2025stjoint,
-    author = {乔应},
-    title = {结构化道路下基于时空联合的自动驾驶轨迹规划算法研究},
-    school = {哈尔滨工业大学},
-    address = {哈尔滨},
-    year = {2025},
-    doi = {10.27061/d.cnki.ghgdu.2025.003637},
+@article{schwarting2018planning,
+  author = {Schwarting, Wilko and Alonso-Mora, Javier and Rus, Daniela},
+  title = {Planning and Decision-Making for Autonomous Vehicles},
+  journal = {Annual Review of Control, Robotics, and Autonomous Systems},
+  volume = {1}, pages = {187--210}, year = {2018},
+  doi = {10.1146/annurev-control-060117-105157},
 }
 
-@mastersthesis{xu2025interaction,
-    author = {徐涛},
-    title = {考虑车辆间交互的无人车行为决策与运动规划算法研究},
-    school = {哈尔滨工业大学},
-    address = {哈尔滨},
-    year = {2025},
-    doi = {10.27061/d.cnki.ghgdu.2025.003591},
+@misc{fan2018baidu,
+  author = {Fan, Haoyang and Zhu, Fan and Liu, Changchun and Zhang, Liangliang and Zhuang, Li and Li, Dong and Zhu, Weicheng and Hu, Jiangtao and Li, Hongye and Kong, Qi},
+  title = {Baidu {Apollo} {EM} Motion Planner},
+  eprinttype = {arxiv}, eprint = {1807.08048}, year = {2018},
 }
 
-@mastersthesis{li2025perturbation,
-    author = {李浩淼},
-    title = {考虑障碍物扰动的自动驾驶时空联合规划算法},
-    school = {吉林大学},
-    address = {长春},
-    year = {2025},
-    doi = {10.27162/d.cnki.gjlin.2025.004150},
+@online{apollo2024,
+  author = {{Apollo Auto}}, title = {Apollo Open-Source Autonomous Driving Platform},
+  url = {https://github.com/ApolloAuto/apollo}, year = {2024}, urldate = {2026-09-03},
 }
 
-@inproceedings{rosmann2013sparse,
-    author = {R{\"o}smann, Christoph and Feiten, Wendelin and W{\"o}sch, Thomas and Hoffmann, Frank and Bertram, Torsten},
-    title = {Efficient trajectory optimization using a sparse model},
-    booktitle = {2013 European Conference on Mobile Robots (ECMR)},
-    pages = {138--143},
-    year = {2013},
-    organization = {IEEE},
-    doi = {10.1109/ECMR.2013.6698833},
-}
-% ===== 改进点一：威胁度评估与差异化安全距离 =====
-
-@article{minderhoud2001extended,
-    author = {Minderhoud, Michiel M. and Bovy, Piet H.L.},
-    title = {Extended time-to-collision measures for road traffic safety assessment},
-    journal = {Accident Analysis \& Prevention},
-    volume = {33},
-    number = {1},
-    pages = {89--97},
-    year = {2001},
-    doi = {10.1016/S0001-4575(00)00019-1},
-}
-
-@mastersthesis{lvzhuangzhuang2024,
-    author = {吕壮壮},
-    title = {基于标定行车安全场的自动驾驶汽车路径规划与跟踪控制},
-    school = {合肥工业大学},
-    address = {合肥},
-    year = {2024},
-    doi = {10.27101/d.cnki.ghfgu.2024.002111},
-}
-
-@article{zhaohongzhuan2025,
-    author = {赵红专 and 张鑫 and 张蓓聆 and 展新 and 李文勇 and 袁泉 and 王涛 and 周旦},
-    title = {基于改进人工势场的智能车动态安全椭圆路径规划方法},
-    journal = {山东大学学报(工学版)},
-    volume = {55},
-    number = {3},
-    pages = {46--57},
-    year = {2025},
-    issn = {1672-3961},
-}
-
-@mastersthesis{renhongzheng2025,
-    author = {任洪正},
-    title = {无人驾驶汽车变道决策与轨迹跟踪控制研究},
-    school = {燕山大学},
-    address = {秦皇岛},
-    year = {2025},
-    doi = {10.27440/d.cnki.gysdu.2025.002193},
-}
-
-@mastersthesis{linjiarui2021,
-    author = {林家瑞},
-    title = {基于威胁评估的{C-V2X}车载单元消息预处理方法的研究与设计},
-    school = {重庆邮电大学},
-    address = {重庆},
-    year = {2021},
-    doi = {10.27675/d.cnki.gcydx.2021.001197},
-}
-
-@mastersthesis{lifangqi2025,
-    author = {李方祺},
-    title = {鸟瞰视角智能车辆路径规划方法研究},
-    school = {湖北汽车工业学院},
-    address = {十堰},
-    year = {2025},
-    doi = {10.27847/d.cnki.ghbqc.2025.000013},
-}
-
-@article{riskfield2024,
-    author = {Wang, Zhaojie and Lu, Guangquan and Tan, Haitian and Liu, Miaomiao},
-    title = {A Risk-Field Based Motion Planning Method for Multi-Vehicle Conflict Scenario},
-    journal = {IEEE Transactions on Vehicular Technology},
-    volume = {73},
-    number = {1},
-    pages = {310--322},
-    year = {2024},
-    doi = {10.1109/TVT.2023.3308912},
-}
-
-@article{drivingsafetyfield2023,
-    author = {Liu, Ke and Wang, Honglin and Fu, Yao and Wen, Guanzheng and Wang, Binyu},
-    title = {A Dynamic Path-Planning Method for Obstacle Avoidance Based on the Driving Safety Field},
-    journal = {Sensors},
-    volume = {23},
-    number = {22},
-    pages = {9180},
-    year = {2023},
-    doi = {10.3390/s23229180},
-}
-
-@article{timevariantmargin2020,
-    author = {Wu, Xiaodong and Qiao, Bangjun and Su, Chengrui},
-    title = {Trajectory Planning with Time-Variant Safety Margin for Autonomous Vehicle Lane Change},
-    journal = {Applied Sciences},
-    volume = {10},
-    number = {5},
-    pages = {1626},
-    year = {2020},
-    doi = {10.3390/app10051626},
-}
-
-@article{riskfieldmodel2022,
-    author = {Luo, Jiufei and Li, Sijun and Li, Haiqing and Xia, Fuhao},
-    title = {Intelligent network vehicle driving risk field modeling and path planning for autonomous obstacle avoidance},
-    journal = {Proceedings of the Institution of Mechanical Engineers, Part C: Journal of Mechanical Engineering Science},
-    volume = {236},
-    number = {15},
-    pages = {8621--8634},
-    year = {2022},
-    doi = {10.1177/09544062221085886},
-}
-
-@article{coevorisk2023,
-    author = {Wu, Jiabin and Chen, Xiaohua and Bie, Yiming and Zhou, Wei},
-    title = {A co-evolutionary lane-changing trajectory planning method for automated vehicles based on the instantaneous risk identification},
-    journal = {Accident Analysis and Prevention},
-    volume = {180},
-    pages = {106907},
-    year = {2023},
-    doi = {10.1016/j.aap.2022.106907},
-}
-
-% ===== 改进点二：组级最优、走廊与最大间隙 =====
-
-@article{yoon2024stcorridor,
-    author = {Yoon, Youngmin and Kim, Changhee and Lee, Heeseong and Seo, Dabin and Yi, Kyongsu},
-    title = {Spatio-Temporal Corridor-Based Motion Planning of Lane Change Maneuver for Autonomous Driving in Multi-Vehicle Traffic},
-    journal = {IEEE Transactions on Intelligent Transportation Systems},
-    volume = {25},
-    number = {10},
-    pages = {13163--13183},
-    year = {2024},
-    doi = {10.1109/TITS.2024.3388380},
-}
-
-@article{lijun2024corridor,
-    author = {Li, Jun and Li, Haomin and Zeng, Ye and Jiang, Runpeng and Mai, Chaodong and Ma, Zhe and Cai, Jiamin and Xiao, Boyi},
-    title = {Research on the local path planning of an orchard mower based on safe corridor and quadratic programming},
-    journal = {Frontiers in Plant Science},
-    volume = {15},
-    pages = {1403385},
-    year = {2024},
-    doi = {10.3389/fpls.2024.1403385},
-}
-
-@article{zhaofuzhou2024,
-    author = {Zhao, Fuzhou and Han, Ling and Cui, Mingyang and Huang, Heye and Zhong, Shan and Su, Feifei and Wang, Lei},
-    title = {On-road trajectory planning of connected and automated vehicles in complex traffic settings: A hierarchical framework of trajectory refinement},
-    journal = {IEEE Access},
-    volume = {12},
-    pages = {7456--7468},
-    year = {2024},
-    doi = {10.1109/ACCESS.2024.3352919},
-}
-
-@article{sweepingregion2025,
-    author = {Yoon, Youngmin and Lee, Jaewan},
-    title = {Lane change path planning using sweeping region for full-sized autonomous driving bus in urban environment},
-    journal = {Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering},
-    volume = {239},
-    number = {13},
-    pages = {6433--6454},
-    year = {2025},
-    doi = {10.1177/09544070241296910},
-}
-
-@inproceedings{frenetcorridor2025,
-    author = {Tariq, Faizan M. and Yeh, Zheng-Hang and Singh, Avinash and Isele, David and Bae, Sangjae},
-    title = {Frenet Corridor Planner: An Optimal Local Path Planning Framework for Autonomous Driving},
-    booktitle = {2025 IEEE Intelligent Vehicles Symposium (IV)},
-    pages = {686--693},
-    year = {2025},
-    doi = {10.1109/IV64158.2025.11097649},
-}
-
-@article{stchangegaps2022,
-    author = {Feng, Zhiqi and Song, Wenjie and Fu, Mengyin and Yang, Yi and Wang, Meiling},
-    title = {Decision-Making and Path Planning for Highway Autonomous Driving Based on Spatio-Temporal Lane-Change Gaps},
-    journal = {IEEE Systems Journal},
-    volume = {16},
-    number = {2},
-    pages = {3249--3259},
-    year = {2022},
-    doi = {10.1109/JSYST.2021.3096932},
-}
-
-@article{separationmax2013,
-    author = {Kala, Rahul and Warwick, Kevin},
-    title = {Multi-Level Planning for Semi-autonomous Vehicles in Traffic Scenarios Based on Separation Maximization},
-    journal = {Journal of Intelligent and Robotic Systems},
-    volume = {72},
-    number = {3-4},
-    pages = {559--590},
-    year = {2013},
-    doi = {10.1007/s10846-013-9817-7},
-}
-
-@article{narrowcorridor2022,
-    author = {Xu, Biao and Yuan, Shijie and Lin, Xuerong and Hu, Manjiang and Bian, Yougang and Qin, Zhaobo},
-    title = {Space Discretization-Based Optimal Trajectory Planning for Automated Vehicles in Narrow Corridor Scenes},
-    journal = {Electronics},
-    volume = {11},
-    number = {24},
-    pages = {4239},
-    year = {2022},
-    doi = {10.3390/electronics11244239},
-}
-
-% ===== 改进点三：动态时间维度、预测与路径-速度协调 =====
-
-@article{yangbo2023ped,
-    author = {Yang, Bo and Yan, Song and Wang, Zheng and Nakano, Kimihiko},
-    title = {Prediction based trajectory planning for safe interactions between autonomous vehicles and moving pedestrians in shared spaces},
-    journal = {IEEE Transactions on Intelligent Transportation Systems},
-    volume = {24},
-    number = {10},
-    pages = {10513--10524},
-    year = {2023},
-    doi = {10.1109/TITS.2023.3281157},
-}
-
-@article{jeong2021ml,
-    author = {Jeong, Yonghwan and Yi, Kyongsu},
-    title = {Target Vehicle Motion Prediction-Based Motion Planning Framework for Autonomous Driving in Uncontrolled Intersections},
-    journal = {IEEE Transactions on Intelligent Transportation Systems},
-    volume = {22},
-    number = {1},
-    pages = {168--177},
-    year = {2021},
-    doi = {10.1109/TITS.2019.2955721},
-}
-
-@article{crossingped2019,
-    author = {Wu, Wenjing and Jia, Hongfei and Luo, Qingyu and Wang, Zhanzhong},
-    title = {Dynamic Path Planning for Autonomous Driving on Branch Streets With Crossing Pedestrian Avoidance Guidance},
-    journal = {IEEE Access},
-    volume = {7},
-    pages = {144720--144731},
-    year = {2019},
-    doi = {10.1109/ACCESS.2019.2938232},
-}
-
-@article{pathspeedstructured2024,
-    author = {Liu, Fang and Zhao, Xiaowen and Su, Weixing and Wen, Yonggang},
-    title = {Dynamic path-speed planning algorithm for autonomous driving on structured roads},
-    journal = {Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering},
-    volume = {238},
-    number = {10-11},
-    pages = {3172--3193},
-    year = {2024},
-    doi = {10.1177/09544070231181626},
-}
-
-@article{humanlikepred2022,
-    author = {Li, Peng and Pei, Xiaofei and Chen, Zhenfu and Zhou, Xingzhen and Xu, Jie},
-    title = {Human-like motion planning of autonomous vehicle based on probabilistic trajectory prediction},
-    journal = {Applied Soft Computing},
-    volume = {118},
-    pages = {108499},
-    year = {2022},
-    doi = {10.1016/j.asoc.2022.108499},
-}
-
-@article{survrisk2020,
-    author = {Zhang, Lijun and Xiao, Wei and Zhang, Zhuang and Meng, Dejian},
-    title = {Surrounding Vehicles Motion Prediction for Risk Assessment and Motion Planning of Autonomous Vehicle in Highway Scenarios},
-    journal = {IEEE Access},
-    volume = {8},
-    pages = {209356--209376},
-    year = {2020},
-    doi = {10.1109/ACCESS.2020.3039789},
-}
-
-@article{adjpred2025,
-    author = {Fu, Xiang and Ruan, Qianfeng and Tang, Maojia and Wan, Jiaqi and Xiao, Zitai and Yin, Yipeng and Zhang, Xilong and Yang, Tianqi},
-    title = {Research on path planning of intelligent vehicle integrated with adjacent vehicle prediction},
-    journal = {Cluster Computing},
-    volume = {28},
-    number = {13},
-    pages = {861},
-    year = {2025},
-    doi = {10.1007/s10586-025-05605-5},
-}
-
-% ==================== 小论文新增条目（取自 build/extracts/related.json 与 文献列表/ 原始文件）====================
-@article{yang2021_ia_planner,
-    author = {Yang, Xiaoyu and Li, Huiyun},
-    title = {{IA} Planner: Motion Planning Using Instantaneous Analysis for Autonomous Vehicle in the Dense Dynamic Scenarios on Highways},
-    journal = {IEEE Robotics and Automation Letters},
-    year = {2021},
-}
-
-@article{hu2023_hybrid_astar_slt,
-    author = {胡杰 and 张志豪 and 陈瑞楠 and 陈锐鹏 and 刘昊岩 and 朱琪 and 陈晖},
-    title = {基于改进混合{A*}的智能汽车时空联合规划方法},
-    journal = {汽车工程},
-    year = {2023},
-    doi = {10.19562/j.chinasae.qcgc.2023.07.003},
-}
-
-@article{hu2025_dp_nmpc,
-    author = {胡杰 and 郑嘉辰 and 周思龙 and 赵文龙 and 张志凌 and 姚茂嘉},
-    title = {结构化道路下智能车时空联合轨迹规划方法},
-    journal = {汽车工程},
-    year = {2025},
-    doi = {10.19562/j.chinasae.qcgc.2025.05.003},
-}
-
-@article{han2026_contingency,
-    author = {Han, Wei and Leng, Bo and Zhang, Peizhi and Xiong, Lu},
-    title = {Safety-Critical Kinematically-Executable Overtake Planning via Contingency Path-Speed Iterative Algorithm for Automated Valet Parking},
-    journal = {IET Intelligent Transport Systems},
-    year = {2026},
-}
-
-@article{zhang2023_dp_rcg,
-    author = {Zhang, Ziyu and Wang, Chunyan and Zhao, Wanzhong and Cao, Mingchun and Liu, Jinqiang and Xu, Kunhao},
-    title = {Path-Speed Decoupling Planning Method Based on Risk Cooperative Game for Intelligent Vehicles},
-    journal = {IEEE Transactions on Transportation Electrification},
-    year = {2023},
-    doi = {10.1109/TTE.2023.3316124},
-}
-
-@article{wang2022_jfr,
-    author = {Wang, Haiming and Zhang, Liangliang and Kong, Qi and Zhu, Weicheng},
-    title = {Motion Planning in Complex Urban Environments: An Industrial Application on Autonomous Last-Mile Delivery Vehicles},
-    journal = {Journal of Field Robotics},
-    year = {2022},
-    doi = {10.1002/rob.22060},
+@article{chen2019em,
+  author = {Chen, Jianyu and Zhan, Wei and Tomizuka, Masayoshi},
+  title = {Autonomous Driving Motion Planning With Constrained Iterative {LQR}},
+  journal = {IEEE Transactions on Intelligent Vehicles},
+  volume = {4}, number = {2}, pages = {244--254}, year = {2019},
+  doi = {10.1109/TIV.2019.2904385},
 }
 
 @article{meng2019_access,
-    author = {Meng, Yu and Wu, Yangming and Gu, Qing and Liu, Li},
-    title = {A Decoupled Trajectory Planning Framework Based on the Integration of Lattice Searching and Convex Optimization},
-    journal = {IEEE Access},
-    year = {2019},
-    doi = {10.1109/ACCESS.2019.2940271},
+  author = {Meng, Yu and Wu, Yangming and Gu, Qing and Liu, Li},
+  title = {A Decoupled Trajectory Planning Framework Based on the Integration of Lattice Searching and Convex Optimization},
+  journal = {IEEE Access}, volume = {7}, pages = {130530--130551}, year = {2019},
+  doi = {10.1109/ACCESS.2019.2940271},
+}
+
+@article{kessler2023,
+  author = {Kessler, Tobias and Esterle, Klemens and Knoll, Alois},
+  title = {Mixed-Integer Motion Planning on {German} Roads Within the {Apollo} Driving Stack},
+  journal = {IEEE Transactions on Intelligent Vehicles},
+  volume = {8}, number = {1}, pages = {851--867}, year = {2023},
+  doi = {10.1109/TIV.2022.3162671},
+}
+
+@inproceedings{liu2017speed,
+  author = {Liu, Changliu and Zhan, Wei and Tomizuka, Masayoshi},
+  title = {Speed Profile Planning in Dynamic Environments via Temporal Optimization},
+  booktitle = {2017 IEEE Intelligent Vehicles Symposium},
+  pages = {154--159}, year = {2017}, doi = {10.1109/IVS.2017.7995713},
+}
+
+@article{zhou2021dliaps,
+  author = {Zhou, Jinyun and He, Runxin and Wang, Yu and Jiang, Shu and Zhu, Zhenguang and Hu, Jiangtao and Miao, Jinghao and Luo, Qi},
+  title = {Autonomous Driving Trajectory Optimization With Dual-Loop Iterative Anchoring Path Smoothing and Piecewise-Jerk Speed Optimization},
+  journal = {IEEE Robotics and Automation Letters},
+  volume = {6}, number = {2}, pages = {439--446}, year = {2021},
+  doi = {10.1109/LRA.2020.3045925},
+}
+
+@inproceedings{zhou2021pathqp,
+  author = {Zhang, Yajia and Sun, Hongyi and Zhou, Jinyun and Pan, Jiacheng and Hu, Jiangtao and Miao, Jinghao},
+  title = {Optimal Vehicle Path Planning Using Quadratic Optimization for {Baidu Apollo} Open Platform},
+  booktitle = {2020 IEEE Intelligent Vehicles Symposium}, pages = {978--984}, year = {2020},
+  doi = {10.1109/IV47402.2020.9304787},
+}
+
+@article{stellato2020osqp,
+  author = {Stellato, Bartolomeo and Banjac, Goran and Goulart, Paul and Bemporad, Alberto and Boyd, Stephen},
+  title = {{OSQP}: An Operator Splitting Solver for Quadratic Programs},
+  journal = {Mathematical Programming Computation},
+  volume = {12}, number = {4}, pages = {637--672}, year = {2020},
+  doi = {10.1007/s12532-020-00179-2},
+}
+
+@misc{yang2021_ia_planner,
+  author = {Yang, Xiaoyu and Li, Huiyun},
+  title = {{IA} Planner: Motion Planning Using Instantaneous Analysis for Autonomous Vehicle in the Dense Dynamic Scenarios on Highways},
+  eprinttype = {arxiv}, eprint = {2103.10909}, year = {2021},
+}
+
+@article{morsali2021svm,
+  author = {Morsali, Mahdi and Frisk, Erik and {\r{A}}slund, Jan},
+  title = {Spatio-Temporal Planning in Multi-Vehicle Scenarios for Autonomous Vehicle Using Support Vector Machines},
+  journal = {IEEE Transactions on Intelligent Vehicles},
+  volume = {6}, number = {4}, pages = {611--621}, year = {2021},
+  doi = {10.1109/TIV.2020.3042087},
+}
+
+@inproceedings{cheng2022gp,
+  author = {Cheng, Jie and Chen, Yingbing and Zhang, Qingwen and Gan, Lu and Liu, Chengju and Liu, Ming},
+  title = {Real-Time Trajectory Planning for Autonomous Driving With Gaussian Process and Incremental Refinement},
+  booktitle = {2022 International Conference on Robotics and Automation},
+  pages = {8999--9005}, year = {2022}, doi = {10.1109/ICRA46639.2022.9812405},
+}
+
+@article{hu2023_hybrid_astar_slt,
+  author = {胡杰 and 张志豪 and 陈瑞楠 and 陈锐鹏 and 刘昊岩 and 朱琪 and 陈晖},
+  title = {基于改进混合{A*}的智能汽车时空联合规划方法},
+  journal = {汽车工程}, volume = {45}, number = {7}, pages = {1135--1147}, year = {2023},
+  doi = {10.19562/j.chinasae.qcgc.2023.07.003},
+}
+
+@article{hu2025_dp_nmpc,
+  author = {胡杰 and 郑嘉辰 and 周思龙 and 赵文龙 and 张志凌 and 姚茂嘉},
+  title = {结构化道路下智能车时空联合轨迹规划方法},
+  journal = {汽车工程}, volume = {47}, number = {5}, year = {2025},
+  doi = {10.19562/j.chinasae.qcgc.2025.05.003},
+}
+
+@article{micheli2023nmpc,
+  author = {Micheli, Federico and Bersani, Mattia and Arrigoni, Stefano and Braghin, Francesco and Cheli, Federico},
+  title = {{NMPC} Trajectory Planner for Urban Autonomous Driving},
+  journal = {Vehicle System Dynamics}, volume = {61}, number = {5}, pages = {1387--1409}, year = {2023},
+  doi = {10.1080/00423114.2022.2081220},
+}
+
+@article{han2024efficient,
+  author = {Han, Zhichao and Wu, Yuwei and Li, Tong and Zhang, Lu and Pei, Liuao and Xu, Long and Li, Chengyang and Ma, Changjia and Xu, Chao and Shen, Shaojie and Gao, Fei},
+  title = {An Efficient Spatial-Temporal Trajectory Planner for Autonomous Vehicles in Unstructured Environments},
+  journal = {IEEE Transactions on Intelligent Transportation Systems},
+  volume = {25}, number = {2}, pages = {1797--1814}, year = {2024},
+  doi = {10.1109/TITS.2023.3315320},
+}
+
+@article{guo2024joint,
+  author = {Guo, Jianhua and Xie, Zhihao and Liu, Ming and Dai, Zhiyuan and Jiang, Yu and Guo, Jinqiu and Xie, Dong},
+  title = {Spatio-Temporal Joint Optimization-Based Trajectory Planning Method for Autonomous Vehicles in Complex Urban Environments},
+  journal = {Sensors}, volume = {24}, number = {14}, pages = {4685}, year = {2024},
+  doi = {10.3390/s24144685},
+}
+
+@article{yoon2024stcorridor,
+  author = {Yoon, Youngmin and Kim, Changhee and Lee, Heeseong and Seo, Dabin and Yi, Kyongsu},
+  title = {Spatio-Temporal Corridor-Based Motion Planning of Lane Change Maneuver for Autonomous Driving in Multi-Vehicle Traffic},
+  journal = {IEEE Transactions on Intelligent Transportation Systems},
+  volume = {25}, number = {10}, pages = {13163--13183}, year = {2024},
+  doi = {10.1109/TITS.2024.3388380},
+}
+
+@article{zhang2023_dp_rcg,
+  author = {Zhang, Ziyu and Wang, Chunyan and Zhao, Wanzhong and Cao, Mingchun and Liu, Jinqiang and Xu, Kunhao},
+  title = {Path-Speed Decoupling Planning Method Based on Risk Cooperative Game for Intelligent Vehicles},
+  journal = {IEEE Transactions on Transportation Electrification},
+  volume = {10}, number = {1}, year = {2024}, doi = {10.1109/TTE.2023.3316124},
+}
+
+@article{narrowcorridor2022,
+  author = {Xu, Biao and Yuan, Shijie and Lin, Xuerong and Hu, Manjiang and Bian, Yougang and Qin, Zhaobo},
+  title = {Space Discretization-Based Optimal Trajectory Planning for Automated Vehicles in Narrow Corridor Scenes},
+  journal = {Electronics}, volume = {11}, number = {24}, pages = {4239}, year = {2022},
+  doi = {10.3390/electronics11244239},
+}
+
+@inproceedings{frenetcorridor2025,
+  author = {Tariq, Faizan M. and Yeh, Zheng-Hang and Singh, Avinash and Isele, David and Bae, Sangjae},
+  title = {Frenet Corridor Planner: An Optimal Local Path Planning Framework for Autonomous Driving},
+  booktitle = {2025 IEEE Intelligent Vehicles Symposium}, pages = {686--693}, year = {2025},
+  doi = {10.1109/IV64158.2025.11097649},
+}
+
+@article{tariq2026enveloping,
+  author = {Tariq, Faizan M. and Yeh, Zheng-Hang and Singh, Avinash and Isele, David and Bae, Sangjae},
+  title = {Frenet Enveloping Planner: An Efficient Local Path Planning Framework for Autonomous Driving},
+  journal = {IEEE Transactions on Intelligent Vehicles},
+  volume = {11}, number = {3}, pages = {361--370}, year = {2026},
+  doi = {10.1109/TIV.2025.3623575},
+}
+
+@article{yangbo2023ped,
+  author = {Yang, Bo and Yan, Song and Wang, Zheng and Nakano, Kimihiko},
+  title = {Prediction-Based Trajectory Planning for Safe Interactions Between Autonomous Vehicles and Moving Pedestrians in Shared Spaces},
+  journal = {IEEE Transactions on Intelligent Transportation Systems},
+  volume = {24}, number = {10}, pages = {10513--10524}, year = {2023},
+  doi = {10.1109/TITS.2023.3281157},
+}
+
+@article{crossingped2019,
+  author = {Wu, Wenjing and Jia, Hongfei and Luo, Qingyu and Wang, Zhanzhong},
+  title = {Dynamic Path Planning for Autonomous Driving on Branch Streets With Crossing Pedestrian Avoidance Guidance},
+  journal = {IEEE Access}, volume = {7}, pages = {144720--144731}, year = {2019},
+  doi = {10.1109/ACCESS.2019.2938232},
+}
+
+@article{pathspeedstructured2024,
+  author = {Liu, Fang and Zhao, Xiaowen and Su, Weixing and Wen, Yonggang},
+  title = {Dynamic Path-Speed Planning Algorithm for Autonomous Driving on Structured Roads},
+  journal = {Proceedings of the Institution of Mechanical Engineers, Part D: Journal of Automobile Engineering},
+  volume = {238}, number = {10--11}, pages = {3172--3193}, year = {2024},
+  doi = {10.1177/09544070231181626},
 }
 
 @inproceedings{hu2023uniad,
-    author = {Hu, Yihan and Yang, Jiazhi and Chen, Li and Li, Keyu and Sima, Chonghao and Zhu, Xizhou and Chai, Siqi and Du, Senyao and Lin, Tianwei and Wang, Wenhai and Lu, Lewei and Jia, Xiaosong and Liu, Qiang and Dai, Jifeng and Qiao, Yu and Li, Hongyang},
-    title = {Planning-Oriented Autonomous Driving},
-    booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition (CVPR)},
-    pages = {17853--17862},
-    year = {2023},
-    eprinttype = {arxiv},
-    eprint = {2212.10156},
+  author = {Hu, Yihan and Yang, Jiazhi and Chen, Li and Li, Keyu and Sima, Chonghao and Zhu, Xizhou and Chai, Siqi and Du, Senyao and Lin, Tianwei and Wang, Wenhai and Lu, Lewei and Jia, Xiaosong and Liu, Qiang and Dai, Jifeng and Qiao, Yu and Li, Hongyang},
+  title = {Planning-Oriented Autonomous Driving},
+  booktitle = {Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
+  pages = {17853--17862}, year = {2023},
 }
 
 @inproceedings{jiang2023vad,
-    author = {Jiang, Bo and Chen, Shaoyu and Xu, Qing and Liao, Bencheng and Chen, Jiajie and Zhou, Helong and Zhang, Qian and Liu, Wenyu and Huang, Chang and Wang, Xinggang},
-    title = {{VAD}: Vectorized Scene Representation for Efficient Autonomous Driving},
-    booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision (ICCV)},
-    pages = {8340--8350},
-    year = {2023},
-    eprinttype = {arxiv},
-    eprint = {2303.12077},
+  author = {Jiang, Bo and Chen, Shaoyu and Xu, Qing and Liao, Bencheng and Chen, Jiajie and Zhou, Helong and Zhang, Qian and Liu, Wenyu and Huang, Chang and Wang, Xinggang},
+  title = {{VAD}: Vectorized Scene Representation for Efficient Autonomous Driving},
+  booktitle = {Proceedings of the IEEE/CVF International Conference on Computer Vision},
+  pages = {8340--8350}, year = {2023},
+}
+
+@article{minderhoud2001extended,
+  author = {Minderhoud, Michiel M. and Bovy, Piet H. L.},
+  title = {Extended Time-to-Collision Measures for Road Traffic Safety Assessment},
+  journal = {Accident Analysis \& Prevention},
+  volume = {33}, number = {1}, pages = {89--97}, year = {2001},
+  doi = {10.1016/S0001-4575(00)00019-1},
 }

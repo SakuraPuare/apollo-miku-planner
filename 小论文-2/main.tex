@@ -24,6 +24,10 @@
 \providecommand{\datapath}{../图片/data/01_crossing_ped/}
 % 概念图内部引用的示例参数宏，给出缺省值以保证自包含编译
 \input{_ped_macros}
+\input{generated/randomized_macros}
+\input{generated/joint_reference_macros}
+\input{generated/closed_loop_macros}
+\input{generated/sensitivity_macros}
 % ---- 图片目录与统一配色（复用毕设 图片/ 下自包含 TikZ 概念图）----
 \graphicspath{{../图片/}}
 \makeatletter
@@ -95,7 +99,7 @@
 \renewcommand*{\bibfont}{\footnotesize}
 \setlength{\bibitemsep}{1.5pt}
 
-\title{MIKU：面向解耦路径--速度规划的\\多障碍物交互感知运动学约束统一}
+\title{MIKU：解耦路径--速度规划中的\\多障碍物中心可行带构造}
 \author{廖嘉旺，孙成娇\thanks{通讯作者。}\\[2pt]\normalsize 湖北文理学院 计算机工程学院}
 \date{}
 
@@ -105,26 +109,49 @@
 \begin{abstract}
 \small
 \noindent
-路径--速度解耦规划器在路径阶段处理动态多障碍物时，时间无关投影会合并不同时刻的占据，逐障碍物避让又可能因局部选向冲突过度收缩横向可行域。本文提出多障碍物交互感知运动学约束统一方法（Multi-Obstacle Interaction-Aware Kinematic Constraint Unification, MIKU）。MIKU 先将道路与障碍物物理边界统一转化为自车中心约束，再以扫描线形成纵向连通分量，将组内避让组合化为排序后的连续分割与最大间隙选择，并用当前周期到达时间初值 $\tau(s)$ 查询动态占据。单截面组内求解由 $O(2^k)$ 组合枚举化为 $O(k\log k)$ 排序与扫描；固定种子随机反例检查将扫描解与 $2^k$ 穷举解逐例对照。在 Apollo 路径--速度解耦规划环境的 8 个确定性场景中，4 个目标压力场景的基线与 MIKU 终点到达数分别为 0/4 和 4/4，4 个配对场景中两者均为 4/4。关闭速度侧走廊注入后所有已报告指标不变，因而本文将其降级为可选接口，不将其作为已获得独立实验支持的性能贡献。这些结果支持 MIKU 在所考察构型中改善边界保守与局部选向冲突，不作统计普适性外推。
+路径--速度解耦规划中，道路物理边界、自车尺寸与障碍物缓冲若重复计入，会系统性地压缩横向可行域；多障碍物逐个贪心选向还可能遗漏可行组合。本文提出多障碍物交互感知运动学约束统一方法（MIKU）：首先把道路与障碍物统一转化为自车中心坐标下的可行/禁行区间，再将组内 $2^k$ 个避让组合归约为排序后的 $k+1$ 个连续分割。基于前缀最大值的扫描解以 $O(k\log k)$ 时间返回精确最大中心间隙；4,000 个固定种子小规模实例与 $2^k$ 穷举解逐例一致。在 6 类、每类 100 个固定种子的配对规划实验中，MIKU 与时间盲基线 B0 的无碰撞到达率分别为 \RandAllMikuSuccessPct\% 和 \RandAllBZeroSuccessPct\%，配对差值为 \RandAllMikuVsBZeroSuccessDiff 个百分点（95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]）；两者碰撞率均为 \RandAllMikuCollisionPct\%。该汇总改善由窄路类驱动，横穿与交织动态类出现负差值；30 例粗网格联合参照的到达率差值为 \JointMikuVsBThreeSuccessDiff 个百分点，但置信区间跨零，故不作普遍性提升声称。经修正的安全时窗注入未显示独立正收益，本文将其从主方法中剔除。
 
 \vspace{0.5em}
-\noindent\textbf{关键词：}自动驾驶；路径--速度解耦；时空约束传播；多障碍物交互；组合优化
+\noindent\textbf{关键词：}自动驾驶；路径--速度解耦；中心可行区间；多障碍物；最大间隙
 \end{abstract}
 % ====== 1 引言（文献综述驱动） ======
 \section{引言}
 \label{sec:intro}
 
-轨迹规划要求自动驾驶系统在动态多障碍物环境中实时生成安全、舒适且可执行的轨迹。路径--速度解耦（Path-Velocity Decomposition, PVD）自\citet{kant1986pvd}提出以来一直是结构化道路规划的重要范式：先在 Frenet 空间求横向路径，再沿固定路径求纵向速度。该结构已用于多种工业级规划系统\citep{fan2018baidu,apollo2024,wang2022_jfr}，其优势是把高维时空问题分解为可在在线周期内稳定求解的两个低维子问题。然而，分解同时改变了信息流。动态障碍物的时变占据 $O_i(t)$ 在路径阶段常被替换为全时刻并集或当前时刻快照，输出接口又只保留路径几何 $l(s)$，没有携带该路径成立所依赖的时序条件，例如“自车不早于 $\tau(s)$ 到达位置 $s$”。本文所称的\emph{时序约束缺失}特指这两步信息压缩，而不是泛指模块间通信不足。它使速度阶段只能在既定路径上补偿，容易在多障碍物交互中造成保守制动或可行解遗漏\citep{meng2019_access,gonzalez2016}。
+轨迹规划要求自动驾驶系统在动态多障碍物环境中实时生成安全、舒适且可执行的轨迹\citep{katrakazas2015realtime,gonzalez2016,paden2016,schwarting2018planning}。路径--速度解耦（Path-Velocity Decomposition, PVD）自\citet{kant1986pvd}提出以来一直是结构化道路规划的重要范式：先在 Frenet 空间求横向路径，再沿固定路径求纵向速度；Frenet 多项式、时空栅格与半结构化道路搜索奠定了其工程基础\citep{werling2010,mcnaughton2011lattice,dolgov2010,kuwata2009rrt,ziegler2014}。Apollo EM 及其路径 QP、双循环优化公开了代表性的工业实现\citep{fan2018baidu,apollo2024,zhou2021pathqp,zhou2021dliaps}，格点搜索与凸优化组合也采用同类顺序接口\citep{meng2019_access}。其优势是把高维时空问题分解为在线可解的两个低维子问题，但分解同时改变了信息流：动态占据 $O_i(t)$ 在路径阶段常被压缩为并集或快照，输出又只保留路径几何 $l(s)$，使速度阶段只能在既定路径上补偿\citep{liu2017speed,pathspeedstructured2024}。
 
-针对解耦在动态场景中的保守与失效，第一条研究路线放弃解耦，转向时空联合规划。\citet{yang2021_ia_planner}提出IA~Planner，通过瞬时分析将三维时空约束投影为二维空间约束后用模型预测控制（Model Predictive Control, MPC）求解联合轨迹；\citet{hu2023_hybrid_astar_slt}在路程--横向--时间三维栅格中用改进混合A\textsuperscript{*}搜索粗粒度轨迹再以非线性MPC精化，其后续工作\citep{hu2025_dp_nmpc}以确定性采样的动态规划替换粗搜索来抑制维度爆炸；\citet{qiao2025stjoint}则在结构化道路下将时间--纵向--横向三维决策与时空安全走廊的二次规划相结合。这类方法换得了时空一致性，但搜索与优化均在三维域内进行，计算开销随障碍物数量显著增长，\citet{hu2023_hybrid_astar_slt}报告换道超车与旁车切入两类场景的平均耗时分别达117\,ms与76\,ms，且需重写整条求解链路，难以直接复用现有的生产级框架。
+针对这种压缩，第一条路线直接进行时空联合规划。IA~Planner 预印本把同时刻碰撞关系投影到空间域\citep{yang2021_ia_planner}；改进混合A\textsuperscript{*}+NMPC 与后续 DP+NMPC 在路程--横向--时间域搜索并精化\citep{hu2023_hybrid_astar_slt,hu2025_dp_nmpc}。SVM 引导四维状态格搜索\citep{morsali2021svm}、差分平坦联合优化\citep{han2024efficient}、单层 NMPC\citep{micheli2023nmpc}和多约束联合优化\citep{guo2024joint}均在同一优化链中显式处理空间与时间。时空一致性因此更直接，但通常需要替换原有的顺序路径 QP/速度 QP 接口。
 
-第二条路线保留解耦结构并增强阶段间耦合。\citet{han2026_contingency}把动态障碍物的多模态预测概率作为软代价注入路径 QP，能够影响偏好，但不直接改变可行域；\citet{zhang2023_dp_rcg}并行枚举候选路径--速度组合并以合作博弈选取配对，组合规模为 $O(m_p m_v)$。混合整数规划进一步把离散避让方向与连续轨迹合并求解，可获得组合决策的全局最优，但最坏复杂度随障碍物规模快速增长\citep{kessler2023}。以 UniAD\citep{hu2023uniad} 与 VAD\citep{jiang2023vad} 为代表的端到端架构则在统一表示中联合优化感知、预测和规划\citep{li2024decision,zhang2018autonomous}。这些方法分别从软代价、候选配对、整数决策和统一学习表示改善耦合，为路径与速度协同提供了不同实现路线。
+第二条路线保留或迭代解耦结构。Cheng 等以高斯过程路径、ST 搜索和增量更新实现迭代协调\citep{cheng2022gp}；DP-RCG 并行生成路径--速度候选后以合作博弈配对\citep{zhang2023_dp_rcg}；受约束迭代 LQR 与混合整数规划则分别从连续优化和离散避让方向上处理联合轨迹\citep{chen2019em,kessler2023}。安全走廊方法在时空域或 Frenet 空间限制连续优化\citep{yoon2024stcorridor,frenetcorridor2025,tariq2026enveloping}，窄走廊规划则强调有限横向空间的离散选择\citep{narrowcorridor2022}。行人交互研究进一步表明预测时序与横向绕行必须协同考虑\citep{crossingped2019,yangbo2023ped}。以 UniAD\citep{hu2023uniad} 与 VAD\citep{jiang2023vad} 为代表的端到端方法在统一表示中学习规划，但不保留本文讨论的可解释 QP 接口。
 
-现有研究仍留下一个可独立研究的问题：能否保留两个 QP 的求解结构，同时把动态占据及其时间有效性以硬约束形式从路径阶段传播到速度阶段。为此，需要同时解决三个相互关联的子问题：不同障碍物应保留多大安全裕度，多障碍物避让方向如何协调，以及路径选择所依据的时间条件如何转化为速度可行域。若只处理其中一项，统一缓冲、组合冲突或时间盲投影仍可能单独压缩可行域。
+表~\ref{tab:related_compare}从与本文最接近的求解层级比较方法差异。MIKU 不追求联合时空最优，而是在保留顺序 QP 的前提下，把多障碍物避让归约为中心禁行区间上的精确连续分割；到达时间只用于动态占据查询，全宽动态冲突仍交由原 ST 模块处理。
 
-本文提出多障碍物交互感知运动学约束统一方法（Multi-Obstacle Interaction-Aware Kinematic Constraint Unification, MIKU）。其主要贡献收敛为两项：第一，统一道路中心可行边界与障碍物中心禁行边界，将多障碍物避让转化为连通分量上的最大间隙问题，证明最优分割在排序中连续，并把单组搜索由 $O(2^k)$ 降至 $O(k\log k)$；第二，以当前周期的到达时间初值 $\tau(s)$ 查询动态占据，构造时变横向通行带，并在 Apollo 解耦求解链中保持两个 QP 的内部结构不变。多因子差异化裕度作为边界参数化模块；速度侧走廊上界保留为可选接口，不列为已被当前实验独立验证的贡献。
+\begin{table}[htbp]
+\centering
+\caption{MIKU 与同层及联合规划方法的结构差异}
+\label{tab:related_compare}
+\small
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{lllll}
+\toprule
+方法 & 路径--速度关系 & 动态时间信息 & 多障碍物离散决策 & 保留顺序 QP \\
+\midrule
+Apollo EM / DL-IAPS\citep{fan2018baidu,zhou2021dliaps} & 解耦/迭代 & ST 速度域 & 逐层启发式 & 是 \\
+GP 增量规划\citep{cheng2022gp} & 迭代解耦 & ST 搜索 & 局部截断 & 部分 \\
+DP-RCG\citep{zhang2023_dp_rcg} & 候选配对 & 路径--速度对 & 合作博弈 & 是 \\
+SVM/平坦性联合规划\citep{morsali2021svm,han2024efficient} & 时空联合 & 联合变量 & 联合搜索/优化 & 否 \\
+时空走廊\citep{yoon2024stcorridor,guo2024joint} & 走廊内联合 & 显式时间走廊 & 拓扑/初值相关 & 否 \\
+MIKU（本文） & 单次解耦 & 查询后交回 ST & $k+1$ 连续分割精确扫描 & 是 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
 
-算法验证采用 4 个临界交互场景及其 4 个配对可比场景。MIKU 在临界组将终点到达数由 0/4 提升至 4/4，8 场景平均速度由 3.53\,m/s 提升至 4.57\,m/s；在双方均可到达终点的配对组中，平均速度基本持平，两个动态场景的纵向平顺性明显改善，QP 耗时保持同一量级。6 个消融配置与 100 次蒙特卡洛扰动进一步验证了时变投影、组级间隙决策和差异化裕度的作用。作为工程兼容性验证，MIKU 已在开源生产级规划栈中完成增量接入；该接入仅是算法实例化，方法定义与理论推导不依赖特定软件栈。
+本文聚焦解耦接口中可被精确界定的横向边界问题：如何保留现有路径 QP 与速度 QP，同时避免尺寸/缓冲重复计入，并在多障碍物间选出宽度最大的中心可行带。到达时间初值仅用于查询动态占据；当动态障碍物在查询时刻封死整个横截面时，算法不把其误判为永久几何阻塞，而是交回原 ST 占用模块等待。
+
+本文的贡献为：（1）给出自车中心语义下道路可行区间与障碍物禁行区间的统一构造，明确半车宽只计入一次；（2）证明按禁行区间下界排序后只需考察 $k+1$ 个连续分割，用前缀最大上界求得精确最大间隙，并用 4,000 组随机穷举对照检查该结论；（3）建立 B0、B1、B2 三类同层解耦基线与 600 个配对随机实例的主证据链，并以 30 例联合网格参照和 60 例滚动重规划子集检查质量--开销差距与重规划行为。
+
+实验结果不支持“所有动态场景均改进”的强声称。因此，本文将实验结论限定为：差异化裕度在本文的随机窄路分布中改善可达性，最大间隙扫描具有可机检的精确性；组级协调只在确定性临界构型中展示作用，不作随机鲁棒性外推。
 
 % ====== 2 问题提出 ======
 \section{解耦接口的时序约束缺失}
@@ -221,17 +248,17 @@
 \section{MIKU：多障碍物交互感知运动学约束统一}
 \label{sec:method}
 
-第\ref{sec:problem}节将解耦接口中的缺失量形式化为动态占据的时间索引与路径成立的到达时序。MIKU 将这两类时序量与多障碍物空间约束统一表达，但不把路径和速度合并为单一高维优化：路径阶段仍求 $l(s)$，速度阶段仍求 $s(t)$，二者通过可验证的约束而非求解器内部状态建立联系。
+第\ref{sec:problem}节说明了解耦规划的边界压缩机制。MIKU 不合并路径与速度优化：路径阶段仍求 $l(s)$，速度阶段仍求 $s(t)$。改动集中在路径边界构造器，速度阶段仍使用原有 ST 占用和运动学约束。
 
-MIKU 由三个连续组件组成。威胁度模型先为每个障碍物生成差异化安全裕度 $\delta_i$；扫描线分组与最大间隙优化再把障碍物级约束合成为组级横向通行带；到达时间函数 $\tau(s)$ 最后把通行带的时间有效性转化为速度 QP 的逐时间步纵向上界。三个组件共享安全边界 $u_i$、$v_i$ 与同一套间隙最优性结论，整体数据流如图~\ref{fig:algorithm_flow} 所示。
+MIKU 由三个路径侧组件组成：差异化额外裕度 $d_{buf,i}$，纵向连通分量分组，以及组内最大中心间隙扫描。动态障碍物的边界可以由到达时间初值 $\tau(s)$ 查询，但 $\tau$ 不定义安全时窗。如果纯动态障碍物在查询时刻使最大间隙小于数值容差，则将其标记为时间冲突并交由原 ST 占用处理，而不截断整条路径。
 
-每个规划周期内，MIKU 依次估计 $\tau(s)$ 并查询动态障碍物的时变 SL 投影，计算 $\Theta_i$ 与 $\delta_i$，以扫描线和最大间隙求解路径横向边界，再把关键位置及其最早到达时刻组成时间清单 $\mathcal{T}$。$\mathcal{T}$ 经逐时间步投影收紧速度 QP 上界，使路径选择的时序前提在速度阶段继续成立。完整伪代码与复杂度见§\ref{sec:method_algorithm}。
+每个规划周期内，算法统一构造中心语义下的道路与障碍物区间，按纵向重叠分组，对每组排序并扫描 $k+1$ 个候选分割，最后把选定的上下界写回路径 QP。完整伪代码与复杂度见§\ref{sec:method_algorithm}。
 
 \begin{figure}[htbp]
 \centering
 \adjustbox{max width=\textwidth}{\input{../图片/fig_algorithm_flow}}
-\caption{MIKU 的交互感知时空约束传播流程}
-\caption*{到达时间函数 $\tau(s)$ 驱动时变 SL 投影，威胁度、扫描线分组与最大间隙在自车实际到达时刻的障碍物占据上求解；所得路径横向边界沿 $\tau(s)$ 抬升为时空走廊 $\Omega$，再转化为逐时间步纵向上界，路径 QP 与速度 QP 的内部结构保持不变。}
+\caption{MIKU 的中心可行带构造流程}
+\caption*{图中时间约束支路是本轮实验被否决的候选接口，不属于主方法。实线主链为中心边界统一、分组与前缀最大间隙扫描，路径 QP 和速度 QP 内部结构不变。}
 \label{fig:algorithm_flow}
 \end{figure}
 
@@ -355,107 +382,32 @@ MIKU 以一个归一化的威胁度 $\Theta_i$ 取代上述二分，对每个障
 \label{fig:max_gap}
 \end{figure}
 
-\subsection{到达时间函数与时空可通行走廊}
-\label{sec:method_corridor}
+\subsection{到达时间查询与动态冲突降级}
+\label{sec:method_dynamic}
 
-前两个组件解决给定横截面上的风险分级与通行带选择，第三个组件进一步处理约束随时间变化的问题，并将路径决策的时序前提传至速度规划。其桥梁是到达时间函数 $\tau(s)$，用于估计自车抵达纵向位置 $s$ 的时刻。$\tau(s)$ 在路径阶段是由二阶运动学模型或上周期速度曲线给定的参数，而非新的优化变量，因此路径阶段的决策变量仍为方向组合。以匀加速运动学估计时
-
+到达时间初值用于选取动态障碍物的查询时刻。无历史速度曲线时，使用匀加速运动学估计
 \begin{equation}
-    \tau(s) = \frac{-v_{ego} + \sqrt{v_{ego}^{2} + 2\,a_{ego}\,(s - s_{ego})}}{a_{ego}},
-    \label{eq:arrival_time}
+  \tau(s)=\frac{-v_{ego}+\sqrt{v_{ego}^{2}+2a_{ego}(s-s_{ego})}}{a_{ego}},
+  \label{eq:arrival_time}
 \end{equation}
+$a_{ego}\to0$ 时取连续极限 $(s-s_{ego})/\max(v_{ego},\epsilon_v)$。B2 基线则从上一轮速度解的首次到达时刻反推 $\tau(s)$，最多更新三轮。在两种情况中，$\tau$ 都只是预测查询索引，不是由它自身定义的安全界。
 
-其中 $s_{ego}$、$v_{ego}$、$a_{ego}$ 来自当前自车状态估计。退化分支统一处理：$a_{ego}\to 0$ 时，式\eqref{eq:arrival_time}经 Taylor 展开退化为匀速估计 $\tau(s)\approx (s-s_{ego})/v_{ego}$；$v_{ego}\approx 0$ 且 $a_{ego}\approx 0$ 时令 $\tau(s)=+\infty$，算法退回静态版本；减速且判别式 $v_{ego}^{2}+2a_{ego}(s-s_{ego})<0$ 时，自车在当前减速度下无法抵达 $s$，同样令 $\tau(s)=+\infty$ 并对该截面采用全时刻并集投影。实现上优先利用上周期速度曲线 $s_{prev}(t)$，当其单调不减时，以一维查表和线性插值求首次满足 $s_{prev}(t)\geq s$ 的时刻；无历史曲线、曲线非单调或查询越界时，再回退到式\eqref{eq:arrival_time}。这一滚动估计会在每个规划周期随最新状态和速度曲线更新。
+若查询到的纯动态禁行区间使最大中心间隙小于 $\epsilon$，该结果只表明“此查询时刻不能横向绕过”，不表明整条路径永久不可行。MIKU 因而保留静态子集给出的横向边界，并把该动态冲突交还原 ST 占用边界处理。这一降级规则由回归测试覆盖，防止将横穿行人误转化为永久停车点。
 
-有了 $\tau(s)$，每个动态障碍物的横向占据便取自自车到达该截面时的预测位置。对障碍物 $i$，在上游轨迹预测器给出的有限时域内查询时刻 $\tau(s)$ 的位置并作线性插值，再投影至参考线 Frenet 坐标，结合几何尺寸得到时变 SL 边界 $[l_i^{-}(\tau(s)), l_i^{+}(\tau(s))]$；若该时刻障碍物纵向位置与 $s$ 的距离超过其纵向尺寸一半，则标记其在 $s$ 处不活跃。超出预测时域的部分采用末端状态保守延拓。当前实现选取概率最高的预测轨迹，多模态情形可对候选轨迹的占据取并集；第\ref{sec:method_threat}节的横向重叠率因子也使用同一时变投影，静态障碍物仍取当前观测位置。
+我们另外实现了从预测占用补集直接构造的先通过/后通过安全时窗，并通过点集 oracle 检查。但修正后的减法消融未给出独立正收益，且在一个动静混合压力构型中产生回归，因此主方法不注入该时窗。这一负结果使方法的证据边界停留在路径侧中心可行带，而不把尚未验证的速度侧约束列为贡献。
 
-把第\ref{sec:method_band}节的静态间隙优化逐截面推广到动态情形。在每个 $s$ 截面按 $u_i(\tau(s))$ 排序后定义时变间隙
-
-\begin{equation}
-    g_p(s)=U_p(s)-V_p(s),\qquad p=0,1,\ldots,k,
-    \label{eq:time_varying_gap}
-\end{equation}
-
-其中的时变边界递推为
-\begin{align*}
- V_0(s)&=l_{road}^{-}(s),\\
- V_p(s)&=\max\!\left(l_{road}^{-}(s),\max_{1\leq q\leq p}v_{(q)}(\tau(s))\right),\\
- U_p(s)&=\min\!\left(l_{road}^{+}(s),u_{(p+1)}(\tau(s))\right)\quad(p<k),\\
- U_k(s)&=l_{road}^{+}(s).
-\end{align*}
-引理\ref{lem:continuous_partition}与定理\ref{thm:max_gap}给出逐截面最优；将其拼接为一条连续偏移曲线时，还需在同一连通分量内固定组级分割。这里固定的是各障碍物到 $\mathcal{L}$、$\mathcal{R}$ 的指派，即全程保持同侧绕行，而非固定排序序号 $p$。若分量覆盖区间内各 $u_i(\tau(s))$ 的相对次序不随 $s$ 翻转，则序号分割与指派分割一致；发生翻转时，采用与链式分量相同的保守包络。指派固定后，最优分割取使整段最薄截面最宽的极大极小解
-\begin{equation}
-    W^{*} = \max_{p}\ \min_{s}\ g_p(s),
-    \label{eq:time_varying_opt}
-\end{equation}
-式\eqref{eq:time_varying_opt}可由定理\ref{thm:max_gap}直接得到，各截面 $W(p,s)=g_p(s)$，固定分割的整段宽度为 $\min_s g_p(s)$，在 $k+1$ 个候选中取最大即得 $W^{*}$。该极大极小解是固定单一分割约束下的受限最优，而非允许分割沿 $s$ 变化的无约束最优，约束施加于可行解集合而非削弱定理结论本身，实现上仍以保守包络处理链式连通分量，保证安全可行但不声称全局最优。选定最优分割 $p^{*}$ 后，把 SL 通行性沿 $\tau(s)$ 抬升至 ST 平面，得到时空可通行走廊
-\begin{equation}
-    \Omega = \left\{ (s,t) \ \middle|\ g_{p^{*}}(s) \geq \epsilon\ \text{且}\ t \geq \tau(s) \right\}.
-    \label{eq:st_corridor}
-\end{equation}
-
-走廊有两种几何特征。其一是禁行切片：若某 $s_k$ 处最优中心间隙小于 $\epsilon$，纵向列 $\{s_k\}\times\mathbb{R}_{+}$ 被排除。其二是 $\tau(s)$ 左下沿：自车不得早于 $\tau(s)$ 到达 $s$，从而为动态障碍物离开冲突区预留时间。两者组合使 $\Omega$ 在几何上为非凸集合。以图~\ref{fig:corridor} 的车道汇入场景为例，时间盲基线把汇入车的全时域占据投影到当前时刻，自车从起点即被迫停车；MIKU 按 $\tau(s)$ 放置时变占据，在障碍物真实进入冲突区之前保留可利用的通行区。方法并不直接优化非凸集合 $\Omega$，而是将其沿离散时间步投影为位置变量的线性盒式上界 $s_j^{ub}$，因此可以在不改变速度 QP 目标函数、运动学等式及稀疏结构的前提下嵌入。
-
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.46\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_corridor_a}}
-  \caption{时间盲基线将占据压至 $t{=}0$}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.46\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_corridor_b}}
-  \caption{MIKU 按到达时间争取通行区}
-\end{subfigure}
-\caption{车道汇入场景中时间盲基线与 MIKU 的 ST 走廊对照}
-\caption*{两子图共用相同坐标轴范围。(a) 时间盲基线把汇入车的全时域占据保守投影至 $t{=}0$，自车从起点即无可利用通行区。(b) MIKU 按到达时间 $\tau(s)$ 放置时变占据，在真实冲突时刻之前保留通行区；该走廊再被投影为速度变量的逐时间步盒式上界。}
-\label{fig:corridor}
-\end{figure}
-
-\subsection{时空走廊的速度 QP 注入与可行性保持}
-\label{sec:method_inject}
-
-走廊需要转化为速度约束才能影响实际轨迹。条件 $t_{arrive}(s_k)\geq\tau(s_k)$ 等价于对所有 $t<\tau(s_k)$ 施加 $s(t)\leq s_k$，即自车不得在约定时刻前到达关键位置。设速度 QP 在离散时刻 $t_j=j\Delta t$ 上以纵向位置 $s_j$、速度 $\dot{s}_j$ 和加速度 $\ddot{s}_j$ 为决策变量，原问题给出位置盒式边界 $s_j^{lb,0}\leq s_j\leq s_j^{ub,0}$。对每个动态障碍物，取其时变投影首次进入候选走廊的位置 $s_k$ 及相应到达时刻 $\tau_k$，组成清单 $\mathcal{T}=\{(s_k,\tau_k)\}$。走廊对应的上界与原上界按下式融合：
-
-\begin{equation}
-    s_j^{ub,\mathrm{corr}}=
-    \min_{(s_k,\tau_k)\in\mathcal{T}:\,t_j<\tau_k} s_k,
-    \qquad
-    s_j^{ub}=\min\!\left(s_j^{ub,0},s_j^{ub,\mathrm{corr}}\right),
-    \label{eq:tighten_ub}
-\end{equation}
-
-其中空索引集上的 $s_j^{ub,\mathrm{corr}}$ 定义为 $+\infty$。式\eqref{eq:tighten_ub}只改写位置上界分量，不增加约束行数，也不改变目标矩阵、运动学等式或稀疏模式；对纵向占据范围较大的障碍物，可在占据区间两端采样以提高离散近似精度。需要强调，取最小值只能保持或收紧原速度边界，不能放宽原问题已经施加的约束。MIKU 对全时域并集投影的修正发生在路径通行带构造阶段，走廊注入的作用是把该路径选择所依赖的到达时序继续传入速度阶段，而不是替代原有的纵向碰撞约束。
-
-两个约束源的信息语义不同：原位置边界描述已选路径上的纵向可达范围，走廊上界描述路径决策成立所需的最早到达时刻。式\eqref{eq:tighten_ub}保留原下界 $s_j^{lb}=s_j^{lb,0}$，并取两类上界的交集。仅含静态障碍物时 $\mathcal{T}=\varnothing$，速度 QP 完全退化为原问题；含动态障碍物时，新增上界阻止速度解提前进入路径阶段假定尚未开放的横向通道，从而补足固定路径几何无法表达的时序条件。
-
-约束传播包含隐式与显式两条通道。若某 $s_k$ 处 $g_{p^{*}}(s_k)<\epsilon$，路径有效区间在该真实不可行位置终止，禁行切片通过路径几何长度隐式传达；其余由到达时序产生的条件则通过式\eqref{eq:tighten_ub}显式写入速度上界。两条通道分别传递空间不可行位置和时间开放条件，且都不改变路径 QP 与速度 QP 的内部求解形式。
-
-走廊注入在何种前提下保持速度问题的可行性，由下述命题给出；如§\ref{sec:method_corridor}所述，凸性来源不在非凸集合 $\Omega$ 本身，而在其逐时间步线性投影所化成的盒式上界。
-
-\begin{proposition}[走廊约束下的可行性与最优解存在性]
-\label{prop:feasibility_recovery}
-设速度 QP 的目标为连续凸二次函数，决策变量受有界的速度、加速度和位置盒约束。若存在分割 $p^{*}$ 使 $\min_s g_{p^{*}}(s)\geq\epsilon$，且存在一条离散运动学轨迹 $\hat{\mathbf{x}}$ 同时满足原下界、式\eqref{eq:tighten_ub}收紧后的上界及全部运动学等式，则走廊注入后的可行域非空，速度 QP 存在最优解。特别地，当静止等待轨迹满足原下界与物理约束，且所有走廊上界均不低于当前纵向位置时，上述可行性条件成立。
-\end{proposition}
-
-证明要点。注入后的可行域是运动学等式所定义的仿射子空间与各决策变量盒约束的交集。由假设，$\hat{\mathbf{x}}$ 属于该交集，故可行域非空；线性等式与盒约束均为凸集，交集仍为凸集。各变量受双侧有界约束，因此可行域有界且闭，连续凸二次目标在非空紧集上必取得最小值。对特别情形，静止等待轨迹满足离散运动学等式，且其位置恒为当前纵向位置，直接满足所列上下界，因而构成所需的 $\hat{\mathbf{x}}$。$\hfill\Box$
-
-该命题限定于离散时间网格上的有限维盒式约束，不把非凸集合 $\Omega$ 本身视为凸集。当障碍物未能在目标时刻前让出足够空间时，上下界交集可能为空，此时算法应保持等待或停车，而不强行恢复通行。禁行切片已通过路径有效区间隐式表达，因此命题只需在该区间内讨论 $\tau(s)$ 所产生的上界收紧。
-
-$\tau(s)$ 用于构造时变通行带，通行带约束影响速度规划，而速度结果又决定下一周期的到达时间估计。MIKU 采用滚动时域更新：当前周期使用上周期速度曲线估计 $\tau(s)$，下一周期再以最新状态和速度结果重算。该单步延迟保持一次规划内的两个 QP 顺序求解，并为后续研究双向迭代及其收敛条件保留接口。
 
 \subsection{整体流程与复杂度}
 \label{sec:method_algorithm}
 
-三个组件在一次路径边界求解中顺序衔接，算法\ref{alg:miku}给出从自车状态与障碍物预测轨迹到路径边界与速度约束清单 $\mathcal{T}$ 的完整流程，与本节开头的四步总览一一对应，$\mathcal{T}$ 经式\eqref{eq:tighten_ub}注入速度 QP。
+算法\ref{alg:miku}给出从自车状态与障碍物预测轨迹到路径边界的完整流程。
 
 \begin{algorithm}[htbp]
 \small
 \caption{MIKU 多障碍物交互感知约束统一求解}
 \label{alg:miku}
 \KwIn{$n$ 个障碍物及其预测轨迹，道路边界 $[l_{road}^{-}(s), l_{road}^{+}(s)]$，自车状态 $(s_{ego}, v_{ego}, a_{ego})$}
-\KwOut{路径边界 $\{[l^{-}(s), l^{+}(s)]\}$，速度约束清单 $\mathcal{T}$}
+\KwOut{路径边界 $\{[l^{-}(s), l^{+}(s)]\}$}
 \For{每个路径离散位置 $s$}{
   按式\eqref{eq:arrival_time}估计到达时间 $\tau(s)$\;
   \For{每个障碍物 $i$}{
@@ -465,232 +417,25 @@ $\tau(s)$ 用于构造时变通行带，通行带约束影响速度规划，而�
   按 $s_i^{-}$ 升序扫描线分组，将活跃障碍物划入连通分量\;
   \For{每个连通分量 $C$}{
     组内按 $u_i$ 升序排列为 $O_{(1)}, \ldots, O_{(k)}$\;
-    用道路中心边界裁剪前缀最大值，按式\eqref{eq:time_varying_gap}计算 $k+1$ 个间隙\;
+    用道路中心边界裁剪前缀最大值，按式\eqref{eq:gap_def}计算 $k+1$ 个间隙\;
     取 $p^{*} = \arg\max_p g_p$，分配 $d_{(i)}=L\ (i\leq p^{*})$ 或 $R\ (i>p^{*})$\;
   }
   由分割结果写出该截面的 $[l^{-}(s), l^{+}(s)]$，记录禁行切片\;
 }
-对每个动态障碍物取关键位置 $(s_k, \tau_k)$ 汇入 $\mathcal{T}$\;
-\KwRet 路径边界与 $\mathcal{T}$
+\KwRet 路径边界
 \end{algorithm}
 
 复杂度可逐段相加。到达时间估计为 $O(K)$，其中 $K$ 为路径离散点数；在任一截面同时活跃的障碍物数有界时，时变投影的累计采样量为 $O(K)$。扫描线排序为 $O(n\log n)$，组内排序满足 $\sum_j O(k_j\log k_j)\leq O(n\log n)$，间隙计算和边界合成为 $O(K)$。交互密度的朴素邻域统计为 $O(n^2)$；采用以聚类半径为粒度的空间桶索引后，在局部密度有界条件下摊还为 $O(n)$。因此，MIKU 在常见有界密度条件下的整体复杂度为 $O(n\log n+K)$；若全部 $n$ 个障碍物在全部 $K$ 个截面同时活跃，则时变投影与邻域统计分别退化为 $O(nK)$ 和 $O(n^2)$，最坏复杂度为 $O(nK+n^2)$。链式连通分量的保守包络为线性步骤，不改变复杂度阶；$O(k\log k)$ 的精确最优性对应单截面或具有公共活跃截面的单分量。该量级适配常见的百毫秒级在线规划预算，实际求解开销将在第\ref{sec:experiment}节报告。
 
 % ====== _parts/experiment.tex ======
-\section{实验与分析}
-\label{sec:experiment}
-
-本节从终点到达率、轨迹平顺性、求解开销、组件贡献和参数鲁棒性五个方面验证 MIKU。连续数值指标由同一套仿真程序生成，时间盲基线与 MIKU 共享场景、动力学模型和 QP 求解器；Apollo 11.0 中的 C++ 接入用于检验算法对生产级解耦规划栈的兼容性。两类实验分别回答算法性能与工程兼容性问题。
-
-\subsection{仿真平台与场景设置}
-\label{subsec:exp_setup}
-
-实验平台配备 Intel i9-14900HX 处理器和 64\,GB DDR5 内存，操作系统为 Arch Linux；软件栈为 Apollo 11.0、C++17、OSQP 0.6.2 与 Dreamview 2.0，数值复现程序基于 Python 3.12。
-
-工程接入集中在路径--速度接口两端：路径侧在 \texttt{LaneFollowPath} 的边界构造前加入时变投影、分组与最大间隙求解，并借用 \texttt{STDrivableBoundary} 携带时间清单；速度侧在 \texttt{PiecewiseJerk\allowbreak SpeedOptimizer} 中按式\eqref{eq:tighten_ub}融合上界。原路径 QP、速度 QP 的目标函数、运动学等式与求解器均保持不变；这些类名仅说明 MIKU 在实验平台中的实现映射，不属于算法定义。
-
-MIKU 的关键参数沿用威胁度建模与通行带构造两节的标定值：差异化额外安全裕度取 $[0.10,0.40]$\,m，障碍物聚类半径取 10\,m，纵向重叠分组阈值取 12\,m，面向城市道路中低速工况。
-
-测试场景共 8 个，由 4 个原始压力场景与 4 个配对可比场景构成。压力场景P1--P4保留临界构型，暴露Baseline在动态障碍物、统一安全裕度与逐障碍物贪心决策三类配置下的失效边界；可比场景C1--C4逐一复制对应压力场景，仅轻量调整规划时间窗或障碍物横向位置使两者均能通过，从而在同一可达前提下比较轨迹质量与求解开销，避免把通过与失败的离散对照直接解读为连续指标的优势。构型与可比化调整如表\ref{tab:exp_scenarios}所示。
-
-\begin{table}[htbp]
-\centering
-\caption{压力场景与配对可比场景的构型设置}
-\label{tab:exp_scenarios}
-\small
-\begin{tabular}{c l p{7.4cm}}
-\toprule
-\textbf{场景对} & \textbf{构型} & \textbf{可比化调整与比较目的} \\
-\midrule
-P1 / C1 & 单行人横穿 & C1延长规划时间窗，比较动态障碍物提前投影后的纵向平顺性 \\
-P2 / C2 & 行人加停车 & C2外移停车横向中心使Baseline恢复可达，比较动静混合分组后的速度QP开销 \\
-P3 / C3 & 窄路加双侧交通锥 & C3将对称锥列改为轻微非对称使Baseline可通过，保留差异化裕度释放通行空间 \\
-P4 / C4 & 单车道维修封闭加借道 & C4将水马横向中心调至Baseline贪心切换临界侧，比较组级边界组织的求解开销 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-实验基线为固定配置下的分段加加速度路径--速度解耦规划器：动态障碍物主要由速度阶段处理，路径阶段不利用其到达时刻预测。因此，P1--P4 检验时间盲路径边界在目标压力构型下的可达性，C1--C4 则在双方均可达时比较轨迹质量与计算开销。该设置使实验结论直接对应本文研究的解耦接口，而不依赖其他可选规划分支。
-
-每个场景计算六项指标。终点到达率 $P_{\mathrm{arr}}$ 以 $s_{\mathrm{end}}\geq s_{\max}-1$\,m 为判据，平均速度记为 $\bar v$；轨迹平顺性由最大纵向加速度 $|a_x|_{\max}$、最大横向加速度 $|a_y|_{\max}$ 与最大 jerk $|j|_{\max}$ 衡量，其中 $a_y=v^2\kappa$；计算开销采用路径 QP 与速度 QP 的总求解时间 $t_{\mathrm{qp}}$。终点到达率衡量可达性，建模层面的几何安全由差异化安全边界约束；最小安全间距作为独立安全指标在适用范围中讨论。
-
-\subsection{终点到达率与速度对照}
-\label{subsec:exp_passrate}
-
-8 场景的终点到达率与平均速度如表\ref{tab:exp_pass}所示。压力场景 P1--P4 中，时间盲基线到达 0/4，MIKU 到达 4/4；时变投影与组级通行带使路径阶段能够利用动态占据和多障碍物联合约束，P1 的 SL 路径边界见图~\ref{fig:exp_p1_sl}。可比场景 C1--C4 中两者均到达 4/4，表明 MIKU 在原本可达的构型中保持了可达性。汇总 8 个场景，基线与 MIKU 分别到达 4/8 和 8/8。
-
-\begin{table}[htbp]
-\centering
-\caption{8 场景终点到达率与平均速度对照}
-\label{tab:exp_pass}
-\small
-\begin{tabular}{lccc}
-\toprule
-\textbf{场景组} & \textbf{到达数 Baseline / MIKU} & \textbf{$\bar v$ Baseline (m/s)} & \textbf{$\bar v$ MIKU (m/s)} \\
-\midrule
-压力场景 P1--P4 & 0/4 \ / \ 4/4 & 2.58 & 4.66 \\
-可比场景 C1--C4 & 4/4 \ / \ 4/4 & 4.48 & 4.47 \\
-\midrule
-汇总 8 场景 & 4/8 \ / \ 8/8 & 3.53 & 4.57 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-MIKU 的主要收益体现在压力构型下的可达性恢复：终点到达数由 0/4 提升至 4/4，平均速度由 2.58\,m/s 提升至 4.66\,m/s。可比场景中两者均达到 4/4，平均速度分别为 4.48\,m/s 和 4.47\,m/s，说明新增约束传播不会牺牲原本可达场景的行驶效率。汇总平均速度提升 29.3\%，其物理含义是避免失效后的停车降级，而非提高常规巡航速度。
-
-\begin{figure}[htbp]
-\centering
-\begingroup
-\renewcommand{\datapath}{../图片/data/01_crossing_ped/}
-\begin{subfigure}[b]{0.43\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_exp_01_crossing_ped_sl_a}}
-  \caption{Baseline 路径阶段忽略动态行人走直线}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.43\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_exp_01_crossing_ped_sl_b}}
-  \caption{MIKU 沿时变投影绕行通过}
-\end{subfigure}
-\endgroup
-\caption{压力场景 P1 单行人横穿的 SL 路径边界对照}
-\caption*{时间盲基线未在路径阶段利用横穿行人的预测轨迹，因而保持直线路径并将冲突处理推迟到速度阶段。MIKU 根据 $\tau(12){=}1.5$\,s 查询行人预测位置，此时行人已由 $l{=}{-}0.6$\,m 横移至 $l{\approx}1.28$\,m，算法据此构造下侧可行带并完成绕行。}
-\label{fig:exp_p1_sl}
-\end{figure}
-
-可比场景的轨迹质量对照进一步说明约束前置的作用，结果见表\ref{tab:exp_comfort}。在 C1、C2 两个动态场景中，MIKU 将纵向加速度峰值分别由 3.10、2.82\,m/s$^2$ 降至 1.87、1.32\,m/s$^2$，jerk 峰值分别由 8.19、9.33\,m/s$^3$ 降至 1.62、1.25\,m/s$^3$。相应的横向加速度峰值升至 1.07、1.45\,m/s$^2$，表明算法通过提前规划有限横向机动，避免速度阶段的急刹与重启。C3、C4 中两者指标基本一致，说明 MIKU 在无需动态协调的构型下保持原有轨迹质量。
-
-\begin{table}[htbp]
-\centering
-\caption{可比场景轨迹舒适性指标对照（Baseline / MIKU）}
-\label{tab:exp_comfort}
-\small
-\begin{tabular}{lccc}
-\toprule
-\textbf{场景} & \textbf{$|a_x|_{\max}$ (m/s$^2$)} & \textbf{$|a_y|_{\max}$ (m/s$^2$)} & \textbf{$|j|_{\max}$ (m/s$^3$)} \\
-\midrule
-C1 & 3.10 \ / \ 1.87 & 0.00 \ / \ 1.07 & 8.19 \ / \ 1.62 \\
-C2 & 2.82 \ / \ 1.32 & 0.06 \ / \ 1.45 & 9.33 \ / \ 1.25 \\
-C3 & 0.14 \ / \ 0.14 & 0.02 \ / \ 0.00 & 0.14 \ / \ 0.14 \\
-C4 & 0.11 \ / \ 0.11 & 1.93 \ / \ 1.87 & 0.11 \ / \ 0.11 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-C1 单行人横穿场景的纵向速度、加速度与 jerk 时序对照如图~\ref{fig:exp_c1_va} 所示，直观呈现表~\ref{tab:exp_comfort} 中舒适性峰值的来源。
-
-\begin{figure}[htbp]
-\centering
-\begingroup
-\begin{subfigure}[b]{0.32\textwidth}
-  \centering
-  \input{../图片/fig_exp_05_crossing_ped_cmp_va_a}
-  \caption{纵向速度 $v(t)$}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.32\textwidth}
-  \centering
-  \input{../图片/fig_exp_05_crossing_ped_cmp_va_b}
-  \caption{纵向与横向加速度}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.32\textwidth}
-  \centering
-  \input{../图片/fig_exp_05_crossing_ped_cmp_va_c}
-  \caption{jerk $j(t)$}
-\end{subfigure}
-\endgroup
-\caption{可比场景 C1 的速度与舒适性时序对照}
-\caption*{时间盲基线将冲突处理推迟到速度阶段，产生明显的加速度与 jerk 峰值；MIKU 通过时变投影提前确定横向绕行，$|a_x|_{\max}$ 由 3.10\,m/s$^2$ 降至 1.87\,m/s$^2$，$|j|_{\max}$ 由 8.19\,m/s$^3$ 降至 1.62\,m/s$^3$。}
-\label{fig:exp_c1_va}
-\end{figure}
-
-\subsection{求解效率对照}
-\label{subsec:exp_qp}
-
-求解效率只在双方均完成完整规划的 C1--C4 上比较，逐场景 QP 总耗时见表\ref{tab:exp_qp_percomp}。
-
-\begin{table}[htbp]
-\centering
-\caption{可比场景逐场景 QP 总耗时（ms）}
-\label{tab:exp_qp_percomp}
-\small
-\begin{tabular}{lccc}
-\toprule
-\textbf{场景} & \textbf{Baseline} & \textbf{MIKU} & \textbf{说明} \\
-\midrule
-C1 & 10.44 & 12.53 & MIKU 略慢 \\
-C2 & 56.41 & 3.17 & Baseline 离群偏高 \\
-C3 & 4.11 & 3.75 & 基本持平 \\
-C4 & 5.68 & 5.58 & 基本持平 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-C1、C3、C4 中两种方法的总耗时分别为 10.44/12.53、4.11/3.75 和 5.68/5.58\,ms，均处于同一量级；C2 中 MIKU 为 3.17\,ms，时间盲基线为 56.41\,ms。结果表明，MIKU 新增的投影与分组保持了在线规划的实时量级，并在 C2 的约束退化构型下明显降低求解开销。其附加计算复杂度为 $O(n\log n+K)$，走廊融合只修改速度变量的盒式上界，不增加约束行数或改变 QP 稀疏结构。
-
-\subsection{组件消融}
-\label{subsec:exp_ablation}
-
-消融实验使用 P1--P4 压力场景，定位各机制对终点到达能力的贡献。MIKU 分解为时变 SL 投影、扫描线分组、组内最大间隙、差异化裕度 $\delta_i$ 与 ST 走廊注入；其中分组和间隙决策是同一组级优化的两个步骤，合并为一个消融项。在完整 MIKU 上逐项关闭组件，得到表\ref{tab:exp_ablation_matrix}中的 4 个减法变体，并与完整方法及时间盲基线对照。
-
-\begin{table}[htbp]
-\centering
-\caption{消融变体与机制开关}
-\label{tab:exp_ablation_matrix}
-\small
-\begin{tabular}{llccccc}
-\toprule
-\textbf{编号} & \textbf{变体} & 投影 & 分组 & 间隙 & 裕度 & 走廊 \\
-\midrule
-M0 & Baseline             & $\times$    & $\times$    & $\times$    & $\times$    & $\times$    \\
-M1 & 关闭时变投影         & $\times$    & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
-M2 & 关闭分组与间隙决策   & $\checkmark$ & $\times$    & $\times$    & $\checkmark$ & $\checkmark$ \\
-M3 & 关闭差异化裕度       & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$    & $\checkmark$ \\
-M4 & 关闭走廊注入         & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\times$    \\
-M5 & 完整MIKU             & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ & $\checkmark$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\begin{table}[htbp]
-\centering
-\caption{消融变体在压力场景中的终点到达数}
-\label{tab:exp_ablation_score}
-\small
-\begin{tabular}{llc}
-\toprule
-\textbf{编号} & \textbf{变体} & \textbf{到达数} \\
-\midrule
-M5 & 完整 MIKU             & 4/4 \\
-M4 & 关闭走廊注入          & 4/4 \\
-M2 & 关闭分组与间隙决策    & 3/4 \\
-M3 & 关闭差异化裕度        & 3/4 \\
-M1 & 关闭时变投影          & 2/4 \\
-M0 & 时间盲基线            & 0/4 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-减法消融给出了组件与目标失效构型之间的直接对应关系。关闭时变投影后，M1 在 P1、P2 两个动态场景失效；关闭分组与最大间隙决策后，M2 在 P4 的密集障碍物构型失效；关闭差异化裕度后，M3 在 P3 的窄间隙构型失效。三组结果分别验证了时间感知、组级协调与威胁度分级在对应压力构型中的作用。
-
-M4 与完整 MIKU 均达到 4/4，说明当前压力场景主要由前三个组件解决，走廊上界未成为活跃约束。该结果明确了本组实验中各组件的实际贡献；多动态障碍物时间窗交织场景将用于进一步检验走廊注入的独立作用。
-
-\subsection{灵敏度分析}
-\label{subsec:exp_sensitivity}
-
-为检验威胁度权重的鲁棒性，本文在 P1--P4 上对 5 个权重分别施加 $\pm20\%$ 均匀扰动并重新归一化，共进行 100 次蒙特卡洛采样。通行带宽度相对基准的最大偏差为 6.4\%，全部样本均保持在设定的几何可行阈值之上。P4 出现 57\% 的排序翻转，但翻转集中于威胁度差小于 0.02 的同类交通锥，安全裕度变化不足 0.01\,m；它改变的是近等价障碍物的排序，而非给定裕度下最大间隙解的最优性。结果表明，在本文考察的扰动范围内，通行带几何对威胁度权重变化保持稳定。
-
-\subsection{适用范围与讨论}
-\label{subsec:exp_limitations}
-
-当前验证覆盖确定性数值仿真、桌面平台求解耗时与 Apollo 代码在环接入，直接支持本文对目标压力构型、配对可比场景和工程兼容性的结论。P1--P4 用于隔离解耦接口的三类典型失效，C1--C4 用于在双方均可达时比较连续指标；更大规模随机场景、其他同类规划方法与不同硬件平台将用于扩展统计和外部效度。
-
-终点到达率刻画可达性，完整安全评价还应加入最小安全间距、几何侵入和感知预测噪声下的闭环指标。当前消融中走廊上界未成为活跃约束，其独立贡献需要由多动态障碍物时间窗交织场景检验。以上边界不改变本文关于时变投影、组级间隙决策和差异化裕度在目标构型中作用的实验结论。
-
+\input{randomized_experiment}
 % ====== 5 结论 ======
 \section{结论}
 \label{sec:conclusion}
 
-本文提出 MIKU 多障碍物交互感知运动学约束统一方法，通过统一的自车中心边界、时变占据投影与组级最大间隙协调路径--速度解耦规划中的多障碍物边界构造。理论部分证明了最优分割的连续性与前缀最大间隙解的精确最优性，并将单截面组合搜索由 $O(2^k)$ 降至 $O(k\log k)$；固定种子的自动穷举对照未发现反例。在 4 个目标压力场景中，MIKU 将终点到达数由 0/4 提升至 4/4；在 4 个可比场景中保持 4/4 到达数和同量级求解时间。当前消融支持时变投影、组级间隙决策和差异化裕度在对应目标构型中的作用；关闭速度侧走廊注入后已报告指标不变，故其仅保留为可选接口。当前结论限于这些确定性构型；随机闭环场景、安全指标、公平强基线与时间窗约束的独立效果仍需完成后才能扩展性能结论。
+本文将道路、自车尺寸与障碍物裕度统一到自车中心语义，并证明多障碍物最大间隙只需考察排序后的 $k+1$ 个连续分割。前缀最大扫描把单截面求解降为 $O(k\log k)$，4,000 个固定种子实例与穷举 oracle 一致。在 \RandCaseCount 个配对随机实例中，MIKU 相对 B0 的无碰撞到达率汇总差值为 \RandAllMikuVsBZeroSuccessDiff 个百分点，95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]；但碰撞率没有降低，且改善集中在窄路分布。
+
+横穿行人与多动态交织类的负差值表明，一次到达时间查询不能代替联合时空协调。30 例联合参照中，B3 单独到达的配对有 \JointBThreeOnlySuccessCount 个，MIKU 单独到达的配对有 \JointMikuOnlySuccessCount 个；到达率差的 95\% CI [\JointMikuVsBThreeSuccessCiLow,\JointMikuVsBThreeSuccessCiHigh] 跨零，而且两者保护带定义不同，因而这些个例只提示可行性差异，不能证明联合方法的总体优势或将差异全部归因于解耦结构。60 例规划器滚动重规划子集中，MIKU 相对 B0 的到达率差为 \ClosedMikuVsBZeroSuccessDiff 个百分点，但总体到达率只有 \ClosedMikuSuccessPct\%，且 MIKU 出现 \ClosedMikuCollisionPct\% 的碰撞率。经修正的速度侧安全时窗因无独立正收益已从主方法剔除。后续工作需要扩展联合参照与滚动样本，并加入感知、控制器和执行器的软硬件在环实验；在此之前，本文结论只适用于已公开的随机生成分布和 Apollo 规划器环境。
 
 \printbibliography[heading=bibintoc,title={参考文献}]
 
