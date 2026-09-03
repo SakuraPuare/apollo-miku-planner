@@ -1,0 +1,137 @@
+{
+  "protocol": "miku-rolling-v1",
+  "case_kinds": [
+    "crossing_pedestrian",
+    "vehicle_cut_in",
+    "parked_and_oncoming",
+    "narrow_multi_obstacle",
+    "interleaved_dynamic",
+    "prediction_noise"
+  ],
+  "seed_start": 0,
+  "seed_count_per_kind": 10,
+  "paired_case_count": 60,
+  "methods": [
+    "B0",
+    "B1",
+    "B2",
+    "MIKU"
+  ],
+  "config": {
+    "replan_period_s": 0.5,
+    "minimum_cycle_horizon_s": 2.0,
+    "target_tolerance_m": 1.0
+  },
+  "execution": "Execute the first 0.5 s segment, update ego/obstacles, and replan until arrival or scenario horizon.",
+  "noise": "The initial observation biases are held fixed across replans; execution applies planned increments to truth state.",
+  "summaries": [
+    {
+      "method": "B0",
+      "n": 60,
+      "success_rate": 0.18333333333333332,
+      "collision_rate": 0.0,
+      "degraded_stop_rate": 0.8166666666666667,
+      "min_clearance_mean_m": 2.492647118258222,
+      "progress_ratio_mean": 0.539402357150312,
+      "penalized_travel_time_mean_s": 14.84,
+      "planning_cycles_mean": 21.616666666666667,
+      "episode_runtime_p50_ms": 346.093602511246,
+      "episode_runtime_p95_ms": 1250.6410789414076
+    },
+    {
+      "method": "B1",
+      "n": 60,
+      "success_rate": 0.23333333333333334,
+      "collision_rate": 0.0,
+      "degraded_stop_rate": 0.7666666666666667,
+      "min_clearance_mean_m": 2.516781688735025,
+      "progress_ratio_mean": 0.5574726639194866,
+      "penalized_travel_time_mean_s": 14.533333333333333,
+      "planning_cycles_mean": 21.516666666666666,
+      "episode_runtime_p50_ms": 318.9913630085357,
+      "episode_runtime_p95_ms": 1246.365235041958
+    },
+    {
+      "method": "B2",
+      "n": 60,
+      "success_rate": 0.21666666666666667,
+      "collision_rate": 0.0,
+      "degraded_stop_rate": 0.7833333333333333,
+      "min_clearance_mean_m": 2.5275620753012995,
+      "progress_ratio_mean": 0.5389383286483013,
+      "penalized_travel_time_mean_s": 14.593333333333332,
+      "planning_cycles_mean": 21.466666666666665,
+      "episode_runtime_p50_ms": 930.151147502329,
+      "episode_runtime_p95_ms": 3320.0749761439506
+    },
+    {
+      "method": "MIKU",
+      "n": 60,
+      "success_rate": 0.25,
+      "collision_rate": 0.016666666666666666,
+      "degraded_stop_rate": 0.75,
+      "min_clearance_mean_m": 2.1620850629881616,
+      "progress_ratio_mean": 0.6375154701738246,
+      "penalized_travel_time_mean_s": 14.456666666666667,
+      "planning_cycles_mean": 21.533333333333335,
+      "episode_runtime_p50_ms": 164.61692149823648,
+      "episode_runtime_p95_ms": 1282.2788038014548
+    }
+  ],
+  "paired_statistics": [
+    {
+      "comparison": "MIKU-B0",
+      "metric": "success",
+      "n": 60,
+      "mean_difference": 0.06666666666666667,
+      "ci_low": 0.016666666666666666,
+      "ci_high": 0.13333333333333333,
+      "cohen_dz": 0.26502470684465484
+    },
+    {
+      "comparison": "MIKU-B0",
+      "metric": "collision",
+      "n": 60,
+      "mean_difference": 0.016666666666666666,
+      "ci_low": 0.0,
+      "ci_high": 0.05,
+      "cohen_dz": 0.12909944487358055
+    },
+    {
+      "comparison": "MIKU-B1",
+      "metric": "success",
+      "n": 60,
+      "mean_difference": 0.016666666666666666,
+      "ci_low": -0.03333333333333333,
+      "ci_high": 0.08333333333333333,
+      "cohen_dz": 0.07411802958204411
+    },
+    {
+      "comparison": "MIKU-B1",
+      "metric": "collision",
+      "n": 60,
+      "mean_difference": 0.016666666666666666,
+      "ci_low": 0.0,
+      "ci_high": 0.05,
+      "cohen_dz": 0.12909944487358055
+    },
+    {
+      "comparison": "MIKU-B2",
+      "metric": "success",
+      "n": 60,
+      "mean_difference": 0.03333333333333333,
+      "ci_low": 0.0,
+      "ci_high": 0.08333333333333333,
+      "cohen_dz": 0.18414137497317518
+    },
+    {
+      "comparison": "MIKU-B2",
+      "metric": "collision",
+      "n": 60,
+      "mean_difference": 0.016666666666666666,
+      "ci_low": 0.0,
+      "ci_high": 0.05,
+      "cohen_dz": 0.12909944487358055
+    }
+  ]
+}

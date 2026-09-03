@@ -105,9 +105,9 @@
       "max_lateral_acceleration_mean_mps2": 0.0,
       "jerk_rms_mean_mps3": 0.9834107682873033,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 8.948956497988547,
-      "runtime_p95_ms": 47.67218480083101,
-      "runtime_p99_ms": 106.06724932018567
+      "runtime_p50_ms": 8.718036999198375,
+      "runtime_p95_ms": 48.17439634498441,
+      "runtime_p99_ms": 107.10947095190942
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -127,9 +127,9 @@
       "max_lateral_acceleration_mean_mps2": 0.06967328426535933,
       "jerk_rms_mean_mps3": 1.0796466801519269,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 9.764458000063314,
-      "runtime_p95_ms": 81.72954205110727,
-      "runtime_p99_ms": 135.09253397871413
+      "runtime_p50_ms": 9.947503996954765,
+      "runtime_p95_ms": 84.6729686974868,
+      "runtime_p99_ms": 129.24352552261607
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -149,9 +149,9 @@
       "max_lateral_acceleration_mean_mps2": 0.11844634585682394,
       "jerk_rms_mean_mps3": 0.8869848601162336,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 30.738877998373937,
-      "runtime_p95_ms": 151.6293138998662,
-      "runtime_p99_ms": 416.5200185899087
+      "runtime_p50_ms": 31.30563449667534,
+      "runtime_p95_ms": 152.92359784798458,
+      "runtime_p99_ms": 383.5560697662009
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -171,9 +171,9 @@
       "max_lateral_acceleration_mean_mps2": 0.07250460356215466,
       "jerk_rms_mean_mps3": 1.0874964584267737,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 10.283128000082797,
-      "runtime_p95_ms": 82.31161319854435,
-      "runtime_p99_ms": 146.85989318244583
+      "runtime_p50_ms": 10.515791000216268,
+      "runtime_p95_ms": 83.6014273965702,
+      "runtime_p99_ms": 128.10161867841146
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -193,9 +193,9 @@
       "max_lateral_acceleration_mean_mps2": 0.0,
       "jerk_rms_mean_mps3": 0.5092858639727872,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 7.707493499765405,
-      "runtime_p95_ms": 35.68857209829729,
-      "runtime_p99_ms": 54.10166319095879
+      "runtime_p50_ms": 7.758974501484772,
+      "runtime_p95_ms": 33.47282524919136,
+      "runtime_p99_ms": 51.670841180748546
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -215,9 +215,9 @@
       "max_lateral_acceleration_mean_mps2": 0.0,
       "jerk_rms_mean_mps3": 0.5479094431146205,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 7.870891500715516,
-      "runtime_p95_ms": 40.5776000523474,
-      "runtime_p99_ms": 54.286012128177546
+      "runtime_p50_ms": 7.799900500685908,
+      "runtime_p95_ms": 38.88568170004873,
+      "runtime_p99_ms": 60.028391187588696
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -237,9 +237,9 @@
       "max_lateral_acceleration_mean_mps2": 0.0,
       "jerk_rms_mean_mps3": 0.53502913106986,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 23.43905099951371,
-      "runtime_p95_ms": 101.84286965104545,
-      "runtime_p99_ms": 153.43298036917992
+      "runtime_p50_ms": 23.7084974978643,
+      "runtime_p95_ms": 100.25808260106713,
+      "runtime_p99_ms": 145.54084115217856
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -259,9 +259,9 @@
       "max_lateral_acceleration_mean_mps2": 0.00073650605657987,
       "jerk_rms_mean_mps3": 0.5507059773997789,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 7.855317999201361,
-      "runtime_p95_ms": 44.667277649932636,
-      "runtime_p99_ms": 85.47816986003474
+      "runtime_p50_ms": 7.730832003289834,
+      "runtime_p95_ms": 42.15417359519049,
+      "runtime_p99_ms": 86.62657684348248
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -281,9 +281,9 @@
       "max_lateral_acceleration_mean_mps2": 0.3873710482275969,
       "jerk_rms_mean_mps3": 0.5947033096688071,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 5.389029500292963,
-      "runtime_p95_ms": 107.62572905150589,
-      "runtime_p99_ms": 268.9232250709756
+      "runtime_p50_ms": 5.355361001420533,
+      "runtime_p95_ms": 105.43568079883697,
+      "runtime_p99_ms": 263.4083109573112
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -303,9 +303,9 @@
       "max_lateral_acceleration_mean_mps2": 0.34188516915082423,
       "jerk_rms_mean_mps3": 0.906061638261437,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 8.111690500300028,
-      "runtime_p95_ms": 212.005788200804,
-      "runtime_p99_ms": 266.87749777218414
+      "runtime_p50_ms": 7.907538496510824,
+      "runtime_p95_ms": 208.1154072027856,
+      "runtime_p99_ms": 264.69403858311125
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -325,9 +325,9 @@
       "max_lateral_acceleration_mean_mps2": 0.3610674650408262,
       "jerk_rms_mean_mps3": 0.7776844413428775,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 24.52181500120787,
-      "runtime_p95_ms": 492.66388460018777,
-      "runtime_p99_ms": 552.081382072539
+      "runtime_p50_ms": 24.170050499378704,
+      "runtime_p95_ms": 482.55261150152353,
+      "runtime_p99_ms": 532.4671331159344
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -347,9 +347,9 @@
       "max_lateral_acceleration_mean_mps2": 0.37028797577926376,
       "jerk_rms_mean_mps3": 0.510063635933306,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 5.351541498384904,
-      "runtime_p95_ms": 98.82407124841845,
-      "runtime_p99_ms": 219.22842466112368
+      "runtime_p50_ms": 5.206280999118462,
+      "runtime_p95_ms": 97.2152864498639,
+      "runtime_p99_ms": 211.9041239666697
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -369,9 +369,9 @@
       "max_lateral_acceleration_mean_mps2": 0.024461409587534733,
       "jerk_rms_mean_mps3": 0.46000829424282935,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 85.08765299848164,
-      "runtime_p95_ms": 132.77459760174676,
-      "runtime_p99_ms": 152.15899629951323
+      "runtime_p50_ms": 85.37493750191061,
+      "runtime_p95_ms": 131.78856504637224,
+      "runtime_p99_ms": 154.7251780419175
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -391,9 +391,9 @@
       "max_lateral_acceleration_mean_mps2": 0.03289781128388803,
       "jerk_rms_mean_mps3": 0.46000829424282935,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 85.65453399933176,
-      "runtime_p95_ms": 131.70502925040634,
-      "runtime_p99_ms": 153.18558123966807
+      "runtime_p50_ms": 84.37736549967667,
+      "runtime_p95_ms": 130.7662031995278,
+      "runtime_p99_ms": 154.3521375909769
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -413,9 +413,9 @@
       "max_lateral_acceleration_mean_mps2": 0.03289781128388803,
       "jerk_rms_mean_mps3": 0.46000829424282935,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 253.05215750086063,
-      "runtime_p95_ms": 387.95689955040865,
-      "runtime_p99_ms": 468.3068915414336
+      "runtime_p50_ms": 252.5420630008739,
+      "runtime_p95_ms": 394.2082244040648,
+      "runtime_p99_ms": 481.0091424125133
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -435,9 +435,9 @@
       "max_lateral_acceleration_mean_mps2": 0.020874081675034385,
       "jerk_rms_mean_mps3": 0.21588189392563917,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 7.2196545006590895,
-      "runtime_p95_ms": 101.64345725279418,
-      "runtime_p99_ms": 114.31011565942774
+      "runtime_p50_ms": 7.208532995718997,
+      "runtime_p95_ms": 100.47875249729258,
+      "runtime_p99_ms": 114.09416059192179
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -457,9 +457,9 @@
       "max_lateral_acceleration_mean_mps2": 0.0,
       "jerk_rms_mean_mps3": 0.887306462507083,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 13.8959905016236,
-      "runtime_p95_ms": 77.34279315245654,
-      "runtime_p99_ms": 104.372781140155
+      "runtime_p50_ms": 14.88788300048327,
+      "runtime_p95_ms": 76.80929740090498,
+      "runtime_p99_ms": 107.1189618187782
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -479,9 +479,9 @@
       "max_lateral_acceleration_mean_mps2": 0.049923289561780874,
       "jerk_rms_mean_mps3": 0.9119183235769015,
       "time_window_violations_mean": 0.0,
-      "runtime_p50_ms": 18.9299405010388,
-      "runtime_p95_ms": 104.76907280153682,
-      "runtime_p99_ms": 151.03079580785592
+      "runtime_p50_ms": 19.296125497930916,
+      "runtime_p95_ms": 106.81867389866964,
+      "runtime_p99_ms": 154.67469682123956
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -501,9 +501,9 @@
       "max_lateral_acceleration_mean_mps2": 0.03834142338790313,
       "jerk_rms_mean_mps3": 0.8604662502325746,
       "time_window_violations_mean": 0.01,
-      "runtime_p50_ms": 51.30206850117247,
-      "runtime_p95_ms": 252.10089935007997,
-      "runtime_p99_ms": 318.9442466324545
+      "runtime_p50_ms": 51.877762998628896,
+      "runtime_p95_ms": 269.67638220194203,
+      "runtime_p99_ms": 324.6295171169914
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -523,9 +523,9 @@
       "max_lateral_acceleration_mean_mps2": 0.055362669294190356,
       "jerk_rms_mean_mps3": 0.9150261816459448,
       "time_window_violations_mean": 0.01,
-      "runtime_p50_ms": 20.011780001368606,
-      "runtime_p95_ms": 107.15698965086631,
-      "runtime_p99_ms": 117.04383567041126
+      "runtime_p50_ms": 19.673910497658653,
+      "runtime_p95_ms": 110.56940684611618,
+      "runtime_p99_ms": 125.96125145777529
     },
     {
       "case_kind": "prediction_noise",
@@ -535,19 +535,19 @@
       "reach_rate": 0.46,
       "collision_rate": 0.14,
       "degraded_stop_rate": 0.54,
-      "min_clearance_mean_m": 6.578567505813959,
+      "min_clearance_mean_m": 6.5785693559844285,
       "min_ttc_mean_s": 2.5404182647628906,
       "arrival_time_success_mean_s": 10.0,
       "progress_ratio_mean": 0.6355328415589182,
-      "average_speed_mean_mps": 2.6051931628598766,
-      "path_length_mean_m": 26.05193162859876,
+      "average_speed_mean_mps": 2.6051931506723163,
+      "path_length_mean_m": 26.051931506723157,
       "max_longitudinal_acceleration_mean_mps2": 2.7238379514244384,
-      "max_lateral_acceleration_mean_mps2": 0.006898748073101512,
+      "max_lateral_acceleration_mean_mps2": 0.008233758183088143,
       "jerk_rms_mean_mps3": 2.123144805803865,
       "time_window_violations_mean": 0.15,
-      "runtime_p50_ms": 8.273591000033775,
-      "runtime_p95_ms": 22.003652800412958,
-      "runtime_p99_ms": 48.469273439113785
+      "runtime_p50_ms": 8.418044501013355,
+      "runtime_p95_ms": 24.793403554213,
+      "runtime_p99_ms": 49.97554635490817
     },
     {
       "case_kind": "prediction_noise",
@@ -557,19 +557,19 @@
       "reach_rate": 0.42,
       "collision_rate": 0.13,
       "degraded_stop_rate": 0.58,
-      "min_clearance_mean_m": 6.748338257764065,
+      "min_clearance_mean_m": 6.748340107934533,
       "min_ttc_mean_s": 2.5784036840905666,
       "arrival_time_success_mean_s": 10.0,
       "progress_ratio_mean": 0.6152890969625873,
-      "average_speed_mean_mps": 2.522195421109132,
-      "path_length_mean_m": 25.221954211091315,
+      "average_speed_mean_mps": 2.5221954089215717,
+      "path_length_mean_m": 25.221954089215714,
       "max_longitudinal_acceleration_mean_mps2": 2.773640259112656,
-      "max_lateral_acceleration_mean_mps2": 0.007461170249161848,
+      "max_lateral_acceleration_mean_mps2": 0.008796180359148479,
       "jerk_rms_mean_mps3": 2.1429451181976575,
       "time_window_violations_mean": 0.14,
-      "runtime_p50_ms": 8.45591899997089,
-      "runtime_p95_ms": 40.795761050321744,
-      "runtime_p99_ms": 55.18956412921404
+      "runtime_p50_ms": 8.678348000103142,
+      "runtime_p95_ms": 41.699515604341286,
+      "runtime_p99_ms": 54.29868869810896
     },
     {
       "case_kind": "prediction_noise",
@@ -579,19 +579,19 @@
       "reach_rate": 0.46,
       "collision_rate": 0.14,
       "degraded_stop_rate": 0.54,
-      "min_clearance_mean_m": 6.578567505813959,
+      "min_clearance_mean_m": 6.5785693559844285,
       "min_ttc_mean_s": 2.5404182647628906,
       "arrival_time_success_mean_s": 10.0,
       "progress_ratio_mean": 0.6355328415589182,
-      "average_speed_mean_mps": 2.6051931628598766,
-      "path_length_mean_m": 26.05193162859876,
+      "average_speed_mean_mps": 2.6051931506723163,
+      "path_length_mean_m": 26.051931506723157,
       "max_longitudinal_acceleration_mean_mps2": 2.7238379514244384,
-      "max_lateral_acceleration_mean_mps2": 0.006898748073101512,
+      "max_lateral_acceleration_mean_mps2": 0.008233758183088143,
       "jerk_rms_mean_mps3": 2.123144805803865,
       "time_window_violations_mean": 0.15,
-      "runtime_p50_ms": 24.26638799988723,
-      "runtime_p95_ms": 75.3102580516497,
-      "runtime_p99_ms": 149.46220835117865
+      "runtime_p50_ms": 24.1111754985468,
+      "runtime_p95_ms": 75.44969690388822,
+      "runtime_p99_ms": 149.32584491245512
     },
     {
       "case_kind": "prediction_noise",
@@ -601,19 +601,19 @@
       "reach_rate": 0.42,
       "collision_rate": 0.13,
       "degraded_stop_rate": 0.58,
-      "min_clearance_mean_m": 6.739940514425067,
+      "min_clearance_mean_m": 6.739942364595537,
       "min_ttc_mean_s": 2.5775232985843877,
       "arrival_time_success_mean_s": 10.0,
       "progress_ratio_mean": 0.6157769386348223,
-      "average_speed_mean_mps": 2.5242285567449803,
-      "path_length_mean_m": 25.2422855674498,
+      "average_speed_mean_mps": 2.5242285445574195,
+      "path_length_mean_m": 25.242285445574197,
       "max_longitudinal_acceleration_mean_mps2": 2.770108349362431,
-      "max_lateral_acceleration_mean_mps2": 0.008895428655600035,
+      "max_lateral_acceleration_mean_mps2": 0.010230438765586667,
       "jerk_rms_mean_mps3": 2.1411379932268004,
       "time_window_violations_mean": 0.14,
-      "runtime_p50_ms": 8.460660501441453,
-      "runtime_p95_ms": 42.129849898083194,
-      "runtime_p99_ms": 49.07321320835766
+      "runtime_p50_ms": 8.786069498455618,
+      "runtime_p95_ms": 41.83501499755948,
+      "runtime_p99_ms": 49.161233874838246
     },
     {
       "case_kind": "all",
@@ -623,19 +623,19 @@
       "reach_rate": 0.635,
       "collision_rate": 0.028333333333333332,
       "degraded_stop_rate": 0.365,
-      "min_clearance_mean_m": 1.7066814209649055,
+      "min_clearance_mean_m": 1.70668172932665,
       "min_ttc_mean_s": 1.6335479567201903,
       "arrival_time_success_mean_s": 10.83879781420765,
       "progress_ratio_mean": 0.7903864984697115,
-      "average_speed_mean_mps": 3.001222340751237,
-      "path_length_mean_m": 31.911462404121824,
+      "average_speed_mean_mps": 3.0012223387199763,
+      "path_length_mean_m": 31.91146238380923,
       "max_longitudinal_acceleration_mean_mps2": 2.039244585521336,
-      "max_lateral_acceleration_mean_mps2": 0.06978853431470552,
+      "max_lateral_acceleration_mean_mps2": 0.07001103599970329,
       "jerk_rms_mean_mps3": 0.926309917413779,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 11.215194999749656,
-      "runtime_p95_ms": 107.20632430166006,
-      "runtime_p99_ms": 140.7664994090009
+      "runtime_p50_ms": 11.264541499258485,
+      "runtime_p95_ms": 106.91442215174901,
+      "runtime_p99_ms": 138.6515065537241
     },
     {
       "case_kind": "all",
@@ -645,19 +645,19 @@
       "reach_rate": 0.5516666666666666,
       "collision_rate": 0.02666666666666667,
       "degraded_stop_rate": 0.4483333333333333,
-      "min_clearance_mean_m": 1.8553997454032758,
+      "min_clearance_mean_m": 1.8554000537650206,
       "min_ttc_mean_s": 1.7808815966829323,
       "arrival_time_success_mean_s": 10.722397476340694,
       "progress_ratio_mean": 0.733094159258799,
-      "average_speed_mean_mps": 2.7909762895291546,
-      "path_length_mean_m": 29.552348620654637,
+      "average_speed_mean_mps": 2.7909762874978945,
+      "path_length_mean_m": 29.552348600342036,
       "max_longitudinal_acceleration_mean_mps2": 2.1501996700770896,
-      "max_lateral_acceleration_mean_mps2": 0.08364012075183572,
+      "max_lateral_acceleration_mean_mps2": 0.08386262243683348,
       "jerk_rms_mean_mps3": 1.008081582924229,
       "time_window_violations_mean": 0.028333333333333332,
-      "runtime_p50_ms": 13.205797498812899,
-      "runtime_p95_ms": 112.45031059770545,
-      "runtime_p99_ms": 210.54365940079128
+      "runtime_p50_ms": 13.276222998683807,
+      "runtime_p95_ms": 113.96722190402214,
+      "runtime_p99_ms": 226.197817242355
     },
     {
       "case_kind": "all",
@@ -667,19 +667,19 @@
       "reach_rate": 0.6316666666666667,
       "collision_rate": 0.03,
       "degraded_stop_rate": 0.36833333333333335,
-      "min_clearance_mean_m": 1.7392804050346165,
+      "min_clearance_mean_m": 1.739280713396361,
       "min_ttc_mean_s": 1.7027087480943448,
       "arrival_time_success_mean_s": 10.831404958677686,
       "progress_ratio_mean": 0.7822788957829745,
-      "average_speed_mean_mps": 2.965295374984637,
-      "path_length_mean_m": 31.554839754523332,
+      "average_speed_mean_mps": 2.965295372953377,
+      "path_length_mean_m": 31.554839734210738,
       "max_longitudinal_acceleration_mean_mps2": 2.016413695087038,
-      "max_lateral_acceleration_mean_mps2": 0.09294196560709049,
+      "max_lateral_acceleration_mean_mps2": 0.09316446729208826,
       "jerk_rms_mean_mps3": 0.9405529638013733,
       "time_window_violations_mean": 0.03166666666666667,
-      "runtime_p50_ms": 36.99772049913008,
-      "runtime_p95_ms": 328.5761613509748,
-      "runtime_p99_ms": 491.1518097902805
+      "runtime_p50_ms": 37.527397500525694,
+      "runtime_p95_ms": 326.566560701758,
+      "runtime_p99_ms": 480.92901859257796
     },
     {
       "case_kind": "all",
@@ -689,19 +689,19 @@
       "reach_rate": 0.6883333333333334,
       "collision_rate": 0.028333333333333332,
       "degraded_stop_rate": 0.31166666666666665,
-      "min_clearance_mean_m": 1.7690247933068197,
+      "min_clearance_mean_m": 1.7690251016685647,
       "min_ttc_mean_s": 1.268412348233592,
       "arrival_time_success_mean_s": 10.93969849246231,
       "progress_ratio_mean": 0.8295176934069737,
-      "average_speed_mean_mps": 3.131774917734012,
-      "path_length_mean_m": 33.488886668241456,
+      "average_speed_mean_mps": 3.131774915702752,
+      "path_length_mean_m": 33.48888664792885,
       "max_longitudinal_acceleration_mean_mps2": 1.9573947651317751,
-      "max_lateral_acceleration_mean_mps2": 0.08811021083713716,
+      "max_lateral_acceleration_mean_mps2": 0.08833271252213493,
       "jerk_rms_mean_mps3": 0.903385356759707,
       "time_window_violations_mean": 0.03,
-      "runtime_p50_ms": 8.816817498882301,
-      "runtime_p95_ms": 93.73315029733911,
-      "runtime_p99_ms": 146.05650902245537
+      "runtime_p50_ms": 8.786069498455618,
+      "runtime_p95_ms": 94.39295154697898,
+      "runtime_p99_ms": 127.26907997843202
     }
   ],
   "paired_statistics": [
@@ -780,10 +780,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 11.341350190123194,
-      "ci_low": 6.135696209802518,
-      "ci_high": 17.814882135125117,
-      "cohen_dz": 0.38354023310004837
+      "mean_difference": 11.416795089753577,
+      "ci_low": 6.128904115688783,
+      "ci_high": 18.00998009275281,
+      "cohen_dz": 0.37969387018839457
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -860,10 +860,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 2.2430884102141135,
-      "ci_low": -0.5088702433486105,
-      "ci_high": 5.315352795649232,
-      "cohen_dz": 0.14736197406630147
+      "mean_difference": 2.1223693202773575,
+      "ci_low": -0.6415413610811811,
+      "ci_high": 5.165240401913249,
+      "cohen_dz": 0.13925381741569487
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -940,10 +940,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -30.66760642970621,
-      "ci_low": -40.328462222586495,
-      "ci_high": -22.459249388218268,
-      "cohen_dz": -0.6601625606195357
+      "mean_difference": -31.013216199644376,
+      "ci_low": -40.69466807841491,
+      "ci_high": -22.75987984540917,
+      "cohen_dz": -0.6683272367433439
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -1020,10 +1020,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 2.4976422397230635,
-      "ci_low": 0.39895278206859075,
-      "ci_high": 5.23808591294164,
-      "cohen_dz": 0.19955048787671412
+      "mean_difference": 2.3923009304417064,
+      "ci_low": 0.3523665500979405,
+      "ci_high": 5.049102216435131,
+      "cohen_dz": 0.19655142648639823
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -1100,10 +1100,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 1.4959669100790052,
-      "ci_low": 0.03736142803518305,
-      "ci_high": 3.7483898118462067,
-      "cohen_dz": 0.14861584295558006
+      "mean_difference": 1.2715216803917428,
+      "ci_low": -0.15317230824257422,
+      "ci_high": 3.413169476454641,
+      "cohen_dz": 0.13214653178725766
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -1180,10 +1180,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -21.424469470148324,
-      "ci_low": -25.743504596596722,
-      "ci_high": -17.425991912429716,
-      "cohen_dz": -1.0136113778166915
+      "mean_difference": -21.196468399866717,
+      "ci_low": -25.41351416771613,
+      "ci_high": -17.270296344982853,
+      "cohen_dz": -1.0266287831434275
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -1260,10 +1260,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -4.691349379863823,
-      "ci_low": -9.958899114529231,
-      "ci_high": 0.0321852695715265,
-      "cohen_dz": -0.18513944566644447
+      "mean_difference": -4.608910119059146,
+      "ci_low": -9.657579177266598,
+      "ci_high": -0.06320013405820991,
+      "cohen_dz": -0.1892155681970302
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -1340,10 +1340,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -19.708529760137026,
-      "ci_low": -31.452044108961672,
-      "ci_high": -9.104777515754911,
-      "cohen_dz": -0.34058038792118134
+      "mean_difference": -19.56300316960551,
+      "ci_low": -31.232407615480042,
+      "ci_high": -9.077694189645628,
+      "cohen_dz": -0.3425826173681124
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -1420,10 +1420,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -77.71152582994546,
-      "ci_low": -103.17619154335898,
-      "ci_high": -55.19841761434419,
-      "cohen_dz": -0.6383404304578503
+      "mean_difference": -76.60261160977825,
+      "ci_low": -101.78838527486187,
+      "ci_high": -54.39438530625743,
+      "cohen_dz": -0.6379657663244677
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -1500,10 +1500,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -48.11885158964287,
-      "ci_low": -57.78736352254873,
-      "ci_high": -39.19583649120524,
-      "cohen_dz": -1.019293454817164
+      "mean_difference": -47.80109918989183,
+      "ci_low": -57.49877010888849,
+      "ci_high": -38.94743977344842,
+      "cohen_dz": -1.0169456771552263
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -1580,10 +1580,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -48.288766729638155,
-      "ci_low": -57.912100053814356,
-      "ci_high": -39.108822345096996,
-      "cohen_dz": -1.0252756279157604
+      "mean_difference": -47.62548896978842,
+      "ci_low": -57.2149406152148,
+      "ci_high": -38.38303675134557,
+      "cohen_dz": -1.0127893411872648
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -1660,10 +1660,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -191.9128408598408,
-      "ci_low": -216.57101047814922,
-      "ci_high": -167.13082803770888,
-      "cohen_dz": -1.5355514819623801
+      "mean_difference": -191.18551701001707,
+      "ci_low": -215.8225164868236,
+      "ci_high": -166.5824748326413,
+      "cohen_dz": -1.5296075788694694
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -1740,10 +1740,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 14.813432700029807,
-      "ci_low": 8.906328254956861,
-      "ci_high": 21.44728903774648,
-      "cohen_dz": 0.45572522393976495
+      "mean_difference": 15.498595090102754,
+      "ci_low": 9.411522439080727,
+      "ci_high": 22.49214971378023,
+      "cohen_dz": 0.4585722326399672
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -1820,10 +1820,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 1.0682611302399891,
-      "ci_low": -3.098834620285743,
-      "ci_high": 5.432824782088573,
-      "cohen_dz": 0.05000248944325135
+      "mean_difference": 1.185721650326741,
+      "ci_low": -3.0199083645693463,
+      "ci_high": 5.54761259250881,
+      "cohen_dz": 0.05516332764062386
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -1900,10 +1900,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -46.68558789995586,
-      "ci_low": -57.071548166073626,
-      "ci_high": -37.01967500815227,
-      "cohen_dz": -0.9028177575025754
+      "mean_difference": -47.856734639644856,
+      "ci_low": -58.391858005294125,
+      "ci_high": -38.106962668223794,
+      "cohen_dz": -0.9075516759576168
     },
     {
       "case_kind": "prediction_noise",
@@ -1980,10 +1980,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": 1.5169283599971095,
-      "ci_low": 0.34549772499758546,
-      "ci_high": 3.0530493210844707,
-      "cohen_dz": 0.2199190490099451
+      "mean_difference": 1.411574129597284,
+      "ci_low": 0.26018207808738225,
+      "ci_high": 2.905946850074542,
+      "cohen_dz": 0.20815848026521913
     },
     {
       "case_kind": "prediction_noise",
@@ -2060,10 +2060,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -0.09745452018250944,
-      "ci_low": -0.7347846451148143,
-      "ci_high": 0.3935586967472772,
-      "cohen_dz": -0.03449340087885836
+      "mean_difference": -0.1231431403721217,
+      "ci_low": -0.7594833894872863,
+      "ci_high": 0.34108962907339446,
+      "cohen_dz": -0.04350406731659108
     },
     {
       "case_kind": "prediction_noise",
@@ -2140,10 +2140,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 100,
-      "mean_difference": -18.382324100239202,
-      "ci_low": -21.944055805222888,
-      "ci_high": -15.371788380632097,
-      "cohen_dz": -1.0882292774596727
+      "mean_difference": -18.493416590063134,
+      "ci_low": -22.029791071579893,
+      "ci_high": -15.487363662878124,
+      "cohen_dz": -1.0987295602438976
     },
     {
       "case_kind": "all",
@@ -2220,10 +2220,10 @@
       "comparison": "MIKU-B0",
       "metric": "runtime_ms",
       "n": 600,
-      "mean_difference": -3.77347457993892,
-      "ci_low": -6.626146746826332,
-      "ci_high": -0.8220796825095674,
-      "cohen_dz": -0.1061857103732461
+      "mean_difference": -3.6151240115092755,
+      "ci_low": -6.476812888720815,
+      "ci_high": -0.6684255388075449,
+      "cohen_dz": -0.10149917734409365
     },
     {
       "case_kind": "all",
@@ -2300,10 +2300,10 @@
       "comparison": "MIKU-B1",
       "metric": "runtime_ms",
       "n": 600,
-      "mean_difference": -10.547905759904097,
-      "ci_low": -13.625314122455771,
-      "ci_high": -7.644791000355026,
-      "cohen_dz": -0.2823124832963218
+      "mean_difference": -10.455337104795035,
+      "ci_low": -13.536306185941308,
+      "ci_high": -7.556821194277292,
+      "cohen_dz": -0.2824618204163601
     },
     {
       "case_kind": "all",
@@ -2380,10 +2380,10 @@
       "comparison": "MIKU-B2",
       "metric": "runtime_ms",
       "n": 600,
-      "mean_difference": -64.46405909830598,
-      "ci_low": -72.76110328303942,
-      "ci_high": -56.88308062652414,
-      "cohen_dz": -0.6579704101757637
+      "mean_difference": -64.39132740816906,
+      "ci_low": -72.64919753739134,
+      "ci_high": -56.87970422567228,
+      "cohen_dz": -0.6605970627751013
     }
   ]
 }

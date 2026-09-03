@@ -1,0 +1,88 @@
+{
+  "protocol": "miku-joint-reference-v1",
+  "case_kinds": [
+    "crossing_pedestrian",
+    "vehicle_cut_in",
+    "parked_and_oncoming",
+    "narrow_multi_obstacle",
+    "interleaved_dynamic",
+    "prediction_noise"
+  ],
+  "seed_start": 0,
+  "seed_count_per_kind": 5,
+  "paired_case_count": 30,
+  "grid": {
+    "dt": 0.5,
+    "ds": 0.5,
+    "dl": 0.25,
+    "dv": 1.0,
+    "max_speed": 13.0,
+    "max_lateral_speed": 0.5,
+    "max_lateral_acceleration": 1.0,
+    "safety_guard": 0.1,
+    "beam_width": 20000
+  },
+  "scope": "Deterministic beam search on a coarse joint grid; not a continuous global optimum.",
+  "summaries": [
+    {
+      "method": "B3",
+      "n": 30,
+      "success_rate": 0.8333333333333334,
+      "collision_rate": 0.13333333333333333,
+      "min_clearance_mean_m": 0.15930569682357623,
+      "progress_ratio_mean": 0.9893617021276596,
+      "penalized_travel_time_mean_s": 8.783333333333333,
+      "runtime_p50_ms": 873.4492225012218,
+      "runtime_p95_ms": 2468.3484135999597
+    },
+    {
+      "method": "MIKU",
+      "n": 30,
+      "success_rate": 0.7,
+      "collision_rate": 0.0,
+      "min_clearance_mean_m": 2.321153143467053,
+      "progress_ratio_mean": 0.8095443732719612,
+      "penalized_travel_time_mean_s": 12.333333333333334,
+      "runtime_p50_ms": 8.084413995675277,
+      "runtime_p95_ms": 91.59026909946988
+    }
+  ],
+  "paired_statistics": [
+    {
+      "comparison": "MIKU-B3",
+      "metric": "success",
+      "n": 30,
+      "mean_difference": -0.13333333333333333,
+      "ci_low": -0.3,
+      "ci_high": 0.03333333333333333,
+      "cohen_dz": -0.3070976116635082
+    },
+    {
+      "comparison": "MIKU-B3",
+      "metric": "collision",
+      "n": 30,
+      "mean_difference": -0.13333333333333333,
+      "ci_low": -0.26666666666666666,
+      "ci_high": -0.03333333333333333,
+      "cohen_dz": -0.38563966175427117
+    },
+    {
+      "comparison": "MIKU-B3",
+      "metric": "min_clearance_m",
+      "n": 30,
+      "mean_difference": 2.1618474466434776,
+      "ci_low": 0.8970815050038705,
+      "ci_high": 3.669172844583956,
+      "cohen_dz": 0.5439400927817415
+    },
+    {
+      "comparison": "MIKU-B3",
+      "metric": "penalized_travel_time_s",
+      "n": 30,
+      "mean_difference": 3.55,
+      "ci_low": 2.35,
+      "ci_high": 4.75,
+      "cohen_dz": 1.0066287541455528
+    }
+  ]
+}
