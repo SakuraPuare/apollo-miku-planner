@@ -15,8 +15,8 @@
     M1_no_C1      — 仅关闭 C1 时变 SL 投影 (τ-shift)
     M2_no_C2C3    — 关闭 C2 扫描线分组 与 C3 组内 max-gap
     M3_no_C4      — 关闭 C4 多因子差异化裕度 δ_i
-    M4_no_C5      — 关闭 C5 ST 走廊注入
-    M5_full       — 完整 MIKU
+    M4_no_C5      — 关闭 C5 占用补集安全时窗
+    M5_full       — 启用修正后的先通过/后通过安全时窗
 
 每个变体在每个场景下输出 13 列指标，落盘 CSV 给 metric_score.py 与 pgfplots 直接吃。
 """
@@ -125,11 +125,15 @@ def _metric_row(scn_name: str, flags: AblationFlags, scn, m, r) -> dict:
 
 
 def main():
-    out_dir = os.path.join(
-        os.path.dirname(os.path.abspath(__file__)), "..", "图片", "data", "ablation"
+    root = os.path.normpath(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     )
-    out_dir = os.path.normpath(out_dir)
-    os.makedirs(out_dir, exist_ok=True)
+    out_dirs = (
+        os.path.join(root, "图片", "data", "ablation"),
+        os.path.join(root, "小论文-2", "generated"),
+    )
+    for out_dir in out_dirs:
+        os.makedirs(out_dir, exist_ok=True)
 
     rows = []
     print(
@@ -141,7 +145,14 @@ def main():
     # 主对比指标仍由 apollo_pipeline.py 输出的可比子场景生成。
     for scn_name, scn in STRESS_SCENARIOS.items():
         for flags in VARIANTS:
-            r = run_pipeline(flags, scn)
+            # C5 evaluates the corrected before/after safe-window formulation.
+            # The pipeline suppresses the legacy one-sided corridor whenever
+            # safe_window_mode is active, yielding a clean component switch.
+            r = run_pipeline(
+                flags,
+                scn,
+                safe_window_mode=flags.corridor_inject,
+            )
             m = compute_metrics(r, scn)
             row = _metric_row(scn_name, flags, scn, m, r)
             rows.append(row)
@@ -155,29 +166,25 @@ def main():
             )
         print("-" * 100)
 
-    csv_path = os.path.join(out_dir, "ablation.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=METRIC_COLUMNS)
-        w.writeheader()
-        for row in rows:
-            w.writerow(row)
-    print(f"\n→ {csv_path}  ({len(rows)} rows)")
+    payload = {
+        "variants": [asdict(v) for v in VARIANTS],
+        "scenarios": [
+            (name, SCENARIO_META.get(name, name)) for name in STRESS_SCENARIOS
+        ],
+        "rows": rows,
+    }
+    for out_dir in out_dirs:
+        csv_path = os.path.join(out_dir, "ablation.csv")
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            w = csv.DictWriter(f, fieldnames=METRIC_COLUMNS)
+            w.writeheader()
+            w.writerows(rows)
+        print(f"\n→ {csv_path}  ({len(rows)} rows)")
 
-    json_path = os.path.join(out_dir, "ablation.json")
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "variants": [asdict(v) for v in VARIANTS],
-                "scenarios": [
-                    (name, SCENARIO_META.get(name, name)) for name in STRESS_SCENARIOS
-                ],
-                "rows": rows,
-            },
-            f,
-            ensure_ascii=False,
-            indent=2,
-        )
-    print(f"→ {json_path}")
+        json_path = os.path.join(out_dir, "ablation.json")
+        with open(json_path, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        print(f"→ {json_path}")
 
 
 if __name__ == "__main__":

@@ -2,11 +2,12 @@
 # requires-python = ">=3.10"
 # dependencies = ["numpy", "matplotlib>=3.8", "scipy>=1.11", "osqp>=0.6.3"]
 # ///
-r"""威胁度权重灵敏度分析 — 验证 ±20% 扰动下障碍物威胁度排序的稳定性。
+r"""MIKU 参数灵敏度分析：权重、到达时间和障碍物预测误差。
 
 输出：
   1. 终端运行日志
   2. 毕业论文/_sensitivity_macros.tex — LaTeX 宏定义，供 chapter8.tex 引用
+  3. 小论文-2/generated/sensitivity_* — 轨迹级 CSV/JSON 与论文宏
 
 宏命名规则：\Sens<场景><指标>
   场景：One/Two/Three/Four
@@ -21,6 +22,9 @@ r"""威胁度权重灵敏度分析 — 验证 ±20% 扰动下障碍物威胁度�
 
 from __future__ import annotations
 
+import copy
+import csv
+import json
 import sys
 from pathlib import Path
 
@@ -32,6 +36,9 @@ import apollo_pipeline as _mod
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "毕业论文" / "_sensitivity_macros.tex"
+OUT_DATA = ROOT / "图片" / "data" / "sensitivity"
+PAPER_OUT = ROOT / "小论文-2" / "generated" / "sensitivity_macros.tex"
+PAPER_DATA = ROOT / "小论文-2" / "generated"
 
 Scenario = _mod.Scenario
 compute_threat = _mod.compute_threat
@@ -44,6 +51,7 @@ NAMES = ["TTC", "Overlap", "Vel", "Type", "Inter"]
 SCN_WORDS = {"01": "One", "02": "Two", "03": "Three", "04": "Four"}
 PERTURB_FRAC = 0.20
 N_TRIALS = 100
+N_TRAJECTORY_TRIALS = 20
 SINGLE_FACTOR_TRIALS = len(NAMES) * 2
 DELTA_EXCEED_THRESHOLD = 0.05
 THETA_CLOSE_THRESHOLD = 0.02
@@ -60,6 +68,7 @@ def m(key: str, value: str) -> None:
 
 m("SensPerturbPct", f"{PERTURB_FRAC * 100:.0f}")
 m("SensTrialCount", str(N_TRIALS))
+m("SensTrajectoryTrialCount", str(N_TRAJECTORY_TRIALS))
 m("SensSingleFactorTrialCount", str(SINGLE_FACTOR_TRIALS))
 m("SensDeltaExceedThreshold", f"{DELTA_EXCEED_THRESHOLD:.2f}")
 m("SensThetaCloseThreshold", f"{THETA_CLOSE_THRESHOLD:.2f}")
@@ -167,10 +176,164 @@ m("SensWorstFlipRate", f"{max(all_flip_rates):.0f}")
 m("SensWorstAbsDev", f"{max(all_abs_devs):.4f}")
 m("SensWorstRelDev", f"{max(all_rel_devs):.1f}")
 
+# ── 3. 扰动传播到最终轨迹指标 ──
+print()
+print("=" * 80)
+print("3. 扰动传播：终点、jerk 与横向偏移")
+print("=" * 80)
+
+main_flags = _mod.AblationFlags(True, True, True, True, False, "MIKU")
+trajectory_rng = np.random.default_rng(4242)
+trajectory_rows: list[dict[str, object]] = []
+
+
+def trajectory_metrics(scn: Scenario, tau_fn=None) -> dict[str, float | int]:
+    result = _mod.run_pipeline(main_flags, scn, tau_fn=tau_fn)
+    metrics = _mod.compute_metrics(result, scn)
+    return {
+        "success": int(metrics.get("success", 0)),
+        "s_end": float(metrics.get("s_end", 0.0) or 0.0),
+        "jerk_rms": float(metrics.get("jerk_rms", 0.0) or 0.0),
+        "l_max_dev": float(metrics.get("l_max_dev", 0.0) or 0.0),
+    }
+
+
+for sc_name, scn in SCENARIOS.items():
+    prefix = SCN_WORDS[sc_name[:2]]
+    base = trajectory_metrics(scn)
+    scenario_rows = []
+    for trial in range(N_TRAJECTORY_TRIALS):
+        weights = BASELINE_W * (
+            1 + trajectory_rng.uniform(-PERTURB_FRAC, PERTURB_FRAC, size=5)
+        )
+        weights /= weights.sum()
+        old_weights = _mod.THREAT_WEIGHTS
+        try:
+            _mod.THREAT_WEIGHTS = tuple(weights)
+            metrics = trajectory_metrics(scn)
+        finally:
+            _mod.THREAT_WEIGHTS = old_weights
+        row = {
+            "scenario": sc_name,
+            "variant": "threat_weights",
+            "trial": trial,
+            **metrics,
+        }
+        scenario_rows.append(row)
+        trajectory_rows.append(row)
+
+    success_rate = np.mean([row["success"] for row in scenario_rows]) * 100
+    max_s_end_deviation = max(
+        abs(float(row["s_end"]) - float(base["s_end"])) for row in scenario_rows
+    )
+    max_jerk_deviation = max(
+        abs(float(row["jerk_rms"]) - float(base["jerk_rms"]))
+        for row in scenario_rows
+    )
+    max_lateral_deviation = max(
+        abs(float(row["l_max_dev"]) - float(base["l_max_dev"]))
+        for row in scenario_rows
+    )
+    m(f"Sens{prefix}TrajectorySuccessPct", f"{success_rate:.0f}")
+    m(f"Sens{prefix}TrajectoryMaxSEndDev", f"{max_s_end_deviation:.3f}")
+    m(f"Sens{prefix}TrajectoryMaxJerkDev", f"{max_jerk_deviation:.3f}")
+    m(f"Sens{prefix}TrajectoryMaxLateralDev", f"{max_lateral_deviation:.3f}")
+    print(
+        f"  [{sc_name}] success={success_rate:.0f}%, "
+        f"Δs_end≤{max_s_end_deviation:.3f}m, "
+        f"Δjerk≤{max_jerk_deviation:.3f}, "
+        f"Δl≤{max_lateral_deviation:.3f}m"
+    )
+
+# Arrival-time, obstacle-speed, and lateral-position perturbations use fixed
+# symmetric levels. They are planning-input tests, not new truth distributions.
+for sc_name, scn in SCENARIOS.items():
+    for percentage in (-20, 20):
+        scale = 1.0 + percentage / 100.0
+
+        def scaled_tau(s: float, factor: float = scale) -> float:
+            return factor * _mod.arrival_time(s, scn)
+
+        trajectory_rows.append(
+            {
+                "scenario": sc_name,
+                "variant": f"tau_{percentage:+d}pct",
+                "trial": 0,
+                **trajectory_metrics(scn, tau_fn=scaled_tau),
+            }
+        )
+    for speed_error in (-0.5, 0.5):
+        perturbed = copy.deepcopy(scn)
+        for obstacle in perturbed.obstacles:
+            if not obstacle.is_static:
+                obstacle.vs += speed_error
+        trajectory_rows.append(
+            {
+                "scenario": sc_name,
+                "variant": f"obstacle_speed_{speed_error:+.1f}mps",
+                "trial": 0,
+                **trajectory_metrics(perturbed),
+            }
+        )
+    for lateral_error in (-0.2, 0.2):
+        perturbed = copy.deepcopy(scn)
+        for obstacle in perturbed.obstacles:
+            obstacle.l0 += lateral_error
+        trajectory_rows.append(
+            {
+                "scenario": sc_name,
+                "variant": f"obstacle_lateral_{lateral_error:+.1f}m",
+                "trial": 0,
+                **trajectory_metrics(perturbed),
+            }
+        )
+
+single_factor_rows = [
+    row for row in trajectory_rows if row["variant"] != "threat_weights"
+]
+dynamic_single_factor_rows = [
+    row
+    for row in single_factor_rows
+    if row["scenario"] in ("01_crossing_ped", "02_ped_plus_parked")
+]
+m("SensSingleFactorCount", str(len(single_factor_rows)))
+m(
+    "SensSingleFactorSuccessPct",
+    f"{100 * np.mean([row['success'] for row in single_factor_rows]):.0f}",
+)
+m("SensDynamicSingleFactorCount", str(len(dynamic_single_factor_rows)))
+m(
+    "SensDynamicSingleFactorSuccessPct",
+    f"{100 * np.mean([row['success'] for row in dynamic_single_factor_rows]):.0f}",
+)
+
+OUT_DATA.mkdir(parents=True, exist_ok=True)
+PAPER_DATA.mkdir(parents=True, exist_ok=True)
+sensitivity_metadata = {
+    "protocol": "miku-sensitivity-v2",
+    "weight_trials_per_scenario": N_TRAJECTORY_TRIALS,
+    "weight_range": [-PERTURB_FRAC, PERTURB_FRAC],
+    "tau_error_percent": [-20, 20],
+    "obstacle_speed_error_mps": [-0.5, 0.5],
+    "obstacle_lateral_error_m": [-0.2, 0.2],
+    "rows": trajectory_rows,
+}
+for data_dir in (OUT_DATA, PAPER_DATA):
+    with (data_dir / "sensitivity_trajectory.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=tuple(trajectory_rows[0]))
+        writer.writeheader()
+        writer.writerows(trajectory_rows)
+    (data_dir / "sensitivity_trajectory.json").write_text(
+        json.dumps(sensitivity_metadata, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+
 # ── 4. 输出 LaTeX 宏文件 ──
 print()
 print("=" * 80)
-print(f"3. 输出 LaTeX 宏 → {OUT}")
+print(f"4. 输出 LaTeX 宏 → {OUT}")
 print("=" * 80)
 
 lines = [
@@ -185,11 +348,13 @@ for key in sorted(macros):
 lines.append("")
 
 OUT.write_text("\n".join(lines), encoding="utf-8")
+PAPER_OUT.write_text("\n".join(lines), encoding="utf-8")
 print(f"  写入 {len(macros)} 个宏到 {OUT}")
+print(f"  写入 {len(macros)} 个宏到 {PAPER_OUT}")
 
 print()
 print("=" * 80)
-print("4. 结论")
+print("5. 结论")
 print("=" * 80)
 print(f"""
   - 场景二/三单因子扰动 0/10 翻转，排序完全稳定
