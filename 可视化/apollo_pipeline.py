@@ -80,6 +80,7 @@ MIN_BORROW_WIDTH = 2.0
 PLANNING_TIME_RANGE_MIN = 6.0
 PLANNING_TIME_RANGE_MAX = 15.0
 PATH_BOUNDARY_STEP = 0.5
+PATH_GAP_EPSILON = 1e-6
 ABLATION_FAIL_PENALTY_S = 5
 
 
@@ -802,11 +803,38 @@ def _miku_path_bounds(
                 }
             )
             continue
+        temporal_only = []
         solution = solve_max_gap(
             [ForbiddenInterval(r["u"], r["v"]) for r in active],
             center_road_min,
             center_road_max,
         )
+        # A pure dynamic full-width conflict is temporal, not a permanent path
+        # blockage.  Preserve the static geometry here and leave the dynamic
+        # occupancy to the downstream ST bounds.  If the static subset is also
+        # infeasible, the ordinary blocked-path handling remains active.
+        if solution.gap < PATH_GAP_EPSILON:
+            temporal_only = [r for r in active if not r["obs"].is_static]
+            if temporal_only:
+                active = [r for r in active if r["obs"].is_static]
+                if not active:
+                    group_decisions.append(
+                        {
+                            "grp": grp,
+                            "l_minus": center_road_min,
+                            "l_plus": center_road_max,
+                            "p_star": None,
+                            "g_star": center_road_max - center_road_min,
+                            "ordered": [],
+                            "temporal_only": temporal_only,
+                        }
+                    )
+                    continue
+                solution = solve_max_gap(
+                    [ForbiddenInterval(r["u"], r["v"]) for r in active],
+                    center_road_min,
+                    center_road_max,
+                )
         ordered = [active[i] for i in solution.ordered_indices]
         k = len(ordered)
         gaps = list(solution.candidate_gaps)
@@ -836,6 +864,7 @@ def _miku_path_bounds(
                 "g_star": gaps[p_star],
                 "ordered": ordered,
                 "gaps": gaps,
+                "temporal_only": temporal_only,
             }
         )
 
@@ -916,8 +945,11 @@ def path_bounds_decider(
             scn, s_arr, flags, tau_fn=tau_fn
         )
 
-    # ego 起点位置硬约束
-    l_min[0] = l_max[0] = e.l0
+    # ego 当前起点位置硬约束。初次规划 s0=0；滚动重规划时将已经驶过的
+    # 前缀固定到当前横向状态，避免求解器把起点错误地留在全局 s=0。
+    start_index = int(np.argmin(np.abs(s_arr - e.s0)))
+    l_min[: start_index + 1] = e.l0
+    l_max[: start_index + 1] = e.l0
 
     # Apollo 真实行为：l_min > l_max 直接 blocked，下游 trim。无 squeeze hack。
     blocked_idx = -1
@@ -1013,6 +1045,8 @@ def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
                 continue  # 横向不重叠（含边界严格分离）
             s_lo = os_ - obs.L / 2 - e.L / 2
             s_hi = os_ + obs.L / 2 + e.L / 2
+            if s_hi < e.s0 - 1e-9:
+                continue
             intervals.append((float(t), float(s_lo), float(s_hi)))
         boundaries.append(
             {
@@ -1050,7 +1084,8 @@ def speed_dp(scn: Scenario, st_bounds):
     INF = 1e15
     cost = np.full((nt, ns), INF)
     parent = np.full((nt, ns), -1, dtype=np.int32)
-    cost[0, 0] = 0.0
+    start_index = int(np.clip(round(e.s0 / ds), 0, ns - 1))
+    cost[0, start_index] = 0.0
 
     v_ref, w_v, w_a = e.v0, 1.0, 0.5
     a_min, a_max, v_max = -4.0, 2.0, 13.0

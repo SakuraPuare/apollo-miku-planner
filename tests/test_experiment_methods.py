@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from apollo_pipeline import COMPARABLE_SCENARIOS, PRESSURE_SCENARIOS, run_pipeline
+from apollo_pipeline import COMPARABLE_SCENARIOS, run_pipeline
+from experiment_cases import generate_case
 from experiment_methods import METHODS, method_by_key, run_method
 
 
@@ -27,7 +28,7 @@ def test_unknown_method_is_rejected():
 
 
 def test_pure_dynamic_full_width_conflict_is_deferred_to_speed_stage():
-    scenario = PRESSURE_SCENARIOS["01_crossing_ped"]
+    scenario = generate_case("crossing_pedestrian", 0).planning_scenario
     run = run_method(method_by_key("MIKU"), scenario)
     assert run.result["blocked_idx"] == -1
     assert run.result["st_bounds"][0]["intervals"]

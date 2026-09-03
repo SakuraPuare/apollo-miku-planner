@@ -14,6 +14,7 @@ from typing import Callable
 import numpy as np
 
 from apollo_pipeline import AblationFlags, Scenario, arrival_time, run_pipeline
+from joint_reference import run_joint_reference
 
 
 @dataclass(frozen=True)
@@ -23,6 +24,7 @@ class MethodSpec:
     flags: AblationFlags
     iterative: bool = False
     max_iterations: int = 1
+    solver: str = "pipeline"
 
 
 @dataclass
@@ -57,6 +59,13 @@ METHODS: tuple[MethodSpec, ...] = (
     ),
 )
 
+JOINT_REFERENCE = MethodSpec(
+    "B3",
+    "B3-JointReference",
+    AblationFlags.baseline(),
+    solver="joint_grid",
+)
+
 
 def _trajectory_tau(result: dict, scn: Scenario) -> Callable[[float], float]:
     """Construct first-arrival ``tau(s)`` from the preceding speed solution."""
@@ -87,7 +96,12 @@ def _trajectory_tau(result: dict, scn: Scenario) -> Callable[[float], float]:
 def run_method(spec: MethodSpec, scn: Scenario, convergence_s: float = 0.05) -> MethodRun:
     """Run one method and measure the complete planning call(s), not QP only."""
     start = time.perf_counter()
-    result = run_pipeline(spec.flags, scn)
+    if spec.solver == "joint_grid":
+        result = run_joint_reference(scn)
+    elif spec.solver == "pipeline":
+        result = run_pipeline(spec.flags, scn)
+    else:
+        raise ValueError(f"unknown method solver: {spec.solver}")
     iterations = 1
     converged = not spec.iterative
 
@@ -109,7 +123,7 @@ def run_method(spec: MethodSpec, scn: Scenario, convergence_s: float = 0.05) -> 
 
 
 def method_by_key(key: str) -> MethodSpec:
-    for method in METHODS:
+    for method in (*METHODS, JOINT_REFERENCE):
         if method.key == key:
             return method
     raise KeyError(key)

@@ -44,7 +44,10 @@ def trajectory_from_run(run: MethodRun, scn: Scenario) -> Trajectory:
     s = np.asarray(result["s_qp"], dtype=float)
     v = np.asarray(result["v_qp"], dtype=float)
     a = np.asarray(result["a_qp"], dtype=float)
-    lateral = np.interp(s, result["s_arr"], result["l_path"])
+    if result.get("l_qp") is not None:
+        lateral = np.asarray(result["l_qp"], dtype=float)
+    else:
+        lateral = np.interp(s, result["s_arr"], result["l_path"])
     return Trajectory(ts, s, lateral, v, a, False)
 
 
