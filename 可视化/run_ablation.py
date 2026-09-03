@@ -44,11 +44,11 @@ from apollo_pipeline import (  # noqa: E402
 
 VARIANTS = [
     AblationFlags(False, False, False, False, False, "M0_baseline"),
-    AblationFlags(False, True, True, True, True, "M1_no_C1"),
-    AblationFlags(True, False, False, True, True, "M2_no_C2C3"),
-    AblationFlags(True, True, True, False, True, "M3_no_C4"),
-    AblationFlags(True, True, True, True, False, "M4_no_C5"),
-    AblationFlags(True, True, True, True, True, "M5_full"),
+    AblationFlags(False, True, True, True, True, "M1_no_C1", False),
+    AblationFlags(True, False, False, True, True, "M2_no_C2C3", True),
+    AblationFlags(True, True, True, False, True, "M3_no_C4", False),
+    AblationFlags(True, True, True, True, False, "M4_no_C5", True),
+    AblationFlags(True, True, True, True, True, "M5_full", True),
 ]
 
 METRIC_COLUMNS = [

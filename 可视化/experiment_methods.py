@@ -25,6 +25,8 @@ class MethodSpec:
     iterative: bool = False
     max_iterations: int = 1
     solver: str = "pipeline"
+    damping: float = 1.0
+    refine_on_demand: bool = False
 
 
 @dataclass
@@ -53,9 +55,11 @@ METHODS: tuple[MethodSpec, ...] = (
     MethodSpec(
         "MIKU",
         "MIKU",
-        # Corrected safe-window injection (C5) is retained for ablation only:
-        # it had no independent benefit and caused a repeatable P2 regression.
-        AblationFlags(True, True, True, True, False, "MIKU"),
+        AblationFlags(True, True, True, True, True, "MIKU", True),
+        iterative=True,
+        max_iterations=2,
+        damping=0.7,
+        refine_on_demand=True,
     ),
 )
 
@@ -93,13 +97,22 @@ def _trajectory_tau(result: dict, scn: Scenario) -> Callable[[float], float]:
     return tau
 
 
-def run_method(spec: MethodSpec, scn: Scenario, convergence_s: float = 0.05) -> MethodRun:
+def run_method(
+    spec: MethodSpec,
+    scn: Scenario,
+    convergence_s: float = 0.05,
+    preferred_homotopy: dict[str, int] | None = None,
+) -> MethodRun:
     """Run one method and measure the complete planning call(s), not QP only."""
     start = time.perf_counter()
     if spec.solver == "joint_grid":
         result = run_joint_reference(scn)
     elif spec.solver == "pipeline":
-        result = run_pipeline(spec.flags, scn)
+        result = run_pipeline(
+            spec.flags,
+            scn,
+            preferred_homotopy=preferred_homotopy,
+        )
     else:
         raise ValueError(f"unknown method solver: {spec.solver}")
     iterations = 1
@@ -108,15 +121,52 @@ def run_method(spec: MethodSpec, scn: Scenario, convergence_s: float = 0.05) -> 
     if spec.iterative:
         probe_s = np.linspace(scn.ego.s0, scn.s_max, 64)
         previous_tau = np.array([arrival_time(float(s), scn) for s in probe_s])
+        target = max(scn.s_max - 1.0, scn.ego.s0)
+
+        def planner_score(candidate: dict) -> tuple[int, int, int, float]:
+            trajectory = candidate.get("s_qp")
+            if trajectory is None:
+                return (0, 0, 0, -float("inf"))
+            progress = float(np.asarray(trajectory, dtype=float)[-1])
+            reached = int(progress >= target - 1e-3)
+            hard_goal = int(not candidate.get("terminal_goal_relaxed", False))
+            return (1, reached, hard_goal, progress)
+
+        best_result = result
+        requires_refinement = (
+            not spec.refine_on_demand
+            or (
+                planner_score(result)[1] == 0
+                and any(not obstacle.is_static for obstacle in scn.obstacles)
+                and not any(obstacle.is_static for obstacle in scn.obstacles)
+            )
+        )
         for iteration in range(2, spec.max_iterations + 1):
+            if not requires_refinement:
+                break
             tau_fn = _trajectory_tau(result, scn)
-            updated_tau = np.array([tau_fn(float(s)) for s in probe_s])
-            result = run_pipeline(spec.flags, scn, tau_fn=tau_fn)
+            raw_tau = np.array([tau_fn(float(s)) for s in probe_s])
+            updated_tau = (
+                spec.damping * raw_tau + (1.0 - spec.damping) * previous_tau
+            )
+
+            def damped_tau(s: float) -> float:
+                return float(np.interp(s, probe_s, updated_tau))
+
+            result = run_pipeline(
+                spec.flags,
+                scn,
+                tau_fn=damped_tau,
+                preferred_homotopy=preferred_homotopy,
+            )
             iterations = iteration
+            if planner_score(result) > planner_score(best_result):
+                best_result = result
             if float(np.max(np.abs(updated_tau - previous_tau))) <= convergence_s:
                 converged = True
                 break
             previous_tau = updated_tau
+        result = best_result
 
     runtime_ms = (time.perf_counter() - start) * 1000.0
     return MethodRun(spec, result, runtime_ms, iterations, converged)

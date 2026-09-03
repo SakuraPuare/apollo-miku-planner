@@ -44,8 +44,19 @@ import numpy as np
 import osqp
 import scipy.sparse as sp
 from matplotlib.patches import Circle, Polygon, Rectangle
-from miku_geometry import ForbiddenInterval, solve_max_gap
-from miku_time import OccupancyInterval, TimeWindow, safe_time_windows, select_time_window
+from miku_geometry import (
+    ForbiddenInterval,
+    enumerate_lateral_bands,
+    select_spatial_homotopy,
+    solve_max_gap,
+)
+from miku_time import (
+    ConflictPoint,
+    OccupancyInterval,
+    TimeWindow,
+    enumerate_temporal_homotopies,
+    safe_time_windows,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -151,6 +162,7 @@ class AblationFlags:
     threat_delta: bool = True
     corridor_inject: bool = True
     name: str = "M5_full"
+    robust_prediction: bool = False
 
     @classmethod
     def baseline(cls) -> "AblationFlags":
@@ -158,7 +170,7 @@ class AblationFlags:
 
     @classmethod
     def full(cls) -> "AblationFlags":
-        return cls(True, True, True, True, True, "M5_full")
+        return cls(True, True, True, True, True, "M5_full", True)
 
     @classmethod
     def from_mode(cls, mode_or_flags) -> "AblationFlags":
@@ -178,6 +190,7 @@ class AblationFlags:
                 self.max_gap,
                 self.threat_delta,
                 self.corridor_inject,
+                self.robust_prediction,
             ]
         )
 
@@ -704,6 +717,8 @@ def _miku_path_bounds(
     flags: Optional[AblationFlags] = None,
     debug=False,
     tau_fn: Optional[Callable[[float], float]] = None,
+    candidate_rank: int = 0,
+    split_overrides: Optional[dict[int, int]] = None,
 ):
     """MIKU PathBoundsDecider — 论文第六章算法\\ref{alg:optimal_band}：
 
@@ -786,7 +801,7 @@ def _miku_path_bounds(
 
     # —— 步骤4-5：组内 max-gap 求解，得到分组的 [l^-, l^+]
     group_decisions = []
-    for grp in groups:
+    for group_index, grp in enumerate(groups):
         # 完全位于中心可行区间外的障碍物不收紧当前道路截面。
         active = [
             r for r in grp if r["u"] < center_road_max and r["v"] > center_road_min
@@ -803,7 +818,34 @@ def _miku_path_bounds(
                 }
             )
             continue
-        temporal_only = []
+        # A localized lateral crossing is a temporal homotopy decision. Trying
+        # to squeeze the path around it at one estimated arrival time makes the
+        # path boundary discontinuous and can turn a feasible yield manoeuvre
+        # into a false blockage. C5 owns these obstacles and transfers their
+        # occupancy to the speed stage.
+        temporal_only = [
+            r
+            for r in active
+            if flags.corridor_inject
+            and not r["obs"].is_static
+            and abs(float(r["obs"].vl)) >= 0.2
+            and abs(float(r["obs"].vs)) <= 1.0
+        ]
+        if temporal_only:
+            active = [r for r in active if r not in temporal_only]
+            if not active:
+                group_decisions.append(
+                    {
+                        "grp": grp,
+                        "l_minus": center_road_min,
+                        "l_plus": center_road_max,
+                        "p_star": None,
+                        "g_star": center_road_max - center_road_min,
+                        "ordered": [],
+                        "temporal_only": temporal_only,
+                    }
+                )
+                continue
         solution = solve_max_gap(
             [ForbiddenInterval(r["u"], r["v"]) for r in active],
             center_road_min,
@@ -814,8 +856,9 @@ def _miku_path_bounds(
         # occupancy to the downstream ST bounds.  If the static subset is also
         # infeasible, the ordinary blocked-path handling remains active.
         if solution.gap < PATH_GAP_EPSILON:
-            temporal_only = [r for r in active if not r["obs"].is_static]
-            if temporal_only:
+            newly_temporal = [r for r in active if not r["obs"].is_static]
+            if newly_temporal:
+                temporal_only.extend(newly_temporal)
                 active = [r for r in active if r["obs"].is_static]
                 if not active:
                     group_decisions.append(
@@ -840,8 +883,20 @@ def _miku_path_bounds(
         gaps = list(solution.candidate_gaps)
         # C3 关闭：退化为「整组绕一侧」二元决策，比较 g_0 与 g_k
         if flags.max_gap:
-            p_star = solution.split_index
+            ranked_bands = enumerate_lateral_bands(
+                [ForbiddenInterval(r["u"], r["v"]) for r in active],
+                center_road_min,
+                center_road_max,
+                top_k=3,
+            )
+            selected_band = ranked_bands[min(candidate_rank, len(ranked_bands) - 1)]
+            p_star = (
+                split_overrides.get(group_index, selected_band.split_index)
+                if split_overrides is not None
+                else selected_band.split_index
+            )
         else:
+            ranked_bands = ()
             p_star = k if gaps[k] >= gaps[0] else 0
         # 分配 L/R：i ≤ p* → 左绕（在通道左侧 → ego 走通道右侧 → ego l ≤ u_(p*+1)）
         # 论文记号：L_p = {(1)..(p)}，R_p = {(p+1)..(k)}；通行带 l^+ = min_{R} u, l^- = max_{L} v
@@ -865,7 +920,45 @@ def _miku_path_bounds(
                 "ordered": ordered,
                 "gaps": gaps,
                 "temporal_only": temporal_only,
+                "band_candidates": ranked_bands,
+                "group_index": group_index,
             }
+        )
+
+    # Select one longitudinally coherent sequence from the Top-K band layers.
+    # Explicit overrides and nonzero ranks are retained for ablation/oracle
+    # experiments; the default planner uses the global dynamic program.
+    spatial_homotopy = None
+    spatial_layers = [
+        gd for gd in group_decisions if gd.get("band_candidates")
+    ]
+    if (
+        flags.max_gap
+        and candidate_rank == 0
+        and split_overrides is None
+        and spatial_layers
+    ):
+        spatial_homotopy = select_spatial_homotopy(
+            [gd["band_candidates"] for gd in spatial_layers],
+            initial_lateral=e.l0,
+            transition_weight=0.05,
+            gap_epsilon=PATH_GAP_EPSILON,
+        )
+        if spatial_homotopy is not None:
+            for gd, band in zip(
+                spatial_layers,
+                spatial_homotopy.bands,
+                strict=True,
+            ):
+                gd["p_star"] = band.split_index
+                gd["l_minus"] = band.lower
+                gd["l_plus"] = band.upper
+                gd["g_star"] = band.gap
+                gd["selected_band"] = band
+
+    for gd in group_decisions:
+        gd["spatial_homotopy_cost"] = (
+            None if spatial_homotopy is None else spatial_homotopy.cost
         )
 
     # —— 步骤6：把每组的 L/R 决策投影回 path_boundary
@@ -924,6 +1017,8 @@ def path_bounds_decider(
     scn: Scenario,
     mode_or_flags,
     tau_fn: Optional[Callable[[float], float]] = None,
+    candidate_rank: int = 0,
+    split_overrides: Optional[dict[int, int]] = None,
 ):
     """Apollo PathBoundsDecider 入口（支持字符串 mode 与 AblationFlags 两种调用）。
 
@@ -942,7 +1037,12 @@ def path_bounds_decider(
         l_min, l_max, _, _ = _baseline_path_bounds(scn, s_arr)
     else:
         l_min, l_max, _, _, group_decisions = _miku_path_bounds(
-            scn, s_arr, flags, tau_fn=tau_fn
+            scn,
+            s_arr,
+            flags,
+            tau_fn=tau_fn,
+            candidate_rank=candidate_rank,
+            split_overrides=split_overrides,
         )
 
     # ego 当前起点位置硬约束。初次规划 s0=0；滚动重规划时将已经驶过的
@@ -1023,7 +1123,12 @@ def path_optimizer(s_arr, l_min, l_max):
 # ============================ ③ SpeedBoundsDecider 1：障碍物投到 ST ============================
 
 
-def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
+def st_boundary_mapper(
+    scn: Scenario,
+    s_arr_path,
+    l_path,
+    robust_prediction: bool = False,
+):
     """对每个障碍物，沿时间 t 检查它和 ego path 的横向重叠；重叠时给出 (t, s_lo, s_hi)。"""
     e = scn.ego
     boundaries = []
@@ -1035,16 +1140,40 @@ def st_boundary_mapper(scn: Scenario, s_arr_path, l_path):
             os_, ol_ = obs.position_at(t)
             if os_ < 0 or os_ > scn.s_max:
                 continue
-            l_ego = float(np.interp(os_, s_arr_path, l_path))
-            # ST mapper 仅检查几何重叠；安全裕度 δ 已在 PathBounds 阶段吃掉，不再叠加
-            ego_l_lo = l_ego - e.W / 2
-            ego_l_hi = l_ego + e.W / 2
-            obs_l_lo = ol_ - obs.W / 2
-            obs_l_hi = ol_ + obs.W / 2
+            # The ego centre can be anywhere within the longitudinal Minkowski
+            # interval while its rectangle overlaps the obstacle.  On a curved
+            # lateral-offset path, querying l(s) only at the obstacle centre
+            # misses collisions near the front/rear corners.  Use the complete
+            # path envelope over that interval.
+            longitudinal_half_extent = (obs.L + e.L) / 2.0
+            envelope_lo = max(float(s_arr_path[0]), os_ - longitudinal_half_extent)
+            envelope_hi = min(float(s_arr_path[-1]), os_ + longitudinal_half_extent)
+            envelope_mask = (s_arr_path >= envelope_lo) & (s_arr_path <= envelope_hi)
+            envelope_values = list(np.asarray(l_path)[envelope_mask])
+            envelope_values.extend(
+                [
+                    float(np.interp(envelope_lo, s_arr_path, l_path)),
+                    float(np.interp(envelope_hi, s_arr_path, l_path)),
+                ]
+            )
+            ego_l_lo = min(envelope_values) - e.W / 2
+            ego_l_hi = max(envelope_values) + e.W / 2
+            if robust_prediction and not obs.is_static and obs.vs >= -1.0:
+                if obs.obs_type == "ped":
+                    lateral_uncertainty = 0.05 + 0.03 * float(t)
+                    longitudinal_uncertainty = 0.10 + 0.05 * float(t)
+                else:
+                    lateral_uncertainty = 0.20 + 0.12 * float(t)
+                    longitudinal_uncertainty = 0.40 + 0.30 * float(t)
+            else:
+                lateral_uncertainty = 0.0
+                longitudinal_uncertainty = 0.15 if not obs.is_static else 0.0
+            obs_l_lo = ol_ - obs.W / 2 - lateral_uncertainty
+            obs_l_hi = ol_ + obs.W / 2 + lateral_uncertainty
             if obs_l_lo >= ego_l_hi or obs_l_hi <= ego_l_lo:
                 continue  # 横向不重叠（含边界严格分离）
-            s_lo = os_ - obs.L / 2 - e.L / 2
-            s_hi = os_ + obs.L / 2 + e.L / 2
+            s_lo = os_ - obs.L / 2 - e.L / 2 - longitudinal_uncertainty
+            s_hi = os_ + obs.L / 2 + e.L / 2 + longitudinal_uncertainty
             if s_hi < e.s0 - 1e-9:
                 continue
             intervals.append((float(t), float(s_lo), float(s_hi)))
@@ -1142,8 +1271,9 @@ def build_st_bounds(
     safe_window_mode: bool = False,
     tau_fn: Optional[Callable[[float], float]] = None,
     decision_log: Optional[list[dict]] = None,
+    preferred_homotopy: Optional[dict[str, int]] = None,
 ):
-    """重建 ``s_j^ub / s_j^lb``，可选择占用补集导出的安全时窗。"""
+    """重建 ``s_j^ub / s_j^lb``，并将时序同伦类编码为凸约束。"""
     dt = ts[1] - ts[0]
     nt = len(ts)
     # 默认 s_ub 设大（视化用）：让 ego 在没障碍/没 trim 时可以匀速跑到 t_max
@@ -1159,22 +1289,21 @@ def build_st_bounds(
     if decision_log is None:
         decision_log = []
 
-    # 动态障碍物：基线保持 YIELD；MIKU 从预测占用的补集中选择
-    # 先通过/后通过同伦类。tau 只排序候选窗，不定义安全边界。
-    for b in st_bounds:
-        if b["is_static"] or not b["intervals"]:
-            continue
-        # A single arrival window is meaningful for a localized crossing region.
-        # Longitudinally moving obstacles instead retain pointwise ST following
-        # bounds; collapsing their swept tube to one station would over-constrain.
-        localized_crossing = abs(float(b.get("vl", 0.0))) >= 0.2 and abs(
-            float(b.get("vs", 0.0))
-        ) <= 1.0
+    # Build one layered temporal graph for all localized crossing conflicts.
+    # Nodes are safe arrival components; graph edges enforce causal travel
+    # between stations. This prevents independently plausible local windows
+    # from forming a globally inconsistent sequence.
+    crossing_metadata: dict[int, dict] = {}
+    conflict_points = []
+    horizon = TimeWindow(0.0, float(scn.t_max))
+    for boundary_index, b in enumerate(st_bounds):
+        localized_crossing = (
+            not b["is_static"]
+            and bool(b["intervals"])
+            and abs(float(b.get("vl", 0.0))) >= 0.2
+            and abs(float(b.get("vs", 0.0))) <= 1.0
+        )
         if not safe_window_mode or not localized_crossing:
-            for t, s_lo, _s_hi in b["intervals"]:
-                ti = int(round(t / dt))
-                if 0 <= ti < nt:
-                    s_ub[ti] = min(s_ub[ti], s_lo)
             continue
 
         occupancy_times = sorted(float(item[0]) for item in b["intervals"])
@@ -1196,38 +1325,112 @@ def build_st_bounds(
             if distance > 0.0
             else 0.0
         )
-        horizon = TimeWindow(0.0, float(scn.t_max))
-        safe = safe_time_windows(occupancies, horizon, safety_guard=0.10)
+        temporal_guard = 0.10 + 0.05 * min(abs(float(b.get("vl", 0.0))), 2.0)
+        safe = safe_time_windows(occupancies, horizon, safety_guard=temporal_guard)
         reachable = TimeWindow(min(max(earliest, 0.0), scn.t_max), scn.t_max)
+        feasible = tuple(
+            overlap
+            for window in safe
+            if (overlap := window.intersect(reachable)) is not None
+        )
         nominal = (
             tau_fn(0.5 * (conflict_s_lo + conflict_s_hi))
             if tau_fn is not None
             else arrival_time(0.5 * (conflict_s_lo + conflict_s_hi), scn)
         )
-        selection = select_time_window(safe, nominal, reachable)
-        if selection.status == "stop" or selection.window is None:
-            s_ub[:] = np.minimum(s_ub, conflict_s_lo)
-            decision_log.append({"name": b["name"], "status": "stop"})
+        graph_name = f"{boundary_index}:{b['name']}"
+        crossing_metadata[boundary_index] = {
+            "graph_name": graph_name,
+            "conflict_s_lo": conflict_s_lo,
+            "conflict_s_hi": conflict_s_hi,
+            "safe": safe,
+            "nominal": nominal,
+        }
+        conflict_points.append(
+            ConflictPoint(
+                graph_name,
+                conflict_s_hi,
+                feasible,
+                nominal,
+            )
+        )
+
+    temporal_plans = enumerate_temporal_homotopies(
+        conflict_points,
+        start_station=scn.ego.s0,
+        start_time=0.0,
+        max_speed=13.0,
+        beam_width=8,
+        preferred_window_indices={
+            metadata["graph_name"]: preferred_homotopy[b["name"]]
+            for boundary_index, b in enumerate(st_bounds)
+            if preferred_homotopy is not None
+            and b["name"] in preferred_homotopy
+            and (metadata := crossing_metadata.get(boundary_index)) is not None
+        },
+        persistence_penalty=0.20,
+    )
+    selected_temporal_choices = (
+        {choice.name: choice for choice in temporal_plans[0].choices}
+        if temporal_plans
+        else {}
+    )
+
+    # 动态障碍物：基线保持 YIELD；MIKU 从预测占用的补集中选择
+    # 先通过/后通过同伦类。tau 只排序候选窗，不定义安全边界。
+    for boundary_index, b in enumerate(st_bounds):
+        if b["is_static"] or not b["intervals"]:
+            continue
+        # A single arrival window is meaningful for a localized crossing region.
+        # Longitudinally moving obstacles instead retain pointwise ST following
+        # bounds; collapsing their swept tube to one station would over-constrain.
+        localized_crossing = abs(float(b.get("vl", 0.0))) >= 0.2 and abs(
+            float(b.get("vs", 0.0))
+        ) <= 1.0
+        if not safe_window_mode or not localized_crossing:
+            for t, s_lo, _s_hi in b["intervals"]:
+                ti = int(round(t / dt))
+                if 0 <= ti < nt:
+                    s_ub[ti] = min(s_ub[ti], s_lo)
             continue
 
-        window = selection.window
+        metadata = crossing_metadata[boundary_index]
+        conflict_s_lo = metadata["conflict_s_lo"]
+        conflict_s_hi = metadata["conflict_s_hi"]
+        choice = selected_temporal_choices.get(metadata["graph_name"])
+        if choice is None:
+            s_ub[:] = np.minimum(s_ub, conflict_s_lo)
+            decision_log.append(
+                {
+                    "name": b["name"],
+                    "status": "stop",
+                    "graph_candidate_count": len(temporal_plans),
+                }
+            )
+            continue
+
+        window = choice.window
         has_lower_boundary = window.start > horizon.start + 1e-9
         has_upper_boundary = window.end < horizon.end - 1e-9
+        longitudinal_guard = 0.05
         if has_lower_boundary:
             s_ub[ts < window.start] = np.minimum(
-                s_ub[ts < window.start], conflict_s_lo
+                s_ub[ts < window.start], conflict_s_lo - longitudinal_guard
             )
         if has_upper_boundary:
             s_lb[ts >= window.end] = np.maximum(
-                s_lb[ts >= window.end], conflict_s_hi
+                s_lb[ts >= window.end], conflict_s_hi + longitudinal_guard
             )
         decision_log.append(
             {
                 "name": b["name"],
                 "status": "selected",
                 "window": (window.start, window.end),
-                "target_arrival": selection.target_arrival,
-                "candidate_count": selection.candidate_count,
+                "target_arrival": choice.target_arrival,
+                "window_index": choice.window_index,
+                "candidate_count": len(metadata["safe"]),
+                "graph_candidate_count": len(temporal_plans),
+                "homotopy_cost": temporal_plans[0].cost,
             }
         )
 
@@ -1247,7 +1450,7 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     K = len(ts)
     dt = ts[1] - ts[0]
     n = 3 * K  # [s, v, a] × K
-    v_ref, w_v, w_a, w_jerk = e.v0, 5.0, 1.0, 100.0
+    v_ref, w_v, w_a, w_jerk, w_terminal = e.v0, 5.0, 1.0, 100.0, 20.0
     v_max, a_min, a_max = 13.0, -4.0, 2.0
 
     P = np.zeros((n, n))
@@ -1262,6 +1465,14 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
         P[3 * (j + 1) + 2, 3 * (j + 1) + 2] += c
         P[3 * j + 2, 3 * (j + 1) + 2] -= c
         P[3 * (j + 1) + 2, 3 * j + 2] -= c
+
+    # The velocity objective alone may prefer a comfortable but unnecessarily
+    # long post-yield recovery.  Apollo's speed optimizer also carries progress
+    # guidance from the coarse search.  A terminal reference preserves that
+    # role without inheriting the discretisation error of this compact DP grid.
+    terminal_target = min(float(s_ub[-1]), scn.s_max - 1.0)
+    P[3 * (K - 1), 3 * (K - 1)] += 2 * w_terminal
+    q[3 * (K - 1)] += -2 * w_terminal * terminal_target
 
     eq_r, eq_c, eq_v, eq_b = [], [], [], []
     r = 0
@@ -1330,29 +1541,32 @@ def run_pipeline(
     scn: Scenario,
     tau_fn: Optional[Callable[[float], float]] = None,
     safe_window_mode: bool = False,
+    candidate_rank: int = 0,
+    split_overrides: Optional[dict[int, int]] = None,
+    preferred_homotopy: Optional[dict[str, int]] = None,
 ):
     flags = AblationFlags.from_mode(mode_or_flags)
     s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(
-        scn, flags, tau_fn=tau_fn
+        scn,
+        flags,
+        tau_fn=tau_fn,
+        candidate_rank=candidate_rank,
+        split_overrides=split_overrides,
     )
     l_path, path_qp_ms = path_optimizer(s_arr, l_min, l_max)
-    st_bounds = st_boundary_mapper(scn, s_arr, l_path)
+    st_bounds = st_boundary_mapper(
+        scn,
+        s_arr,
+        l_path,
+        robust_prediction=flags.robust_prediction,
+    )
     ts, s_dp, forbidden, ss = speed_dp(scn, st_bounds)
 
     corridor = None
-    if flags.corridor_inject and group_decisions and not safe_window_mode:
-        # 论文中的可选接口只保留原有的保守“不早于”上界。占用补集
-        # 安全时窗是独立实验功能，必须由调用方显式启用，不能改变既有
-        # 8 场景和消融中 ``miku`` 的默认语义。
-        corridor = []
-        for gd in group_decisions:
-            dynamic = [r for r in gd["grp"] if not r["obs"].is_static]
-            if not dynamic:
-                continue
-            r = min(dynamic, key=lambda item: item["s_minus"])
-            s_k = r["s_minus"] - scn.ego.L / 2
-            tau_k = tau_fn(s_k) if tau_fn is not None else arrival_time(s_k, scn)
-            corridor.append((s_k, tau_k))
+    # C5 is the temporal-homotopy coordination layer. ``safe_window_mode`` is
+    # retained as a diagnostic override; full MIKU enables the same semantics
+    # through its component flag.
+    use_temporal_homotopy = flags.corridor_inject or safe_window_mode
 
     time_window_decisions: list[dict] = []
     s_ub, s_lb = build_st_bounds(
@@ -1360,9 +1574,10 @@ def run_pipeline(
         st_bounds,
         s_dp,
         ts,
-        safe_window_mode=safe_window_mode,
+        safe_window_mode=use_temporal_homotopy,
         tau_fn=tau_fn,
         decision_log=time_window_decisions,
+        preferred_homotopy=preferred_homotopy,
     )
 
     # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
@@ -1376,7 +1591,22 @@ def run_pipeline(
         blocked_s = max(s_arr[blocked_idx] - scn.ego.L / 2, 0.0)
         s_ub = np.minimum(s_ub, blocked_s)
 
+    # Encode the planning goal as a terminal boundary condition whenever the
+    # constructed corridor reaches it. This avoids reporting a false failure
+    # merely because a soft objective converges a few centimetres short.
+    terminal_lower_before_goal = float(s_lb[-1])
+    s_lb[-1] = min(s_target, s_ub[-1])
+
     s_qp, v_qp, a_qp, speed_qp_ms = speed_qp(scn, s_ub, s_lb, ts)
+    terminal_goal_relaxed = False
+    if s_qp is None and s_lb[-1] > terminal_lower_before_goal + 1e-9:
+        # A hard goal must never turn a safe partial plan into solver failure.
+        # Retry with the original corridor bound and expose the relaxation in
+        # the result so experiments can count it explicitly.
+        s_lb[-1] = terminal_lower_before_goal
+        s_qp, v_qp, a_qp, retry_ms = speed_qp(scn, s_ub, s_lb, ts)
+        speed_qp_ms += retry_ms
+        terminal_goal_relaxed = True
 
     # 横向加速度 a_y(t) = v(t)^2 · κ(s(t))
     # 直道前提：κ_ref = 0 → κ(s) ≈ l''(s)，由 l_path 二阶中心差分得到
@@ -1400,6 +1630,7 @@ def run_pipeline(
         kappa_s=kappa_s,
         blocked_idx=blocked_idx,
         blocked_s=blocked_s,
+        group_decisions=group_decisions,
         st_bounds=st_bounds,
         ts=ts,
         s_dp=s_dp,
@@ -1413,6 +1644,9 @@ def run_pipeline(
         a_y=a_y,
         corridor=corridor,
         time_window_decisions=time_window_decisions,
+        terminal_goal_relaxed=terminal_goal_relaxed,
+        candidate_rank=candidate_rank,
+        split_overrides=split_overrides,
         qp_solve_ms={
             "path": path_qp_ms,
             "speed": speed_qp_ms,

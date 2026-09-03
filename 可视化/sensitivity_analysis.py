@@ -182,7 +182,7 @@ print("=" * 80)
 print("3. 扰动传播：终点、jerk 与横向偏移")
 print("=" * 80)
 
-main_flags = _mod.AblationFlags(True, True, True, True, False, "MIKU")
+main_flags = _mod.AblationFlags(True, True, True, True, True, "MIKU", True)
 trajectory_rng = np.random.default_rng(4242)
 trajectory_rows: list[dict[str, object]] = []
 

@@ -57,6 +57,35 @@ class WindowSelection:
     candidate_count: int
 
 
+@dataclass(frozen=True)
+class ConflictPoint:
+    """A longitudinal conflict station with a union of safe arrival windows."""
+
+    name: str
+    station: float
+    safe_windows: tuple[TimeWindow, ...]
+    nominal_arrival: float
+
+
+@dataclass(frozen=True)
+class TemporalChoice:
+    """One selected safe component at a conflict point."""
+
+    name: str
+    station: float
+    window_index: int
+    window: TimeWindow
+    target_arrival: float
+
+
+@dataclass(frozen=True)
+class TemporalHomotopy:
+    """A causally ordered path through multiple temporal safe components."""
+
+    choices: tuple[TemporalChoice, ...]
+    cost: float
+
+
 def merge_windows(windows: Iterable[TimeWindow]) -> tuple[TimeWindow, ...]:
     """Return the sorted union of overlapping or touching closed windows."""
 
@@ -156,3 +185,86 @@ def select_time_window(
     )
     _, target, window = ranked[0]
     return WindowSelection("selected", window, target, len(feasible))
+
+
+def enumerate_temporal_homotopies(
+    conflicts: Sequence[ConflictPoint],
+    start_station: float,
+    start_time: float = 0.0,
+    max_speed: float = 13.0,
+    beam_width: int = 8,
+    switch_penalty: float = 0.10,
+    preferred_window_indices: dict[str, int] | None = None,
+    persistence_penalty: float = 0.20,
+) -> tuple[TemporalHomotopy, ...]:
+    """Rank feasible multi-conflict temporal homotopy classes with beam search.
+
+    Each graph layer is a conflict station and each node is one connected safe
+    time component. Edges enforce monotone progress and the maximum-speed lower
+    bound between consecutive stations. The search is finite, deterministic,
+    and returns at most ``beam_width`` complete classes.
+    """
+
+    if max_speed <= 0.0 or not math.isfinite(max_speed):
+        raise ValueError("max_speed must be finite and positive")
+    if beam_width <= 0:
+        raise ValueError("beam_width must be positive")
+    if switch_penalty < 0.0 or not math.isfinite(switch_penalty):
+        raise ValueError("switch_penalty must be finite and non-negative")
+    if persistence_penalty < 0.0 or not math.isfinite(persistence_penalty):
+        raise ValueError("persistence_penalty must be finite and non-negative")
+    preferred_window_indices = preferred_window_indices or {}
+
+    ordered = sorted(conflicts, key=lambda point: (point.station, point.name))
+    # cost, last station, last arrival, last component, choices
+    beam: list[tuple[float, float, float, int | None, tuple[TemporalChoice, ...]]] = [
+        (0.0, start_station, start_time, None, ())
+    ]
+    for point in ordered:
+        expanded = []
+        for cost, last_station, last_time, last_component, choices in beam:
+            if point.station < last_station - 1e-9:
+                continue
+            travel_floor = last_time + (point.station - last_station) / max_speed
+            for window_index, window in enumerate(point.safe_windows):
+                target = max(
+                    travel_floor,
+                    window.start,
+                    window.project(point.nominal_arrival),
+                )
+                if target > window.end + 1e-9:
+                    continue
+                transition_cost = abs(target - point.nominal_arrival)
+                if last_component is not None and window_index != last_component:
+                    transition_cost += switch_penalty
+                preferred = preferred_window_indices.get(point.name)
+                if preferred is not None and window_index != preferred:
+                    transition_cost += persistence_penalty
+                choice = TemporalChoice(
+                    point.name,
+                    point.station,
+                    window_index,
+                    window,
+                    target,
+                )
+                expanded.append(
+                    (
+                        cost + transition_cost,
+                        point.station,
+                        target,
+                        window_index,
+                        choices + (choice,),
+                    )
+                )
+        expanded.sort(
+            key=lambda item: (
+                item[0],
+                item[2],
+                tuple(choice.window_index for choice in item[4]),
+            )
+        )
+        beam = expanded[:beam_width]
+        if not beam:
+            return ()
+
+    return tuple(TemporalHomotopy(choices=item[4], cost=item[0]) for item in beam)

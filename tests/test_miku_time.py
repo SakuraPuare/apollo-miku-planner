@@ -7,9 +7,11 @@ import random
 import pytest
 
 from miku_time import (
+    ConflictPoint,
     OccupancyInterval,
     TimeWindow,
     intersect_window_sets,
+    enumerate_temporal_homotopies,
     safe_time_windows,
     select_time_window,
 )
@@ -116,8 +118,8 @@ def test_st_bounds_encode_reachable_before_pass_window() -> None:
         safe_window_mode=True,
         decision_log=decisions,
     )
-    assert decisions[0]["window"][1] == pytest.approx(2.9)
-    assert np.all(lower[ts >= 2.9] >= 10.0)
+    assert decisions[0]["window"][1] == pytest.approx(2.85)
+    assert np.all(lower[ts >= 2.85] >= 10.05)
     window_start = decisions[0]["window"][0]
     assert np.all(upper[ts >= window_start] == 1e4)
 
@@ -141,6 +143,77 @@ def test_st_bounds_encode_after_pass_window_when_before_is_unreachable() -> None
         safe_window_mode=True,
         decision_log=decisions,
     )
-    assert decisions[0]["window"] == pytest.approx((4.1, 6.0))
-    assert np.all(upper[ts < 4.1] <= 8.0)
+    assert decisions[0]["window"] == pytest.approx((4.15, 6.0))
+    assert np.all(upper[ts < 4.15] <= 7.95)
     assert np.all(lower == 0.0)
+
+
+def test_temporal_graph_enforces_causal_travel_between_conflicts() -> None:
+    homotopies = enumerate_temporal_homotopies(
+        [
+            ConflictPoint(
+                "near",
+                10.0,
+                (TimeWindow(0.0, 1.0), TimeWindow(3.0, 8.0)),
+                0.8,
+            ),
+            ConflictPoint(
+                "far",
+                30.0,
+                (TimeWindow(0.0, 2.0), TimeWindow(4.0, 8.0)),
+                2.0,
+            ),
+        ],
+        start_station=0.0,
+        max_speed=10.0,
+    )
+
+    assert homotopies
+    # Reaching s=30 by t=2 after visiting s=10 is impossible at 10 m/s, so the
+    # far conflict must use its later safe component.
+    assert all(plan.choices[-1].window_index == 1 for plan in homotopies)
+    assert all(plan.choices[-1].target_arrival >= 4.0 for plan in homotopies)
+
+
+def test_temporal_graph_returns_ranked_finite_beam() -> None:
+    conflicts = [
+        ConflictPoint(
+            f"c{index}",
+            5.0 * (index + 1),
+            (TimeWindow(0.0, 3.0), TimeWindow(4.0, 10.0)),
+            float(index + 1),
+        )
+        for index in range(4)
+    ]
+
+    homotopies = enumerate_temporal_homotopies(
+        conflicts,
+        start_station=0.0,
+        max_speed=13.0,
+        beam_width=3,
+    )
+
+    assert 1 <= len(homotopies) <= 3
+    assert [plan.cost for plan in homotopies] == sorted(plan.cost for plan in homotopies)
+    assert all(len(plan.choices) == len(conflicts) for plan in homotopies)
+
+
+def test_temporal_graph_respects_previous_cycle_preference() -> None:
+    point = ConflictPoint(
+        "crossing",
+        10.0,
+        (TimeWindow(1.0, 2.0), TimeWindow(3.0, 5.0)),
+        2.5,
+    )
+
+    default = enumerate_temporal_homotopies([point], 0.0, max_speed=20.0)
+    persistent = enumerate_temporal_homotopies(
+        [point],
+        0.0,
+        max_speed=20.0,
+        preferred_window_indices={"crossing": 1},
+        persistence_penalty=1.0,
+    )
+
+    assert default[0].choices[0].window_index == 0
+    assert persistent[0].choices[0].window_index == 1

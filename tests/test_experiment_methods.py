@@ -34,11 +34,12 @@ def test_pure_dynamic_full_width_conflict_is_deferred_to_speed_stage():
     assert run.result["st_bounds"][0]["intervals"]
 
 
-def test_default_miku_keeps_the_paper_conservative_corridor_semantics():
+def test_default_miku_uses_temporal_homotopy_corridor_semantics():
     scenario = COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"]
 
     result = run_pipeline("miku", scenario)
 
-    assert result["corridor"]
-    assert result["time_window_decisions"] == []
+    assert result["corridor"] is None
+    assert result["time_window_decisions"]
+    assert result["time_window_decisions"][0]["status"] == "selected"
     assert result["s_qp"][-1] >= scenario.s_max - 1.0 - 1.0e-6

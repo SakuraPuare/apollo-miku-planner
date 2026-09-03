@@ -18,6 +18,7 @@ class ClosedLoopConfig:
     replan_period_s: float = 0.5
     minimum_cycle_horizon_s: float = 2.0
     target_tolerance_m: float = 1.0
+    terminal_lookahead_m: float = 3.0
 
 
 def _observation_biases(case: RandomCase) -> tuple[Ego, list[Obstacle]]:
@@ -79,7 +80,12 @@ def _cycle_scenario(
         # Keep the QP's terminal stopping point one metre beyond the evaluation
         # line. Otherwise repeated replanning asymptotically brakes just before
         # the line because run_pipeline uses s_max - 1 as its terminal target.
-        s_max=truth.s_max + 1.0,
+        s_max=(
+            truth.s_max
+            - config.target_tolerance_m
+            + config.terminal_lookahead_m
+            + 1.0
+        ),
         t_max=cycle_horizon,
         l_road_min=truth.l_road_min,
         l_road_max=truth.l_road_max,
@@ -109,11 +115,22 @@ def run_closed_loop(
     total_runtime_ms = 0.0
     planning_cycles = 0
     all_converged = True
+    preferred_homotopy: dict[str, int] = {}
     target = truth.s_max - config.target_tolerance_m
 
     while times[-1] < truth.t_max - 1e-9 and longitudinal[-1] < target - 1e-9:
         cycle = _cycle_scenario(case, times[-1], state, config)
-        planned = run_method(method, cycle)
+        planned = run_method(
+            method,
+            cycle,
+            preferred_homotopy=preferred_homotopy,
+        )
+        preferred_homotopy = {
+            decision["name"]: int(decision["window_index"])
+            for decision in planned.result.get("time_window_decisions", [])
+            if decision.get("status") == "selected"
+            and decision.get("window_index") is not None
+        }
         planned_trajectory = trajectory_from_run(planned, cycle)
         total_runtime_ms += planned.runtime_ms
         planning_cycles += 1

@@ -6,7 +6,13 @@ import random
 
 import pytest
 
-from miku_geometry import ForbiddenInterval, brute_force_max_gap, solve_max_gap
+from miku_geometry import (
+    ForbiddenInterval,
+    brute_force_max_gap,
+    enumerate_lateral_bands,
+    select_spatial_homotopy,
+    solve_max_gap,
+)
 
 
 def test_prefix_max_regression_for_nested_intervals() -> None:
@@ -69,3 +75,61 @@ def test_invalid_road_bounds_are_rejected(road_lower: float, road_upper: float) 
 def test_invalid_forbidden_interval_is_rejected() -> None:
     with pytest.raises(ValueError):
         ForbiddenInterval(1.0, -1.0)
+
+
+def test_top_k_bands_are_ranked_and_match_max_gap() -> None:
+    intervals = [ForbiddenInterval(-1.1, -0.4), ForbiddenInterval(0.2, 0.8)]
+
+    bands = enumerate_lateral_bands(intervals, -2.0, 2.0, top_k=2)
+    optimum = solve_max_gap(intervals, -2.0, 2.0)
+
+    assert len(bands) == 2
+    assert bands[0].gap == pytest.approx(optimum.gap)
+    assert bands[0].split_index == optimum.split_index
+    assert bands[0].gap >= bands[1].gap
+
+
+def test_k_obstacles_have_only_k_plus_one_continuous_bands() -> None:
+    intervals = [
+        ForbiddenInterval(-1.5, -1.0),
+        ForbiddenInterval(-0.2, 0.4),
+        ForbiddenInterval(0.8, 1.1),
+    ]
+
+    bands = enumerate_lateral_bands(intervals, -2.0, 2.0)
+
+    assert len(bands) == len(intervals) + 1
+    assert {band.split_index for band in bands} == {0, 1, 2, 3}
+
+
+def test_invalid_top_k_is_rejected() -> None:
+    with pytest.raises(ValueError):
+        enumerate_lateral_bands([], -1.0, 1.0, top_k=0)
+
+
+def test_spatial_homotopy_trades_small_width_for_continuity() -> None:
+    first = (
+        # Slightly wider, but far left.
+        enumerate_lateral_bands([ForbiddenInterval(-0.2, 1.6)], -2.0, 2.0)[0],
+    )
+    second_candidates = enumerate_lateral_bands(
+        [ForbiddenInterval(-1.6, 0.2)], -2.0, 2.0
+    )
+
+    selected = select_spatial_homotopy(
+        (first, second_candidates),
+        initial_lateral=0.0,
+        transition_weight=1.0,
+    )
+
+    assert selected is not None
+    assert len(selected.bands) == 2
+    assert all(band.gap > 0.0 for band in selected.bands)
+
+
+def test_spatial_homotopy_rejects_layer_without_positive_band() -> None:
+    blocked = enumerate_lateral_bands(
+        [ForbiddenInterval(-2.0, 2.0)], -1.0, 1.0
+    )
+
+    assert select_spatial_homotopy((blocked,), 0.0) is None
