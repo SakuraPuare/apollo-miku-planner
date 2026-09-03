@@ -142,7 +142,7 @@ def run(seed_start: int, seed_count: int, output: Path) -> None:
             case = generate_case(kind, seed)
             for method in SUBSET_METHODS:
                 row = evaluate_run(run_method(method, case.planning_scenario), case)
-                row["schema_version"] = "miku-joint-reference-v1"
+                row["schema_version"] = "miku-joint-reference-v2"
                 rows.append(row)
         print(f"completed joint subset: {kind}", flush=True)
     summaries = _summaries(rows)
@@ -158,7 +158,7 @@ def run(seed_start: int, seed_count: int, output: Path) -> None:
         _macros(summaries, paired, rows), encoding="utf-8"
     )
     metadata = {
-        "protocol": "miku-joint-reference-v1",
+        "protocol": "miku-joint-reference-v2",
         "case_kinds": list(CASE_KINDS),
         "seed_start": seed_start,
         "seed_count_per_kind": seed_count,
@@ -176,7 +176,7 @@ def run(seed_start: int, seed_count: int, output: Path) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--seed-start", type=int, default=0)
-    parser.add_argument("--seeds", type=int, default=5)
+    parser.add_argument("--seeds", type=int, default=10)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
     if args.seed_start < 0 or args.seeds <= 0:

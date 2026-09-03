@@ -117,61 +117,115 @@ def run_closed_loop(
     all_converged = True
     preferred_homotopy: dict[str, str] = {}
     homotopy_history: list[dict] = []
+    committed_plan = None
     target = truth.s_max - config.target_tolerance_m
 
     while times[-1] < truth.t_max - 1e-9 and longitudinal[-1] < target - 1e-9:
-        cycle = _cycle_scenario(case, times[-1], state, config)
-        planned = run_method(
-            method,
-            cycle,
-            preferred_homotopy=preferred_homotopy,
-        )
-        preferred_homotopy = {
-            decision["name"]: str(decision["homotopy_label"])
-            for decision in planned.result.get("time_window_decisions", [])
-            if decision.get("status") == "selected"
-            and decision.get("homotopy_label") is not None
-        }
-        homotopy_history.append(
-            {
-                "cycle_start_s": state[0],
-                "cycle_start_time": times[-1],
-                "decisions": planned.result.get("time_window_decisions", []),
-            }
-        )
-        planned_trajectory = trajectory_from_run(planned, cycle)
-        total_runtime_ms += planned.runtime_ms
-        planning_cycles += 1
-        all_converged = all_converged and planned.converged
+        # A pass-before decision becomes unsafe if a later cycle changes to
+        # yield after the stopping line has already been crossed. Keep executing
+        # the verified trajectory until the ego clears the conflict station.
+        if committed_plan is not None:
+            cleared = all(
+                state[0]
+                > obstacle.position_at(times[-1])[0]
+                + (truth.ego.L + obstacle.L) / 2.0
+                + 0.15
+                for obstacle in committed_plan["obstacles"]
+            )
+            if cleared:
+                committed_plan = None
 
-        relative_indices = np.flatnonzero(
-            (planned_trajectory.time_s > 1e-9)
-            & (planned_trajectory.time_s <= config.replan_period_s + 1e-9)
-        )
+        using_commitment = committed_plan is not None
+        if using_commitment:
+            planned_trajectory = committed_plan["trajectory"]
+            plan_start_time = committed_plan["start_time"]
+            plan_start_state = committed_plan["start_state"]
+            elapsed = times[-1] - plan_start_time
+            relative_indices = np.flatnonzero(
+                (planned_trajectory.time_s > elapsed + 1e-9)
+                & (
+                    planned_trajectory.time_s
+                    <= elapsed + config.replan_period_s + 1e-9
+                )
+            )
+            cycle_a_y = committed_plan["a_y"]
+        else:
+            cycle = _cycle_scenario(case, times[-1], state, config)
+            planned = run_method(
+                method,
+                cycle,
+                preferred_homotopy=preferred_homotopy,
+            )
+            decisions = planned.result.get("time_window_decisions", [])
+            preferred_homotopy = {
+                decision["name"]: str(decision["homotopy_label"])
+                for decision in decisions
+                if decision.get("status") == "selected"
+                and decision.get("homotopy_label") is not None
+            }
+            homotopy_history.append(
+                {
+                    "cycle_start_s": state[0],
+                    "cycle_start_time": times[-1],
+                    "decisions": decisions,
+                }
+            )
+            planned_trajectory = trajectory_from_run(planned, cycle)
+            total_runtime_ms += planned.runtime_ms
+            planning_cycles += 1
+            all_converged = all_converged and planned.converged
+            relative_indices = np.flatnonzero(
+                (planned_trajectory.time_s > 1e-9)
+                & (planned_trajectory.time_s <= config.replan_period_s + 1e-9)
+            )
+            plan_start_time = times[-1]
+            plan_start_state = state
+            cycle_a_y = planned.result.get("a_y")
+
+            pass_before_names = {
+                decision["name"]
+                for decision in decisions
+                if decision.get("homotopy_label") == "pass_before"
+            }
+            if pass_before_names and planned.result.get("s_qp") is not None:
+                committed_plan = {
+                    "trajectory": planned_trajectory,
+                    "start_time": plan_start_time,
+                    "start_state": plan_start_state,
+                    "a_y": cycle_a_y,
+                    "obstacles": [
+                        obstacle
+                        for obstacle in truth.obstacles
+                        if obstacle.name in pass_before_names
+                    ],
+                }
         if relative_indices.size == 0:
             break
-        start_s = float(planned_trajectory.longitudinal_m[0])
-        start_l = float(planned_trajectory.lateral_m[0])
-        start_v = float(planned_trajectory.speed_mps[0])
         cycle_start_time = times[-1]
         for index in relative_indices:
-            absolute_t = cycle_start_time + float(planned_trajectory.time_s[index])
+            absolute_t = plan_start_time + float(planned_trajectory.time_s[index])
             if absolute_t > truth.t_max + 1e-9:
                 break
-            executed_s = state[0] + (
-                float(planned_trajectory.longitudinal_m[index]) - start_s
+            executed_s = plan_start_state[0] + (
+                float(planned_trajectory.longitudinal_m[index])
+                - float(planned_trajectory.longitudinal_m[0])
             )
-            executed_l = state[1] + float(planned_trajectory.lateral_m[index]) - start_l
+            executed_l = (
+                plan_start_state[1]
+                + float(planned_trajectory.lateral_m[index])
+                - float(planned_trajectory.lateral_m[0])
+            )
             executed_v = max(
                 0.0,
-                state[2] + float(planned_trajectory.speed_mps[index]) - start_v,
+                plan_start_state[2]
+                + float(planned_trajectory.speed_mps[index])
+                - float(planned_trajectory.speed_mps[0]),
             )
             times.append(absolute_t)
             longitudinal.append(executed_s)
             lateral.append(executed_l)
             speed.append(executed_v)
             acceleration.append(float(planned_trajectory.acceleration_mps2[index]))
-            cycle_a_y = planned.result.get("a_y")
             lateral_acceleration.append(
                 0.0 if cycle_a_y is None else float(cycle_a_y[index])
             )

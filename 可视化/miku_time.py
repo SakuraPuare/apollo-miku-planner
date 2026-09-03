@@ -65,6 +65,7 @@ class ConflictPoint:
     station: float
     safe_windows: tuple[TimeWindow, ...]
     nominal_arrival: float
+    earliest_arrival: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -242,6 +243,7 @@ def enumerate_temporal_homotopies(
                     label = f"intermediate_{window_index}"
                 target = max(
                     travel_floor,
+                    point.earliest_arrival,
                     window.start,
                     window.project(point.nominal_arrival),
                 )

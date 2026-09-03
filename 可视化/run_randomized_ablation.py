@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import asdict, replace
 from pathlib import Path
 
@@ -149,19 +150,39 @@ def _macros(summary: list[dict], paired: list[dict]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def run(seed_start: int, seed_count: int, output: Path) -> None:
+def _evaluate_case(task: tuple[str, int]) -> list[dict]:
+    kind, seed = task
+    case = generate_case(kind, seed)
+    return [
+        evaluate_run(run_method(method, case.planning_scenario), case)
+        for method in ABLATIONS
+    ]
+
+
+def run(seed_start: int, seed_count: int, output: Path, workers: int = 1) -> None:
     output.mkdir(parents=True, exist_ok=True)
     rows = []
     total = len(CASE_KINDS) * seed_count
     completed = 0
-    for kind in CASE_KINDS:
-        for seed in range(seed_start, seed_start + seed_count):
-            case = generate_case(kind, seed)
-            for method in ABLATIONS:
-                rows.append(evaluate_run(run_method(method, case.planning_scenario), case))
+    tasks = [
+        (kind, seed)
+        for kind in CASE_KINDS
+        for seed in range(seed_start, seed_start + seed_count)
+    ]
+    if workers == 1:
+        evaluated = map(_evaluate_case, tasks)
+    else:
+        executor = ProcessPoolExecutor(max_workers=workers)
+        evaluated = executor.map(_evaluate_case, tasks, chunksize=1)
+    try:
+        for case_rows in evaluated:
+            rows.extend(case_rows)
             completed += 1
             if completed % 25 == 0 or completed == total:
                 print(f"completed {completed}/{total} paired ablation cases", flush=True)
+    finally:
+        if workers != 1:
+            executor.shutdown()
 
     summary = _aggregate(rows)
     paired = _paired(rows)
@@ -192,10 +213,11 @@ def main() -> None:
     parser.add_argument("--seed-start", type=int, default=0)
     parser.add_argument("--seeds", type=int, default=100)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--workers", type=int, default=1)
     args = parser.parse_args()
-    if args.seed_start < 0 or args.seeds <= 0:
-        parser.error("--seed-start must be non-negative and --seeds must be positive")
-    run(args.seed_start, args.seeds, args.output)
+    if args.seed_start < 0 or args.seeds <= 0 or args.workers <= 0:
+        parser.error("--seed-start must be non-negative; --seeds/--workers must be positive")
+    run(args.seed_start, args.seeds, args.output, args.workers)
 
 
 if __name__ == "__main__":

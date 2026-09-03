@@ -28,3 +28,15 @@ def test_closed_loop_preserves_prediction_noise_as_observation_bias():
     assert run.result["closed_loop_cycles"] >= 1
     assert run.result["s_qp"][0] == case.truth_scenario.ego.s0
     assert run.result["l_qp"][0] == case.truth_scenario.ego.l0
+
+
+def test_pass_before_commitment_survives_rolling_replanning():
+    """A verified pass-before plan must not flip to a late yield near conflict."""
+    case = generate_case("delayed_crossing", 18)
+    run = run_closed_loop(method_by_key("MIKU"), case)
+    metrics = evaluate_run(run, case)
+
+    assert run.iterations >= 2
+    assert metrics["success"] == 1
+    assert metrics["collision"] == 0
+    assert metrics["time_window_violations"] == 0

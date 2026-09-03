@@ -28,6 +28,7 @@ class MethodSpec:
     damping: float = 1.0
     refine_on_demand: bool = False
     temporal_top_k: int = 1
+    spatial_top_k: int = 1
 
 
 @dataclass
@@ -62,6 +63,7 @@ METHODS: tuple[MethodSpec, ...] = (
         damping=0.7,
         refine_on_demand=True,
         temporal_top_k=3,
+        spatial_top_k=3,
     ),
 )
 
@@ -117,21 +119,49 @@ def run_method(
         )
     else:
         raise ValueError(f"unknown method solver: {spec.solver}")
-    if (
-        spec.solver == "pipeline"
-        and spec.flags.corridor_inject
-        and result.get("s_qp") is None
-        and spec.temporal_top_k > 1
-    ):
-        for temporal_rank in range(1, spec.temporal_top_k):
-            alternative = run_pipeline(
-                spec.flags,
-                scn,
-                preferred_homotopy=preferred_homotopy,
-                temporal_plan_rank=temporal_rank,
+    if spec.solver == "pipeline" and result.get("s_qp") is None:
+        # Validate the Cartesian product lazily: temporal alternatives on the
+        # best spatial class first, then the remaining spatial classes.  Stop
+        # as soon as a convex QP certifies feasibility.
+        spatial_count = max(
+            1,
+            min(
+                spec.spatial_top_k,
+                int(result.get("spatial_homotopy_candidate_count", 0)),
+            ),
+        )
+        for spatial_rank in range(spatial_count):
+            spatial_result = result
+            if spatial_rank > 0:
+                spatial_result = run_pipeline(
+                    spec.flags,
+                    scn,
+                    preferred_homotopy=preferred_homotopy,
+                    candidate_rank=spatial_rank,
+                    temporal_plan_rank=0,
+                )
+                if spatial_result.get("s_qp") is not None:
+                    result = spatial_result
+                    break
+            temporal_count = max(
+                1,
+                min(
+                    spec.temporal_top_k,
+                    int(spatial_result.get("temporal_homotopy_candidate_count", 0)),
+                ),
             )
-            if alternative.get("s_qp") is not None:
-                result = alternative
+            for temporal_rank in range(1, temporal_count):
+                temporal_result = run_pipeline(
+                    spec.flags,
+                    scn,
+                    preferred_homotopy=preferred_homotopy,
+                    candidate_rank=spatial_rank,
+                    temporal_plan_rank=temporal_rank,
+                )
+                if temporal_result.get("s_qp") is not None:
+                    result = temporal_result
+                    break
+            if result.get("s_qp") is not None:
                 break
     iterations = 1
     converged = not spec.iterative

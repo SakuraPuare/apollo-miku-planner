@@ -206,94 +206,97 @@ def select_spatial_homotopy(
     transition_weight: float = 0.05,
     gap_epsilon: float = 1.0e-6,
 ) -> SpatialHomotopy | None:
-    """Select a coherent Top-K spatial homotopy with dynamic programming.
+    """Select the best coherent spatial homotopy with dynamic programming."""
+
+    plans = enumerate_spatial_homotopies(
+        layers,
+        initial_lateral,
+        top_k=1,
+        transition_weight=transition_weight,
+        gap_epsilon=gap_epsilon,
+    )
+    return plans[0] if plans else None
+
+
+def enumerate_spatial_homotopies(
+    layers: Sequence[Sequence[LateralBandCandidate]],
+    initial_lateral: float,
+    top_k: int = 3,
+    transition_weight: float = 0.05,
+    gap_epsilon: float = 1.0e-6,
+) -> tuple[SpatialHomotopy, ...]:
+    """Return the exact Top-K paths through the layered lateral-band graph.
 
     The node cost rewards wider bands and the edge cost penalizes lateral
-    centre changes. Only positive-width bands participate; an empty layer
-    therefore yields an explicit infeasible result instead of a squeezed path.
+    centre changes.  Keeping the K best prefixes *per terminal node* is exact
+    for this first-order layered graph: every future cost depends on a prefix
+    only through its current band.  Complexity is ``O(M K Q^2 log(KQ))`` for
+    ``M`` layers of at most ``Q`` candidates.
     """
 
+    if top_k <= 0:
+        raise ValueError("top_k must be positive")
     if transition_weight < 0.0 or not math.isfinite(transition_weight):
         raise ValueError("transition_weight must be finite and non-negative")
     if gap_epsilon < 0.0 or not math.isfinite(gap_epsilon):
         raise ValueError("gap_epsilon must be finite and non-negative")
     if not layers:
-        return SpatialHomotopy((), 0.0)
+        return (SpatialHomotopy((), 0.0),)
 
     feasible_layers = [
         [band for band in layer if band.gap >= gap_epsilon] for layer in layers
     ]
     if any(not layer for layer in feasible_layers):
-        return None
+        return ()
 
-    # Each layer keeps only the best prefix ending at each current band.  The
-    # prefix rank preserves the former lexicographic split-index tie-break
-    # without retaining all Q^m sequences.
-    first_layer = feasible_layers[0]
-    states: list[tuple[float, float, int]] = []  # cost, centre, prefix rank
-    for band in first_layer:
+    # State is (cost, band sequence).  Maintain K prefixes for each current
+    # terminal band rather than a single winner, enabling genuine QP fallback.
+    states_by_terminal: list[list[tuple[float, tuple[LateralBandCandidate, ...]]]] = []
+    for band in feasible_layers[0]:
         centre = 0.5 * (band.lower + band.upper)
-        cost = -band.gap + transition_weight * abs(centre - initial_lateral)
-        states.append((cost, centre, 0))
-    first_order = sorted(
-        range(len(first_layer)),
-        key=lambda index: (first_layer[index].split_index, index),
-    )
-    first_ranks = {state_index: rank for rank, state_index in enumerate(first_order)}
-    states = [
-        (cost, centre, first_ranks[index])
-        for index, (cost, centre, _) in enumerate(states)
-    ]
-    predecessors: list[list[int]] = [[-1] * len(first_layer)]
+        states_by_terminal.append(
+            [
+                (
+                    -band.gap + transition_weight * abs(centre - initial_lateral),
+                    (band,),
+                )
+            ]
+        )
 
     for layer in feasible_layers[1:]:
-        next_states: list[tuple[float, float, int]] = []
-        next_predecessors: list[int] = []
+        next_by_terminal = []
         for band in layer:
             centre = 0.5 * (band.lower + band.upper)
-            previous_index, (cost, _, _) = min(
-                enumerate(states),
+            expanded = []
+            for prefixes in states_by_terminal:
+                for cost, sequence in prefixes:
+                    previous = sequence[-1]
+                    previous_centre = 0.5 * (previous.lower + previous.upper)
+                    expanded.append(
+                        (
+                            cost
+                            - band.gap
+                            + transition_weight * abs(centre - previous_centre),
+                            sequence + (band,),
+                        )
+                    )
+            expanded.sort(
                 key=lambda item: (
-                    item[1][0]
-                    + transition_weight * abs(centre - item[1][1]),
-                    item[1][2],
-                ),
-            )
-            next_states.append(
-                (
-                    cost - band.gap
-                    + transition_weight * abs(centre - states[previous_index][1]),
-                    centre,
-                    0,
+                    item[0],
+                    tuple(candidate.split_index for candidate in item[1]),
                 )
             )
-            next_predecessors.append(previous_index)
+            next_by_terminal.append(expanded[:top_k])
+        states_by_terminal = next_by_terminal
 
-        prefix_order = sorted(
-            range(len(layer)),
-            key=lambda index: (
-                states[next_predecessors[index]][2],
-                layer[index].split_index,
-                index,
-            ),
+    complete = [state for terminal in states_by_terminal for state in terminal]
+    complete.sort(
+        key=lambda item: (
+            item[0],
+            tuple(candidate.split_index for candidate in item[1]),
         )
-        prefix_ranks = {
-            state_index: rank for rank, state_index in enumerate(prefix_order)
-        }
-        states = [
-            (cost, centre, prefix_ranks[index])
-            for index, (cost, centre, _) in enumerate(next_states)
-        ]
-        predecessors.append(next_predecessors)
-
-    best_index = min(range(len(states)), key=lambda index: (states[index][0], states[index][2]))
-    best_cost = states[best_index][0]
-    selected: list[LateralBandCandidate] = []
-    for layer_index in range(len(feasible_layers) - 1, -1, -1):
-        selected.append(feasible_layers[layer_index][best_index])
-        best_index = predecessors[layer_index][best_index]
-    selected.reverse()
-    return SpatialHomotopy(tuple(selected), best_cost)
+    )
+    return tuple(SpatialHomotopy(sequence, cost) for cost, sequence in complete[:top_k])
 
 
 def brute_force_max_gap(

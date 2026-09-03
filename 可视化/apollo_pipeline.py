@@ -22,7 +22,8 @@
     ⑥ SpeedBoundsDecider 2  — 按决策重建 s_j^ub / s_j^lb
     ⑦ PiecewiseJerkSpeed    — QP 出最终平滑 s(t), v(t), a(t)
 
-  MIKU 改动：① 用 τ(s)-shifted 障碍位置；⑥ 之后多注入一路 corridor 约束。
+  MIKU 改动：鲁棒时变占据、Top-K 空间同伦、多冲突时间同伦、
+  双向 ST 约束与按需路径--速度细化；两个 QP 求解骨架保持不变。
 
 输出 PNG：apollo_pipeline.png（6 子图：SL × ST × 时序，左 Baseline / 右 MIKU）。
 """
@@ -47,7 +48,7 @@ from matplotlib.patches import Circle, Polygon, Rectangle
 from miku_geometry import (
     ForbiddenInterval,
     enumerate_lateral_bands,
-    select_spatial_homotopy,
+    enumerate_spatial_homotopies,
     solve_max_gap,
 )
 from miku_time import (
@@ -736,7 +737,7 @@ def _miku_path_bounds(
     步骤6: 将整组 L/R 决策写回各障碍物自身 SLBoundary 对应的 s 截面；
            分组只统一绕行方向，不把整组纵向区间统一收缩成一个大边界。
 
-    flags 控制 4 个组件的启停（C1/C2/C3/C4），默认 full。
+    flags 控制空间、时间与鲁棒性组件的启停，默认 full。
 
     返回 (l_min, l_max, eff_l_min, eff_l_max, debug_info)。
     """
@@ -935,20 +936,26 @@ def _miku_path_bounds(
     # Explicit overrides and nonzero ranks are retained for ablation/oracle
     # experiments; the default planner uses the global dynamic program.
     spatial_homotopy = None
+    spatial_homotopies = ()
     spatial_layers = [
         gd for gd in group_decisions if gd.get("band_candidates")
     ]
     if (
         flags.max_gap
-        and candidate_rank == 0
         and split_overrides is None
         and spatial_layers
     ):
-        spatial_homotopy = select_spatial_homotopy(
+        spatial_homotopies = enumerate_spatial_homotopies(
             [gd["band_candidates"] for gd in spatial_layers],
             initial_lateral=e.l0,
+            top_k=3,
             transition_weight=0.05,
             gap_epsilon=PATH_GAP_EPSILON,
+        )
+        spatial_homotopy = (
+            spatial_homotopies[min(candidate_rank, len(spatial_homotopies) - 1)]
+            if spatial_homotopies
+            else None
         )
         if spatial_homotopy is not None:
             for gd, band in zip(
@@ -966,6 +973,7 @@ def _miku_path_bounds(
         gd["spatial_homotopy_cost"] = (
             None if spatial_homotopy is None else spatial_homotopy.cost
         )
+        gd["spatial_homotopy_candidate_count"] = len(spatial_homotopies)
 
     # —— 步骤6：把每组的 L/R 决策投影回 path_boundary
     # 分组只决定同一连通分量内各障碍物的绕行侧；道路边界仍按单个障碍物
@@ -1336,12 +1344,6 @@ def build_st_bounds(
         )
         temporal_guard = 0.10 + 0.05 * min(abs(float(b.get("vl", 0.0))), 2.0)
         safe = safe_time_windows(occupancies, horizon, safety_guard=temporal_guard)
-        reachable = TimeWindow(min(max(earliest, 0.0), scn.t_max), scn.t_max)
-        feasible = tuple(
-            overlap
-            for window in safe
-            if (overlap := window.intersect(reachable)) is not None
-        )
         nominal = (
             tau_fn(0.5 * (conflict_s_lo + conflict_s_hi))
             if tau_fn is not None
@@ -1359,8 +1361,9 @@ def build_st_bounds(
             ConflictPoint(
                 graph_name,
                 conflict_s_hi,
-                feasible,
+                safe,
                 nominal,
+                min(max(earliest, 0.0), scn.t_max),
             )
         )
 
@@ -1666,6 +1669,20 @@ def run_pipeline(
         candidate_rank=candidate_rank,
         split_overrides=split_overrides,
         temporal_plan_rank=temporal_plan_rank,
+        spatial_homotopy_candidate_count=max(
+            (
+                int(decision.get("spatial_homotopy_candidate_count", 0))
+                for decision in group_decisions
+            ),
+            default=0,
+        ),
+        temporal_homotopy_candidate_count=max(
+            (
+                int(decision.get("graph_candidate_count", 0))
+                for decision in time_window_decisions
+            ),
+            default=0,
+        ),
         qp_solve_ms={
             "path": path_qp_ms,
             "speed": speed_qp_ms,
