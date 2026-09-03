@@ -15,7 +15,7 @@ from miku_time import (
     safe_time_windows,
     select_time_window,
 )
-from apollo_pipeline import Ego, Scenario, build_st_bounds
+from apollo_pipeline import Ego, Obstacle, Scenario, build_st_bounds, st_boundary_mapper
 
 import numpy as np
 
@@ -211,9 +211,37 @@ def test_temporal_graph_respects_previous_cycle_preference() -> None:
         [point],
         0.0,
         max_speed=20.0,
-        preferred_window_indices={"crossing": 1},
+        preferred_window_labels={"crossing": "yield_after"},
         persistence_penalty=1.0,
     )
 
     assert default[0].choices[0].window_index == 0
     assert persistent[0].choices[0].window_index == 1
+
+
+def test_robust_mapper_propagates_reported_prediction_error() -> None:
+    obstacle = Obstacle(
+        s0=10.0,
+        l0=1.2,
+        vs=1.0,
+        vl=-0.2,
+        W=0.5,
+        L=1.0,
+        uncertainty_s0=0.4,
+        uncertainty_l0=0.2,
+        uncertainty_vs=0.3,
+        uncertainty_vl=0.1,
+    )
+    scenario = Scenario(Ego(), [obstacle], s_max=25.0, t_max=3.0)
+    stations = np.linspace(0.0, 25.0, 51)
+    path = np.zeros_like(stations)
+
+    nominal = st_boundary_mapper(scenario, stations, path, robust_prediction=False)[0]
+    robust = st_boundary_mapper(scenario, stations, path, robust_prediction=True)[0]
+
+    assert len(robust["intervals"]) >= len(nominal["intervals"])
+    shared_time = nominal["intervals"][0][0]
+    nominal_interval = next(row for row in nominal["intervals"] if row[0] == shared_time)
+    robust_interval = next(row for row in robust["intervals"] if row[0] == shared_time)
+    assert robust_interval[1] < nominal_interval[1]
+    assert robust_interval[2] > nominal_interval[2]

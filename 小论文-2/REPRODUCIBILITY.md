@@ -25,6 +25,7 @@ PYTHONPATH=可视化 uv run python 可视化/apollo_pipeline.py
 PYTHONPATH=可视化 uv run python 可视化/run_ablation.py
 PYTHONPATH=可视化 uv run python 可视化/sensitivity_analysis.py
 PYTHONPATH=可视化 uv run python 可视化/run_randomized_experiments.py
+PYTHONPATH=可视化 uv run python 可视化/run_randomized_ablation.py
 PYTHONPATH=可视化 uv run python 可视化/run_joint_reference_experiments.py
 PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py
 cd 小论文-2

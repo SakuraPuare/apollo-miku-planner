@@ -17,6 +17,7 @@ CASE_KINDS = (
     "narrow_multi_obstacle",
     "interleaved_dynamic",
     "prediction_noise",
+    "delayed_crossing",
 )
 
 
@@ -173,7 +174,28 @@ def _prediction_noise(rng: np.random.Generator) -> RandomCase:
         obstacle.l0 += float(rng.normal(0.0, 0.18))
         obstacle.vs += float(rng.normal(0.0, 0.30))
         obstacle.vl += float(rng.normal(0.0, 0.12))
+        obstacle.uncertainty_s0 = 0.35
+        obstacle.uncertainty_l0 = 0.18
+        obstacle.uncertainty_vs = 0.30
+        obstacle.uncertainty_vl = 0.12
     return RandomCase("prediction_noise", -1, planning, truth)
+
+
+def _delayed_crossing(rng: np.random.Generator) -> Scenario:
+    """Crossing with both reachable pass-before and yield-after homotopies."""
+
+    ego = Ego(v0=float(rng.uniform(8.0, 10.0)))
+    side = float(rng.choice((-1.0, 1.0)))
+    pedestrian = Obstacle(
+        s0=float(rng.uniform(14.0, 20.0)),
+        l0=side * float(rng.uniform(2.0, 3.0)),
+        vl=-side * float(rng.uniform(0.5, 0.9)),
+        W=0.55,
+        L=0.55,
+        name="delayed pedestrian",
+        obs_type="ped",
+    )
+    return Scenario(ego, [pedestrian], s_max=34.0, t_max=9.0)
 
 
 def generate_case(kind: str, seed: int) -> RandomCase:
@@ -190,6 +212,7 @@ def generate_case(kind: str, seed: int) -> RandomCase:
         "parked_and_oncoming": _parked_and_oncoming,
         "narrow_multi_obstacle": _narrow_multi_obstacle,
         "interleaved_dynamic": _interleaved_dynamic,
+        "delayed_crossing": _delayed_crossing,
     }
     try:
         scenario = generators[kind](rng)

@@ -119,6 +119,12 @@ class Obstacle:
     obs_type: str = (
         "vehicle"  # "ped" | "bike" | "vehicle" | "unknown_movable" | "static"
     )
+    # Calibrated bounded prediction error.  MIKU propagates the initial
+    # position radius with the velocity-error radius over the prediction time.
+    uncertainty_s0: float = 0.0
+    uncertainty_l0: float = 0.0
+    uncertainty_vs: float = 0.0
+    uncertainty_vl: float = 0.0
 
     def position_at(self, t: float) -> Tuple[float, float]:
         return self.s0 + self.vs * t, self.l0 + self.vl * t
@@ -1158,16 +1164,18 @@ def st_boundary_mapper(
             )
             ego_l_lo = min(envelope_values) - e.W / 2
             ego_l_hi = max(envelope_values) + e.W / 2
-            if robust_prediction and not obs.is_static and obs.vs >= -1.0:
-                if obs.obs_type == "ped":
-                    lateral_uncertainty = 0.05 + 0.03 * float(t)
-                    longitudinal_uncertainty = 0.10 + 0.05 * float(t)
-                else:
-                    lateral_uncertainty = 0.20 + 0.12 * float(t)
-                    longitudinal_uncertainty = 0.40 + 0.30 * float(t)
+            if robust_prediction and not obs.is_static:
+                lateral_uncertainty = obs.uncertainty_l0 + obs.uncertainty_vl * float(t)
+                longitudinal_uncertainty = (
+                    obs.uncertainty_s0 + obs.uncertainty_vs * float(t)
+                )
             else:
                 lateral_uncertainty = 0.0
-                longitudinal_uncertainty = 0.15 if not obs.is_static else 0.0
+                longitudinal_uncertainty = 0.0
+            # Shared numerical guard for the 0.1 s speed grid; this is not part
+            # of the method-specific prediction tube.
+            if not obs.is_static:
+                longitudinal_uncertainty += 0.15
             obs_l_lo = ol_ - obs.W / 2 - lateral_uncertainty
             obs_l_hi = ol_ + obs.W / 2 + lateral_uncertainty
             if obs_l_lo >= ego_l_hi or obs_l_hi <= ego_l_lo:
@@ -1271,7 +1279,8 @@ def build_st_bounds(
     safe_window_mode: bool = False,
     tau_fn: Optional[Callable[[float], float]] = None,
     decision_log: Optional[list[dict]] = None,
-    preferred_homotopy: Optional[dict[str, int]] = None,
+    preferred_homotopy: Optional[dict[str, str]] = None,
+    temporal_plan_rank: int = 0,
 ):
     """重建 ``s_j^ub / s_j^lb``，并将时序同伦类编码为凸约束。"""
     dt = ts[1] - ts[0]
@@ -1361,7 +1370,7 @@ def build_st_bounds(
         start_time=0.0,
         max_speed=13.0,
         beam_width=8,
-        preferred_window_indices={
+        preferred_window_labels={
             metadata["graph_name"]: preferred_homotopy[b["name"]]
             for boundary_index, b in enumerate(st_bounds)
             if preferred_homotopy is not None
@@ -1370,8 +1379,13 @@ def build_st_bounds(
         },
         persistence_penalty=0.20,
     )
+    selected_temporal_plan = (
+        temporal_plans[min(temporal_plan_rank, len(temporal_plans) - 1)]
+        if temporal_plans
+        else None
+    )
     selected_temporal_choices = (
-        {choice.name: choice for choice in temporal_plans[0].choices}
+        {choice.name: choice for choice in selected_temporal_plan.choices}
         if temporal_plans
         else {}
     )
@@ -1428,9 +1442,11 @@ def build_st_bounds(
                 "window": (window.start, window.end),
                 "target_arrival": choice.target_arrival,
                 "window_index": choice.window_index,
+                "homotopy_label": choice.label,
                 "candidate_count": len(metadata["safe"]),
                 "graph_candidate_count": len(temporal_plans),
-                "homotopy_cost": temporal_plans[0].cost,
+                "homotopy_cost": selected_temporal_plan.cost,
+                "temporal_plan_rank": temporal_plan_rank,
             }
         )
 
@@ -1543,7 +1559,8 @@ def run_pipeline(
     safe_window_mode: bool = False,
     candidate_rank: int = 0,
     split_overrides: Optional[dict[int, int]] = None,
-    preferred_homotopy: Optional[dict[str, int]] = None,
+    preferred_homotopy: Optional[dict[str, str]] = None,
+    temporal_plan_rank: int = 0,
 ):
     flags = AblationFlags.from_mode(mode_or_flags)
     s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(
@@ -1578,6 +1595,7 @@ def run_pipeline(
         tau_fn=tau_fn,
         decision_log=time_window_decisions,
         preferred_homotopy=preferred_homotopy,
+        temporal_plan_rank=temporal_plan_rank,
     )
 
     # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
@@ -1647,6 +1665,7 @@ def run_pipeline(
         terminal_goal_relaxed=terminal_goal_relaxed,
         candidate_rank=candidate_rank,
         split_overrides=split_overrides,
+        temporal_plan_rank=temporal_plan_rank,
         qp_solve_ms={
             "path": path_qp_ms,
             "speed": speed_qp_ms,

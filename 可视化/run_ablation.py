@@ -7,16 +7,18 @@
 #     "osqp>=0.6.3",
 # ]
 # ///
-"""MIKU 消融实验主控脚本 — 6 变体 × 4 场景全跑，输出 ablation.csv / ablation.json。
+"""MIKU 组件消融：输出 ablation.csv / ablation.json。
 
 变体定义（论文第八章第六节表）：
 
     M0_baseline   — Apollo 原始流程（IsStatic 过滤 + 逐障碍物贪心 nudge）
     M1_no_C1      — 仅关闭 C1 时变 SL 投影 (τ-shift)
-    M2_no_C2C3    — 关闭 C2 扫描线分组 与 C3 组内 max-gap
-    M3_no_C4      — 关闭 C4 多因子差异化裕度 δ_i
-    M4_no_C5      — 关闭 C5 占用补集安全时窗
-    M5_full       — 启用修正后的先通过/后通过安全时窗
+    M2_no_C2      — 关闭 C2 扫描线纵向分组
+    M3_no_C3      — 关闭 C3 Top-K 连续空间同伦
+    M4_no_C4      — 关闭 C4 多因子差异化裕度
+    M5_no_C5      — 关闭 C5 多障碍物时序同伦图
+    M6_no_C6      — 关闭 C6 预测不确定性占用管
+    M7_full       — 完整时空同伦走廊
 
 每个变体在每个场景下输出 13 列指标，落盘 CSV 给 metric_score.py 与 pgfplots 直接吃。
 """
@@ -44,11 +46,13 @@ from apollo_pipeline import (  # noqa: E402
 
 VARIANTS = [
     AblationFlags(False, False, False, False, False, "M0_baseline"),
-    AblationFlags(False, True, True, True, True, "M1_no_C1", False),
-    AblationFlags(True, False, False, True, True, "M2_no_C2C3", True),
-    AblationFlags(True, True, True, False, True, "M3_no_C4", False),
-    AblationFlags(True, True, True, True, False, "M4_no_C5", True),
-    AblationFlags(True, True, True, True, True, "M5_full", True),
+    AblationFlags(False, True, True, True, True, "M1_no_C1", True),
+    AblationFlags(True, False, True, True, True, "M2_no_C2", True),
+    AblationFlags(True, True, False, True, True, "M3_no_C3", True),
+    AblationFlags(True, True, True, False, True, "M4_no_C4", True),
+    AblationFlags(True, True, True, True, False, "M5_no_C5", True),
+    AblationFlags(True, True, True, True, True, "M6_no_C6", False),
+    AblationFlags(True, True, True, True, True, "M7_full", True),
 ]
 
 METRIC_COLUMNS = [
@@ -59,6 +63,7 @@ METRIC_COLUMNS = [
     "C3_maxgap",
     "C4_delta",
     "C5_corridor",
+    "C6_robust",
     "success",
     "blocked",
     "v_avg",
@@ -106,6 +111,7 @@ def _metric_row(scn_name: str, flags: AblationFlags, scn, m, r) -> dict:
         "C3_maxgap": int(flags.max_gap),
         "C4_delta": int(flags.threat_delta),
         "C5_corridor": int(flags.corridor_inject),
+        "C6_robust": int(flags.robust_prediction),
         "success": int(m.get("success", 0) and not is_inf),
         "blocked": int(m.get("blocked", 0)),
         "v_avg": round(_safe("avg_v"), 4),

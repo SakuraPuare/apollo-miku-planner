@@ -12,7 +12,7 @@ import numpy as np
 
 from experiment_cases import CASE_KINDS, generate_case
 from experiment_methods import JOINT_REFERENCE, method_by_key, run_method
-from experiment_metrics import bootstrap_paired_difference, evaluate_run
+from experiment_metrics import bootstrap_paired_difference, evaluate_run, exact_mcnemar
 from joint_reference import JointGrid
 from run_randomized_experiments import RAW_FIELDS
 
@@ -71,11 +71,23 @@ def _paired(rows: list[dict]) -> list[dict]:
     ):
         miku = np.asarray([indexed[(*key, "MIKU")][metric] for key in keys], dtype=float)
         b3 = np.asarray([indexed[(*key, "B3")][metric] for key in keys], dtype=float)
+        result = bootstrap_paired_difference(miku, b3, seed=93000 + index)
+        if metric in ("success", "collision"):
+            result.update(exact_mcnemar(miku, b3))
+        else:
+            result.update(
+                {
+                    "candidate_only": None,
+                    "reference_only": None,
+                    "discordant": None,
+                    "mcnemar_exact_p": None,
+                }
+            )
         statistics.append(
             {
                 "comparison": "MIKU-B3",
                 "metric": metric,
-                **bootstrap_paired_difference(miku, b3, seed=93000 + index),
+                **result,
             }
         )
     return statistics
@@ -114,6 +126,7 @@ def _macros(summaries: list[dict], paired: list[dict], rows: list[dict]) -> str:
             f"\\newcommand{{\\JointMikuVsBThreeSuccessDiff}}{{{100*success['mean_difference']:.1f}}}",
             f"\\newcommand{{\\JointMikuVsBThreeSuccessCiLow}}{{{100*success['ci_low']:.1f}}}",
             f"\\newcommand{{\\JointMikuVsBThreeSuccessCiHigh}}{{{100*success['ci_high']:.1f}}}",
+            f"\\newcommand{{\\JointMikuVsBThreeSuccessMcNemarP}}{{{success['mcnemar_exact_p']:.4g}}}",
             f"\\newcommand{{\\JointBThreeOnlySuccessCount}}{{{b3_only_successes}}}",
             f"\\newcommand{{\\JointMikuOnlySuccessCount}}{{{miku_only_successes}}}",
             "",

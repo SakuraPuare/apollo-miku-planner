@@ -13,7 +13,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from apollo_pipeline import Scenario
+from apollo_pipeline import Scenario, compute_delta
 
 
 @dataclass(frozen=True)
@@ -25,7 +25,6 @@ class JointGrid:
     max_speed: float = 13.0
     max_lateral_speed: float = 0.5
     max_lateral_acceleration: float = 1.0
-    safety_guard: float = 0.10
     beam_width: int = 20_000
 
 
@@ -39,17 +38,29 @@ def _center_road_limits(scn: Scenario, grid: JointGrid) -> tuple[float, float]:
         road_min -= scn.lane_width
     if scn.lane_borrow in ("left", "both"):
         road_max += scn.lane_width
-    inset = scn.ego.W / 2.0 + grid.safety_guard
+    inset = scn.ego.W / 2.0 + scn.delta_min
     return road_min + inset, road_max - inset
 
 
-def _collision_free(
-    scn: Scenario, t: float, s: float, lateral: float, guard: float
-) -> bool:
+def _collision_free(scn: Scenario, t: float, s: float, lateral: float) -> bool:
     for obs in scn.obstacles:
         obs_s, obs_l = obs.position_at(t)
-        longitudinal_limit = (scn.ego.L + obs.L) / 2.0 + guard
-        lateral_limit = (scn.ego.W + obs.W) / 2.0 + guard
+        longitudinal_uncertainty = (
+            obs.uncertainty_s0 + obs.uncertainty_vs * t if not obs.is_static else 0.0
+        )
+        lateral_uncertainty = (
+            obs.uncertainty_l0 + obs.uncertainty_vl * t if not obs.is_static else 0.0
+        )
+        longitudinal_limit = (
+            (scn.ego.L + obs.L) / 2.0
+            + (0.15 if not obs.is_static else 0.0)
+            + longitudinal_uncertainty
+        )
+        lateral_limit = (
+            (scn.ego.W + obs.W) / 2.0
+            + compute_delta(obs, scn)
+            + lateral_uncertainty
+        )
         if (
             abs(s - obs_s) < longitudinal_limit
             and abs(lateral - obs_l) < lateral_limit
@@ -105,7 +116,7 @@ def run_joint_reference(scn: Scenario, grid: JointGrid | None = None) -> dict:
                     if not 0 <= next_l_index < len(lateral_grid):
                         continue
                     next_l = float(lateral_grid[next_l_index])
-                    if not _collision_free(scn, t, next_s, next_l, grid.safety_guard):
+                    if not _collision_free(scn, t, next_s, next_l):
                         continue
                     lateral_acceleration = (
                         (next_lateral_step - lateral_step) * grid.dl / grid.dt**2

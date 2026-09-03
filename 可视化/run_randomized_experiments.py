@@ -19,7 +19,7 @@ import numpy as np
 
 from experiment_cases import CASE_KINDS, generate_case
 from experiment_methods import METHODS, run_method
-from experiment_metrics import bootstrap_paired_difference, evaluate_run
+from experiment_metrics import bootstrap_paired_difference, evaluate_run, exact_mcnemar
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -151,6 +151,17 @@ def _paired_statistics(rows: list[dict]) -> list[dict]:
                 result = bootstrap_paired_difference(
                     miku, comparison, seed=bootstrap_seed
                 )
+                if metric in ("success", "collision"):
+                    result.update(exact_mcnemar(miku, comparison))
+                else:
+                    result.update(
+                        {
+                            "candidate_only": None,
+                            "reference_only": None,
+                            "discordant": None,
+                            "mcnemar_exact_p": None,
+                        }
+                    )
                 bootstrap_seed += 1
                 statistics.append(
                     {
@@ -195,6 +206,7 @@ def _latex_macros(aggregates: list[dict], statistics: list[dict]) -> str:
         "narrow_multi_obstacle": "Narrow",
         "interleaved_dynamic": "Interleaved",
         "prediction_noise": "Noise",
+        "delayed_crossing": "Delayed",
         "all": "All",
     }
     method_words = {"B0": "BZero", "B1": "BOne", "B2": "BTwo", "MIKU": "Miku"}
@@ -254,6 +266,10 @@ def _latex_macros(aggregates: list[dict], statistics: list[dict]) -> str:
                 f"\\newcommand{{{prefix}Effect}}{{{row['cohen_dz']:.3f}}}",
             ]
         )
+        if row.get("mcnemar_exact_p") is not None:
+            lines.append(
+                f"\\newcommand{{{prefix}McNemarP}}{{{row['mcnemar_exact_p']:.4g}}}"
+            )
     return "\n".join(lines) + "\n"
 
 
@@ -304,7 +320,7 @@ def _write_derived(
         _latex_macros(aggregates, statistics), encoding="utf-8"
     )
     metadata = {
-        "protocol": "miku-random-v1",
+        "protocol": "miku-random-v2",
         "case_kinds": list(CASE_KINDS),
         "methods": [
             {

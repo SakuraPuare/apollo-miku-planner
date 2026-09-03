@@ -115,7 +115,8 @@ def run_closed_loop(
     total_runtime_ms = 0.0
     planning_cycles = 0
     all_converged = True
-    preferred_homotopy: dict[str, int] = {}
+    preferred_homotopy: dict[str, str] = {}
+    homotopy_history: list[dict] = []
     target = truth.s_max - config.target_tolerance_m
 
     while times[-1] < truth.t_max - 1e-9 and longitudinal[-1] < target - 1e-9:
@@ -126,11 +127,18 @@ def run_closed_loop(
             preferred_homotopy=preferred_homotopy,
         )
         preferred_homotopy = {
-            decision["name"]: int(decision["window_index"])
+            decision["name"]: str(decision["homotopy_label"])
             for decision in planned.result.get("time_window_decisions", [])
             if decision.get("status") == "selected"
-            and decision.get("window_index") is not None
+            and decision.get("homotopy_label") is not None
         }
+        homotopy_history.append(
+            {
+                "cycle_start_s": state[0],
+                "cycle_start_time": times[-1],
+                "decisions": planned.result.get("time_window_decisions", []),
+            }
+        )
         planned_trajectory = trajectory_from_run(planned, cycle)
         total_runtime_ms += planned.runtime_ms
         planning_cycles += 1
@@ -189,6 +197,7 @@ def run_closed_loop(
         "s_arr": np.asarray(longitudinal, dtype=float),
         "l_path": np.asarray(lateral, dtype=float),
         "closed_loop_cycles": planning_cycles,
+        "homotopy_history": homotopy_history,
     }
     return MethodRun(
         method=method,

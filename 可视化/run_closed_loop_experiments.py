@@ -13,7 +13,7 @@ import numpy as np
 from closed_loop import ClosedLoopConfig, run_closed_loop
 from experiment_cases import CASE_KINDS, generate_case
 from experiment_methods import METHODS
-from experiment_metrics import bootstrap_paired_difference, evaluate_run
+from experiment_metrics import bootstrap_paired_difference, evaluate_run, exact_mcnemar
 from run_randomized_experiments import RAW_FIELDS
 
 
@@ -73,15 +73,17 @@ def _paired(rows: list[dict]) -> list[dict]:
             comparison = np.asarray(
                 [indexed[(*key, baseline.key)][metric] for key in keys], dtype=float
             )
+            result = bootstrap_paired_difference(
+                miku,
+                comparison,
+                seed=94000 + baseline_index * 10 + metric_index,
+            )
+            result.update(exact_mcnemar(miku, comparison))
             statistics.append(
                 {
                     "comparison": f"MIKU-{baseline.key}",
                     "metric": metric,
-                    **bootstrap_paired_difference(
-                        miku,
-                        comparison,
-                        seed=94000 + baseline_index * 10 + metric_index,
-                    ),
+                    **result,
                 }
             )
     return statistics
@@ -117,9 +119,11 @@ def _macros(summaries: list[dict], paired: list[dict]) -> str:
             f"\\newcommand{{\\ClosedMikuVsBZeroSuccessDiff}}{{{100*success['mean_difference']:.1f}}}",
             f"\\newcommand{{\\ClosedMikuVsBZeroSuccessCiLow}}{{{100*success['ci_low']:.1f}}}",
             f"\\newcommand{{\\ClosedMikuVsBZeroSuccessCiHigh}}{{{100*success['ci_high']:.1f}}}",
+            f"\\newcommand{{\\ClosedMikuVsBZeroSuccessMcNemarP}}{{{success['mcnemar_exact_p']:.4g}}}",
             f"\\newcommand{{\\ClosedMikuVsBZeroCollisionDiff}}{{{100*collision['mean_difference']:.1f}}}",
             f"\\newcommand{{\\ClosedMikuVsBZeroCollisionCiLow}}{{{100*collision['ci_low']:.1f}}}",
             f"\\newcommand{{\\ClosedMikuVsBZeroCollisionCiHigh}}{{{100*collision['ci_high']:.1f}}}",
+            f"\\newcommand{{\\ClosedMikuVsBZeroCollisionMcNemarP}}{{{collision['mcnemar_exact_p']:.4g}}}",
             "",
         )
     )

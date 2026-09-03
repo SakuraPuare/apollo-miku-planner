@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 
 import numpy as np
 
@@ -11,7 +12,7 @@ from experiment_cases import RandomCase
 from experiment_methods import MethodRun
 
 
-RAW_SCHEMA_VERSION = "miku-random-v1"
+RAW_SCHEMA_VERSION = "miku-random-v2"
 COLLISION_TOLERANCE_M = 1e-3
 
 
@@ -221,4 +222,38 @@ def bootstrap_paired_difference(
         "ci_low": float(np.quantile(bootstrap_means, 0.025)),
         "ci_high": float(np.quantile(bootstrap_means, 0.975)),
         "cohen_dz": effect,
+    }
+
+
+def exact_mcnemar(candidate: np.ndarray, reference: np.ndarray) -> dict[str, float | int]:
+    """Two-sided exact McNemar test for paired binary outcomes."""
+
+    if candidate.shape != reference.shape:
+        raise ValueError("paired arrays must have equal shapes")
+    candidate = np.asarray(candidate)
+    reference = np.asarray(reference)
+    valid = np.isfinite(candidate) & np.isfinite(reference)
+    candidate = candidate[valid]
+    reference = reference[valid]
+    if not np.all(np.isin(candidate, (0, 1))) or not np.all(np.isin(reference, (0, 1))):
+        raise ValueError("McNemar inputs must be binary")
+    candidate = candidate.astype(int)
+    reference = reference.astype(int)
+
+    candidate_only = int(np.sum((candidate == 1) & (reference == 0)))
+    reference_only = int(np.sum((candidate == 0) & (reference == 1)))
+    discordant = candidate_only + reference_only
+    if discordant == 0:
+        p_value = 1.0
+    else:
+        tail = sum(
+            math.comb(discordant, index)
+            for index in range(min(candidate_only, reference_only) + 1)
+        ) / (2**discordant)
+        p_value = min(1.0, 2.0 * tail)
+    return {
+        "candidate_only": candidate_only,
+        "reference_only": reference_only,
+        "discordant": discordant,
+        "mcnemar_exact_p": float(p_value),
     }

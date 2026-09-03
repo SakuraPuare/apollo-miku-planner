@@ -27,6 +27,7 @@ class MethodSpec:
     solver: str = "pipeline"
     damping: float = 1.0
     refine_on_demand: bool = False
+    temporal_top_k: int = 1
 
 
 @dataclass
@@ -60,6 +61,7 @@ METHODS: tuple[MethodSpec, ...] = (
         max_iterations=2,
         damping=0.7,
         refine_on_demand=True,
+        temporal_top_k=3,
     ),
 )
 
@@ -101,7 +103,7 @@ def run_method(
     spec: MethodSpec,
     scn: Scenario,
     convergence_s: float = 0.05,
-    preferred_homotopy: dict[str, int] | None = None,
+    preferred_homotopy: dict[str, str] | None = None,
 ) -> MethodRun:
     """Run one method and measure the complete planning call(s), not QP only."""
     start = time.perf_counter()
@@ -115,6 +117,22 @@ def run_method(
         )
     else:
         raise ValueError(f"unknown method solver: {spec.solver}")
+    if (
+        spec.solver == "pipeline"
+        and spec.flags.corridor_inject
+        and result.get("s_qp") is None
+        and spec.temporal_top_k > 1
+    ):
+        for temporal_rank in range(1, spec.temporal_top_k):
+            alternative = run_pipeline(
+                spec.flags,
+                scn,
+                preferred_homotopy=preferred_homotopy,
+                temporal_plan_rank=temporal_rank,
+            )
+            if alternative.get("s_qp") is not None:
+                result = alternative
+                break
     iterations = 1
     converged = not spec.iterative
 
