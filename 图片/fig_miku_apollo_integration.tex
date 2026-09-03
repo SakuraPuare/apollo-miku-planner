@@ -19,7 +19,7 @@
 ]
 
 \node[input]  (in)   at (0,0) {参考线、车辆状态\\障碍物预测轨迹};
-\node[miku]   (miku) at (3.6,0) {\textbf{MIKU 路径约束构造}\\到达时间投影 $+$ 交互感知裕度\\扫描线分组 $+$ 组级最大间隙};
+\node[miku]   (miku) at (3.6,0) {\textbf{MIKU 时变通行带}\\交互感知边界 $+$ 时变投影\\Top-K 空间同伦选择};
 \node[apollo] (pqp)  at (7.4,0) {Apollo 路径 QP\\求解 $l(s)$};
 \node[apollo] (st)   at (10.3,0) {Apollo ST\\边界映射};
 \node[apollo] (sqp)  at (13.2,0) {Apollo 速度 QP\\求解 $s(t)$};
@@ -32,7 +32,7 @@
 \draw[mainflow] (sqp) -- (out);
 
 \draw[mikuflow] (miku.north) .. controls (5.8,2.05) and (11.0,2.05) .. (sqp.north)
-    node[lab, midway, above=1pt, text=deeppink] {\textbf{通行带时间条件 $\mathcal T$}\\融合为 ST 位置上界};
+    node[lab, midway, above=1pt, text=deeppink] {\textbf{多冲突点时间同伦 $\mathcal H_t$}\\融合为 ST 位置上下边界};
 
 \node[font=\scriptsize, text=deeppink, anchor=west] at (1.6,-1.35)
     {\rule{0.75cm}{1.1pt}\;MIKU 约束构造与传递};
