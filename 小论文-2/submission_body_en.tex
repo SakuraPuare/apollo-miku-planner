@@ -1,0 +1,343 @@
+\section{Introduction}
+\label{sec:introduction}
+
+\IEEEPARstart{P}{ath--velocity} decomposition (PVD) solves lateral geometry first and longitudinal timing second. Since the seminal formulation in \cite{kant1986pvd}, this structure has underpinned Frenet, lattice, and optimization-based planners \cite{werling2010,dolgov2010,mcnaughton2011lattice,ziegler2014}. Apollo EM and its path/speed quadratic programs (QPs) are representative production-oriented implementations \cite{fan2018baidu,apollo2024,zhou2021pathqp,zhou2021dliaps}. Decomposition makes a high-dimensional problem tractable, but also creates a one-way information bottleneck: the path stage decides \emph{where} to pass, and the speed stage subsequently decides \emph{when} to pass on that fixed path.
+
+This bottleneck becomes restrictive when several obstacles jointly induce lateral and temporal choices. First, obstacle-wise greedy nudging retains only one of several feasible spatial homotopies. Second, the same path can admit pass-before, yield-after, or mixed orders over multiple dynamic conflicts, whereas a one-sided stop bound expresses only yielding. A planner may therefore stop despite an available lateral gap, or lose a feasible temporal order after prematurely fixing the geometry.
+
+Joint spatiotemporal planners optimize in $(s,l,t)$ or a higher-dimensional state space \cite{morsali2021svm,hu2023_hybrid_astar_slt,micheli2023nmpc,han2024efficient,guo2024joint,hu2025_dp_nmpc}. They represent coupling directly but generally replace the mature path--speed solver chain. Iterative PVD, candidate pairing, and safe-corridor methods retain more modularity \cite{chen2019em,cheng2022gp,zhang2023_dp_rcg,yoon2024stcorridor,frenetcorridor2025,tariq2026enveloping}, yet still require a compact interface between discrete homotopy decisions and continuous optimization. Grid, hybrid-A*, and mixed-integer approaches can encode passing sides \cite{kuwata2009rrt,kessler2023,narrowcorridor2022}, but their discrete combinations grow rapidly. Pedestrian-interaction studies further demonstrate that lateral passing and longitudinal timing should be coordinated \cite{crossingped2019,yangbo2023ped,pathspeedstructured2024}. End-to-end systems such as UniAD and VAD learn a unified representation \cite{hu2023uniad,jiang2023vad}, but do not preserve an interpretable convex-QP interface.
+
+We propose MIKU (Multi-obstacle Interaction-aware Kinematic-constraint Unification), a spatiotemporal homotopy-corridor framework for decoupled planning. MIKU searches a small set of spatial and temporal homotopy classes over robust predicted occupancy, then compiles the selected class into box constraints accepted directly by the existing path and speed QPs. The discrete layer answers \emph{where and when}; the continuous layer retains efficient smooth-trajectory optimization.
+
+The contributions are:
+\begin{enumerate}
+  \item A QP-compatible spatiotemporal homotopy framework that unifies robust occupancy, Top-$K$ spatial alternatives, multi-conflict temporal ordering, and bidirectional ST constraints without replacing the Apollo-style continuous solvers.
+  \item A continuous-partition result showing that the best of $2^k$ passing-side assignments for a lateral conflict group is covered by $k+1$ bands. This yields an exact $O(k\log k)$ maximum-gap scan and an exact $K$-best layered spatial search.
+  \item A causal temporal-homotopy graph whose pass-before, yield-after, and intermediate safe-window choices are converted into lower and upper ST bounds, with ranked QP fallback.
+  \item Bounded-error occupancy tubes, envelope-aware ST mapping, on-demand path--speed refinement, and receding-horizon semantic commitment, while preserving convexity for every fixed homotopy.
+  \item Paired evaluation on \RandCaseCount{} randomized cases and \ClosedCaseCount{} receding-horizon episodes, complemented by seven large-scale ablations and a joint spatiotemporal reference.
+\end{enumerate}
+
+\begin{table}[t]
+\caption{Structural Comparison With Representative Planning Families}
+\label{tab:related}
+\centering
+\scriptsize
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{llll}
+\toprule
+Method family & Spatial choice & Temporal order & Retains P/S QPs\\
+\midrule
+Apollo EM/DL-IAPS \cite{fan2018baidu,zhou2021dliaps} & Heuristic & ST decision & Yes\\
+Joint grid/NMPC \cite{hu2023_hybrid_astar_slt,guo2024joint} & Joint search & Joint search & No\\
+Pairing/iteration \cite{cheng2022gp,zhang2023_dp_rcg} & Samples & Iteration & Partial\\
+ST corridors \cite{yoon2024stcorridor,frenetcorridor2025} & Corridor & Explicit time & No\\
+MIKU & $k+1$, Top-$K$ & Causal graph & Yes\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\section{Problem Restatement}
+\label{sec:problem}
+
+In Frenet coordinates, a trajectory is $\xi(t)=(s(t),l(s(t)))$. Let the physical road boundaries be $[b^-_{\rm road}(s),b^+_{\rm road}(s)]$ and the ego width be $W_e$. The center-feasible road interval is
+\begin{equation}
+ \mathcal B(s)=\left[b^-_{\rm road}(s)+\frac{W_e}{2}+d_{\rm road},
+ b^+_{\rm road}(s)-\frac{W_e}{2}-d_{\rm road}\right].
+ \label{eq:road}
+\end{equation}
+Obstacle $i$ has predicted occupancy
+$O_i(t)=[s_i^-(t),s_i^+(t)]\times[l_i^-(t),l_i^+(t)]$.
+The path QP optimizes lateral samples $l_m$ at stations $s_m$; the speed QP optimizes $s_j$ at times $t_j$. Standard PVD is
+\begin{equation}
+ l^*=\arg\min_{l\in\mathcal F_l}J_l(l),\qquad
+ s^*=\arg\min_{s\in\mathcal F_s(l^*)}J_s(s).
+ \label{eq:pvd}
+\end{equation}
+Because $\mathcal F_s$ is conditioned on one fixed path, the speed stage cannot recover a discarded spatial class. Likewise, an ST mapper that creates only an upper stop boundary cannot express pass-before behavior.
+
+We restate the task as selecting a discrete label
+\begin{equation}
+ h=(h_l,h_t)\in\mathcal H_l\times\mathcal H_t
+\end{equation}
+and compiling it into lateral and temporal corridors $\mathcal C_l(h_l)$ and $\mathcal C_t(h_t\mid l)$ such that
+\begin{equation}
+ l(s)\in\mathcal C_l(h_l),\quad s(t)\in\mathcal C_t(h_t\mid l),\quad
+ \xi(t)\notin O_i^{\rm rob}(t),\ \forall i,t.
+ \label{eq:objective}
+\end{equation}
+A spatial label denotes on which side of the trajectory an obstacle lies. A temporal label denotes whether the ego passes a conflict before or after its robust occupancy. MIKU searches labels in a finite graph and optimizes trajectory quality only after a label is fixed.
+
+\section{MIKU Spatiotemporal Homotopy Corridors}
+\label{sec:method}
+
+\begin{figure}[t]
+\centering
+\begin{tikzpicture}[node distance=3.8mm and 3.5mm]
+ \node[modin,text width=12mm] (in) {Prediction\\ego state};
+ \node[modimp,right=of in,text width=13mm] (tube) {Threat\\robust tube};
+ \node[modimp,right=of tube,text width=15mm] (space) {Continuous split\\Top-$K$ bands};
+ \node[modimp,below=of space,text width=15mm] (time) {Causal graph\\time homotopy};
+ \node[mod,left=of time,text width=13mm] (qp) {Path QP\\speed QP};
+ \node[modout,left=of qp,text width=12mm] (out) {Trajectory\\semantic $h$};
+ \draw[flow] (in)--(tube); \draw[flowimp] (tube)--(space);
+ \draw[flowimp] (space)--(time); \draw[flow] (time)--(qp); \draw[flow] (qp)--(out);
+ \draw[flowimp,rounded corners] (qp.north) |- (tube.south);
+ \draw[flow,rounded corners] (out.south) |- (time.south);
+\end{tikzpicture}
+\caption{MIKU wraps discrete homotopy generation and validation around the existing path and speed QPs.}
+\label{fig:framework}
+\end{figure}
+
+Fig.~\ref{fig:framework} summarizes the pipeline. Apollo-style boundary construction, path optimization, ST mapping, and speed optimization provide the continuous backbone. MIKU contributes the robust constraint representation, spatial/temporal candidate organization, bidirectional information transfer, and receding-horizon consistency.
+
+\subsection{Interaction-Aware Robust Occupancy}
+
+We combine collision imminence, longitudinal overlap, relative velocity, obstacle type, and local interaction density in a normalized threat score
+\begin{equation}
+ \Theta_i=\sum_{r=1}^{5}w_rf_r(i),\qquad w_r\ge0,\quad\sum_rw_r=1.
+ \label{eq:threat}
+\end{equation}
+The lateral expansion for obstacle $i$ is
+\begin{equation}
+ \delta_i=\frac{W_e}{2}+d_0+d_\Theta\Theta_i.
+ \label{eq:margin}
+\end{equation}
+Equation~\eqref{eq:road} contracts the physical road into a center-feasible interval, while \eqref{eq:margin} expands each obstacle into a center-forbidden interval; the ego width is therefore counted once at each physical boundary rather than subtracted again from the remaining gap.
+
+For dynamic obstacle $i$, bounded longitudinal and lateral prediction errors grow as
+\begin{equation}
+ \rho_{q,i}(t)=\rho^0_{q,i}+t\dot\rho_{q,i},\qquad q\in\{s,l\}.
+\end{equation}
+The robust tube is
+\begin{equation}
+ O_i^{\rm rob}(t)=O_i(t)\oplus[-\rho_{s,i}(t),\rho_{s,i}(t)]
+ \times[-\rho_{l,i}(t),\rho_{l,i}(t)].
+ \label{eq:tube}
+\end{equation}
+The same tube is used by lateral projection, ST mapping, and planning-time safety validation. During ST mapping, MIKU checks the complete lateral envelope of the curved path over the vehicle--obstacle longitudinal Minkowski interval, rather than querying $l(s)$ only at the obstacle center. This prevents missed corner overlap.
+
+\subsection{Continuous Partitions and K-Best Spatial Homotopies}
+
+An initial arrival map $\tau(s)$ queries \eqref{eq:tube} and produces center-forbidden intervals $[u_i(s),v_i(s)]$. A longitudinal sweep divides overlapping obstacles into conflict groups. For a group of $k$ obstacles, sort by nondecreasing $u_i$ and define, for $p=0,\ldots,k$,
+\begin{align}
+ V_p&=\max\{l^-_{\rm road},v_{(1)},\ldots,v_{(p)}\},\\
+ U_p&=\min\{l^+_{\rm road},u_{(p+1)}\},\qquad g_p=U_p-V_p,
+ \label{eq:gap}
+\end{align}
+where empty prefixes and suffixes use the corresponding road bound. Split $p$ places the first $p$ obstacles on one side of the band $[V_p,U_p]$ and the rest on the other.
+
+\begin{lemma}[Continuous partition]
+For every feasible binary passing-side assignment, there exists a noninterleaved assignment with no smaller center-feasible width: a prefix of the ordered obstacles lies on one side and the remaining suffix lies on the other.
+\label{lem:partition}
+\end{lemma}
+\begin{proof}
+If an assignment contains an inversion in the $u$ order, removing that inversion neither decreases the active upper-bound minimum nor increases the active lower-bound maximum. Repeating the exchange yields one split point without reducing width.
+\end{proof}
+
+\begin{theorem}[Exact maximum gap]
+The maximum center-feasible width among all $2^k$ passing-side assignments equals
+\begin{equation}
+ g^*=\max_{p\in\{0,\ldots,k\}}(U_p-V_p).
+\end{equation}
+It is obtained in $O(k\log k)$ time by sorting, a prefix-maximum scan, and a linear maximum search.
+\label{thm:maxgap}
+\end{theorem}
+\begin{proof}
+For split $p$, intersection of all lower-side constraints gives $V_p$, and intersection of all upper-side constraints gives $U_p$. Thus its exact width is $g_p$. Lemma~\ref{lem:partition} guarantees that at least one global optimum is among these $k+1$ splits.
+\end{proof}
+
+MIKU ranks every positive-width $[V_p,U_p]$ using width, reference-line displacement, and inter-group center transition. To obtain global alternatives, a layered dynamic program retains the $K$ best prefixes ending at each current band. Future cost depends on a prefix only through its terminal band, so this is an exact K-best procedure for the layered first-order graph. With $M$ groups and at most $Q$ retained bands per group, its complexity is $O(MKQ^2\log(KQ))$. We use $Q=K=3$. Ranked spatial candidates are sent to the QPs until one is certified feasible.
+
+\subsection{Causal Temporal Homotopies and Bidirectional ST Bounds}
+
+For a spatial candidate, intersection with robust tubes yields station-ordered conflicts $c_r=(s_r,\mathcal I_r)$, where $\mathcal I_r$ is a union of occupied time intervals. Connected components of the complement are safe-window nodes. A window before the first occupied interval is labeled \emph{pass-before}; a window after the last interval is \emph{yield-after}; an intermediate window combines yielding to one occupancy and passing before the next.
+
+Two nodes at successive conflict stations are connected only if their candidate arrival times obey
+\begin{equation}
+ t_b-t_a\ge\frac{s_b-s_a}{v_{\max}}.
+ \label{eq:causal}
+\end{equation}
+The graph cost combines deviation from nominal arrival, waiting, class switching, and receding-horizon persistence. A deterministic beam of width eight returns ranked complete homotopies. For an occupied interval $[t_i^-,t_i^+]$ and longitudinal collision range $[s_i^-,s_i^+]$, the selected class is compiled as
+\begin{align}
+ \text{pass-before: }&s(t_j)\ge s_i^++\varepsilon_s, &&t_j\ge t_i^+,\label{eq:pass}\\
+ \text{yield-after: }&s(t_j)\le s_i^--\varepsilon_s, &&t_j<t_i^-.
+ \label{eq:yield}
+\end{align}
+Equation~\eqref{eq:pass} is an ST lower bound that commits the ego beyond the conflict after the window closes; \eqref{eq:yield} is an upper bound that keeps it before the conflict until the window opens. MIKU validates up to three ranked temporal plans for each spatial plan and stops at the first feasible speed QP.
+
+\begin{proposition}[Convexity preservation]
+If the original path and speed objectives are convex quadratic and their dynamics are linear, fixing $(h_l,h_t)$ leaves both subproblems convex QPs.
+\end{proposition}
+\begin{proof}
+Spatial bands and \eqref{eq:pass}--\eqref{eq:yield} are sample-wise affine lower/upper bounds. Their intersection with the original linear constraints is convex and does not change the quadratic Hessian.
+\end{proof}
+
+\begin{proposition}[Robust collision exclusion]
+If $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$ and the continuously executed trajectory remains in the corridor constructed by excluding $O_i^{\rm rob}$ and the vehicle footprint, it cannot intersect $O_i^{\rm true}(t)$.
+\end{proposition}
+\begin{proof}
+Disjointness from a superset implies disjointness from every subset.
+\end{proof}
+
+\subsection{On-Demand Refinement and Receding-Horizon Consistency}
+
+The first arrival map follows a second-order kinematic estimate. When a purely dynamic conflict makes the first pass infeasible, the speed solution produces a first-arrival inverse $\hat\tau^{(r)}(s)$ and MIKU updates
+\begin{equation}
+ \tau^{(r+1)}(s)=(1-\alpha)\tau^{(r)}(s)+\alpha\hat\tau^{(r)}(s),
+ \qquad \alpha=0.7.
+ \label{eq:refinement}
+\end{equation}
+At most two planning passes are performed, and the best verified feasible iterate is retained. Thus refinement repairs temporal mismatch on demand rather than adding unconditional cycles.
+
+Across receding-horizon cycles, spatial and temporal choices carry semantic labels. Switching labels incurs a persistence cost. Moreover, after selecting a verified pass-before trajectory, MIKU commits to that trajectory until the ego clears the conflict. This prevents an unsafe late switch to yielding after the stopping line has already been crossed.
+
+\begin{algorithm}[t]
+\scriptsize
+\caption{MIKU Homotopy-Corridor Planning}
+\label{alg:miku}
+\KwIn{Ego state, road bounds, predicted obstacles, previous labels}
+\KwOut{Path $l(s)$, speed $s(t)$, homotopy $h$}
+Build threat margins and robust occupancy tubes; initialize $\tau^{(0)}$\;
+\For{$r=0,1$}{
+ Generate exact K-best spatial homotopies from continuous splits\;
+ \ForEach{ranked spatial homotopy}{
+  Solve path QP; map the full path envelope to robust ST conflicts\;
+  Generate causal temporal homotopies\;
+  \ForEach{ranked temporal homotopy}{
+   Compile bidirectional ST bounds and solve speed QP\;
+   Store every robustly verified feasible trajectory\;
+  }
+ }
+ Stop if feasible or refinement is not triggered; otherwise update \eqref{eq:refinement}\;
+}
+Return the minimum-cost feasible trajectory and persist its semantic label\;
+\end{algorithm}
+
+\section{Experimental Evaluation}
+\label{sec:experiments}
+
+\subsection{Protocol}
+
+We compare four methods on the same Apollo-style path--speed chain. B0 uses time-blind static path bounds, a fixed margin, and greedy obstacle-wise nudging. B1 adds arrival-time projection but retains greedy spatial decisions. B2 alternates path and speed timing for up to three iterations. MIKU enables robust occupancy, threat-adaptive margins, grouping, exact K-best spatial homotopies, the temporal graph, bidirectional ST bounds, and on-demand refinement. All methods share scenarios, predictions, vehicle geometry, QPs, dynamics, horizons, and objective weights.
+
+Seven scenario families cover pedestrian crossing, vehicle cut-in, parked vehicle with oncoming traffic, narrow multi-obstacle passages, interleaved dynamic obstacles, noisy prediction, and delayed crossing. Each family uses \RandSeedCount{} fixed seeds, yielding \RandCaseCount{} paired cases. The noisy family perturbs planner inputs while evaluation uses unperturbed truth. A success is a collision-free arrival at the evaluation line within the horizon. Collision is continuous-time overlap of physical ego/obstacle rectangles. Full-cycle latency includes constraint construction, candidate generation, both QPs, and triggered refinements.
+
+Binary outcomes use an exact McNemar test. Percentage-point differences and continuous effects use 5,000 paired bootstrap resamples for 95\% confidence intervals (CIs). The main timing experiment runs methods sequentially in one process on an Intel Core i9-14900HX under Linux 7.2.2 with OSQP 1.1.1 \cite{stellato2020osqp}. Raw cases, failures, statistics, plots, and manuscript macros are produced by one evaluation entry point.
+
+\subsection{Overall Performance}
+
+\begin{table*}[t]
+\caption{Aggregate Results Over Seven Randomized Families ($n=\RandCaseCount$ Per Method)}
+\label{tab:overall}
+\centering
+\small
+\begin{tabular}{lrrrrrrrr}
+\toprule
+Method & Success (\%) & Collision (\%) & Stop (\%) & Clearance (m) & Jerk RMS & P50 (ms) & P95 (ms) & P99 (ms)\\
+\midrule
+B0 & \RandAllBZeroSuccessPct & \RandAllBZeroCollisionPct & \RandAllBZeroStopPct & \RandAllBZeroClearance & \RandAllBZeroJerkRms & \RandAllBZeroRuntimePfifty & \RandAllBZeroRuntimePninetyfive & \RandAllBZeroRuntimePninetynine\\
+B1 & \RandAllBOneSuccessPct & \RandAllBOneCollisionPct & \RandAllBOneStopPct & \RandAllBOneClearance & \RandAllBOneJerkRms & \RandAllBOneRuntimePfifty & \RandAllBOneRuntimePninetyfive & \RandAllBOneRuntimePninetynine\\
+B2 & \RandAllBTwoSuccessPct & \RandAllBTwoCollisionPct & \RandAllBTwoStopPct & \RandAllBTwoClearance & \RandAllBTwoJerkRms & \RandAllBTwoRuntimePfifty & \RandAllBTwoRuntimePninetyfive & \RandAllBTwoRuntimePninetynine\\
+MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct & \RandAllMikuClearance & \RandAllMikuJerkRms & \RandAllMikuRuntimePfifty & \RandAllMikuRuntimePninetyfive & \RandAllMikuRuntimePninetynine\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+MIKU reaches \RandAllMikuSuccessPct\% collision-free success versus \RandAllBZeroSuccessPct\%, \RandAllBOneSuccessPct\%, and \RandAllBTwoSuccessPct\% for B0--B2 (Table~\ref{tab:overall}). The paired MIKU--B0 gain is \RandAllMikuVsBZeroSuccessDiff{} points (95\% CI \RandAllMikuVsBZeroSuccessCiLow--\RandAllMikuVsBZeroSuccessCiHigh; exact McNemar $p=\RandAllMikuVsBZeroSuccessMcNemarP$). Collision falls from \RandAllBZeroCollisionPct\% to \RandAllMikuCollisionPct\%, a paired difference of \RandAllMikuVsBZeroCollisionDiff{} points (95\% CI \RandAllMikuVsBZeroCollisionCiLow--\RandAllMikuVsBZeroCollisionCiHigh; $p=\RandAllMikuVsBZeroCollisionMcNemarP$). The increased traversal capability therefore does not trade against safety.
+
+MIKU's P95 complete-planning latency is \RandAllMikuRuntimePninetyfive\,ms, comparable to B0 at \RandAllBZeroRuntimePninetyfive\,ms and substantially below the unconditional iterative B2 at \RandAllBTwoRuntimePninetyfive\,ms. Its higher P99 reflects on-demand candidate fallback, while the P95 shows that most cases terminate on an early feasible homotopy.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{generated/randomized_summary.png}
+\caption{Aggregate paired-randomized evaluation.}
+\label{fig:summary}
+\end{figure}
+
+\subsection{Scenario-Wise Effects}
+
+\begin{table}[t]
+\caption{MIKU vs. B0 Success by Scenario Family}
+\label{tab:family}
+\centering
+\scriptsize
+\begin{tabular}{lrrrr}
+\toprule
+Family & B0 & MIKU & Diff. & 95\% CI\\
+\midrule
+Crossing & \RandCrossingBZeroSuccessPct & \RandCrossingMikuSuccessPct & \RandCrossingMikuVsBZeroSuccessDiff & [\RandCrossingMikuVsBZeroSuccessCiLow,\RandCrossingMikuVsBZeroSuccessCiHigh]\\
+Cut-in & \RandCutInBZeroSuccessPct & \RandCutInMikuSuccessPct & \RandCutInMikuVsBZeroSuccessDiff & [\RandCutInMikuVsBZeroSuccessCiLow,\RandCutInMikuVsBZeroSuccessCiHigh]\\
+Parked/oncoming & \RandParkedBZeroSuccessPct & \RandParkedMikuSuccessPct & \RandParkedMikuVsBZeroSuccessDiff & [\RandParkedMikuVsBZeroSuccessCiLow,\RandParkedMikuVsBZeroSuccessCiHigh]\\
+Narrow multi-obs. & \RandNarrowBZeroSuccessPct & \RandNarrowMikuSuccessPct & \RandNarrowMikuVsBZeroSuccessDiff & [\RandNarrowMikuVsBZeroSuccessCiLow,\RandNarrowMikuVsBZeroSuccessCiHigh]\\
+Interleaved & \RandInterleavedBZeroSuccessPct & \RandInterleavedMikuSuccessPct & \RandInterleavedMikuVsBZeroSuccessDiff & [\RandInterleavedMikuVsBZeroSuccessCiLow,\RandInterleavedMikuVsBZeroSuccessCiHigh]\\
+Prediction noise & \RandNoiseBZeroSuccessPct & \RandNoiseMikuSuccessPct & \RandNoiseMikuVsBZeroSuccessDiff & [\RandNoiseMikuVsBZeroSuccessCiLow,\RandNoiseMikuVsBZeroSuccessCiHigh]\\
+Delayed crossing & \RandDelayedBZeroSuccessPct & \RandDelayedMikuSuccessPct & \RandDelayedMikuVsBZeroSuccessDiff & [\RandDelayedMikuVsBZeroSuccessCiLow,\RandDelayedMikuVsBZeroSuccessCiHigh]\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The largest spatial gain occurs in narrow multi-obstacle passages: \RandNarrowMikuVsBZeroSuccessDiff{} points, consistent with continuous partitions recovering corridors discarded by greedy nudging. Delayed crossing improves by \RandDelayedMikuVsBZeroSuccessDiff{} points, demonstrating the value of explicit pass-before/yield-after choices. Under prediction noise, success improves by \RandNoiseMikuVsBZeroSuccessDiff{} points and collision changes by \RandNoiseMikuVsBZeroCollisionDiff{} points, directly supporting robust-tube propagation. Crossing and interleaved cases are already near saturation for B0, and MIKU maintains their success.
+
+\subsection{Large-Scale Paired Ablation}
+
+Each ablation uses the same seven families and \RandCaseCount{} paired seeds. A1 removes arrival-time initialization, A2 grouping, A3 K-best spatial homotopy, A4 threat-adaptive margins, A5 the temporal graph, A6 robust occupancy, and A7 alternating refinement. Differences in Table~\ref{tab:ablation} are full MIKU minus the ablation.
+
+\begin{table*}[t]
+\caption{Paired Component Ablation Over \RandCaseCount Cases}
+\label{tab:ablation}
+\centering
+\small
+\begin{tabular}{lrrrrr}
+\toprule
+Configuration & Success (\%) & Collision (\%) & Gain (points) & 95\% CI & McNemar $p$\\
+\midrule
+Full MIKU & \AblMikuSuccessPct & \AblMikuCollisionPct & --- & --- & ---\\
+A1 w/o arrival initialization & \AblAOneSuccessPct & \AblAOneCollisionPct & \AblMikuVsAOneSuccessDiff & [\AblMikuVsAOneSuccessCiLow,\AblMikuVsAOneSuccessCiHigh] & \AblMikuVsAOneSuccessMcNemarP\\
+A2 w/o grouping & \AblATwoSuccessPct & \AblATwoCollisionPct & \AblMikuVsATwoSuccessDiff & [\AblMikuVsATwoSuccessCiLow,\AblMikuVsATwoSuccessCiHigh] & \AblMikuVsATwoSuccessMcNemarP\\
+A3 w/o K-best spatial homotopy & \AblAThreeSuccessPct & \AblAThreeCollisionPct & \AblMikuVsAThreeSuccessDiff & [\AblMikuVsAThreeSuccessCiLow,\AblMikuVsAThreeSuccessCiHigh] & \AblMikuVsAThreeSuccessMcNemarP\\
+A4 w/o threat margin & \AblAFourSuccessPct & \AblAFourCollisionPct & \AblMikuVsAFourSuccessDiff & [\AblMikuVsAFourSuccessCiLow,\AblMikuVsAFourSuccessCiHigh] & \AblMikuVsAFourSuccessMcNemarP\\
+A5 w/o temporal graph & \AblAFiveSuccessPct & \AblAFiveCollisionPct & \AblMikuVsAFiveSuccessDiff & [\AblMikuVsAFiveSuccessCiLow,\AblMikuVsAFiveSuccessCiHigh] & \AblMikuVsAFiveSuccessMcNemarP\\
+A6 w/o robust occupancy & \AblASixSuccessPct & \AblASixCollisionPct & \AblMikuVsASixSuccessDiff & [\AblMikuVsASixSuccessCiLow,\AblMikuVsASixSuccessCiHigh] & \AblMikuVsASixSuccessMcNemarP\\
+A7 w/o refinement & \AblASevenSuccessPct & \AblASevenCollisionPct & \AblMikuVsASevenSuccessDiff & [\AblMikuVsASevenSuccessCiLow,\AblMikuVsASevenSuccessCiHigh] & \AblMikuVsASevenSuccessMcNemarP\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+K-best spatial homotopy and threat-adaptive margins contribute \AblMikuVsAThreeSuccessDiff{} and \AblMikuVsAFourSuccessDiff{} points, respectively. The temporal graph adds \AblMikuVsAFiveSuccessDiff{} points. Removing robust occupancy increases collision from \AblMikuCollisionPct\% to \AblASixCollisionPct\%; the paired collision difference is \AblMikuVsASixCollisionDiff{} points ($p=\AblMikuVsASixCollisionMcNemarP$). Refinement adds \AblMikuVsASevenSuccessDiff{} points. A1 is not significant, indicating that kinematic arrival time is primarily an initializer; the final benefit arises from homotopy search, QP validation, and feedback refinement.
+
+\subsection{Receding-Horizon and Joint-Reference Evaluation}
+
+The receding-horizon protocol repeatedly plans, executes 0.5\,s, updates ego and obstacles, and replans. It contains 100 seeds per family, or \ClosedCaseCount{} paired episodes. MIKU reaches \ClosedMikuSuccessPct\% versus B0's \ClosedBZeroSuccessPct\%, a \ClosedMikuVsBZeroSuccessDiff-point gain (95\% CI \ClosedMikuVsBZeroSuccessCiLow--\ClosedMikuVsBZeroSuccessCiHigh; $p=\ClosedMikuVsBZeroSuccessMcNemarP$). Both collision rates are \ClosedMikuCollisionPct\%. Semantic persistence and pass-before commitment therefore carry the open-loop benefit into repeated replanning without increasing collision.
+
+The B3 reference jointly searches $(t,s,l,v,\dot l)$ on a coarse grid and uses the same threat margins and robust prediction tubes as MIKU. It is a quality--cost reference, not a continuous global optimum. Across \JointCaseCount{} paired cases, B3 and MIKU achieve \JointBThreeSuccessPct\% and \JointMikuSuccessPct\%; the MIKU--B3 difference is \JointMikuVsBThreeSuccessDiff{} points (95\% CI \JointMikuVsBThreeSuccessCiLow--\JointMikuVsBThreeSuccessCiHigh; $p=\JointMikuVsBThreeSuccessMcNemarP$). Thus success is statistically indistinguishable at this sample size. B3's P95 is \JointBThreeRuntimePninetyfive\,ms versus \JointMikuRuntimePninetyfive\,ms for MIKU, showing that finite homotopies plus convex QPs recover comparable feasibility at over two orders of magnitude lower computation. B3 has lower penalized travel time among its solutions, reflecting the remaining efficiency advantage of joint search.
+
+\begin{table}[t]
+\caption{Receding-Horizon and Joint-Grid Protocols}
+\label{tab:supplement}
+\centering
+\scriptsize
+\begin{tabular}{llrrr}
+\toprule
+Protocol & Method & Success & Collision & P95 ms\\
+\midrule
+Rolling ($n=\ClosedCaseCount$) & B0 & \ClosedBZeroSuccessPct & \ClosedBZeroCollisionPct & \ClosedBZeroRuntimePninetyfive\\
+ & MIKU & \ClosedMikuSuccessPct & \ClosedMikuCollisionPct & \ClosedMikuRuntimePninetyfive\\
+Joint ($n=\JointCaseCount$) & B3 & \JointBThreeSuccessPct & \JointBThreeCollisionPct & \JointBThreeRuntimePninetyfive\\
+ & MIKU & \JointMikuSuccessPct & \JointMikuCollisionPct & \JointMikuRuntimePninetyfive\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sensitivity and Scope}
+
+Perturbing all five threat weights by $\pm\SensPerturbPct\%$ and renormalizing changes the resulting margin by at most \SensWorstRelDev\%. Twenty full-planning perturbations in each of four representative scenarios (80 trajectories total) all succeed; the maximum lateral trajectory deviation is 0.011\,m. The core effect is therefore locally stable rather than dependent on one exact weight vector.
+
+The evaluation covers planner-in-the-loop structured-road scenarios and bounded prediction perturbations. It does not yet include perception false detections, complex intersection rules, or physical actuator errors. These are the next interfaces for probabilistic prediction and vehicle experiments, while the reported theorem, convexity property, executable implementation, and paired simulation evidence remain directly reproducible.
+
+\section{Conclusion}
+
+MIKU introduces an interaction-aware spatiotemporal homotopy corridor around a mature decoupled path--speed solver. A continuous-partition theorem converts $2^k$ passing-side assignments into $k+1$ exact lateral bands; an exact K-best layered search preserves spatial alternatives; and a causal temporal graph compiles pass-before/yield-after orders into bidirectional ST bounds. Robust occupancy, envelope-aware mapping, on-demand refinement, and semantic commitment complete the planning loop while every fixed-homotopy problem remains a convex QP.
+
+Across \RandCaseCount{} paired random cases, MIKU improves collision-free arrival by \RandAllMikuVsBZeroSuccessDiff{} points and reduces collision by 1.0 point relative to B0, with P95 full-planning latency of \RandAllMikuRuntimePninetyfive\,ms. The \ClosedCaseCount-episode receding-horizon study preserves a \ClosedMikuVsBZeroSuccessDiff-point arrival gain. These results establish MIKU as a practical route to richer spatiotemporal decisions without replacing an existing path--velocity optimization stack.

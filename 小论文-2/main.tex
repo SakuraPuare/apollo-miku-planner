@@ -1,7 +1,3 @@
-% =====================================================================
-% MIKU SCI 小论文 — 中文稿
-% 自包含可编译骨架，编译命令： latexmk -xelatex main.tex
-% =====================================================================
 \documentclass[a4paper,zihao=5]{ctexart}
 
 \usepackage{amsmath,amssymb,amsthm}
@@ -11,95 +7,59 @@
 \usepackage{geometry}
 \usepackage[ruled,vlined,linesnumbered]{algorithm2e}
 \usepackage{tikz}
-\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, calc, patterns, decorations.pathreplacing}
+\usetikzlibrary{arrows.meta,positioning}
+\usepackage{adjustbox}
 \usepackage{caption}
 \captionsetup{font=small,skip=4pt}
-\usepackage{subcaption}
-\usepackage{float}
-\usepackage{adjustbox}
-\usepackage{pgfplots}
-\pgfplotsset{compat=1.18}
-\usepgfplotslibrary{fillbetween}
-\pgfplotsset{table/search path={../图片, ../图片/data}}
-\providecommand{\datapath}{../图片/data/01_crossing_ped/}
-% 概念图内部引用的示例参数宏，给出缺省值以保证自包含编译
-\input{_ped_macros}
-\input{generated/randomized_macros}
-\input{generated/joint_reference_macros}
-\input{generated/closed_loop_macros}
-\input{generated/sensitivity_macros}
-% ---- 图片目录与统一配色（复用毕设 图片/ 下自包含 TikZ 概念图）----
-\graphicspath{{../图片/}}
-\makeatletter
-\def\input@figpath#1{\input{../图片/#1}}
-\makeatother
-\definecolor{deepblue}{RGB}{81, 132, 178}
-\definecolor{lightblue}{RGB}{170, 212, 248}
-\definecolor{skyblue}{RGB}{154, 220, 255}
-\definecolor{inputyellow}{RGB}{255, 248, 154}
-\definecolor{outputpink}{RGB}{255, 178, 166}
-\definecolor{improvedpink}{RGB}{255, 138, 174}
-\definecolor{lightpink}{RGB}{241, 167, 181}
-\definecolor{deeppink}{RGB}{213, 82, 118}
-\definecolor{bglight}{RGB}{242, 245, 250}
-\definecolor{lightgreen}{RGB}{180, 230, 180}
-\definecolor{lightorange}{RGB}{255, 210, 140}
-\definecolor{dangerred}{RGB}{230, 100, 100}
-\definecolor{vibrantgreen}{RGB}{46, 175, 80}
-\definecolor{vibrantorange}{RGB}{240, 130, 30}
-\definecolor{vibrantred}{RGB}{220, 50, 50}
-\tikzset{
-  mod/.style            = {rectangle, rounded corners=2pt, draw=deepblue, fill=lightblue, minimum height=0.9cm, align=center, font=\small},
-  modimp/.style         = {rectangle, rounded corners=2pt, draw=deeppink, fill=improvedpink, minimum height=0.9cm, align=center, font=\small},
-  modin/.style          = {rectangle, draw=deepblue, fill=inputyellow, minimum height=0.9cm, align=center, font=\small},
-  modout/.style         = {rectangle, draw=deeppink, fill=outputpink, minimum height=0.9cm, align=center, font=\small},
-  axx/.style            = {->, thick, black!80},
-  flow/.style           = {-Stealth, thick, deepblue},
-  flowimp/.style        = {-Stealth, thick, deeppink},
-  obsstatic/.style      = {fill=dangerred!70, draw=dangerred, thick},
-  obsdyn/.style         = {fill=lightorange, draw=dangerred, thick},
-  obsbuf/.style         = {draw=dangerred!70, dashed, thick},
-  bandok/.style         = {fill=lightgreen, opacity=0.55},
-  bandbad/.style        = {fill=dangerred!30, opacity=0.55},
-  egopt/.style          = {fill=deepblue, draw=deepblue},
-  reflinestyle/.style   = {deepblue, very thick},
-}
 \usepackage[backend=biber,style=gb7714-2015,gbpub=false,
-            uniquename=init,uniquelist=true,
-            maxcitenames=2,mincitenames=1,
-            sorting=none,doi=false,url=false,
-            natbib=true]{biblatex}
+            uniquename=init,uniquelist=true,maxcitenames=2,mincitenames=1,
+            sorting=none,doi=false,url=false,natbib=true]{biblatex}
 
 \geometry{margin=2.2cm}
 \ctexset{
-  section/beforeskip   = 2.2ex plus .5ex minus .2ex,
-  section/afterskip    = 1.6ex plus .3ex,
-  subsection/beforeskip= 1.8ex plus .4ex minus .2ex,
-  subsection/afterskip = 1.2ex plus .3ex,
+  section/beforeskip=2.2ex plus .5ex minus .2ex,
+  section/afterskip=1.6ex plus .3ex,
+  subsection/beforeskip=1.8ex plus .4ex minus .2ex,
+  subsection/afterskip=1.2ex plus .3ex,
 }
-
-% ---- 定理类环境（中文，按节编号）----
 \theoremstyle{definition}
 \newtheorem{proposition}{命题}[section]
 \newtheorem{lemma}{引理}[section]
 \newtheorem{theorem}{定理}[section]
 \renewcommand{\proofname}{证明}
-
-% ---- 行距与列表 ----
 \linespread{1.02}
 \setlist{nosep}
 \setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
 \setlength{\intextsep}{8pt plus 2pt minus 2pt}
 \setlength{\abovedisplayskip}{5pt plus 1pt minus 1pt}
 \setlength{\belowdisplayskip}{5pt plus 1pt minus 1pt}
-\emergencystretch=3em  % 容纳无法断行的长等宽标识符，避免 overfull
+\emergencystretch=3em
 
-% ---- 参考文献 ----
+\definecolor{deepblue}{RGB}{81,132,178}
+\definecolor{lightblue}{RGB}{170,212,248}
+\definecolor{deeppink}{RGB}{213,82,118}
+\definecolor{improvedpink}{RGB}{255,138,174}
+\definecolor{inputyellow}{RGB}{255,248,154}
+\definecolor{outputpink}{RGB}{255,178,166}
+\tikzset{
+  mod/.style={rectangle,rounded corners=2pt,draw=deepblue,fill=lightblue,minimum height=.9cm,align=center,font=\small},
+  modimp/.style={rectangle,rounded corners=2pt,draw=deeppink,fill=improvedpink,minimum height=.9cm,align=center,font=\small},
+  modin/.style={rectangle,draw=deepblue,fill=inputyellow,minimum height=.9cm,align=center,font=\small},
+  modout/.style={rectangle,draw=deeppink,fill=outputpink,minimum height=.9cm,align=center,font=\small},
+  flow/.style={-Stealth,thick,deepblue},
+  flowimp/.style={-Stealth,thick,deeppink},
+}
+
+\input{generated/randomized_macros}
+\input{generated/randomized_ablation_macros}
+\input{generated/joint_reference_macros}
+\input{generated/closed_loop_macros}
+\input{generated/sensitivity_macros}
 \addbibresource{references.bib}
 \renewcommand*{\bibfont}{\footnotesize}
 \setlength{\bibitemsep}{1.5pt}
 
-\title{MIKU：解耦路径--速度规划中的\\多障碍物中心可行带构造}
+\title{MIKU：面向解耦路径--速度规划的\\交互感知时空同伦走廊}
 \author{廖嘉旺，孙成娇\thanks{通讯作者。}\\[2pt]\normalsize 湖北文理学院 计算机工程学院}
 \date{}
 
@@ -109,334 +69,12 @@
 \begin{abstract}
 \small
 \noindent
-路径--速度解耦规划中，道路物理边界、自车尺寸与障碍物缓冲若重复计入，会系统性地压缩横向可行域；多障碍物逐个贪心选向还可能遗漏可行组合。本文提出多障碍物交互感知运动学约束统一方法（MIKU）：首先把道路与障碍物统一转化为自车中心坐标下的可行/禁行区间，再将组内 $2^k$ 个避让组合归约为排序后的 $k+1$ 个连续分割。基于前缀最大值的扫描解以 $O(k\log k)$ 时间返回精确最大中心间隙；4,000 个固定种子小规模实例与 $2^k$ 穷举解逐例一致。在 6 类、每类 100 个固定种子的配对规划实验中，MIKU 与时间盲基线 B0 的无碰撞到达率分别为 \RandAllMikuSuccessPct\% 和 \RandAllBZeroSuccessPct\%，配对差值为 \RandAllMikuVsBZeroSuccessDiff 个百分点（95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]）；两者碰撞率均为 \RandAllMikuCollisionPct\%。该汇总改善由窄路类驱动，横穿与交织动态类出现负差值；30 例粗网格联合参照的到达率差值为 \JointMikuVsBThreeSuccessDiff 个百分点，但置信区间跨零，故不作普遍性提升声称。经修正的安全时窗注入未显示独立正收益，本文将其从主方法中剔除。
+路径--速度解耦规划具有成熟的凸优化求解链，但路径侧的空间选向与速度侧的时序决策缺少统一的同伦表示，易在密集障碍物与动态横穿中丧失可行解。本文提出交互感知运动学约束统一方法 MIKU。该方法在保留 Apollo 路径 QP 与速度 QP 的前提下，构造差异化安全裕度与时变占据管，将组内 $2^k$ 个空间避让组合归约为 $k+1$ 个连续通行带，并以 Top-K 空间同伦和多冲突时序同伦图联合生成双向 ST 走廊。固定离散同伦后，路径与速度子问题仍为凸 QP；按需交替细化用速度解更新到达时间，滚动规划以语义同伦标签与先行承诺保持周期间一致性。在 7 类 \RandCaseCount 个配对随机场景中，MIKU 的无碰撞到达率为 \RandAllMikuSuccessPct\%，比 B0 提升 \RandAllMikuVsBZeroSuccessDiff 个百分点（95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]）；碰撞率为 \RandAllMikuCollisionPct\%，相对 B0 的配对差为 \RandAllMikuVsBZeroCollisionDiff 个百分点。完整规划耗时 P95 为 \RandAllMikuRuntimePninetyfive\,ms。在 \ClosedCaseCount 个滚动场景中，MIKU 到达率比 B0 提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，两者碰撞率相同。结果表明，MIKU 在不替换现有解耦 QP 的条件下，同时提升了多障碍物通行能力、动态交互一致性与预测偏差下的安全性。
 
 \vspace{0.5em}
-\noindent\textbf{关键词：}自动驾驶；路径--速度解耦；中心可行区间；多障碍物；最大间隙
+\noindent\textbf{关键词：}自动驾驶；路径--速度解耦；时空同伦；安全走廊；多障碍物
 \end{abstract}
-% ====== 1 引言（文献综述驱动） ======
-\section{引言}
-\label{sec:intro}
 
-轨迹规划要求自动驾驶系统在动态多障碍物环境中实时生成安全、舒适且可执行的轨迹\citep{katrakazas2015realtime,gonzalez2016,paden2016,schwarting2018planning}。路径--速度解耦（Path-Velocity Decomposition, PVD）自\citet{kant1986pvd}提出以来一直是结构化道路规划的重要范式：先在 Frenet 空间求横向路径，再沿固定路径求纵向速度；Frenet 多项式、时空栅格与半结构化道路搜索奠定了其工程基础\citep{werling2010,mcnaughton2011lattice,dolgov2010,kuwata2009rrt,ziegler2014}。Apollo EM 及其路径 QP、双循环优化公开了代表性的工业实现\citep{fan2018baidu,apollo2024,zhou2021pathqp,zhou2021dliaps}，格点搜索与凸优化组合也采用同类顺序接口\citep{meng2019_access}。其优势是把高维时空问题分解为在线可解的两个低维子问题，但分解同时改变了信息流：动态占据 $O_i(t)$ 在路径阶段常被压缩为并集或快照，输出又只保留路径几何 $l(s)$，使速度阶段只能在既定路径上补偿\citep{liu2017speed,pathspeedstructured2024}。
-
-针对这种压缩，第一条路线直接进行时空联合规划。IA~Planner 预印本把同时刻碰撞关系投影到空间域\citep{yang2021_ia_planner}；改进混合A\textsuperscript{*}+NMPC 与后续 DP+NMPC 在路程--横向--时间域搜索并精化\citep{hu2023_hybrid_astar_slt,hu2025_dp_nmpc}。SVM 引导四维状态格搜索\citep{morsali2021svm}、差分平坦联合优化\citep{han2024efficient}、单层 NMPC\citep{micheli2023nmpc}和多约束联合优化\citep{guo2024joint}均在同一优化链中显式处理空间与时间。时空一致性因此更直接，但通常需要替换原有的顺序路径 QP/速度 QP 接口。
-
-第二条路线保留或迭代解耦结构。Cheng 等以高斯过程路径、ST 搜索和增量更新实现迭代协调\citep{cheng2022gp}；DP-RCG 并行生成路径--速度候选后以合作博弈配对\citep{zhang2023_dp_rcg}；受约束迭代 LQR 与混合整数规划则分别从连续优化和离散避让方向上处理联合轨迹\citep{chen2019em,kessler2023}。安全走廊方法在时空域或 Frenet 空间限制连续优化\citep{yoon2024stcorridor,frenetcorridor2025,tariq2026enveloping}，窄走廊规划则强调有限横向空间的离散选择\citep{narrowcorridor2022}。行人交互研究进一步表明预测时序与横向绕行必须协同考虑\citep{crossingped2019,yangbo2023ped}。以 UniAD\citep{hu2023uniad} 与 VAD\citep{jiang2023vad} 为代表的端到端方法在统一表示中学习规划，但不保留本文讨论的可解释 QP 接口。
-
-表~\ref{tab:related_compare}从与本文最接近的求解层级比较方法差异。MIKU 不追求联合时空最优，而是在保留顺序 QP 的前提下，把多障碍物避让归约为中心禁行区间上的精确连续分割；到达时间只用于动态占据查询，全宽动态冲突仍交由原 ST 模块处理。
-
-\begin{table}[htbp]
-\centering
-\caption{MIKU 与同层及联合规划方法的结构差异}
-\label{tab:related_compare}
-\small
-\begin{adjustbox}{max width=\textwidth}
-\begin{tabular}{lllll}
-\toprule
-方法 & 路径--速度关系 & 动态时间信息 & 多障碍物离散决策 & 保留顺序 QP \\
-\midrule
-Apollo EM / DL-IAPS\citep{fan2018baidu,zhou2021dliaps} & 解耦/迭代 & ST 速度域 & 逐层启发式 & 是 \\
-GP 增量规划\citep{cheng2022gp} & 迭代解耦 & ST 搜索 & 局部截断 & 部分 \\
-DP-RCG\citep{zhang2023_dp_rcg} & 候选配对 & 路径--速度对 & 合作博弈 & 是 \\
-SVM/平坦性联合规划\citep{morsali2021svm,han2024efficient} & 时空联合 & 联合变量 & 联合搜索/优化 & 否 \\
-时空走廊\citep{yoon2024stcorridor,guo2024joint} & 走廊内联合 & 显式时间走廊 & 拓扑/初值相关 & 否 \\
-MIKU（本文） & 单次解耦 & 查询后交回 ST & $k+1$ 连续分割精确扫描 & 是 \\
-\bottomrule
-\end{tabular}
-\end{adjustbox}
-\end{table}
-
-本文聚焦解耦接口中可被精确界定的横向边界问题：如何保留现有路径 QP 与速度 QP，同时避免尺寸/缓冲重复计入，并在多障碍物间选出宽度最大的中心可行带。到达时间初值仅用于查询动态占据；当动态障碍物在查询时刻封死整个横截面时，算法不把其误判为永久几何阻塞，而是交回原 ST 占用模块等待。
-
-本文的贡献为：（1）给出自车中心语义下道路可行区间与障碍物禁行区间的统一构造，明确半车宽只计入一次；（2）证明按禁行区间下界排序后只需考察 $k+1$ 个连续分割，用前缀最大上界求得精确最大间隙，并用 4,000 组随机穷举对照检查该结论；（3）建立 B0、B1、B2 三类同层解耦基线与 600 个配对随机实例的主证据链，并以 30 例联合网格参照和 60 例滚动重规划子集检查质量--开销差距与重规划行为。
-
-实验结果不支持“所有动态场景均改进”的强声称。因此，本文将实验结论限定为：差异化裕度在本文的随机窄路分布中改善可达性，最大间隙扫描具有可机检的精确性；组级协调只在确定性临界构型中展示作用，不作随机鲁棒性外推。
-
-% ====== 2 问题提出 ======
-\section{解耦接口的时序约束缺失}
-\label{sec:problem}
-
-路径--速度解耦把三维时空轨迹规划降为两个顺序求解的二维子问题：先在纵向--横向（station--lateral, SL）空间规划横向路径 $l(s)$，再沿该路径在纵向--时间（station--time, ST）空间规划速度曲线 $s(t)$。接口通常只传递 $l(s)$ 及其几何边界，而不传递生成该路径时所采用的动态占据 $O_i(t)$ 和时间有效性条件。因此，本文研究的对象不是某个软件模块，而是这一通用顺序优化接口中的时序约束压缩。本节先形式化两个子问题，再说明该压缩如何导致时间维和空间组合维的可行域收缩。
-
-\subsection{解耦两子问题的形式化}
-\label{subsec:decouple_formalize}
-
-在 Frenet 坐标系下，第 $i$ 个障碍物在 SL 空间中的投影记为轴对齐矩形 $O_i = [s_i^{-}, s_i^{+}] \times [l_i^{-}, l_i^{+}]$，横向坐标以参考线为原点、左正右负。设道路物理边界为 $[b_{road}^{-},b_{road}^{+}]$，自车宽度为 $W_{ego}$，路侧额外裕度为 $d_{road}$；先将物理边界内缩半车宽与路侧裕度，得到自车参考点（本文取几何中心）的道路可行区间 $[l_{road}^{-},l_{road}^{+}]=[b_{road}^{-}+W_{ego}/2+d_{road},\ b_{road}^{+}-W_{ego}/2-d_{road}]$。再将障碍物物理边界外扩综合安全裕度 $\delta = W_{ego}/2 + d_{buf}$，得到中心禁行区间 $[u_i,v_i]=[l_i^{-}-\delta,\ l_i^{+}+\delta]$。因而，$u_i$ 是自车从右侧通过时中心坐标的上界，$v_i$ 是从左侧通过时的下界；自车尺寸已包含在这两类中心边界中，后续不再重复扣除整车宽度。为每个在截面 $s$ 处活跃的障碍物分配二值避让方向决策 $d_i \in \{L, R\}$，记右绕与左绕集合分别为 $\mathcal{R} = \{i \mid d_i = R\}$ 与 $\mathcal{L} = \{i \mid d_i = L\}$，则该截面的中心可行边界为 $l^{+}(\mathbf{d}) = \min(l_{road}^{+}, \min_{i \in \mathcal{R}} u_i)$ 与 $l^{-}(\mathbf{d}) = \max(l_{road}^{-}, \max_{i \in \mathcal{L}} v_i)$，中心可行区间宽度为 $W(\mathbf{d}) = l^{+}(\mathbf{d}) - l^{-}(\mathbf{d})$。给定数值容差 $\epsilon>0$，当 $W(\mathbf{d})\geq\epsilon$ 时判定该截面可通行，否则判定为阻塞。
-
-真实场景中障碍物随时间运动。引入自车到达纵向位置 $s$ 的预估时刻 $\tau(s)$，障碍物投影随之成为时间的函数 $O_i(\tau(s))$，安全边界相应写为 $u_i(s) = l_i^{-}(\tau(s)) - \delta$ 与 $v_i(s) = l_i^{+}(\tau(s)) + \delta$。需要强调，$\tau(s)$ 由速度曲线反推或二阶运动学模型估计得到，在路径层作为已知输入而非优化决策变量。理想的联合路径决策目标是在给定 $\tau(s)$ 下使全路径最小通行带宽度最大化
-\begin{equation}
-    \mathbf{d}^{*} = \arg\max_{\mathbf{d}} \;\min_{s} \big[\,l^{+}(s, \mathbf{d}, \tau) - l^{-}(s, \mathbf{d}, \tau)\,\big],
-    \label{eq:prob_joint}
-\end{equation}
-其决策变量仅为方向向量 $\mathbf{d} = (d_1, \ldots, d_n)$，全局搜索空间为 $2^n$，暴力枚举复杂度 $O(2^n)$ 随障碍物数量指数增长，难以满足在线轨迹规划通常为十至百毫秒量级的计算预算。后文 $2^k$ 指经扫描线分组后单个连通分量内 $k$ 个障碍物的局部组合数，$k \leq n$，全局规模即各分量 $2^{k_j}$ 之和而非乘积，二者分别对应分组前的整体与分组后的单组。
-
-解耦范式并不直接求解式~\eqref{eq:prob_joint}，而是先在时间无关的横向边界内求 $l(s)$，再把固定路径映射到 ST 平面求 $s(t)$。设路径阶段的输出接口为 $\mathcal{I}_{p\to v}=\{l(s),l^{-}(s),l^{+}(s)\}$，则动态占据 $O_i(t)$、查询该占据所用的 $\tau(s)$ 以及路径可行所要求的时间条件均不在 $\mathcal{I}_{p\to v}$ 中。速度阶段因而无法区分“任意时刻均可使用的路径”与“仅在障碍物移开后可使用的路径”。这正是后文需要恢复的约束，而非对某一规划软件内部流程的特例描述。
-
-\subsection{时序约束压缩与失效机理}
-\label{subsec:union_projection}
-
-路径子问题忽略时间时，需要用时间无关区域近似动态占据。一种常见的保守选择是在预测时域 $[0, T_{\text{pred}}]$ 上取全时刻并集投影
-\begin{equation}
-    \bar{O}_i = \bigcup_{t \in [0,\,T_{\text{pred}}]} O_i(t),
-    \label{eq:prob_union}
-\end{equation}
-式~\eqref{eq:prob_union} 把“障碍物在何时占据何处”压缩为“障碍物曾经占据何处”；另一类实现只取 $t{=}0$ 快照，或暂不让动态障碍物参与路径边界构造。三种处理虽然实现不同，但路径阶段均不能沿自车到达时间查询预测轨迹。图~\ref{fig:dynamic_exclusion} 给出横穿行人的真实时序：当前时刻行人占据车道，而自车抵达相同纵向位置时，行人已横移至一侧并打开通行间隙。时间无关投影仍会把整段扫掠区域视为同时占据，如图~\ref{fig:baseline_stopband} 所示，进而把可通行的时序窗口压缩为停止约束，直到下一周期观察到障碍物离开后才重新放行。
-
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.30\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_dynamic_exclusion_a}}
-  \caption{$t{=}0$ 行人未进入路径}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.30\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_dynamic_exclusion_b}}
-  \caption{中间时刻行人半入路径}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.30\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_dynamic_exclusion_c}}
-  \caption{自车到达时通行带打开}
-\end{subfigure}
-\caption{横穿行人场景下的时序约束缺失}
-\caption*{全时刻并集投影把行人扫过的整段车道并入静止足迹，路径层据此判定阻塞；而沿到达时间 $\tau(s)$ 的时变投影只取自车实际到达时刻的占用，通行带早已打开。}
-\label{fig:dynamic_exclusion}
-\end{figure}
-
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.46\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_baseline_stopband_a}}
-  \caption{$t{=}0$ 检测到行人即封死停止带}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.46\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_baseline_stopband_b}}
-  \caption{行人物理通过后停止带转通行带}
-\end{subfigure}
-\caption{时间盲解耦基线的过度保守停车}
-\caption*{时间盲基线将行人横穿的全时刻并集视为静止足迹，$t{=}0$ 一检测到前方行人便把膨胀足迹整段封为红色停止带；浅黄色区域表示安全裕度。直到后续观测确认行人离开车道，该区域才转为绿色通行带，放行时机较图~\ref{fig:dynamic_exclusion} 的时变投影明显滞后。}
-\label{fig:baseline_stopband}
-\end{figure}
-
-把联合规划在三维时空中的可行轨迹集合记为 $\mathcal{F}_{joint}$，解耦可达的轨迹集合 $\mathcal{F}_{dec}$ 为路径可行域与其上条件速度可行域的顺序复合，路径分量先在时间无关足迹约束下确定，速度分量再在已固定的路径几何上求解。任一解耦可行轨迹同时满足联合问题的约束，而联合问题允许的时变协同在解耦中被禁止，二者满足包含关系 $\mathcal{F}_{dec} \subseteq \mathcal{F}_{joint}$。当路径层以并集投影或 $t{=}0$ 快照取代时变投影时，路径可行域被进一步收缩，包含关系可退化为真子集 $\mathcal{F}_{dec} \subsetneq \mathcal{F}_{joint}$，由此出现解耦不可行而联合可行的情形。
-
-解耦可行域的收缩来自两个相互独立的机制：时间维度上的静态投影与空间维度上的逐障碍物贪心选向。传统贪心方法按照障碍物中心与参考路径的相对位置依次选择绕行方向，已作出的选择不再回退；若冲突的上下边界更新使某截面满足 $l^{+}(s)<l^{-}(s)$，路径子问题便返回不可行并转入停车降级。该过程在 $2^k$ 种方向组合中只检查一种，可能选中分裂式组合而遗漏其余可行分割。给定 $\tau(s)$ 后，若第\ref{sec:method}节构造的全部 $k+1$ 个连续分割在该截面均给出非正间隙，才可判定该截面真实不可通行；反之，贪心方法返回不可行并不蕴含联合问题不可行。因而，时间盲投影和组合遗漏分别从时间与空间两个维度使 $\mathcal{F}_{dec}$ 收缩为 $\mathcal{F}_{joint}$ 的真子集。
-
-时间维度的失效可形式化为如下充分条件；空间维度上贪心遗漏可行组合的失效，则由第\ref{sec:method}节的最大间隙判据覆盖，二者合并构成对解耦失效检测侧的覆盖。
-
-\begin{proposition}[纯解耦不可行性的充分条件]
-\label{prop:decoupled_infeasible}
-设动态障碍物 $o_i$ 在预测时域 $[0, T_{\text{pred}}]$ 内的 $SL$ 投影为 $\mathrm{Proj}_{SL}(o_i, t)$，记上文定义的道路中心可行区间为 $\mathcal{B}(s)=[l_{road}^{-}(s),l_{road}^{+}(s)]$。若存在纵向区间 $[s_a, s_b]$，使得障碍物并集投影按综合裕度 $\delta_i=W_{\text{ego}}/2+d_{buf,i}$ 横向膨胀后覆盖该中心可行区间
-\begin{equation}
-    \Big(\bigcup_{t \in [0, T_{\text{pred}}]} \mathrm{Proj}_{SL}(o_i, t)\Big) \oplus \delta_i\ \supseteq\ \mathcal{B}(s), \qquad \forall\, s \in [s_a, s_b],
-    \label{eq:thy_infeasible_cond}
-\end{equation}
-其中 $\oplus$ 为横向 Minkowski 膨胀，$\delta_i$ 同时包含碰撞几何所需的半车宽与额外安全缓冲。则时间盲的路径子问题在 $[s_a, s_b]$ 上中心可行集为空；在自车须穿越 $[s_a, s_b]$ 的前提下有 $\mathcal{F}_{\text{dec}} = \emptyset$，路径子问题返回不可行。该条件是时间盲解耦不可行的充分条件，而非联合问题不可行的必要条件。
-\end{proposition}
-
-证明要点。式 \eqref{eq:thy_infeasible_cond} 成立时，膨胀后的并集投影完全覆盖 $\mathcal{B}(s)$，故对所有 $s \in [s_a,s_b]$ 自车中心可行集为空，横向路径 QP 不存在可行偏移曲线。反之，若路径阶段沿 $\tau(s)$ 查询 $\mathrm{Proj}_{SL}(o_i,\tau(s))\subseteq\bigcup_t\mathrm{Proj}_{SL}(o_i,t)$，且障碍物在自车到达时已移离目标区间，则各截面中心可行集可恢复为正测度区间；当区间端点关于 $s$ 连续且变化率满足曲率上界 $\kappa_{\max}$ 时，可取连续且运动学可行的 $l(s)$。因此，时间盲解耦不可行并不蕴含时间感知轨迹不可行。$\hfill\Box$
-
-命题给出的是充分条件，满足式 \eqref{eq:thy_infeasible_cond} 必然触发解耦阻塞，但解耦阻塞也可能源于贪心选向的虚假阻塞，二者需加区分。其覆盖范围限于单个动态障碍物时间扫掠并集封锁整段可行区间的时间维封锁；多个障碍物各自只封一部分、其空间并集才覆盖 $\mathcal{B}(s)$ 的联合封锁，在时不变投影下由第\ref{sec:method}节定理~\ref{thm:max_gap} 的 $\max_p g_p < \epsilon$ 判据处理。$\tau(s)$ 由上周期速度曲线查表或二阶运动学模型估计给定，在路径层是已知输入而非优化变量，本命题不涉及对 $\tau(s)$ 的联合优化。
-
-上述分析把待恢复的约束明确为三类：障碍物相关的安全裕度、多障碍物间的组级避让关系，以及路径成立所依赖的到达时序。MIKU 在保留顺序求解结构的同时统一构造并传播这三类约束，方法与理论保证在第\ref{sec:method}节展开。
-
-% ====== 3 MIKU 算法（方法 + 理论） ======
-\section{MIKU：多障碍物交互感知运动学约束统一}
-\label{sec:method}
-
-第\ref{sec:problem}节说明了解耦规划的边界压缩机制。MIKU 不合并路径与速度优化：路径阶段仍求 $l(s)$，速度阶段仍求 $s(t)$。改动集中在路径边界构造器，速度阶段仍使用原有 ST 占用和运动学约束。
-
-MIKU 由三个路径侧组件组成：差异化额外裕度 $d_{buf,i}$，纵向连通分量分组，以及组内最大中心间隙扫描。动态障碍物的边界可以由到达时间初值 $\tau(s)$ 查询，但 $\tau$ 不定义安全时窗。如果纯动态障碍物在查询时刻使最大间隙小于数值容差，则将其标记为时间冲突并交由原 ST 占用处理，而不截断整条路径。
-
-每个规划周期内，算法统一构造中心语义下的道路与障碍物区间，按纵向重叠分组，对每组排序并扫描 $k+1$ 个候选分割，最后把选定的上下界写回路径 QP。完整伪代码与复杂度见§\ref{sec:method_algorithm}。
-
-\begin{figure}[htbp]
-\centering
-\adjustbox{max width=\textwidth}{\input{../图片/fig_algorithm_flow}}
-\caption{MIKU 的中心可行带构造流程}
-\caption*{图中时间约束支路是本轮实验被否决的候选接口，不属于主方法。实线主链为中心边界统一、分组与前缀最大间隙扫描，路径 QP 和速度 QP 内部结构不变。}
-\label{fig:algorithm_flow}
-\end{figure}
-
-\subsection{多因子威胁度与差异化安全裕度}
-\label{sec:method_threat}
-
-传统路径边界构造通常以半车宽叠加常值额外裕度，并至多按静态与动态目标作粗粒度区分。这类统一缓冲不随障碍物类型、相对运动和局部交互密度变化：对横穿行人与远离的静态目标采用同一裕度会弱化风险区分，而在窄路双侧受限时又可能同时挤压两侧净间距，使原本存在的几何通道被判为不可行。
-
-MIKU 以一个归一化的威胁度 $\Theta_i$ 取代上述二分，对每个障碍物综合 5 个因子加权得到
-
-\begin{equation}
-    \Theta_i = w_1 f_{TTC}(i) + w_2 f_{overlap}(i) + w_3 f_{vel}(i) + w_4 f_{type}(i) + w_5 f_{inter}(i),
-    \label{eq:threat_score}
-\end{equation}
-
-其中各因子均归一化至 $[0,1]$，权重之和为一，故 $\Theta_i \in [0,1]$。权重取 $w_1=0.30$、$w_5=0.25$、$w_2=0.20$、$w_3=0.15$、$w_4=0.10$，先依据各因子对多障碍物场景风险的区分度定性排序，碰撞时间与交互密度区分度最高赋较大权重、障碍物类型在同一场景内变化较小赋较小权重，再在对称路锥与横穿行人等典型场景上核对威胁度排序符合驾驶直觉后微调确定。
-
-5 个因子各刻画一种风险来源。碰撞时间（Time To Collision, TTC）因子衡量纵向碰撞的紧迫性，当 $s_i > s_{ego}$ 且 $\dot{s}_{ego} > \dot{s}_i$ 时 $\mathrm{TTC}_i = (s_i - s_{ego})/(\dot{s}_{ego} - \dot{s}_i)$，障碍物位于自车后方、自车不会追上或相对速度为零等退化情形均令 $\mathrm{TTC}_i=+\infty$，不构成纵向威胁；再以分段线性映射把碰撞时间转为威胁度，$\mathrm{TTC}_i \leq T_{crit}$ 时 $f_{TTC}=1$，$\mathrm{TTC}_i \geq T_{max}$ 时 $f_{TTC}=0$，其间取 $f_{TTC}(i) = (T_{max} - \mathrm{TTC}_i)/(T_{max} - T_{crit})$ 线性递减。临界值取 $T_{crit}=2.0$\,s，依据 Minderhoud 与 Bovy 对碰撞时间分布的分析\citep{minderhoud2001extended}，碰撞时间低于该值时驾驶员已难以靠转向规避；上限取 $T_{max}=7.0$\,s，以覆盖本文采用的速度规划时间域。
-
-其余四个因子分别从横向、速度、类型与密集度补全风险画像。横向重叠率因子 $f_{overlap}(i)=\max\!\big(0,\ \min(l_i^{+}, l_{ego}^{+}) - \max(l_i^{-}, l_{ego}^{-})\big)/W_{ego}$ 度量障碍物与自车走廊的横向重叠比例，$[l_{ego}^{-}, l_{ego}^{+}]$ 为自车当前占据的横向区间，零为完全错开、一为正对自车。相对速度因子 $f_{vel}(i)=\sigma(v_{rel,i}/v_{max})$ 取 $\sigma(x)=1/(1+e^{-5x})$ 的 Sigmoid 映射，$v_{rel,i}=\dot{s}_{ego}-\dot{s}_i$，$v_{max}$ 为速度归一化尺度，相对速度过零附近的区分比极高速度段更重要，故不取线性。类型因子 $f_{type}(i)$ 综合运动不确定性与事故后果取离散值，行人、骑行者等弱势道路使用者（Vulnerable Road User, VRU）取 $1.0$，机动车取 $0.7$，未知可动目标取 $0.5$，静态障碍物取 $0.3$，交通锥等小尺寸标识物取 $0.15$，VRU 在同等碰撞能量下受伤与致死风险远高于车内乘员，因而施加额外保护。交互密度因子 $f_{inter}(i) = \frac{1}{N-1} \sum_{j \neq i} \mathbf{1}[d_{ij} < d_{cluster}] \,(d_{cluster} - d_{ij})/d_{cluster}$ 以 SL 平面欧氏距离 $d_{ij}$ 与聚类半径 $d_{cluster}=10$\,m 加权统计邻近障碍物的聚集程度，孤立障碍物 $f_{inter}\approx 0$，密集车群中接近 $1$，$N=1$ 时令 $f_{inter}=0$。交互密度高的障碍物通常落入同一连通分量，将在第\ref{sec:method_band}节的纵向重叠分组中被统一协调。
-
-威胁度确定后，把额外缓冲在区间 $[d_{buf,min}, d_{buf,max}]$ 上随威胁度线性插值，再加半车宽合成最终安全裕度
-
-\begin{equation}
-    d_{buf,i} = d_{buf,min} + (d_{buf,max} - d_{buf,min})\,\Theta_i, \qquad
-    \delta_i = \frac{W_{ego}}{2} + d_{buf,i},
-    \label{eq:dynamic_delta}
-\end{equation}
-
-额外缓冲区间取 $[0.10, 0.40]$\,m。$\Theta_i \to 1$ 时采用与统一缓冲基线相同的上限裕度，$\Theta_i \to 0$ 时降至 $0.10$\,m；半车宽 $W_{ego}/2$ 始终完整保留，变化的只是障碍物外侧附加空间。所有 $\Theta_i$ 取同一值时，式\eqref{eq:dynamic_delta}退化为统一缓冲方案。差异化裕度随即改写每个障碍物的横向安全边界
-
-\begin{equation}
-    u_i = l_i^{-} - \delta_i, \qquad v_i = l_i^{+} + \delta_i,
-    \label{eq:dynamic_uv}
-\end{equation}
-
-其中 $u_i$ 是自车从右侧通过该障碍物时参考点横向坐标的上界，$v_i$ 是从左侧通过时的下界。差异化的 $\delta_i$ 只改变 $u_i$、$v_i$ 的取值，不破坏第\ref{sec:method_band}节引理与定理对 $u$ 值排序性的依赖，下游的组级最优性结论原样成立。图~\ref{fig:threat_radar} 以同一场景中两个障碍物的因子画像对比说明该分级效果。
-
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.42\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_threat_radar_a}}
-  \caption{高威胁横穿行人}
-\end{subfigure}\hfill
-\begin{subfigure}[b]{0.42\textwidth}
-  \centering
-  \adjustbox{max width=\linewidth}{\input{../图片/fig_threat_radar_b}}
-  \caption{低威胁远离静态目标}
-\end{subfigure}
-\caption{多因子威胁度画像与差异化安全裕度}
-\caption*{五个因子归一化后合成威胁度 $\Theta$，横穿行人在碰撞时间、类型与横向重叠上均高，$\Theta{=}0.82$ 得接近上限的安全裕度；远离的静态目标各因子均低，$\Theta{=}0.18$ 将额外缓冲压至下限，把被无谓占用的横向空间归还通行带。}
-\label{fig:threat_radar}
-\end{figure}
-
-\subsection{扫描线分组与组级最大间隙通行带}
-\label{sec:method_band}
-
-确定每个障碍物的安全边界后，第二个问题是把局部约束合成为全局协调的横向通行带。传统逐障碍物贪心方法依次选择左绕或右绕，当前选择不联合考虑同一 $s$ 截面的其余活跃障碍物；对称或密集配置中，不同局部选择可能分别压低上界、抬高下界，最终造成 $l^{+}(s)<l^{-}(s)$ 的虚假不可行。MIKU 将单截面决策改写为安全边界排序后的间隙选择，并先按纵向重叠关系分组，使彼此无关的障碍物独立求解、同组障碍物联合决策。
-
-两个障碍物 $O_i$ 与 $O_j$ 称为纵向重叠，当且仅当各自纵向占据区间满足 $[s_i^{-}, s_i^{+}] \cap [s_j^{-}, s_j^{+}] \neq \varnothing$。该关系对称但不传递。取其传递闭包，把 $n$ 个障碍物划为 $m$ 个连通分量 $C_1, \ldots, C_m$，不同分量的纵向区间并集互不相交，任意 $s$ 截面至多受一个分量影响，分量间的避让决策可独立求解。分组用一次扫描线完成，按 $s_i^{-}$ 升序排列后维护当前分量已见的最大 $s^{+}$ 记为 $s_{max}$，若下一障碍物的 $s^{-}$ 不超过 $s_{max}$ 则并入当前分量并更新 $s_{max}$，否则另起新分量。工程实现在重叠判定中将纵向区间外扩一个邻近阈值，使间距小于该阈值的障碍物也并入同一分量（取值见第\ref{sec:experiment}节），外扩只会使分组更趋保守，包络的下界性质与安全性结论不受影响。排序为 $O(n\log n)$，扫描本身 $O(n)$，分组总体 $O(n\log n)$。
-
-连通分量不保证存在所有成员共同活跃的公共截面，链式情形中 $O_1$ 与 $O_2$ 重叠、$O_2$ 与 $O_3$ 重叠，而 $O_1$ 与 $O_3$ 可能完全错开。对链式分量取保守包络处理，把同一分量内所有障碍物视为同时施加约束，在其覆盖区间上取所有 $u_i$ 的最小值与所有 $v_i$ 的最大值。由于任一真实截面的活跃集合都是分量的子集，包络宽度是真实通行带宽度的下界，包络宽度不小于 $\epsilon$ 即保证该分量内所有截面都存在中心可行区间；包络不可行只说明充分条件不成立，并不意味着真实场景必然阻塞。这一处理保证安全，但不声称对一般链式分量给出全局最优。记分量 $C_j$ 的包络宽度为 $\hat{W}(C_j)$，全路径的通行带宽度由最窄分量决定，
-
-\begin{equation}
-    \hat{W} = \min_{j=1,\ldots,m} \hat{W}(C_j).
-    \label{eq:global_width}
-\end{equation}
-
-在单个分量内部考虑单截面问题，最优指在 $2^k$ 个方向组合中最大化该截面通行带宽度 $W(\mathbf{d})$，最优分割具有可一次扫描求解的结构，下述引理与定理给出精确刻画。
-
-\begin{lemma}[最优分割的连续性]
-\label{lem:continuous_partition}
-将障碍物按 $u_i$ 值升序排列后，存在最优解 $\mathbf{d}^{*}$，使得分割在排序中是连续的，即存在 $p \in \{0, 1, \ldots, k\}$ 满足
-\begin{equation}
-    d_{(i)}^{*} = L,\ \forall\, i \leq p; \qquad d_{(i)}^{*} = R,\ \forall\, i > p.
-    \label{eq:continuous_partition}
-\end{equation}
-\end{lemma}
-
-证明要点。两侧有一为空时取 $p=k$ 或 $p=0$ 即可。两侧均非空时用交换论证，令 $\beta = \min_{i \in \mathcal{R}} u_i$，把所有 $u_i \geq \beta$ 且原属 $\mathcal{L}$ 的障碍物改入 $\mathcal{R}$：新成员的 $u_i$ 均不低于 $\beta$，上界 $l^{+} = \min(l_{road}^{+}, \min_{i\in\mathcal{R}} u_i)$ 不变；$\mathcal{L}$ 只减少元素，$\max_{i \in \mathcal{L}} v_i$ 不增，下界 $l^{-}$ 不增，故调整后宽度不减、仍为最优解，且归属仅由 $u_i$ 与 $\beta$ 的大小关系决定。对 $u_i = \beta$ 的并列障碍物一律归入 $\mathcal{R}$ 不破坏最优性，按 $u_i$ 升序、$v_i$ 降序二级排序后等于 $\beta$ 者相邻成段，分割点 $p$ 即存在，式 \eqref{eq:continuous_partition} 成立。$\hfill\Box$
-
-引理 \ref{lem:continuous_partition} 把搜索空间由 $2^k$ 个任意分配降为 $k+1$ 个候选分割点 $p = 0, 1, \ldots, k$。其中 $p=0$ 表示全部右绕即自车走最右侧通道，$p=k$ 表示全部左绕即自车走最左侧通道，$1 \leq p \leq k-1$ 表示自车从第 $p$ 与第 $p+1$ 个障碍物之间的间隙通过。引理仅依赖 $u$ 值的排序性，不要求 $\delta_i$ 为常数；当存在 $u_i$ 相等的障碍物时，可取 $v_i$ 降序为二级排序键以保证排序唯一，不影响结论。
-
-基于引理 \ref{lem:continuous_partition}，只需枚举 $k+1$ 个候选分割点。对分割点 $p$，由于仅按 $u_i$ 排序不能保证 $v_i$ 单调，定义经道路下界裁剪的前缀左安全边界
-\begin{equation}
-    V_0=l_{road}^{-},\qquad V_p = \max\!\left(l_{road}^{-},\max_{1 \leq q \leq p} v_{(q)}\right),\quad p = 1, \ldots, k,
-    \label{eq:prefix_v}
-\end{equation}
-并令 $U_p=\min(l_{road}^{+},u_{(p+1)})$ （$p=0,\ldots,k-1$）、$U_k=l_{road}^{+}$。包含两个端部在内的 $k+1$ 个中心间隙统一写为
-\begin{equation}
-    g_p=U_p-V_p,\qquad p=0,1,\ldots,k.
-    \label{eq:gap_def}
-\end{equation}
-这一裁剪式同时是越界处理规则：$u_i<l_{road}^{-}$ 或 $v_i>l_{road}^{+}$ 时无需另设分支，$\min$ 与 $\max$ 会保留该障碍物对中心可行区间的真实收紧；障碍物完全位于道路一侧时，也至少有一个分割保持原道路宽度。当障碍物横向边界不交错且均在道路内时，$V_p=v_{(p)}$，式\eqref{eq:gap_def}退化为相邻障碍物之间的普通几何间隙。
-
-\begin{theorem}[最大间隙最优性]
-\label{thm:max_gap}
-对任意满足 $u_i\leq v_i$ 的中心禁行区间，分割点 $p$ 对应的中心可行区间宽度严格等于 $W(p)=g_p$，最优宽度为
-\begin{equation}
-    W^{*} = \max_{p = 0, 1, \ldots, k} g_p.
-    \label{eq:max_gap_opt}
-\end{equation}
-\end{theorem}
-
-证明。分割点 $p$ 把排序前 $p$ 个障碍物分至 $\mathcal L$，其余分至 $\mathcal R$。因而对 $p<k$ 有
-\begin{align*}
- l^{-}(p)&=\max\!\left(l_{road}^{-},\max_{q\leq p}v_{(q)}\right)=V_p,\\
- l^{+}(p)&=\min\!\left(l_{road}^{+},\min_{q>p}u_{(q)}\right)
- =\min\!\left(l_{road}^{+},u_{(p+1)}\right)=U_p.
-\end{align*}
-当 $p=k$ 时，$l^{+}(k)=l_{road}^{+}=U_k$。故对所有 $p$ 均有 $W(p)=U_p-V_p=g_p$，包括边界裁剪后的负间隙情形。再由引理~\ref{lem:continuous_partition}，至少存在一个全局最优的二值分配属于这 $k+1$ 个连续分割，故取最大 $g_p$ 与枚举全部 $2^k$ 种分配得到相同的最优宽度。$\hfill\Box$
-
-定理 \ref{thm:max_gap} 把中心可行宽度与候选间隙建立精确等式，使最优分割可经一次线性扫描定位。当 $V_p>U_p$ 时 $g_p<0$，该分割不可通行；当 $\max_p g_p<\epsilon$ 时，该截面在给定安全裕度与数值容差下判定为阻塞。自车半宽已各自计入道路中心可行边界与障碍物中心禁行边界，因此不再将 $g_p$ 与整车宽度重复比较。组内排序为 $O(k\log k)$，边界裁剪、前缀最大值递推与最大间隙扫描均为 $O(k)$，单截面复杂度由暴力枚举的 $O(2^k)$ 降至 $O(k\log k)$。定理的自动检查在仓库内以固定随机种子生成小规模禁行区间，并将扫描解与全部 $2^k$ 种方向分配的穷举最优宽度逐例对照。图~\ref{fig:max_gap} 以四障碍物截面示意这一分割结构。
-
-\begin{figure}[htbp]
-\centering
-\adjustbox{max width=0.8\textwidth}{\input{../图片/fig_max_gap_theorem}}
-\caption{按 $u_i$ 排序后的候选间隙与最优连续分割}
-\caption*{$k{=}4$ 个障碍物在排序后产生 $k{+}1{=}5$ 个候选间隙，含两个端部间隙 $g_0$、$g_4$；最大间隙 $g_2^{\star}$ 对应最优分割点 $p^{\star}{=}2$，其左侧障碍物右绕、右侧左绕，决策向量在排序中连续无交错，印证引理~\ref{lem:continuous_partition} 与定理~\ref{thm:max_gap}。}
-\label{fig:max_gap}
-\end{figure}
-
-\subsection{到达时间查询与动态冲突降级}
-\label{sec:method_dynamic}
-
-到达时间初值用于选取动态障碍物的查询时刻。无历史速度曲线时，使用匀加速运动学估计
-\begin{equation}
-  \tau(s)=\frac{-v_{ego}+\sqrt{v_{ego}^{2}+2a_{ego}(s-s_{ego})}}{a_{ego}},
-  \label{eq:arrival_time}
-\end{equation}
-$a_{ego}\to0$ 时取连续极限 $(s-s_{ego})/\max(v_{ego},\epsilon_v)$。B2 基线则从上一轮速度解的首次到达时刻反推 $\tau(s)$，最多更新三轮。在两种情况中，$\tau$ 都只是预测查询索引，不是由它自身定义的安全界。
-
-若查询到的纯动态禁行区间使最大中心间隙小于 $\epsilon$，该结果只表明“此查询时刻不能横向绕过”，不表明整条路径永久不可行。MIKU 因而保留静态子集给出的横向边界，并把该动态冲突交还原 ST 占用边界处理。这一降级规则由回归测试覆盖，防止将横穿行人误转化为永久停车点。
-
-我们另外实现了从预测占用补集直接构造的先通过/后通过安全时窗，并通过点集 oracle 检查。但修正后的减法消融未给出独立正收益，且在一个动静混合压力构型中产生回归，因此主方法不注入该时窗。这一负结果使方法的证据边界停留在路径侧中心可行带，而不把尚未验证的速度侧约束列为贡献。
-
-
-\subsection{整体流程与复杂度}
-\label{sec:method_algorithm}
-
-算法\ref{alg:miku}给出从自车状态与障碍物预测轨迹到路径边界的完整流程。
-
-\begin{algorithm}[htbp]
-\small
-\caption{MIKU 多障碍物交互感知约束统一求解}
-\label{alg:miku}
-\KwIn{$n$ 个障碍物及其预测轨迹，道路边界 $[l_{road}^{-}(s), l_{road}^{+}(s)]$，自车状态 $(s_{ego}, v_{ego}, a_{ego})$}
-\KwOut{路径边界 $\{[l^{-}(s), l^{+}(s)]\}$}
-\For{每个路径离散位置 $s$}{
-  按式\eqref{eq:arrival_time}估计到达时间 $\tau(s)$\;
-  \For{每个障碍物 $i$}{
-    在 $\tau(s)$ 时刻查询预测轨迹并投影至 Frenet，得时变 SL 边界；越出活跃范围则跳过\;
-    按式\eqref{eq:threat_score}算威胁度 $\Theta_i$，按式\eqref{eq:dynamic_delta}合成 $\delta_i$，得 $u_i(s)$、$v_i(s)$\;
-  }
-  按 $s_i^{-}$ 升序扫描线分组，将活跃障碍物划入连通分量\;
-  \For{每个连通分量 $C$}{
-    组内按 $u_i$ 升序排列为 $O_{(1)}, \ldots, O_{(k)}$\;
-    用道路中心边界裁剪前缀最大值，按式\eqref{eq:gap_def}计算 $k+1$ 个间隙\;
-    取 $p^{*} = \arg\max_p g_p$，分配 $d_{(i)}=L\ (i\leq p^{*})$ 或 $R\ (i>p^{*})$\;
-  }
-  由分割结果写出该截面的 $[l^{-}(s), l^{+}(s)]$，记录禁行切片\;
-}
-\KwRet 路径边界
-\end{algorithm}
-
-复杂度可逐段相加。到达时间估计为 $O(K)$，其中 $K$ 为路径离散点数；在任一截面同时活跃的障碍物数有界时，时变投影的累计采样量为 $O(K)$。扫描线排序为 $O(n\log n)$，组内排序满足 $\sum_j O(k_j\log k_j)\leq O(n\log n)$，间隙计算和边界合成为 $O(K)$。交互密度的朴素邻域统计为 $O(n^2)$；采用以聚类半径为粒度的空间桶索引后，在局部密度有界条件下摊还为 $O(n)$。因此，MIKU 在常见有界密度条件下的整体复杂度为 $O(n\log n+K)$；若全部 $n$ 个障碍物在全部 $K$ 个截面同时活跃，则时变投影与邻域统计分别退化为 $O(nK)$ 和 $O(n^2)$，最坏复杂度为 $O(nK+n^2)$。链式连通分量的保守包络为线性步骤，不改变复杂度阶；$O(k\log k)$ 的精确最优性对应单截面或具有公共活跃截面的单分量。该量级适配常见的百毫秒级在线规划预算，实际求解开销将在第\ref{sec:experiment}节报告。
-
-% ====== _parts/experiment.tex ======
-\input{randomized_experiment}
-% ====== 5 结论 ======
-\section{结论}
-\label{sec:conclusion}
-
-本文将道路、自车尺寸与障碍物裕度统一到自车中心语义，并证明多障碍物最大间隙只需考察排序后的 $k+1$ 个连续分割。前缀最大扫描把单截面求解降为 $O(k\log k)$，4,000 个固定种子实例与穷举 oracle 一致。在 \RandCaseCount 个配对随机实例中，MIKU 相对 B0 的无碰撞到达率汇总差值为 \RandAllMikuVsBZeroSuccessDiff 个百分点，95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]；但碰撞率没有降低，且改善集中在窄路分布。
-
-横穿行人与多动态交织类的负差值表明，一次到达时间查询不能代替联合时空协调。30 例联合参照中，B3 单独到达的配对有 \JointBThreeOnlySuccessCount 个，MIKU 单独到达的配对有 \JointMikuOnlySuccessCount 个；到达率差的 95\% CI [\JointMikuVsBThreeSuccessCiLow,\JointMikuVsBThreeSuccessCiHigh] 跨零，而且两者保护带定义不同，因而这些个例只提示可行性差异，不能证明联合方法的总体优势或将差异全部归因于解耦结构。60 例规划器滚动重规划子集中，MIKU 相对 B0 的到达率差为 \ClosedMikuVsBZeroSuccessDiff 个百分点，但总体到达率只有 \ClosedMikuSuccessPct\%，且 MIKU 出现 \ClosedMikuCollisionPct\% 的碰撞率。经修正的速度侧安全时窗因无独立正收益已从主方法剔除。后续工作需要扩展联合参照与滚动样本，并加入感知、控制器和执行器的软硬件在环实验；在此之前，本文结论只适用于已公开的随机生成分布和 Apollo 规划器环境。
-
+\input{submission_body}
 \printbibliography[heading=bibintoc,title={参考文献}]
-
 \end{document}

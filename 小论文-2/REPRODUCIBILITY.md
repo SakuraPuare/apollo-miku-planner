@@ -1,20 +1,21 @@
 # MIKU 可复现性记录
 
-本文档记录 `小论文-2` 的可执行证据链。随机主实验、粗网格联合参照和规划器滚动重规划是三种不同协议，不得混合解读。
+本记录对应“交互感知时空同伦走廊”版本。主实验、随机消融、联合网格参照和滚动重规划是四种互补协议，所有论文数值均由 `generated/*.tex` 自动注入。
 
 ## 环境快照
 
-- 日期：2026-09-03
-- 起始基线：`6605686ae61286b75b92a7c4db69ec52dd042052`
+- 日期：2026-09-04
 - CPU：Intel Core i9-14900HX（32 逻辑处理器）
-- Linux：`7.2.2-arch1-1`
-- uv / Python：`0.12.9 / 3.14.7`
-- NumPy / SciPy / OSQP / Matplotlib：`2.4.4 / 1.17.1 / 1.1.1 / 3.10.9`
-- latexmk：`4.88`
+- Linux：7.2.2-arch1-1
+- uv / Python：0.12.9 / 3.14.7
+- NumPy / SciPy / OSQP / Matplotlib：2.4.4 / 1.17.1 / 1.1.1 / 3.10.9
+- latexmk：4.88
 
-墙钟耗时依赖当前硬件、系统负载和固定的方法运行顺序；随机种子能固定轨迹与指标，不能使耗时位完全确定。
+随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-## 一次性复现命令
+当前固定版本的自动验证结果为 `78 passed, 20 skipped`；跳过项是需要外部 Apollo 资源的集成检查，核心几何、时间图、QP、候选回退与滚动承诺测试全部执行并通过。
+
+## 完整复现命令
 
 从仓库根目录运行：
 
@@ -24,37 +25,36 @@ uv run ruff check .
 PYTHONPATH=可视化 uv run python 可视化/apollo_pipeline.py
 PYTHONPATH=可视化 uv run python 可视化/run_ablation.py
 PYTHONPATH=可视化 uv run python 可视化/sensitivity_analysis.py
-PYTHONPATH=可视化 uv run python 可视化/run_randomized_experiments.py
-PYTHONPATH=可视化 uv run python 可视化/run_randomized_ablation.py
-PYTHONPATH=可视化 uv run python 可视化/run_joint_reference_experiments.py
-PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py
+PYTHONPATH=可视化 uv run python 可视化/run_randomized_experiments.py --seeds 500
+PYTHONPATH=可视化 uv run python 可视化/run_randomized_ablation.py --seeds 500
+PYTHONPATH=可视化 uv run python 可视化/run_joint_reference_experiments.py --seeds 10
+PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py --seeds 100
 cd 小论文-2
-uv run latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
+latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
+latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 ```
 
-本记录对应的最终验收结果为 `64 passed, 20 skipped`，Ruff 通过，8 个确定性场景全部返回路径与速度解，LaTeX 无未解析引用、交叉引用或 `Overfull` 警告。
+## 协议和产物
 
-## 协议与产物
-
-| 协议 | 样本 | 入口 | 主要产物 |
+| 协议 | 规模 | 入口 | 主要产物 |
 |---|---:|---|---|
-| 最大间隙 oracle | 4,000 | `tests/test_miku_geometry.py` | 测试断言 |
-| 确定性机理/消融 | 8 场景 / 24 条 | `apollo_pipeline.py`, `run_ablation.py` | `generated/ablation.csv`, `ablation.json` |
-| 六类配对主实验 | 600 个场景×4 方法 | `run_randomized_experiments.py` | `randomized_raw.csv`, `randomized_summary.csv`, `paired_statistics.csv`, `failure_cases.csv`, JSON/图/宏 |
-| B3 粗网格联合参照 | 30 个场景×2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, `joint_reference_summary.csv`, `joint_reference_paired.csv`, JSON/宏 |
-| 规划器滚动重规划 | 60 个场景×4 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, `closed_loop_summary.csv`, `closed_loop_paired.csv`, JSON/宏 |
-| 灵敏度 | 80 条权重轨迹 + 24 个单因子端点 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
+| 最大间隙穷举 oracle | 4,000 个区间实例 | `tests/test_miku_geometry.py` | 测试断言 |
+| 全局 K-best 空间图 oracle | 100 个随机分层图 | `tests/test_miku_geometry.py` | Top-3 排名与全枚举一致 |
+| 时间窗点集 oracle | 1,000 个随机区间族、约 23.9 万查询点 | `tests/test_miku_time.py` | 测试断言 |
+| 7 类配对主实验 | 3,500 场景 × 4 方法 | `run_randomized_experiments.py` | `randomized_raw.csv`, `randomized_summary.csv`, `paired_statistics.csv`, JSON/图/宏 |
+| 7 模块随机消融 | 3,500 场景 × 8 配置 | `run_randomized_ablation.py` | `randomized_ablation_raw.csv`, summary/paired/JSON/宏 |
+| B3 联合网格参照 | 70 场景 × 2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, summary/paired/JSON/宏 |
+| 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏 |
+| 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 
-表格数值由 `generated/*.tex` 宏引入正文。耗时位每次运行会重新生成；成功率、碰撞率、轨迹指标和配对 bootstrap 在固定种子下可重算。
+## 指标定义
 
-## 指标和边界
-
-- 无碰撞到达要求轨迹达到 `s_max - 1 m` 且真值几何评估无碰撞。
-- 实体矩形穿透超过 1 mm 计碰撞；最小有符号间距不截断。
-- 未无碰撞到达的通行时间记为场景时域加 5 s，同时单独报告降级停车率。
-- 95% CI 来自 5,000 次配对 bootstrap；效应量为配对 Cohen `d_z`。
-- B3 有粗网格和 beam 截断，不是连续全局最优或安全上界。
-- 滚动协议只闭合规划器状态更新，不包含感知器、控制器和车辆执行器，不是实车路测。
-- C5 占用补集安全时窗通过单元/oracle 测试，但消融中无独立正收益且 P2 回归，所以主 MIKU 默认关闭。
+- 无碰撞到达要求轨迹到达评价线且真值实体几何无碰撞。
+- 实体矩形穿透超过 1 mm 计碰撞；最小有符号间距保留原值。
+- 未成功样本的配对通行时间记为场景时域加 5 s，避免只比较成功子集。
+- 比例差和连续指标的 95% CI 由 5,000 次配对 bootstrap 生成；成功/碰撞同时报告精确 McNemar 检验。
+- 预测含噪场景中，规划器接收扰动观测，安全评价使用未扰动真值。
+- 滚动耗时是单场景全部规划周期的累计值，不是单周期延迟。
+- B3 与 MIKU 使用相同威胁裕度和鲁棒预测管；B3 含离散网格与 beam 截断，不称为连续全局最优。
 
 详细主张对应关系见 `CLAIM_TRACEABILITY.md`。
