@@ -74,6 +74,7 @@ class TemporalChoice:
     name: str
     station: float
     window_index: int
+    label: str
     window: TimeWindow
     target_arrival: float
 
@@ -194,7 +195,7 @@ def enumerate_temporal_homotopies(
     max_speed: float = 13.0,
     beam_width: int = 8,
     switch_penalty: float = 0.10,
-    preferred_window_indices: dict[str, int] | None = None,
+    preferred_window_labels: dict[str, str] | None = None,
     persistence_penalty: float = 0.20,
 ) -> tuple[TemporalHomotopy, ...]:
     """Rank feasible multi-conflict temporal homotopy classes with beam search.
@@ -213,7 +214,7 @@ def enumerate_temporal_homotopies(
         raise ValueError("switch_penalty must be finite and non-negative")
     if persistence_penalty < 0.0 or not math.isfinite(persistence_penalty):
         raise ValueError("persistence_penalty must be finite and non-negative")
-    preferred_window_indices = preferred_window_indices or {}
+    preferred_window_labels = preferred_window_labels or {}
 
     ordered = sorted(conflicts, key=lambda point: (point.station, point.name))
     # cost, last station, last arrival, last component, choices
@@ -227,6 +228,18 @@ def enumerate_temporal_homotopies(
                 continue
             travel_floor = last_time + (point.station - last_station) / max_speed
             for window_index, window in enumerate(point.safe_windows):
+                if len(point.safe_windows) == 1:
+                    label = (
+                        "before_or_free"
+                        if window.start <= start_time + 1e-9
+                        else "yield_after"
+                    )
+                elif window_index == 0 and window.start <= start_time + 1e-9:
+                    label = "pass_before"
+                elif window_index == len(point.safe_windows) - 1:
+                    label = "yield_after"
+                else:
+                    label = f"intermediate_{window_index}"
                 target = max(
                     travel_floor,
                     window.start,
@@ -237,13 +250,14 @@ def enumerate_temporal_homotopies(
                 transition_cost = abs(target - point.nominal_arrival)
                 if last_component is not None and window_index != last_component:
                     transition_cost += switch_penalty
-                preferred = preferred_window_indices.get(point.name)
-                if preferred is not None and window_index != preferred:
+                preferred = preferred_window_labels.get(point.name)
+                if preferred is not None and label != preferred:
                     transition_cost += persistence_penalty
                 choice = TemporalChoice(
                     point.name,
                     point.station,
                     window_index,
+                    label,
                     window,
                     target,
                 )
