@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from itertools import product
 import random
 
 import pytest
 
 from miku_geometry import (
     ForbiddenInterval,
+    LateralBandCandidate,
     brute_force_max_gap,
     enumerate_lateral_bands,
     select_spatial_homotopy,
@@ -133,3 +135,48 @@ def test_spatial_homotopy_rejects_layer_without_positive_band() -> None:
     )
 
     assert select_spatial_homotopy((blocked,), 0.0) is None
+
+
+def test_spatial_homotopy_dynamic_program_matches_exhaustive_sequences() -> None:
+    rng = random.Random(17)
+    for _ in range(100):
+        initial_lateral = rng.uniform(-1.0, 1.0)
+        transition_weight = rng.uniform(0.0, 1.0)
+        layers = []
+        for _ in range(rng.randint(1, 6)):
+            layer = []
+            for split_index in range(rng.randint(1, 4)):
+                centre = rng.uniform(-2.0, 2.0)
+                gap = rng.uniform(0.1, 3.0)
+                layer.append(
+                    LateralBandCandidate(
+                        split_index,
+                        centre - gap / 2.0,
+                        centre + gap / 2.0,
+                        gap,
+                        (),
+                    )
+                )
+            layers.append(tuple(layer))
+
+        def sequence_key(sequence):
+            cost = 0.0
+            previous_centre = initial_lateral
+            for band in sequence:
+                centre = 0.5 * (band.lower + band.upper)
+                cost += -band.gap + transition_weight * abs(
+                    centre - previous_centre
+                )
+                previous_centre = centre
+            return cost, tuple(band.split_index for band in sequence)
+
+        exhaustive = min(product(*layers), key=sequence_key)
+        selected = select_spatial_homotopy(
+            layers,
+            initial_lateral,
+            transition_weight,
+        )
+
+        assert selected is not None
+        assert selected.bands == exhaustive
+        assert selected.cost == pytest.approx(sequence_key(exhaustive)[0])

@@ -220,35 +220,80 @@ def select_spatial_homotopy(
     if not layers:
         return SpatialHomotopy((), 0.0)
 
-    # cost, centre, bands
-    states: list[tuple[float, float, tuple[LateralBandCandidate, ...]]] = [
-        (0.0, initial_lateral, ())
+    feasible_layers = [
+        [band for band in layer if band.gap >= gap_epsilon] for layer in layers
     ]
-    for layer in layers:
-        feasible = [band for band in layer if band.gap >= gap_epsilon]
-        if not feasible:
-            return None
-        expanded = []
-        for cost, previous_centre, selected in states:
-            for band in feasible:
-                centre = 0.5 * (band.lower + band.upper)
-                expanded.append(
-                    (
-                        cost - band.gap + transition_weight * abs(centre - previous_centre),
-                        centre,
-                        selected + (band,),
-                    )
-                )
-        expanded.sort(
-            key=lambda item: (
-                item[0],
-                tuple(band.split_index for band in item[2]),
-            )
-        )
-        states = expanded
+    if any(not layer for layer in feasible_layers):
+        return None
 
-    best = states[0]
-    return SpatialHomotopy(best[2], best[0])
+    # Each layer keeps only the best prefix ending at each current band.  The
+    # prefix rank preserves the former lexicographic split-index tie-break
+    # without retaining all Q^m sequences.
+    first_layer = feasible_layers[0]
+    states: list[tuple[float, float, int]] = []  # cost, centre, prefix rank
+    for band in first_layer:
+        centre = 0.5 * (band.lower + band.upper)
+        cost = -band.gap + transition_weight * abs(centre - initial_lateral)
+        states.append((cost, centre, 0))
+    first_order = sorted(
+        range(len(first_layer)),
+        key=lambda index: (first_layer[index].split_index, index),
+    )
+    first_ranks = {state_index: rank for rank, state_index in enumerate(first_order)}
+    states = [
+        (cost, centre, first_ranks[index])
+        for index, (cost, centre, _) in enumerate(states)
+    ]
+    predecessors: list[list[int]] = [[-1] * len(first_layer)]
+
+    for layer in feasible_layers[1:]:
+        next_states: list[tuple[float, float, int]] = []
+        next_predecessors: list[int] = []
+        for band in layer:
+            centre = 0.5 * (band.lower + band.upper)
+            previous_index, (cost, _, _) = min(
+                enumerate(states),
+                key=lambda item: (
+                    item[1][0]
+                    + transition_weight * abs(centre - item[1][1]),
+                    item[1][2],
+                ),
+            )
+            next_states.append(
+                (
+                    cost - band.gap
+                    + transition_weight * abs(centre - states[previous_index][1]),
+                    centre,
+                    0,
+                )
+            )
+            next_predecessors.append(previous_index)
+
+        prefix_order = sorted(
+            range(len(layer)),
+            key=lambda index: (
+                states[next_predecessors[index]][2],
+                layer[index].split_index,
+                index,
+            ),
+        )
+        prefix_ranks = {
+            state_index: rank for rank, state_index in enumerate(prefix_order)
+        }
+        states = [
+            (cost, centre, prefix_ranks[index])
+            for index, (cost, centre, _) in enumerate(next_states)
+        ]
+        predecessors.append(next_predecessors)
+
+    best_index = min(range(len(states)), key=lambda index: (states[index][0], states[index][2]))
+    best_cost = states[best_index][0]
+    selected: list[LateralBandCandidate] = []
+    for layer_index in range(len(feasible_layers) - 1, -1, -1):
+        selected.append(feasible_layers[layer_index][best_index])
+        best_index = predecessors[layer_index][best_index]
+    selected.reverse()
+    return SpatialHomotopy(tuple(selected), best_cost)
 
 
 def brute_force_max_gap(
