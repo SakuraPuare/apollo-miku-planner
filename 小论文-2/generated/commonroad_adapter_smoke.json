@@ -11,10 +11,12 @@
     "source_dynamic_obstacles": 24,
     "projected_obstacles": 8,
     "skipped_obstacles": 16,
+    "trajectory_states_used": 320,
     "maximum_projection_residual_m": 5.98618642838818,
     "limitations": [
       "centerline-only lanelet route",
-      "initial-state constant-velocity obstacle projection",
+      "constant-velocity obstacle model with sampled-trajectory residual envelope",
+      "trajectory envelope covers supplied samples only, not inter-sample occupancy",
       "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
       "not a native CommonRoad planner benchmark"
     ]
@@ -25,7 +27,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 24.877788993762806,
+      "runtime_ms": 28.316038980847225,
       "joint_search_status": null,
       "joint_search_certificate": null
     },
@@ -34,13 +36,13 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 297.8221809898969,
+      "runtime_ms": 158.99371600244194,
       "joint_search_status": null,
       "joint_search_certificate": {
         "status": "infeasible",
-        "domain_size": 12,
-        "evaluated_candidates": 12,
-        "expanded_spatial_branches": 12
+        "domain_size": 6,
+        "evaluated_candidates": 6,
+        "expanded_spatial_branches": 6
       }
     }
   }

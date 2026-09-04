@@ -2,7 +2,8 @@
 
 The adapter intentionally supports only the subset needed to audit the
 planner boundary: lanelet centerlines, successor routing, point/rectangle
-initial states, and constant-velocity obstacle projections.  It does not
+initial states, and constant-velocity obstacle projections with sampled
+trajectory residual envelopes.  It does not
 claim CommonRoad rule, shape, or dynamic-model fidelity.
 """
 
@@ -31,6 +32,7 @@ class CommonRoadAdapterResult:
     source_dynamic_obstacles: int
     projected_obstacles: int
     skipped_obstacles: int
+    trajectory_states_used: int
     maximum_projection_residual_m: float
     limitations: tuple[str, ...]
 
@@ -186,6 +188,63 @@ def _state_scalar(state: ET.Element | None, name: str, default: float = 0.0) -> 
     return default if value is None else value
 
 
+def _trajectory_states(obstacle: ET.Element) -> tuple[ET.Element, ...]:
+    """Return the initial state followed by any CommonRoad trajectory states."""
+    initial = _first(obstacle, "initialState")
+    trajectory = _first(obstacle, "trajectory")
+    states = tuple(_children(trajectory, "state")) if trajectory is not None else ()
+    return (() if initial is None else (initial,)) + states
+
+
+def _trajectory_uncertainty(
+    obstacle: ET.Element,
+    polyline: np.ndarray,
+    baseline_s: float,
+    baseline_l: float,
+    baseline_vs: float,
+    baseline_vl: float,
+) -> tuple[float, float, float, float, int]:
+    """Bound linear prediction error using the supplied CommonRoad trajectory.
+
+    The planner only accepts constant-velocity obstacles.  We therefore keep
+    that model and encode the observed trajectory deviation as a conservative
+    affine radius ``r0 + t * rv``.  This is an input envelope, not a claim that
+    the original trajectory dynamics or occupancy sets were preserved.
+    """
+    states = _trajectory_states(obstacle)
+    if len(states) < 2:
+        return 0.0, 0.0, 0.0, 0.0, 0
+    initial_time = _state_scalar(states[0], "time", default=0.0)
+    residual_s: list[tuple[float, float]] = []
+    residual_l: list[tuple[float, float]] = []
+    for state in states[1:]:
+        point = _state_point(state)
+        if point is None:
+            continue
+        time_delta = _state_scalar(state, "time", default=initial_time) - initial_time
+        if time_delta <= 0.0:
+            continue
+        station, lateral, _ = _project(polyline, point)
+        residual_s.append(
+            (time_delta, abs(station - (baseline_s + baseline_vs * time_delta)))
+        )
+        residual_l.append(
+            (time_delta, abs(lateral - (baseline_l + baseline_vl * time_delta)))
+        )
+
+    def _radius(samples: list[tuple[float, float]]) -> tuple[float, float]:
+        if not samples:
+            return 0.0, 0.0
+        # A non-negative affine envelope covering every sampled residual.
+        rate = max(residual / time for time, residual in samples)
+        intercept = max(residual - rate * time for time, residual in samples)
+        return max(0.0, intercept), max(0.0, rate)
+
+    s0, vs = _radius(residual_s)
+    l0, vl = _radius(residual_l)
+    return s0, l0, vs, vl, len(residual_s)
+
+
 def _obstacle_type(raw: str) -> str:
     value = raw.lower()
     if "pedestrian" in value:
@@ -270,6 +329,7 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
     dynamic_nodes = [node for node in root.iter() if _local(node.tag) == "dynamicObstacle"]
     obstacles: list[Obstacle] = []
     skipped = 0
+    trajectory_states_used = 0
     residuals = [ego_residual, goal_residual]
     for node in dynamic_nodes:
         point = _state_point(_first(node, "initialState"))
@@ -293,6 +353,17 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
         segment = int(np.clip(np.searchsorted(np.cumsum(np.linalg.norm(np.diff(polyline, axis=0), axis=1)), station), 0, len(route_heading) - 1))
         heading_delta = math.atan2(math.sin(orientation - route_heading[segment]), math.cos(orientation - route_heading[segment]))
         length, width = dimensions
+        uncertainty_s0, uncertainty_l0, uncertainty_vs, uncertainty_vl, used_states = (
+            _trajectory_uncertainty(
+                node,
+                polyline,
+                station,
+                lateral,
+                velocity * math.cos(heading_delta),
+                velocity * math.sin(heading_delta),
+            )
+        )
+        trajectory_states_used += used_states
         raw_type = (_descendant(node, "type").text or "unknown") if _descendant(node, "type") is not None else "unknown"
         obstacles.append(
             Obstacle(
@@ -304,6 +375,10 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
                 L=length,
                 name=f"commonroad-{node.attrib.get('id', 'obstacle')}",
                 obs_type=_obstacle_type(raw_type),
+                uncertainty_s0=uncertainty_s0,
+                uncertainty_l0=uncertainty_l0,
+                uncertainty_vs=uncertainty_vs,
+                uncertainty_vl=uncertainty_vl,
             )
         )
 
@@ -326,10 +401,12 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
         source_dynamic_obstacles=len(dynamic_nodes),
         projected_obstacles=len(obstacles),
         skipped_obstacles=skipped,
+        trajectory_states_used=trajectory_states_used,
         maximum_projection_residual_m=max(residuals),
         limitations=(
             "centerline-only lanelet route",
-            "initial-state constant-velocity obstacle projection",
+            "constant-velocity obstacle model with sampled-trajectory residual envelope",
+            "trajectory envelope covers supplied samples only, not inter-sample occupancy",
             "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
             "not a native CommonRoad planner benchmark",
         ),

@@ -27,6 +27,12 @@ MINIMAL_XML = b"""
       <orientation><exact>0</exact></orientation>
       <velocity><exact>3</exact></velocity>
     </initialState>
+    <trajectory>
+      <state>
+        <position><point><x>10.2</x><y>0.7</y></point></position>
+        <time><exact>1</exact></time>
+      </state>
+    </trajectory>
   </dynamicObstacle>
   <planningProblem id="p">
     <initialState>
@@ -48,11 +54,14 @@ def test_commonroad_adapter_projects_route_and_obstacle():
     assert result.route_lanelet_ids == ("a", "b")
     assert result.projected_obstacles == 1
     assert result.skipped_obstacles == 0
+    assert result.trajectory_states_used == 1
     assert result.scenario.s_max > result.scenario.ego.s0
     obstacle = result.scenario.obstacles[0]
     assert obstacle.s0 == pytest.approx(7.0)
     assert obstacle.l0 == pytest.approx(0.5)
     assert obstacle.vs == pytest.approx(3.0)
+    assert obstacle.uncertainty_vs == pytest.approx(0.2)
+    assert obstacle.uncertainty_vl == pytest.approx(0.2)
 
 
 def test_commonroad_adapter_rejects_missing_route():

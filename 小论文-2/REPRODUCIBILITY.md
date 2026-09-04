@@ -54,8 +54,8 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | B3 联合网格参照 | 70 场景 × 2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, summary/paired/JSON/宏 |
 | 非平凡联合域压力诊断 | 1--5 个空间冲突层 × 3 次 | `run_joint_search_stress.py` | raw/summary/JSON/宏与 `joint_search_scaling.pdf`；走廊距离下界与实际评估/域大小比例 |
 | 轨迹边界与首页 teaser | 2 个固定种子案例 | `generate_failure_case_figure.py` | `failure_case_qualitative.pdf` 与 `teaser.pdf`；由同一规划代码自动重放 |
-| CommonRoad 受限 adapter smoke | 1 个公开 Lankershim XML | `run_commonroad_adapter_smoke.py` | `commonroad_adapter_smoke.json`；公开 XML 到受限 Frenet planner 调用链，非 benchmark 性能 |
-| CommonRoad 四场景批量诊断 | 4 个公开 Lankershim XML × 2 方法 | `run_commonroad_batch.py` | `commonroad_batch_raw.csv`, `commonroad_batch_results.json`；统一受限转换诊断，非官方 benchmark |
+| CommonRoad 受限 adapter smoke | 1 个公开 Lankershim XML | `run_commonroad_adapter_smoke.py` | `commonroad_adapter_smoke.json`；公开 XML 到受限 Frenet planner 调用链，含采样轨迹残差包络，非 benchmark 性能 |
+| CommonRoad 四场景批量诊断 | 4 个公开 Lankershim XML × 2 方法 | `run_commonroad_batch.py` | `commonroad_batch_raw.csv`, `commonroad_batch_results.json`；统一受限转换诊断（轨迹包络不覆盖样本间 occupancy），非官方 benchmark |
 | CommonRoad 官方语义审计 | 4 个公开 Lankershim XML | `validate_commonroad_native.py`（可选 `commonroad-io==2026.1`） | `commonroad_native_audit.json`；官方解析器实体/形状/预测状态计数，不是性能 benchmark |
 | 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |

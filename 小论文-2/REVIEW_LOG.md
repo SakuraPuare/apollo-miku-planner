@@ -157,3 +157,10 @@
 - 新增 `validate_commonroad_native.py`、`commonroad_native_audit.json` 和对应 schema 回归测试；文档和主张追踪表将其定义为标准化输入语义审计，不冒充 CommonRoad 规划性能 benchmark。
 - 受限 adapter 的 lanelet/动态障碍物计数与官方审计产物加入交叉断言；当前完整测试计数为 108 passed / 20 skipped。
 - 该轮加强了外部来源的可核验性，但没有关闭完整 lanelet/occupancy 规划语义、忠实外部竞争方法和原生 Apollo/CyberRT 证据缺口，Area-Chair 裁决仍为 **Major Revision**。
+
+## Round 12 — 公开轨迹残差包络与外部 smoke 重跑（2026-09-05）
+
+- 受限 CommonRoad adapter 不再只读取动态障碍物初始状态；对 XML 中已提供的轨迹状态，建立首状态常速度 Frenet 模型，并用样本残差拟合非负的 affine 位置误差包络。
+- 最小 XML 回归验证横向/纵向残差进入 `Obstacle.uncertainty_*`；四场景公开 smoke 重新运行，限制元数据同步为“轨迹包络仅覆盖 supplied samples，不覆盖 inter-sample occupancy”。
+- 重新生成的四场景转换诊断为 B0/MIKU 到达率 25%/0%、碰撞率 75%/50%，MIKU 中位耗时 127.9 ms、最大 323.4 ms。结果显示更保守的输入转换会触发 fail-closed，不进入主实验统计，也不冒充 CommonRoad benchmark。
+- 该修正加强了公开轨迹输入的可追溯性，但仍未关闭完整 CommonRoad occupancy/rule 语义、忠实外部竞争方法和原生 Apollo/CyberRT 证据缺口；Area-Chair 裁决保持 **Major Revision**。

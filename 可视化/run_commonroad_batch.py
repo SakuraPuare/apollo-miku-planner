@@ -53,6 +53,7 @@ def _run_scenario(filename: str, timeout: float) -> tuple[dict[str, object], lis
         "source_dynamic_obstacles": adapted.source_dynamic_obstacles,
         "projected_obstacles": adapted.projected_obstacles,
         "skipped_obstacles": adapted.skipped_obstacles,
+        "trajectory_states_used": adapted.trajectory_states_used,
         "route_lanelet_ids": adapted.route_lanelet_ids,
         "maximum_projection_residual_m": adapted.maximum_projection_residual_m,
     }
@@ -85,7 +86,8 @@ def run(timeout: float = 30.0) -> dict[str, object]:
         "scenario_count": len(metadata),
         "adapter_limitations": [
             "centerline-only lanelet route",
-            "initial-state constant-velocity obstacle projection",
+            "constant-velocity obstacle model with sampled-trajectory residual envelope",
+            "trajectory envelope covers supplied samples only, not inter-sample occupancy",
             "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
             "not a native CommonRoad planner benchmark",
         ],

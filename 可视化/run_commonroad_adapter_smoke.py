@@ -61,6 +61,7 @@ def run(url: str = DEFAULT_URL, timeout: float = 30.0) -> dict[str, object]:
             "source_dynamic_obstacles": adapted.source_dynamic_obstacles,
             "projected_obstacles": adapted.projected_obstacles,
             "skipped_obstacles": adapted.skipped_obstacles,
+            "trajectory_states_used": adapted.trajectory_states_used,
             "maximum_projection_residual_m": adapted.maximum_projection_residual_m,
             "limitations": adapted.limitations,
         },
