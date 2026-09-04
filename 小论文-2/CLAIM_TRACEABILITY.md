@@ -14,7 +14,7 @@
 | 曲线路径整段包络避免角点漏检 | 方法3.1 | `st_boundary_mapper` | 几何/ST 回归测试 | 离散采样及车辆 Minkowski 模型 |
 | 固定同伦后保持凸 QP | 凸性命题 | `path_optimizer`, `speed_qp`, `build_st_bounds` | 约束均为逐点上下界；QP 回归测试 | 只说明固定标签子问题，不含候选安全性 |
 | 按需交替细化修正到达时间 | 式(15)、算法1 | `experiment_methods.run_method` | A7：`+0.43 pp`, `p=.25` | 初始求解+至多一次反馈细化；效果不显著，不作独立贡献主张 |
-| 有限联合同伦搜索与最优性 gap | 新算法接口 | `joint_homotopy_search.py::bounded_lazy_joint_search`, `experiment_methods.run_method` | 100 个随机域穷举、预算截断、下界反例；主实验证书字段 | 证书只相对于显式有限候选域；不宣称连续全局最优 |
+| 有限联合同伦搜索与最优性 gap | 新算法接口 | `joint_homotopy_search.py::bounded_lazy_joint_search`, `experiment_methods.run_method` | 100 个随机域穷举、预算截断、下界反例；`randomized_raw.csv`/`closed_loop_raw.csv` 的 `joint_*` 字段 | 证书只相对于显式有限候选域；不宣称连续全局最优；主实验多数域实际只有 1 个候选，已如实保留 |
 | 候选连续安全验证 | 新安全接口 | `validate_pipeline_candidate_continuous_safety`, `experiment_methods.run_method` | 分段线性扫掠矩形测试；MIKU 候选 fail-closed | 仅在给定线性插值和误差包络条件下证书化 |
 | 滚动语义保持与先行承诺避免临近翻转 | 方法3.4 | `closed_loop.py` | `test_pass_before_commitment_survives_rolling_replanning`; 700 例滚动数据 | 工程承诺机制；不是递归可行性证明 |
 | 主实验到达率提升 | 摘要、实验4.2、结论 | 主实验脚本和方法注册 | 700 对：MIKU/B0 `75.3%/60.4%`, 差 `+14.9 pp`, CI `[11.9,18.0]`, `p=7.71e-20` | 公开随机生成分布 |

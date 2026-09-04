@@ -252,6 +252,14 @@ def run_method(
             "evaluated_candidates": certificate.evaluated_candidates,
             "expanded_spatial_branches": certificate.expanded_spatial_branches,
             "remaining_queue_items": certificate.remaining_queue_items,
+            # Count the finite labels explicitly for auditability.  ``solve``
+            # is cached, so this does not re-run already materialised QPs.
+            "domain_size": int(
+                sum(
+                    max(1, int(solve(rank, 0).get("temporal_homotopy_candidate_count", 0)))
+                    for rank in range(spatial_count)
+                )
+            ),
             "domain": "finite enumerated spatial-temporal homotopy labels",
         }
         return selected

@@ -52,3 +52,4 @@ def test_miku_reports_finite_joint_search_certificate():
     assert certificate["status"] in {"optimal", "infeasible"}
     assert certificate["absolute_gap"] == 0.0
     assert certificate["evaluated_candidates"] >= 1
+    assert certificate["domain_size"] >= certificate["evaluated_candidates"]

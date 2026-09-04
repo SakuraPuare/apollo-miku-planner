@@ -48,6 +48,11 @@ RAW_FIELDS = (
     "runtime_ms",
     "iterations",
     "iterative_converged",
+    "joint_search_status",
+    "joint_domain_size",
+    "joint_evaluated_candidates",
+    "joint_expanded_spatial_branches",
+    "joint_absolute_gap",
 )
 
 
@@ -370,8 +375,17 @@ def _read_raw(path: Path) -> list[dict]:
         "degraded_stop",
         "iterations",
         "iterative_converged",
+        "joint_domain_size",
+        "joint_evaluated_candidates",
+        "joint_expanded_spatial_branches",
     }
-    text_fields = {"schema_version", "case_kind", "method", "method_label"}
+    text_fields = {
+        "schema_version",
+        "case_kind",
+        "method",
+        "method_label",
+        "joint_search_status",
+    }
     rows = []
     with path.open(encoding="utf-8", newline="") as stream:
         for raw in csv.DictReader(stream):

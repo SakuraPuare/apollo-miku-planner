@@ -13,7 +13,7 @@
 
 随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-当前固定版本的自动验证结果为 `91 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
+当前固定版本的自动验证结果为 `92 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
 
 ## 完整复现命令
 
@@ -41,10 +41,10 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | 最大间隙穷举 oracle | 4,000 个区间实例 | `tests/test_miku_geometry.py` | 测试断言 |
 | 全局 K-best 空间图 oracle | 100 个随机分层图 | `tests/test_miku_geometry.py` | Top-3 排名与全枚举一致 |
 | 时间窗点集 oracle | 1,000 个随机区间族、约 23.9 万查询点 | `tests/test_miku_time.py` | 测试断言 |
-| 7 类配对主实验 | 700 场景 × 4 方法（2,800 次） | `run_randomized_experiments.py` | `randomized_raw.csv`, `randomized_summary.csv`, `paired_statistics.csv`, JSON/图/宏 |
+| 7 类配对主实验 | 700 场景 × 4 方法（2,800 次） | `run_randomized_experiments.py` | `randomized_raw.csv`, `randomized_summary.csv`, `paired_statistics.csv`, JSON/图/宏；原始行含 `joint_*` 证书列 |
 | 7 模块随机消融 | 700 场景 × 8 配置（5,600 次） | `run_randomized_ablation.py` | `randomized_ablation_raw.csv`, summary/paired/JSON/宏 |
 | B3 联合网格参照 | 70 场景 × 2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, summary/paired/JSON/宏 |
-| 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏 |
+| 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 
 ## 指标定义

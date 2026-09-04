@@ -117,6 +117,7 @@ def run_closed_loop(
     all_converged = True
     preferred_homotopy: dict[str, str] = {}
     homotopy_history: list[dict] = []
+    joint_certificates: list[dict] = []
     committed_plan = None
     target = truth.s_max - config.target_tolerance_m
 
@@ -156,6 +157,9 @@ def run_closed_loop(
                 cycle,
                 preferred_homotopy=preferred_homotopy,
             )
+            certificate = planned.result.get("joint_search_certificate")
+            if certificate is not None:
+                joint_certificates.append(certificate)
             decisions = planned.result.get("time_window_decisions", [])
             preferred_homotopy = {
                 decision["name"]: str(decision["homotopy_label"])
@@ -253,6 +257,27 @@ def run_closed_loop(
         "closed_loop_cycles": planning_cycles,
         "homotopy_history": homotopy_history,
     }
+    if joint_certificates:
+        result["joint_search_certificate"] = {
+            "status": (
+                "all_cycles_optimal"
+                if all(item.get("status") == "optimal" for item in joint_certificates)
+                else "contains_nonoptimal_cycle"
+            ),
+            "domain_size": sum(
+                int(item.get("domain_size", 0)) for item in joint_certificates
+            ),
+            "evaluated_candidates": sum(
+                int(item.get("evaluated_candidates", 0)) for item in joint_certificates
+            ),
+            "expanded_spatial_branches": sum(
+                int(item.get("expanded_spatial_branches", 0))
+                for item in joint_certificates
+            ),
+            "absolute_gap": max(
+                float(item.get("absolute_gap", 0.0)) for item in joint_certificates
+            ),
+        }
     return MethodRun(
         method=method,
         result=result,

@@ -13,7 +13,7 @@ from experiment_methods import MethodRun
 from joint_homotopy_search import AxisAlignedMotionSample, validate_candidate_continuous_safety
 
 
-RAW_SCHEMA_VERSION = "miku-random-v2"
+RAW_SCHEMA_VERSION = "miku-random-v3"
 COLLISION_TOLERANCE_M = 1e-3
 
 
@@ -220,6 +220,24 @@ def evaluate_run(run: MethodRun, case: RandomCase) -> dict[str, object]:
         "runtime_ms": run.runtime_ms,
         "iterations": run.iterations,
         "iterative_converged": int(run.converged),
+        # These fields make the finite-domain certificate auditable from the
+        # raw CSV rather than only from the transient MethodRun object.  The
+        # non-certified baselines intentionally emit nulls.
+        "joint_search_status": (
+            run.result.get("joint_search_certificate", {}).get("status")
+        ),
+        "joint_domain_size": run.result.get("joint_search_certificate", {}).get(
+            "domain_size"
+        ),
+        "joint_evaluated_candidates": (
+            run.result.get("joint_search_certificate", {}).get("evaluated_candidates")
+        ),
+        "joint_expanded_spatial_branches": (
+            run.result.get("joint_search_certificate", {}).get("expanded_spatial_branches")
+        ),
+        "joint_absolute_gap": (
+            run.result.get("joint_search_certificate", {}).get("absolute_gap")
+        ),
     }
 
 

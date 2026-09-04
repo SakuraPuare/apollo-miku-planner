@@ -198,7 +198,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.38902280991896
+      "runtime_p95_ms": 24.322917619429052
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -208,7 +208,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.454235288430926
+      "runtime_p95_ms": 24.65753169381059
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -218,7 +218,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.54749604803509
+      "runtime_p95_ms": 24.877765463315875
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -228,7 +228,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.29065128962974
+      "runtime_p95_ms": 24.703360629791852
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -238,7 +238,7 @@
       "success_rate": 0.47,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6172265737619195,
-      "runtime_p95_ms": 47.0454234979115
+      "runtime_p95_ms": 47.324883341207126
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -248,7 +248,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.909363703569383
+      "runtime_p95_ms": 24.478583085874554
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -258,7 +258,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.13440513482782
+      "runtime_p95_ms": 24.042314547114064
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -268,7 +268,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.259221290412814
+      "runtime_p95_ms": 24.12245213490677
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -278,7 +278,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.930052855281788,
-      "runtime_p95_ms": 38.8758330227574
+      "runtime_p95_ms": 39.02036630315703
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -288,7 +288,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 50.71615693450439
+      "runtime_p95_ms": 50.01884045777842
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -298,7 +298,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.820575761259526
+      "runtime_p95_ms": 49.82546594546874
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -308,7 +308,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9175607237279781,
-      "runtime_p95_ms": 50.647884968202554
+      "runtime_p95_ms": 49.67987009586067
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -318,7 +318,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 51.12364225497003
+      "runtime_p95_ms": 50.22496094898087
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -328,7 +328,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 50.36595123674487
+      "runtime_p95_ms": 49.87303450034232
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -338,7 +338,7 @@
       "success_rate": 0.79,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9016374503242086,
-      "runtime_p95_ms": 30.602775042643763
+      "runtime_p95_ms": 30.56302578770555
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -348,7 +348,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.881154493778006
+      "runtime_p95_ms": 49.88351103384047
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -358,7 +358,7 @@
       "success_rate": 0.68,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7921724478770265,
-      "runtime_p95_ms": 62.027294306608354
+      "runtime_p95_ms": 60.68769264238654
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -368,7 +368,7 @@
       "success_rate": 0.65,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7511267164783605,
-      "runtime_p95_ms": 59.68787489691749
+      "runtime_p95_ms": 59.503200263134204
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -378,7 +378,7 @@
       "success_rate": 0.58,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6990343660902303,
-      "runtime_p95_ms": 59.673622193804476
+      "runtime_p95_ms": 58.981736267742235
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -388,7 +388,7 @@
       "success_rate": 0.57,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6980314122250572,
-      "runtime_p95_ms": 83.6468967492692
+      "runtime_p95_ms": 82.42894288705428
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -398,7 +398,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 58.58524585200939
+      "runtime_p95_ms": 57.65199790184851
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -408,7 +408,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 58.55270390893565
+      "runtime_p95_ms": 57.606275862781324
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -418,7 +418,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 58.93525018909713
+      "runtime_p95_ms": 58.316936784831334
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -428,7 +428,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 59.829624797566794
+      "runtime_p95_ms": 57.599530456354834
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -438,7 +438,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.524357109970857
+      "runtime_p95_ms": 30.656374433601723
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -448,7 +448,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.448416522995085
+      "runtime_p95_ms": 30.672638330725004
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -458,7 +458,7 @@
       "success_rate": 0.05,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.39243592208763844,
-      "runtime_p95_ms": 58.31473427970195
+      "runtime_p95_ms": 58.205236301000696
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -468,7 +468,7 @@
       "success_rate": 0.01,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.34769233344372596,
-      "runtime_p95_ms": 53.713866707403206
+      "runtime_p95_ms": 53.6626142435125
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -478,7 +478,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.387553287437164
+      "runtime_p95_ms": 30.750090804940537
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -488,7 +488,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.59868580021428
+      "runtime_p95_ms": 30.777143973682524
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -498,7 +498,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.978887467063018
+      "runtime_p95_ms": 30.597300939552934
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -508,7 +508,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 30.56060654052997
+      "runtime_p95_ms": 30.49975264875682
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -518,7 +518,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 47.43385819165269
+      "runtime_p95_ms": 46.73967411072226
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -528,7 +528,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 42.36613081448013
+      "runtime_p95_ms": 42.41846728546079
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -538,7 +538,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 41.769579258107115
+      "runtime_p95_ms": 42.394354796851985
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -548,7 +548,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 42.0940629512188
+      "runtime_p95_ms": 42.25879854202503
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -558,7 +558,7 @@
       "success_rate": 0.52,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6021217427261361,
-      "runtime_p95_ms": 85.47808039875234
+      "runtime_p95_ms": 86.665337618615
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -568,7 +568,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 41.57316818891559
+      "runtime_p95_ms": 42.16633759933756
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -578,7 +578,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 41.577379606314935
+      "runtime_p95_ms": 42.440558467933435
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -588,7 +588,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 41.589668035157956
+      "runtime_p95_ms": 42.49002761935117
     },
     {
       "case_kind": "prediction_noise",
@@ -598,7 +598,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.36393639597456806,
-      "runtime_p95_ms": 46.145099816203555
+      "runtime_p95_ms": 45.50410225929223
     },
     {
       "case_kind": "prediction_noise",
@@ -608,7 +608,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.36450423672795
+      "runtime_p95_ms": 43.898343823093455
     },
     {
       "case_kind": "prediction_noise",
@@ -618,7 +618,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.30666455446044
+      "runtime_p95_ms": 44.572220036934596
     },
     {
       "case_kind": "prediction_noise",
@@ -628,7 +628,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3668426381583405,
-      "runtime_p95_ms": 44.19869101111544
+      "runtime_p95_ms": 44.15497884037904
     },
     {
       "case_kind": "prediction_noise",
@@ -638,7 +638,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 45.09834095806582
+      "runtime_p95_ms": 44.83359718724386
     },
     {
       "case_kind": "prediction_noise",
@@ -648,7 +648,7 @@
       "success_rate": 0.33,
       "collision_rate": 0.1,
       "progress_ratio_mean": 0.6051906679318886,
-      "runtime_p95_ms": 35.88711910706479
+      "runtime_p95_ms": 34.96185901603894
     },
     {
       "case_kind": "prediction_noise",
@@ -658,7 +658,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 22.190881952701602
+      "runtime_p95_ms": 22.518392049823888
     },
     {
       "case_kind": "prediction_noise",
@@ -668,7 +668,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.308771536452696
+      "runtime_p95_ms": 45.022347758640535
     },
     {
       "case_kind": "delayed_crossing",
@@ -678,7 +678,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.7374391428892
+      "runtime_p95_ms": 255.81610680092118
     },
     {
       "case_kind": "delayed_crossing",
@@ -688,7 +688,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 242.2002599938422
+      "runtime_p95_ms": 252.19263881590442
     },
     {
       "case_kind": "delayed_crossing",
@@ -698,7 +698,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 243.22420804819544
+      "runtime_p95_ms": 253.09603102941756
     },
     {
       "case_kind": "delayed_crossing",
@@ -708,7 +708,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 242.77040165325147
+      "runtime_p95_ms": 243.1034454391919
     },
     {
       "case_kind": "delayed_crossing",
@@ -718,7 +718,7 @@
       "success_rate": 0.4,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.629752505698451,
-      "runtime_p95_ms": 258.89541874203127
+      "runtime_p95_ms": 260.8912145646172
     },
     {
       "case_kind": "delayed_crossing",
@@ -728,7 +728,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 247.63167854689516
+      "runtime_p95_ms": 249.97268104489183
     },
     {
       "case_kind": "delayed_crossing",
@@ -738,7 +738,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 215.08102786174268
+      "runtime_p95_ms": 189.4084933883276
     },
     {
       "case_kind": "delayed_crossing",
@@ -748,7 +748,7 @@
       "success_rate": 0.87,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 247.38866188417876
+      "runtime_p95_ms": 252.2246570180868
     },
     {
       "case_kind": "all",
@@ -758,7 +758,7 @@
       "success_rate": 0.7542857142857143,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.8367406772044329,
-      "runtime_p95_ms": 61.74945002712773
+      "runtime_p95_ms": 61.53870200505477
     },
     {
       "case_kind": "all",
@@ -768,7 +768,7 @@
       "success_rate": 0.75,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.8304991928102785,
-      "runtime_p95_ms": 59.63627964811166
+      "runtime_p95_ms": 59.84636115172176
     },
     {
       "case_kind": "all",
@@ -778,7 +778,7 @@
       "success_rate": 0.6414285714285715,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.7605116434719525,
-      "runtime_p95_ms": 59.673622193804476
+      "runtime_p95_ms": 60.58110360172577
     },
     {
       "case_kind": "all",
@@ -788,7 +788,7 @@
       "success_rate": 0.6342857142857142,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.7529848188264229,
-      "runtime_p95_ms": 64.37340719567146
+      "runtime_p95_ms": 62.95372371387193
     },
     {
       "case_kind": "all",
@@ -798,7 +798,7 @@
       "success_rate": 0.5414285714285715,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.6786021863327721,
-      "runtime_p95_ms": 76.99337870435552
+      "runtime_p95_ms": 75.7875352501287
     },
     {
       "case_kind": "all",
@@ -808,7 +808,7 @@
       "success_rate": 0.7757142857142857,
       "collision_rate": 0.015714285714285715,
       "progress_ratio_mean": 0.8684299462810792,
-      "runtime_p95_ms": 59.18405300326409
+      "runtime_p95_ms": 59.99152731674257
     },
     {
       "case_kind": "all",
@@ -818,7 +818,7 @@
       "success_rate": 0.7485714285714286,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.8314623021625879,
-      "runtime_p95_ms": 56.8403018041863
+      "runtime_p95_ms": 56.45616844994945
     },
     {
       "case_kind": "all",
@@ -828,7 +828,7 @@
       "success_rate": 0.7528571428571429,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.8345544437675366,
-      "runtime_p95_ms": 60.28452571044909
+      "runtime_p95_ms": 60.10806935955769
     }
   ],
   "paired_statistics": [
