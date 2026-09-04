@@ -13,7 +13,7 @@
 
 随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-当前固定版本的自动验证结果为 `109 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全、滚动承诺、生成物一致性和 CommonRoad 审计产物测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
+当前固定版本的自动验证结果为 `110 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全、滚动承诺、生成物一致性和 CommonRoad 审计产物测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
 
 ## 完整复现命令
 
