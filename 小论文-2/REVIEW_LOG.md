@@ -123,3 +123,4 @@
 - 适配器输出固定记录在 `generated/commonroad_adapter_smoke.json`，并保留 6 m 中心线残差门限、跳过计数和明确限制。B0/MIKU 的 smoke 结果只用于证明调用链，不进入主实验统计或二区性能主张。
 - 该轮关闭“完全没有坐标/lanelet 转换”的实现缺口，但没有关闭“完整 CommonRoad 语义、批量公开场景性能、忠实外部竞争方法和原生 Apollo/CyberRT”的证据缺口。最终 Area Chair 裁决继续为 **Major Revision**，Goal 仍保持进行中。
 - 主代理验收：完整测试 `98 passed, 20 skipped`；Ruff、`git diff --check`、中英文 PDF 编译和图像视检通过。项目裁决仍为 **Major Revision**，Goal 保持进行中。
+- 随后将同一受限 adapter 扩展到四个固定 Lankershim XML：四个场景均建立可达 lanelet 链并调用 B0/MIKU；批量诊断成功率均为 25%，碰撞率为 B0/MIKU 的 75%/50%。这些结果被单独标为转换诊断，不进入主实验统计，也不冒充官方 CommonRoad benchmark。

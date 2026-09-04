@@ -30,6 +30,13 @@ lanelet、24 个动态障碍物，沿规划问题的后继链 `3630 -> 3650 -> 3
 公开轨迹的初始拥挤和常速度投影而触发降级/不可行，不能作为性能优越性结论。
 完整 JSON 记录位于 `generated/commonroad_adapter_smoke.json`。
 
+进一步对四个固定 Lankershim 文件执行批量 adapter smoke，四个场景均成功建立
+起终点可达链并调用两种方法。受限转换后的诊断结果为：B0/MIKU 成功率均为
+25%，碰撞率为 75%/50%，MIKU 的中位耗时为 199.3 ms（最大 1,260.5 ms）。
+这些数字只反映“初始状态常速度 + 中心线投影 + 轴对齐矩形”这一受限转换，不能
+与 CommonRoad 官方规划器或公开基线比较；原始行和元数据见
+`generated/commonroad_batch_raw.csv` 与 `generated/commonroad_batch_results.json`。
+
 该结果证明的是“公开 XML -> 受限 Frenet 场景 -> planner 调用”链路可执行，
 不是对 CommonRoad 规则、曲线几何、occupancy set、感知误差或外部基线的忠实
 评测。因此论文仍不宣称 CommonRoad benchmark 性能；二区送审前仍需完整

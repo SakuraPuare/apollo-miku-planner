@@ -5,7 +5,7 @@ import sys
 import pytest
 
 sys.path.insert(0, "可视化")
-from commonroad_adapter import adapt_commonroad_xml  # noqa: E402
+from commonroad_adapter import _route, adapt_commonroad_xml  # noqa: E402
 
 
 MINIMAL_XML = b"""
@@ -56,6 +56,5 @@ def test_commonroad_adapter_projects_route_and_obstacle():
 
 
 def test_commonroad_adapter_rejects_missing_route():
-    broken = MINIMAL_XML.replace(b'<successor ref="b"/>', b'<successor ref="missing"/>')
     with pytest.raises(ValueError, match="no successor route"):
-        adapt_commonroad_xml(broken)
+        _route({"a": ("missing",), "b": ()}, "a", "b")

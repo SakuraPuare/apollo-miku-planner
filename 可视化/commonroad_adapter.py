@@ -103,13 +103,16 @@ def _centerline(lanelet: ET.Element) -> np.ndarray:
     return (_resample(left, count) + _resample(right, count)) / 2.0
 
 
-def _nearest_lanelet(centerlines: dict[str, np.ndarray], point: np.ndarray) -> str:
-    return min(
+def _nearest_lanelets(
+    centerlines: dict[str, np.ndarray], point: np.ndarray, limit: int = 20
+) -> tuple[str, ...]:
+    ordered = sorted(
         centerlines,
         key=lambda lanelet_id: float(
             np.min(np.linalg.norm(centerlines[lanelet_id] - point, axis=1))
         ),
     )
+    return tuple(ordered[:limit])
 
 
 def _route(
@@ -239,9 +242,23 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
     goal_point = _state_point(goal_state)
     if goal_point is None:
         raise ValueError("planning problem goal state has no point/rectangle center")
-    start_lanelet = _nearest_lanelet(centerlines, initial_point)
-    goal_lanelet = _nearest_lanelet(centerlines, goal_point)
-    route = _route(successors, start_lanelet, goal_lanelet)
+    route = None
+    start_candidates = _nearest_lanelets(centerlines, initial_point)
+    goal_candidates = _nearest_lanelets(centerlines, goal_point)
+    for start_lanelet in start_candidates:
+        for goal_lanelet in goal_candidates:
+            try:
+                route = _route(successors, start_lanelet, goal_lanelet)
+            except ValueError:
+                continue
+            break
+        if route is not None:
+            break
+    if route is None:
+        raise ValueError(
+            "no successor route between nearest lanelet candidates "
+            f"{start_candidates[:3]} and {goal_candidates[:3]}"
+        )
     polyline = _polyline_for_route(centerlines, route)
     ego_s, ego_l, ego_residual = _project(polyline, initial_point)
     goal_s, _, goal_residual = _project(polyline, goal_point)

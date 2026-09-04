@@ -1,0 +1,191 @@
+{
+  "source": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/Lankershim/",
+  "scenario_count": 4,
+  "adapter_limitations": [
+    "centerline-only lanelet route",
+    "initial-state constant-velocity obstacle projection",
+    "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
+    "not a native CommonRoad planner benchmark"
+  ],
+  "scenarios": [
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 24,
+      "projected_obstacles": 8,
+      "skipped_obstacles": 16,
+      "route_lanelet_ids": [
+        "3630",
+        "3650",
+        "3614"
+      ],
+      "maximum_projection_residual_m": 5.98618642838818
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 42,
+      "projected_obstacles": 4,
+      "skipped_obstacles": 38,
+      "route_lanelet_ids": [
+        "3665",
+        "3664"
+      ],
+      "maximum_projection_residual_m": 3.5140424831766115
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 36,
+      "projected_obstacles": 7,
+      "skipped_obstacles": 29,
+      "route_lanelet_ids": [
+        "3608",
+        "3644",
+        "3624"
+      ],
+      "maximum_projection_residual_m": 5.90031485007368
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 34,
+      "projected_obstacles": 1,
+      "skipped_obstacles": 33,
+      "route_lanelet_ids": [
+        "3616"
+      ],
+      "maximum_projection_residual_m": 5.585017423576731
+    }
+  ],
+  "rows": [
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "method": "B0",
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -1.9971781055603122,
+      "runtime_ms": 24.5098450104706,
+      "joint_status": null,
+      "joint_domain_size": null,
+      "joint_evaluated_candidates": null
+    },
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "method": "MIKU",
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -1.9971781055603122,
+      "runtime_ms": 304.5803009881638,
+      "joint_status": "infeasible",
+      "joint_domain_size": 12,
+      "joint_evaluated_candidates": 12
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "method": "B0",
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -2.1796414510385205,
+      "runtime_ms": 23.75648100860417,
+      "joint_status": null,
+      "joint_domain_size": null,
+      "joint_evaluated_candidates": null
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "method": "MIKU",
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -2.1796414510385205,
+      "runtime_ms": 94.06235601636581,
+      "joint_status": "infeasible",
+      "joint_domain_size": 4,
+      "joint_evaluated_candidates": 4
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "method": "B0",
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 0,
+      "min_clearance_m": -0.013375396648597881,
+      "runtime_ms": 12.211757013574243,
+      "joint_status": null,
+      "joint_domain_size": null,
+      "joint_evaluated_candidates": null
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "method": "MIKU",
+      "success": 0,
+      "collision": 0,
+      "degraded_stop": 1,
+      "min_clearance_m": 0.5764831643374437,
+      "runtime_ms": 1260.5483510124031,
+      "joint_status": "infeasible",
+      "joint_domain_size": 32,
+      "joint_evaluated_candidates": 32
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "method": "B0",
+      "success": 1,
+      "collision": 0,
+      "degraded_stop": 0,
+      "min_clearance_m": 3.3390941142769157,
+      "runtime_ms": 5.4097200045362115,
+      "joint_status": null,
+      "joint_domain_size": null,
+      "joint_evaluated_candidates": null
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "method": "MIKU",
+      "success": 1,
+      "collision": 0,
+      "degraded_stop": 0,
+      "min_clearance_m": 3.3390941142769157,
+      "runtime_ms": 7.27655302034691,
+      "joint_status": "optimal",
+      "joint_domain_size": 1,
+      "joint_evaluated_candidates": 1
+    }
+  ],
+  "summary": [
+    {
+      "method": "B0",
+      "scenario_count": 4,
+      "success_rate": 0.25,
+      "collision_rate": 0.75,
+      "degraded_stop_rate": 0.5,
+      "median_runtime_ms": 17.984119011089206,
+      "max_runtime_ms": 24.5098450104706
+    },
+    {
+      "method": "MIKU",
+      "scenario_count": 4,
+      "success_rate": 0.25,
+      "collision_rate": 0.5,
+      "degraded_stop_rate": 0.75,
+      "median_runtime_ms": 199.3213285022648,
+      "max_runtime_ms": 1260.5483510124031
+    }
+  ]
+}
