@@ -22,7 +22,7 @@
 | 关键模块具有独立贡献 | 实验4.4 | `run_randomized_ablation.py` | A2--A7 的配对 bootstrap 与 McNemar | A1 仅作初始化，不声称独立显著收益 |
 | 滚动规划延续单周期收益 | 实验4.5 | `closed_loop.py`, rolling runner | 700 对：到达率差 `+9.29 pp`, CI `[6.71,12.0]`, `p=2.18e-11`; 碰撞差 `-0.57 pp`, CI `[-1.43,0.29]`, `p=.344` | 不等同于实车全系统闭环 |
 | 联合网格诊断参照 | 实验4.5 | `joint_reference.py`, joint runner | 70 对：MIKU 比 B3 到达率高 `+28.6 pp`，碰撞低 `-35.7 pp`，差异显著 | B3 是自建粗网格、不同碰撞检查器，不是外部方法或全局最优 |
-| CommonRoad 外部输入链路 | 外部验证附录 | `commonroad_adapter.py`, `run_commonroad_adapter_smoke.py` | 公开 Lankershim XML：95 lanelets、24 动态障碍；3 段后继链，8 个障碍投影；B0/MIKU 实际调用 | 严格子集 adapter smoke；不代表 CommonRoad benchmark、规则语义或外部性能 |
+| CommonRoad 外部输入链路 | 外部验证附录 | `commonroad_adapter.py`, `run_commonroad_adapter_smoke.py`, `validate_commonroad_native.py` | 公开 Lankershim XML：官方解析器确认 95 lanelets、24--42 动态障碍、矩形形状和 506--2111 个预测状态；受限 adapter 另完成 3 段后继链、障碍投影和 B0/MIKU 调用 | 官方语义审计 + 严格子集 adapter smoke；不代表 CommonRoad benchmark、规则语义或外部性能 |
 | 威胁权重局部稳定 | 实验4.6 | `sensitivity_analysis.py` | ±20% 权重扰动；80 条完整轨迹均成功 | 局部权重稳定性 |
 
 文献条目由 `references.bib` 与 LaTeX/Biber 构建共同检查；实验脚本不会修改论文中的理论表述。

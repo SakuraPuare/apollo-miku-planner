@@ -150,3 +150,9 @@
 - 从固定的 delayed-crossing/9 案例自动生成单页 teaser，并接入中英文引言；它同时展示 S-L 与 S-T 轨迹、障碍物占据、B0 停车和 MIKU pass-before 到达，图注明确不代表实车部署。
 - FIGURE_PLAN.md、RELATED_WORK_MATRIX.md、HIGH_TIER_READINESS.md 与 NOVELTY_AUDIT.md 已按当前实现状态更新，区分“已完成的受限证书/公开 XML adapter smoke”和“仍缺失的完整 benchmark/外部方法/原生平台证据”。
 - 两稿重新编译为中文 10 页、IEEE 英文 9 页；teaser PDF 抽页可读，日志无 Overfull、未解析引用或致命错误。该视觉增强不改变实验数字和 Major Revision 裁决。
+
+## Round 11 — 官方 CommonRoad 语义审计（2026-09-05）
+
+- 在不改变基础依赖的前提下，使用隔离的 `uv run --with commonroad-io==2026.1` 调用官方 `CommonRoadFileReader` 解析四个公开 Lankershim XML；结果确认每个场景含 95 个 lanelet、1 个 planning problem，动态障碍物为 24--42 个，且矩形形状与预测轨迹状态均可读取。
+- 新增 `validate_commonroad_native.py`、`commonroad_native_audit.json` 和对应 schema 回归测试；文档和主张追踪表将其定义为标准化输入语义审计，不冒充 CommonRoad 规划性能 benchmark。
+- 该轮加强了外部来源的可核验性，但没有关闭完整 lanelet/occupancy 规划语义、忠实外部竞争方法和原生 Apollo/CyberRT 证据缺口，Area-Chair 裁决仍为 **Major Revision**。

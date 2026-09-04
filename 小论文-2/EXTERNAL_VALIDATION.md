@@ -37,6 +37,18 @@ lanelet、24 个动态障碍物，沿规划问题的后继链 `3630 -> 3650 -> 3
 与 CommonRoad 官方规划器或公开基线比较；原始行和元数据见
 `generated/commonroad_batch_raw.csv` 与 `generated/commonroad_batch_results.json`。
 
+## 官方解析器语义审计
+
+为验证轻量 XML 解析器没有把公开文件的实体结构误读为自定义格式，另用可选的
+`commonroad-io==2026.1` 官方 `CommonRoadFileReader` 对同四个 XML 做只读审计。结果
+落盘于 `generated/commonroad_native_audit.json`：四个场景均解析出 95 个 lanelet、
+1 个 planning problem 和 0 个静态障碍物；动态障碍物数分别为 24、42、36、34，
+矩形障碍物数与动态障碍物数一致，官方预测轨迹状态总数分别为 914、2111、1321、
+506。该审计确认了 lanelet、矩形形状和时序预测实体的存在，但没有把官方对象直接
+转换成 MIKU 的 Frenet 规划输入，也没有执行 CommonRoad 规则、碰撞或性能评分。
+因此它加强的是“标准化外部输入语义可读取”证据，仍不等同于完整 benchmark 或
+忠实外部竞争方法。
+
 该结果证明的是“公开 XML -> 受限 Frenet 场景 -> planner 调用”链路可执行，
 不是对 CommonRoad 规则、曲线几何、occupancy set、感知误差或外部基线的忠实
 评测。因此论文仍不宣称 CommonRoad benchmark 性能；二区送审前仍需完整

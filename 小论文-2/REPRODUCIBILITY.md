@@ -13,7 +13,7 @@
 
 随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-当前固定版本的自动验证结果为 `106 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全、滚动承诺和生成物一致性测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
+当前固定版本的自动验证结果为 `107 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全、滚动承诺、生成物一致性和 CommonRoad 审计产物测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
 
 ## 完整复现命令
 
@@ -34,6 +34,7 @@ PYTHONPATH=可视化 uv run python 可视化/generate_submission_figures.py
 PYTHONPATH=可视化 uv run python 可视化/generate_failure_case_figure.py
 PYTHONPATH=可视化 uv run python 可视化/run_commonroad_adapter_smoke.py
 PYTHONPATH=可视化 uv run python 可视化/run_commonroad_batch.py
+uv run --with commonroad-io==2026.1 python 可视化/validate_commonroad_native.py --output 小论文-2/generated/commonroad_native_audit.json
 cd 小论文-2
 latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
 latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
@@ -55,6 +56,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | 轨迹边界与首页 teaser | 2 个固定种子案例 | `generate_failure_case_figure.py` | `failure_case_qualitative.pdf` 与 `teaser.pdf`；由同一规划代码自动重放 |
 | CommonRoad 受限 adapter smoke | 1 个公开 Lankershim XML | `run_commonroad_adapter_smoke.py` | `commonroad_adapter_smoke.json`；公开 XML 到受限 Frenet planner 调用链，非 benchmark 性能 |
 | CommonRoad 四场景批量诊断 | 4 个公开 Lankershim XML × 2 方法 | `run_commonroad_batch.py` | `commonroad_batch_raw.csv`, `commonroad_batch_results.json`；统一受限转换诊断，非官方 benchmark |
+| CommonRoad 官方语义审计 | 4 个公开 Lankershim XML | `validate_commonroad_native.py`（可选 `commonroad-io==2026.1`） | `commonroad_native_audit.json`；官方解析器实体/形状/预测状态计数，不是性能 benchmark |
 | 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 

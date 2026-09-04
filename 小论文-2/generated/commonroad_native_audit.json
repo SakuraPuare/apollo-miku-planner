@@ -1,0 +1,50 @@
+[
+  {
+    "file": "USA_Lanker-1_1_T-1.xml",
+    "benchmark_id": "USA_Lanker-1_1_T-1",
+    "scenario_id": "USA_Lanker-1_1_T-1",
+    "lanelets": 95,
+    "dynamic_obstacles": 24,
+    "static_obstacles": 0,
+    "planning_problems": 1,
+    "rectangular_obstacles": 24,
+    "predicted_trajectory_states": 914,
+    "goal_regions": 1
+  },
+  {
+    "file": "USA_Lanker-1_2_T-1.xml",
+    "benchmark_id": "USA_Lanker-1_2_T-1",
+    "scenario_id": "USA_Lanker-1_2_T-1",
+    "lanelets": 95,
+    "dynamic_obstacles": 42,
+    "static_obstacles": 0,
+    "planning_problems": 1,
+    "rectangular_obstacles": 42,
+    "predicted_trajectory_states": 2111,
+    "goal_regions": 1
+  },
+  {
+    "file": "USA_Lanker-1_3_T-1.xml",
+    "benchmark_id": "USA_Lanker-1_3_T-1",
+    "scenario_id": "USA_Lanker-1_3_T-1",
+    "lanelets": 95,
+    "dynamic_obstacles": 36,
+    "static_obstacles": 0,
+    "planning_problems": 1,
+    "rectangular_obstacles": 36,
+    "predicted_trajectory_states": 1321,
+    "goal_regions": 1
+  },
+  {
+    "file": "USA_Lanker-1_4_T-1.xml",
+    "benchmark_id": "USA_Lanker-1_4_T-1",
+    "scenario_id": "USA_Lanker-1_4_T-1",
+    "lanelets": 95,
+    "dynamic_obstacles": 34,
+    "static_obstacles": 0,
+    "planning_problems": 1,
+    "rectangular_obstacles": 34,
+    "predicted_trajectory_states": 506,
+    "goal_regions": 1
+  }
+]
