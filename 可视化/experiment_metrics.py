@@ -10,7 +10,11 @@ import numpy as np
 from apollo_pipeline import Obstacle, Scenario
 from experiment_cases import RandomCase
 from experiment_methods import MethodRun
-from joint_homotopy_search import AxisAlignedMotionSample, validate_candidate_continuous_safety
+from joint_homotopy_search import (
+    AxisAlignedMotionSample,
+    certify_sampled_axis_aligned_motion,
+    validate_candidate_constant_acceleration_safety,
+)
 
 
 RAW_SCHEMA_VERSION = "miku-random-v3"
@@ -117,8 +121,8 @@ def _safety_metrics(trajectory: Trajectory, truth: Scenario) -> tuple[float, flo
         active_dynamic = current_dynamic
 
     # Sample-wise checks above remain useful for TTC and event counts.  The
-    # collision flag additionally uses a piecewise-linear swept-rectangle
-    # check so an overlap between two QP samples cannot be missed.
+    # The collision flag additionally uses a constant-acceleration swept-
+    # rectangle check so an overlap between two QP samples cannot be missed.
     maximum_ego_speed = float(np.max(np.abs(trajectory.speed_mps)))
     for obs in truth.obstacles:
         samples = []
@@ -131,13 +135,26 @@ def _safety_metrics(trajectory: Trajectory, truth: Scenario) -> tuple[float, flo
                     float(trajectory.lateral_m[index] - obs_l),
                     (truth.ego.L + obs.L) / 2.0,
                     (truth.ego.W + obs.W) / 2.0,
+                    float(trajectory.speed_mps[index] - obs.vs),
+                    float(trajectory.acceleration_mps2[index]),
                 )
             )
-        certificate = validate_candidate_continuous_safety(
-            samples,
-            relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
-            relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
-        )
+        try:
+            certificate = validate_candidate_constant_acceleration_safety(
+                samples,
+                relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
+                relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
+            )
+        except ValueError:
+            # Concatenated rolling-horizon segments can introduce a state
+            # reset at the replan boundary.  Fall back to the sound Lipschitz
+            # certificate rather than silently treating that boundary as a
+            # quadratic segment it does not satisfy.
+            certificate = certify_sampled_axis_aligned_motion(
+                samples,
+                relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
+                relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
+            )
         if not certificate.certified:
             collision = 1
 

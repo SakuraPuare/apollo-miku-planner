@@ -50,6 +50,9 @@ def test_miku_reports_finite_joint_search_certificate():
     run = run_method(method_by_key("MIKU"), scenario)
     certificate = run.result["joint_search_certificate"]
     assert certificate["status"] in {"optimal", "infeasible"}
-    assert certificate["absolute_gap"] == 0.0
     assert certificate["evaluated_candidates"] >= 1
     assert certificate["domain_size"] >= certificate["evaluated_candidates"]
+    if certificate["status"] == "optimal":
+        assert certificate["absolute_gap"] == 0.0
+    else:
+        assert certificate["absolute_gap"] == float("inf")

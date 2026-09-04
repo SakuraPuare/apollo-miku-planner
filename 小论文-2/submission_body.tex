@@ -172,7 +172,7 @@ MIKU 不只保留 $g^*$ 对应的一条通行带，而是依据净宽度、参�
 \end{proposition}
 
 \begin{proposition}[占据包含下的鲁棒安全性]
-若真实障碍物占据满足 $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$，执行适配器在相邻输出采样间对双方中心作分段线性插值，且该插值轨迹始终位于按式\eqref{eq:robust-tube}构造的时空走廊内，则执行轨迹与 $O_i^{\rm true}(t)$ 不相交。本命题不覆盖 QP 节点间的二次恒加速度轨迹、模型失配或控制跟踪误差。
+若真实障碍物占据满足 $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$，执行适配器在相邻输出节点间按速度 QP 的恒加速度纵向模型滚放、横向中心作线性插值，且该轨迹始终位于按式\eqref{eq:robust-tube}构造的时空走廊内，则执行轨迹与 $O_i^{\rm true}(t)$ 不相交。实现对纵向二次重叠根和横向线性重叠区间作解析检查；任意模型失配或控制跟踪误差仍不在证书范围内。
 \end{proposition}
 \begin{proof}
 走廊构造排除了 $O_i^{\rm rob}(t)$ 与车辆 Minkowski 足迹。真实占据是该集合的子集，故对更大集合保持不相交蕴含对真实占据不相交。

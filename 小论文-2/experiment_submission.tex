@@ -98,7 +98,7 @@ A7 无交替细化 & \AblASevenSuccessPct & \AblASevenCollisionPct & \AblMikuVsA
 
 \subsection{滚动规划与联合参照}
 
-滚动实验以 0.5\,s 为执行步长循环“规划--执行--更新预测”，每类 100 个种子，共 \ClosedCaseCount 个场景。MIKU 到达率为 \ClosedMikuSuccessPct\%，B0 为 \ClosedBZeroSuccessPct\%，配对提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，95\% CI [\ClosedMikuVsBZeroSuccessCiLow,\ClosedMikuVsBZeroSuccessCiHigh]，McNemar $p=\ClosedMikuVsBZeroSuccessMcNemarP$。MIKU/B0 碰撞率分别为 \ClosedMikuCollisionPct\%/\ClosedBZeroCollisionPct\%，配对差不显著（$p=0.34375$）。
+滚动实验以 0.5\,s 为执行步长循环“规划--执行--更新预测”，每类 100 个种子，共 \ClosedCaseCount 个场景。MIKU 到达率为 \ClosedMikuSuccessPct\%，B0 为 \ClosedBZeroSuccessPct\%，配对提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，95\% CI [\ClosedMikuVsBZeroSuccessCiLow,\ClosedMikuVsBZeroSuccessCiHigh]，McNemar $p=\ClosedMikuVsBZeroSuccessMcNemarP$。MIKU/B0 碰撞率分别为 \ClosedMikuCollisionPct\%/\ClosedBZeroCollisionPct\%，配对差不显著（$p=\ClosedMikuVsBZeroCollisionMcNemarP$）。
 
 B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用相同的威胁相关裕度和鲁棒预测管。它不使用路径--速度顺序 QP，因此用于检验解耦方法与联合候选搜索的质量--开销关系，而不是作为连续全局最优上界。
 

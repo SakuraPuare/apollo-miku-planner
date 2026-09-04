@@ -13,6 +13,7 @@ from joint_homotopy_search import (
     SpatialHomotopyBranch,
     bounded_lazy_joint_search,
     certify_sampled_axis_aligned_motion,
+    validate_candidate_constant_acceleration_safety,
     validate_candidate_continuous_safety,
 )
 
@@ -247,4 +248,31 @@ def test_piecewise_linear_validator_accepts_axis_separated_sweep():
         relative_lateral_speed_bound=0.0,
     )
 
+    assert result.certified
+
+
+def test_constant_acceleration_validator_detects_between_knot_crossing():
+    samples = (
+        AxisAlignedMotionSample(0.0, -2.0, 0.0, 0.5, 0.5, 0.0, 8.0),
+        AxisAlignedMotionSample(1.0, 2.0, 0.0, 0.5, 0.5),
+    )
+    result = validate_candidate_constant_acceleration_safety(
+        samples,
+        relative_longitudinal_speed_bound=4.0,
+        relative_lateral_speed_bound=0.0,
+    )
+    assert not result.certified
+    assert result.failed_interval == 0
+
+
+def test_constant_acceleration_validator_accepts_lateral_separation():
+    samples = (
+        AxisAlignedMotionSample(0.0, -2.0, 2.0, 0.5, 0.5, 0.0, 8.0),
+        AxisAlignedMotionSample(1.0, 2.0, 2.0, 0.5, 0.5),
+    )
+    result = validate_candidate_constant_acceleration_safety(
+        samples,
+        relative_longitudinal_speed_bound=4.0,
+        relative_lateral_speed_bound=0.0,
+    )
     assert result.certified

@@ -262,6 +262,8 @@ class AxisAlignedMotionSample:
     relative_lateral: float
     combined_half_length: float
     combined_half_width: float
+    relative_longitudinal_velocity: float | None = None
+    relative_longitudinal_acceleration: float | None = None
 
 
 @dataclass(frozen=True)
@@ -356,6 +358,19 @@ def certify_sampled_axis_aligned_motion(
     )
 
 
+def _linear_overlap_fraction(
+    value0: float, value1: float, half_extent: float
+) -> tuple[float, float] | None:
+    delta = value1 - value0
+    if abs(delta) <= 1.0e-15:
+        return (0.0, 1.0) if abs(value0) <= half_extent else None
+    first = (-half_extent - value0) / delta
+    second = (half_extent - value0) / delta
+    lower = max(0.0, min(first, second))
+    upper = min(1.0, max(first, second))
+    return (lower, upper) if lower <= upper else None
+
+
 def validate_candidate_continuous_safety(
     samples: Sequence[AxisAlignedMotionSample],
     *,
@@ -394,16 +409,6 @@ def validate_candidate_continuous_safety(
     if len(samples) < 2:
         raise ValueError("at least two time samples are required")
 
-    def overlap_fraction(value0: float, value1: float, half_extent: float):
-        delta = value1 - value0
-        if abs(delta) <= 1.0e-15:
-            return (0.0, 1.0) if abs(value0) <= half_extent else None
-        first = (-half_extent - value0) / delta
-        second = (half_extent - value0) / delta
-        lower = max(0.0, min(first, second))
-        upper = min(1.0, max(first, second))
-        return (lower, upper) if lower <= upper else None
-
     for index, (left, right) in enumerate(zip(samples, samples[1:])):
         dt = float(right.time - left.time)
         if not math.isfinite(dt) or dt <= 0.0:
@@ -422,12 +427,12 @@ def validate_candidate_continuous_safety(
             raise ValueError("sample geometry must be finite")
         if min(values[4:]) < 0.0:
             raise ValueError("combined footprint half-extents must be non-negative")
-        longitudinal = overlap_fraction(
+        longitudinal = _linear_overlap_fraction(
             left.relative_longitudinal,
             right.relative_longitudinal,
             max(left.combined_half_length, right.combined_half_length),
         )
-        lateral = overlap_fraction(
+        lateral = _linear_overlap_fraction(
             left.relative_lateral,
             right.relative_lateral,
             max(left.combined_half_width, right.combined_half_width),
@@ -441,3 +446,151 @@ def validate_candidate_continuous_safety(
             return ContinuousSafetyCertificate(False, index, 0.0, 0.0)
 
     return ContinuousSafetyCertificate(True, None, 0.0, 0.0)
+
+
+def _quadratic_overlap_fractions(
+    position: float,
+    normalized_velocity: float,
+    normalized_acceleration: float,
+    half_extent: float,
+) -> tuple[tuple[float, float], ...]:
+    """Intervals in ``u in [0,1]`` where a quadratic lies in an extent."""
+    breakpoints = [0.0, 1.0]
+    for offset in (-half_extent, half_extent):
+        quadratic = 0.5 * normalized_acceleration
+        linear = normalized_velocity
+        constant = position - offset
+        if abs(quadratic) <= 1.0e-14:
+            if abs(linear) > 1.0e-14:
+                root = -constant / linear
+                if 0.0 < root < 1.0:
+                    breakpoints.append(root)
+            continue
+        discriminant = linear * linear - 4.0 * quadratic * constant
+        if discriminant < 0.0:
+            continue
+        root_discriminant = math.sqrt(max(0.0, discriminant))
+        for root in (
+            (-linear - root_discriminant) / (2.0 * quadratic),
+            (-linear + root_discriminant) / (2.0 * quadratic),
+        ):
+            if 0.0 < root < 1.0:
+                breakpoints.append(root)
+    breakpoints = sorted(set(breakpoints))
+
+    def value(fraction: float) -> float:
+        return (
+            position
+            + normalized_velocity * fraction
+            + 0.5 * normalized_acceleration * fraction * fraction
+        )
+
+    intervals = []
+    tolerance = 1.0e-12
+    for left, right in zip(breakpoints, breakpoints[1:]):
+        if abs(value(0.5 * (left + right))) <= half_extent + tolerance:
+            intervals.append((left, right))
+    for point in breakpoints:
+        if abs(value(point)) <= half_extent + tolerance:
+            intervals.append((point, point))
+    return tuple(intervals)
+
+
+def validate_candidate_constant_acceleration_safety(
+    samples: Sequence[AxisAlignedMotionSample],
+    *,
+    relative_longitudinal_speed_bound: float,
+    relative_lateral_speed_bound: float,
+) -> ContinuousSafetyCertificate:
+    """Validate swept rectangles for the speed-QP execution contract.
+
+    Longitudinal relative motion follows each knot's constant acceleration;
+    lateral relative centers are linearly interpolated.  Quadratic projection
+    roots are intersected with lateral-overlap intervals, detecting collisions
+    that safe knot samples or a linear station sweep can miss.  The larger
+    endpoint footprint covers linearly growing uncertainty conservatively.
+    """
+    longitudinal_bound = _finite_bound(
+        relative_longitudinal_speed_bound, "relative_longitudinal_speed_bound"
+    )
+    lateral_bound = _finite_bound(
+        relative_lateral_speed_bound, "relative_lateral_speed_bound"
+    )
+    if longitudinal_bound < 0.0 or lateral_bound < 0.0:
+        raise ValueError("relative-speed bounds must be non-negative")
+    if len(samples) < 2:
+        raise ValueError("at least two time samples are required")
+
+    maximum_longitudinal_guard = 0.0
+    maximum_lateral_guard = 0.0
+    for index, (left, right) in enumerate(zip(samples, samples[1:])):
+        dt = float(right.time - left.time)
+        if not math.isfinite(dt) or dt <= 0.0:
+            raise ValueError("sample times must be finite and strictly increasing")
+        geometry = (
+            left.relative_longitudinal,
+            left.relative_lateral,
+            right.relative_longitudinal,
+            right.relative_lateral,
+            left.combined_half_length,
+            left.combined_half_width,
+            right.combined_half_length,
+            right.combined_half_width,
+        )
+        if not all(math.isfinite(float(value)) for value in geometry):
+            raise ValueError("sample geometry must be finite")
+        if min(geometry[4:]) < 0.0:
+            raise ValueError("combined footprint half-extents must be non-negative")
+        if (
+            left.relative_longitudinal_velocity is None
+            or left.relative_longitudinal_acceleration is None
+        ):
+            raise ValueError("constant-acceleration samples need velocity and acceleration")
+        velocity = float(left.relative_longitudinal_velocity)
+        acceleration = float(left.relative_longitudinal_acceleration)
+        if not math.isfinite(velocity) or not math.isfinite(acceleration):
+            raise ValueError("relative longitudinal kinematics must be finite")
+        predicted_right = (
+            left.relative_longitudinal + velocity * dt + 0.5 * acceleration * dt * dt
+        )
+        if not math.isclose(
+            predicted_right,
+            right.relative_longitudinal,
+            rel_tol=1.0e-7,
+            abs_tol=1.0e-7,
+        ):
+            raise ValueError("kinematic data do not reproduce the next station knot")
+
+        longitudinal = _quadratic_overlap_fractions(
+            float(left.relative_longitudinal),
+            velocity * dt,
+            acceleration * dt * dt,
+            max(left.combined_half_length, right.combined_half_length),
+        )
+        lateral = _linear_overlap_fraction(
+            float(left.relative_lateral),
+            float(right.relative_lateral),
+            max(left.combined_half_width, right.combined_half_width),
+        )
+        maximum_longitudinal_guard = max(
+            maximum_longitudinal_guard, longitudinal_bound * dt
+        )
+        maximum_lateral_guard = max(maximum_lateral_guard, lateral_bound * dt)
+        if lateral is not None and any(
+            max(longitudinal_interval[0], lateral[0])
+            <= min(longitudinal_interval[1], lateral[1]) + 1.0e-12
+            for longitudinal_interval in longitudinal
+        ):
+            return ContinuousSafetyCertificate(
+                False,
+                index,
+                maximum_longitudinal_guard,
+                maximum_lateral_guard,
+            )
+
+    return ContinuousSafetyCertificate(
+        True,
+        None,
+        maximum_longitudinal_guard,
+        maximum_lateral_guard,
+    )

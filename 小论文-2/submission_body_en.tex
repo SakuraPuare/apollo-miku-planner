@@ -175,7 +175,7 @@ Spatial bands and \eqref{eq:pass}--\eqref{eq:yield} are sample-wise affine lower
 \end{proof}
 
 \begin{proposition}[Robust collision exclusion]
-If $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$, the execution adapter linearly interpolates both centers between output samples, and that interpolant remains in the corridor excluding $O_i^{\rm rob}$ and the vehicle footprint, it cannot intersect $O_i^{\rm true}(t)$. This proposition does not cover the quadratic constant-acceleration curve between QP knots, model mismatch, or tracking error.
+If $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$, the execution adapter rolls out the speed-QP longitudinal state with constant acceleration between knots and linearly interpolates the lateral center, and that rollout remains in the corridor excluding $O_i^{\rm rob}$ and the vehicle footprint, it cannot intersect $O_i^{\rm true}(t)$. The implementation checks the resulting quadratic longitudinal overlap roots and linear lateral overlap intervals. Arbitrary model mismatch or tracking error remains outside the certificate.
 \end{proposition}
 \begin{proof}
 Disjointness from a superset implies disjointness from every subset.
@@ -309,7 +309,7 @@ The spatial, margin, temporal, robustness, and refinement ablations are reported
 
 \subsection{Receding-Horizon and Joint-Reference Evaluation}
 
-The receding-horizon protocol repeatedly plans, executes 0.5\,s, updates ego and obstacles, and replans. It contains 100 seeds per family, or \ClosedCaseCount{} paired episodes. MIKU reaches \ClosedMikuSuccessPct\% versus B0's \ClosedBZeroSuccessPct\%, a \ClosedMikuVsBZeroSuccessDiff-point gain (95\% CI \ClosedMikuVsBZeroSuccessCiLow--\ClosedMikuVsBZeroSuccessCiHigh; $p=\ClosedMikuVsBZeroSuccessMcNemarP$). Collision rates are \ClosedMikuCollisionPct\% and \ClosedBZeroCollisionPct\%; their paired difference is not significant ($p=0.34375$).
+The receding-horizon protocol repeatedly plans, executes 0.5\,s, updates ego and obstacles, and replans. It contains 100 seeds per family, or \ClosedCaseCount{} paired episodes. MIKU reaches \ClosedMikuSuccessPct\% versus B0's \ClosedBZeroSuccessPct\%, a \ClosedMikuVsBZeroSuccessDiff-point gain (95\% CI \ClosedMikuVsBZeroSuccessCiLow--\ClosedMikuVsBZeroSuccessCiHigh; $p=\ClosedMikuVsBZeroSuccessMcNemarP$). Collision rates are \ClosedMikuCollisionPct\% and \ClosedBZeroCollisionPct\%; their paired difference is not significant ($p=\ClosedMikuVsBZeroCollisionMcNemarP$).
 
 The B3 reference jointly searches $(t,s,l,v,\dot l)$ on a coarse grid. It is a diagnostic, not a continuous global optimum or external baseline. Across \JointCaseCount{} paired cases, B3 and MIKU achieve \JointBThreeSuccessPct\% and \JointMikuSuccessPct\%; the difference is \JointMikuVsBThreeSuccessDiff{} points (95\% CI \JointMikuVsBThreeSuccessCiLow--\JointMikuVsBThreeSuccessCiHigh; $p=\JointMikuVsBThreeSuccessMcNemarP$). The significant difference and runtime values are reported diagnostically because collision-checking fidelity differs.
 

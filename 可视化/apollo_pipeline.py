@@ -47,6 +47,7 @@ import scipy.sparse as sp
 from joint_homotopy_search import (
     AxisAlignedMotionSample,
     ContinuousSafetyCertificate,
+    validate_candidate_constant_acceleration_safety,
     validate_candidate_continuous_safety,
 )
 from matplotlib.patches import Circle, Polygon, Rectangle
@@ -1725,7 +1726,7 @@ def run_pipeline(
             "speed": speed_qp_ms,
             "total": path_qp_ms + speed_qp_ms,
         },
-        execution_interpolation_contract="piecewise_linear_centers",
+        execution_interpolation_contract="constant_acceleration_longitudinal",
     )
 
 
@@ -1742,13 +1743,20 @@ def validate_pipeline_candidate_continuous_safety(
     conservative relative-speed bounds.  A failed certificate is inconclusive
     and the caller must refine or reject the candidate; only ``certified=True``
     is a continuous-time safety result under the declared motion bounds and a
-    piecewise-linear center-interpolation execution contract.  It does not
-    certify the quadratic motion between speed-QP knots.
+    constant-acceleration longitudinal / linear-lateral execution contract
+    used by the speed-QP rollout.  The quadratic longitudinal roots are
+    checked analytically; arbitrary tracking or model mismatch remains outside
+    the certificate.
     """
 
     if result.get("s_qp") is None:
         raise ValueError("continuous safety requires a solved speed candidate")
-    if result.get("execution_interpolation_contract") not in (None, "piecewise_linear_centers"):
+    interpolation_contract = result.get("execution_interpolation_contract")
+    if interpolation_contract not in (
+        None,
+        "piecewise_linear_centers",
+        "constant_acceleration_longitudinal",
+    ):
         raise ValueError("unsupported execution interpolation contract")
     ts = np.asarray(result["ts"], dtype=float)
     longitudinal = np.asarray(result["s_qp"], dtype=float)
@@ -1763,6 +1771,7 @@ def validate_pipeline_candidate_continuous_safety(
     path_lateral = np.asarray(result["l_path"], dtype=float)
     station_steps = np.diff(path_stations)
     candidate_speed = result.get("v_qp")
+    candidate_acceleration = result.get("a_qp")
     maximum_speed = (
         float(np.max(np.abs(candidate_speed)))
         if candidate_speed is not None
@@ -1803,14 +1812,24 @@ def validate_pipeline_candidate_continuous_safety(
                     + longitudinal_uncertainty
                     + longitudinal_numerical_guard,
                     (scn.ego.W + obstacle.W) / 2.0 + lateral_uncertainty,
+                    None
+                    if candidate_speed is None
+                    else float(candidate_speed[index] - obstacle.vs),
+                    None
+                    if candidate_acceleration is None
+                    else float(candidate_acceleration[index]),
                 )
             )
         name = obstacle.name or f"obstacle-{obstacle_index}"
-        certificates[name] = validate_candidate_continuous_safety(
+        validator = (
+            validate_candidate_constant_acceleration_safety
+            if interpolation_contract == "constant_acceleration_longitudinal"
+            else validate_candidate_continuous_safety
+        )
+        certificates[name] = validator(
             samples,
             relative_longitudinal_speed_bound=maximum_speed + abs(obstacle.vs),
-            relative_lateral_speed_bound=path_lateral_speed_bound
-            + abs(obstacle.vl),
+            relative_lateral_speed_bound=path_lateral_speed_bound + abs(obstacle.vl),
         )
     return certificates
 

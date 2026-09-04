@@ -31,13 +31,13 @@
 - 新增 `可视化/joint_homotopy_search.py`：有限联合候选的 lazy best-first、可采纳 LB、预算截断 gap、fail-closed 检查。
 - 新增 `certify_sampled_axis_aligned_motion`：明确采样点不蕴含连续安全，并提供 Lipschitz 保守证书。
 - 新增 `tests/test_joint_homotopy_search.py`：随机穷举 oracle、预算 gap、下界反例、采样间穿越共 7 项。
-- 验证：初轮 `85 passed, 20 skipped`；后续集成测试扩展为 `92 passed, 20 skipped`，`ruff` 与 `git diff --check` 通过。
+- 验证：初轮 `85 passed, 20 skipped`；后续集成测试扩展为 `94 passed, 20 skipped`，`ruff` 与 `git diff --check` 通过。
 
 ### 运动员修改与证据（Round 1 后）
 
 - `run_method` 的 MIKU 分支已接入 `bounded_lazy_joint_search`；认证模式令 `spatial_top_k=None`、`temporal_beam_width=None`，枚举显式有限域，逐候选执行 QP 与连续扫掠证书，并记录 `U-L`。
 - 路径投影、ST 映射和评价器均使用有界预测误差；不满足证书的候选 fail-closed。新增 CommonRoad XML 在线 smoke 脚本与四个 NGSIM/Lankershim 场景的实际解析记录。
-- 重生成 700 对主实验、700 对消融和 700 对滚动样本；当前全测为 `92 passed, 20 skipped`。A6 重跑后为成功率 77.6%、碰撞率 1.6%，揭示安全—进度权衡；A7 差异仅 +0.43 pp（p=.25）。
+- 重生成 700 对主实验、700 对消融和 700 对滚动样本；当前全测为 `94 passed, 20 skipped`。A6 重跑后为成功率 77.6%、碰撞率 1.6%，揭示安全—进度权衡；A7 差异仅 +0.43 pp（p=.25）。
 
 ### Round 2 — 修改后独立复审
 
@@ -72,8 +72,14 @@
 - 主实验 700 个 MIKU 原始行全部含联合搜索字段：598 个显式有限域返回 `optimal`，102 个返回 `infeasible`；前者 gap 全为 0，后者依约记录无可行候选。
 - 主实验有限域规模中位数为 1、最大为 2，仅 28/700 个样本为多候选；因此不把当前结果解释为剪枝或大规模联合搜索优势。
 - 滚动实验 700 个 MIKU 行汇总了每轮证书：473 个 episode 为 `all_cycles_optimal`，227 个包含至少一轮不可行有限域。
-- 验证闭环：`92 passed, 20 skipped`，Ruff 与 `git diff --check` 通过；中文 7 页和 IEEE 英文 6 页 PDF 重建成功并抽页视检。
+- 验证闭环：`94 passed, 20 skipped`，Ruff 与 `git diff --check` 通过；中文 7 页和 IEEE 英文 6 页 PDF 重建成功并抽页视检。
 - 裁判仍为 **Major Revision**：可审计性缺口已修复，但它不消除外部性能基准、忠实竞争方法、非平凡联合域和失败边界视觉证据的致命不足。Goal 保持进行中。
+
+### 恒加速执行契约升级与重跑
+
+- 新增 `validate_candidate_constant_acceleration_safety`：对 QP 节点间的纵向二次相对运动解析求根，与横向线性重叠区间相交；滚动重规划拼接边界不满足动力学连续时明确回退到 Lipschitz 证书。
+- 新增恒加速反例单测，重跑后全套测试为 `94 passed, 20 skipped`；重生主实验、消融和滚动产物并重建中英文 PDF。
+- 更严格的连续检查后，主实验 MIKU/B0 成功率为 73.9%/60.3%，碰撞率为 0.43%/6.71%；滚动成功率为 56.6%/42.3%，碰撞差异仍不显著 (`p=.847`) 。以新数字替换旧产物，不保留过于乐观的旧结论。
 
 ## Round 2 — 修改后复审门槛
 
