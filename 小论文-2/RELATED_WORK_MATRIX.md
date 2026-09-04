@@ -11,17 +11,17 @@
 | Cheng et al., ICRA 2022 | GP + incremental refinement | 候选/迭代协调 | 部分 | GP 预测 | MIKU 的证书化候选域与 QP 回退仍需实证差异 | DOI 10.1109/ICRA46639.2022.9812405 |
 | Han et al., T-ITS 2024 | spatial-temporal joint optimization | 联合走廊/动态障碍 | 否 | safe corridor、signed distance | MIKU 以较低连续优化维度换取候选近似；必须报告质量—开销差 | [IEEE 页面](https://ieeexplore.ieee.org/document/10285583) |
 | Yoon et al., T-ITS 2024 | spatio-temporal corridor lane change | 显式时空走廊 | 否/混合 | corridor | MIKU 的差异只能是固定 QP 接口与有限同伦证书，不是“首次 ST corridor” | DOI 10.1109/TITS.2024.3388380 |
-| Deolasee et al., 2022 | trapezoidal prism + Bézier | 联合时空走廊 | 否 | 连续时间安全保证 | MIKU 尚未实现同等级连续安全证明；新增 certifier 仅是起点 | [arXiv](https://arxiv.org/abs/2209.15150) |
+| Deolasee et al., 2022 | trapezoidal prism + Bézier | 联合时空走廊 | 否 | 连续时间安全保证 | MIKU 提供较窄的恒加速/分段线性/轴对齐矩形条件证书，不宣称覆盖其连续走廊模型 | [arXiv](https://arxiv.org/abs/2209.15150) |
 | Kessler et al., T-IV 2023 | mixed-integer Apollo stack | 离散行为与路径 | 是/混合 | 约束相关 | MIKU 需与其比较候选覆盖与计算代价，不能只对自建 B3 | DOI 10.1109/TIV.2022.3162671 |
 | Tariq et al., IV 2025 / T-IV 2026 | Frenet corridor / sparse graph | obstacle-specific nodes | path then speed | risk-aware clearance | 近期直接竞争者，已有 CARLA/硬件证据；当前稿缺外部复现 | [FCP arXiv](https://arxiv.org/abs/2505.03695), [FEP IEEE](https://ieeexplore.ieee.org/document/11214467) |
-| CommonRoad benchmark (Althoff et al., IVS 2017) | 标准 XML 道路/动态障碍/目标 | 可组合 benchmark | 取决于 planner | 真实/手工场景 | 可作为外部验证来源；当前仓库尚未导入场景 | [场景下载页](https://commonroad.in.tum.de/scenarios/), [commonroad-io](https://github.com/CommonRoad/commonroad-io) |
+| CommonRoad benchmark (Althoff et al., IVS 2017) | 标准 XML 道路/动态障碍/目标 | 可组合 benchmark | 取决于 planner | 真实/手工场景 | 当前仓库已导入四个公开 XML 并完成受限 adapter smoke；尚非完整 benchmark 性能评测 | [场景下载页](https://commonroad.in.tum.de/scenarios/), [commonroad-io](https://github.com/CommonRoad/commonroad-io) |
 
 ## 对 MIKU 主张的覆盖判定
 
 | 主张 | 最近工作是否直接覆盖 | 可保留的窄化表述 |
 |---|---|---|
 | “统一 before/after/left/right 语义” | 是（Esterle 2018） | “在鲁棒占据和固定 QP 接口下的有限候选编译” |
-| “Top-K 全局空间同伦” | 部分；当前实现只对截断图精确 | “给定候选图的 K-best；完整域证书化搜索待接入” |
-| “鲁棒占据安全保证” | 形式类似已有集合安全方法，但当前实现不满足 | “在显式误差包络和连续扫掠检查满足时的条件命题” |
+| “Top-K 全局空间同伦” | 部分；当前实现只对截断图精确 | “诊断模式给定候选图的 K-best；认证模式对显式有限域做证书化搜索” |
+| “鲁棒占据安全保证” | 形式类似已有集合安全方法，但条件更窄 | “在显式误差包络、恒加速执行、分段线性路径和连续扫掠检查满足时的条件命题” |
 | “Apollo 实时部署” | 未覆盖；仓库无原生运行证据 | “Apollo-style Python/OSQP 原型计时” |
 | “二区竞争力” | 不能由自生成场景推出 | 等外部 benchmark、外部方法和复审完成后再判 |

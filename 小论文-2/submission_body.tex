@@ -28,6 +28,13 @@ MIKU & $k+1$ 连续分割与 Top-K & 因果时间同伦图 & 有界增长管 & �
 \end{adjustbox}
 \end{table}
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{generated/teaser.pdf}
+\caption{首页概念图：在固定种子的延迟横穿场景中，时间盲基线 B0 停车，而 MIKU 保留 \texttt{pass-before} 空间--时间标签并到达目标。左图为 $S$--$L$ 轨迹，右图为 $S$--$T$ 轨迹及障碍物占据。该图由确定性实验重放生成，用于说明问题机制，不代表实车部署。}
+\label{fig:teaser}
+\end{figure*}
+
 本文提出 MIKU（Multi-obstacle Interaction-aware Kinematic-constraint Unification），即面向解耦路径--速度规划的交互感知时空同伦走廊。其核心思想不是把动态障碍物简单投影到路径边界，而是先在鲁棒预测占据上构造有限的空间与时间同伦候选，再将选定同伦编译为路径 QP 和速度 QP 的盒约束。由此，离散层负责回答“从哪里、何时通过”，连续层仍由成熟凸优化器生成平滑轨迹。
 
 本文的主要贡献如下：

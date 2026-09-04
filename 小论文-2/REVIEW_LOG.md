@@ -144,3 +144,9 @@
 
 - 新增 artifact-consistency 测试，自动比较随机主实验、闭环汇总和联合压力汇总与对应 LaTeX 宏；当前 3 项测试通过，宏的一位/两位小数舍入误差显式纳入容差，完整测试计数为 106 passed / 20 skipped。
 - 该测试只验证“论文数字来自当前生成物”，不替代独立外部 benchmark 或竞争方法复现。外部语义、原生平台和新颖性边界问题仍按前轮 Major Revision 结论处理。
+
+## Round 10 — 首页机制图与状态文档复核（2026-09-05）
+
+- 从固定的 delayed-crossing/9 案例自动生成单页 teaser，并接入中英文引言；它同时展示 S-L 与 S-T 轨迹、障碍物占据、B0 停车和 MIKU pass-before 到达，图注明确不代表实车部署。
+- FIGURE_PLAN.md、RELATED_WORK_MATRIX.md、HIGH_TIER_READINESS.md 与 NOVELTY_AUDIT.md 已按当前实现状态更新，区分“已完成的受限证书/公开 XML adapter smoke”和“仍缺失的完整 benchmark/外部方法/原生平台证据”。
+- 两稿重新编译为中文 10 页、IEEE 英文 9 页；teaser PDF 抽页可读，日志无 Overfull、未解析引用或致命错误。该视觉增强不改变实验数字和 Major Revision 裁决。

@@ -43,4 +43,4 @@
 - [Deolasee et al., trapezoidal prism corridors, arXiv 2209.15150](https://arxiv.org/abs/2209.15150)
 - [CommonRoad 公共场景与 benchmark 说明](https://commonroad.in.tum.de/scenarios/)
 
-**当前裁决：Major Revision。** 在路线 A 接入主流水线、修正时序语义、完成连续安全证书并加入公开场景/外部方法之前，不得声称已达到二区竞争水平。
+**当前裁决：Major Revision。** 路线 A 已接入主流水线，时序语义和连续证书也已修正并测试，公开 CommonRoad XML 已完成受限 adapter smoke；但这不等于完整公开 benchmark、忠实外部方法或原生 Apollo 证据，因此仍不得声称已达到二区竞争水平。

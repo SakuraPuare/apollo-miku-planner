@@ -203,6 +203,27 @@ def generate(output_dir: Path) -> tuple[Path, Path]:
     return pdf_path, png_path
 
 
+def generate_teaser(output_dir: Path) -> tuple[Path, Path]:
+    """Generate the single-case overview used in the paper introduction."""
+    _configure()
+    figure, axes = plt.subplots(1, 2, figsize=(7.15, 3.15), constrained_layout=True)
+    _plot_case(axes, "delayed_crossing", 9)
+    figure.suptitle(
+        "Teaser: path-first decomposition versus finite spatiotemporal labels",
+        fontsize=10,
+    )
+    pdf_path = output_dir / "teaser.pdf"
+    png_path = output_dir / "teaser.png"
+    figure.savefig(
+        pdf_path,
+        bbox_inches="tight",
+        metadata={"Creator": "generate_failure_case_figure.py", "CreationDate": None},
+    )
+    figure.savefig(png_path, dpi=220, bbox_inches="tight")
+    plt.close(figure)
+    return pdf_path, png_path
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output-dir", type=Path, default=ROOT / "小论文-2" / "generated")
@@ -210,6 +231,9 @@ def main() -> None:
     pdf_path, png_path = generate(arguments.output_dir)
     print(f"wrote {pdf_path}")
     print(f"wrote {png_path}")
+    teaser_pdf, teaser_png = generate_teaser(arguments.output_dir)
+    print(f"wrote {teaser_pdf}")
+    print(f"wrote {teaser_png}")
 
 
 if __name__ == "__main__":
