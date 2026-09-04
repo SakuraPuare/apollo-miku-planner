@@ -36,9 +36,9 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 
 \begin{figure}[htbp]
 \centering
-\includegraphics[width=0.96\textwidth]{generated/randomized_summary.png}
-\caption{7 类配对随机场景的总体性能}
-\label{fig:summary}
+\includegraphics[width=0.98\textwidth]{generated/evidence_dashboard.pdf}
+\caption{由原始 CSV 生成的配对证据总览：(a) MIKU--B0 分场景到达率差及 95\% CI；(b) 完整规划耗时 ECDF；(c) 完整 MIKU 相对各消融项的到达率差；(d) MIKU 分场景成功、安全未到达与碰撞构成。}
+\label{fig:evidence-dashboard}
 \end{figure}
 
 \subsection{分场景结果}
@@ -65,7 +65,7 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 \end{adjustbox}
 \end{table}
 
-MIKU 在窄路多障碍中提升 \RandNarrowMikuVsBZeroSuccessDiff 个百分点，在延迟横穿中提升 \RandDelayedMikuVsBZeroSuccessDiff 个百分点。预测含噪场景到达率变化为 \RandNoiseMikuVsBZeroSuccessDiff 个百分点（下降），碰撞率配对差为 \RandNoiseMikuVsBZeroCollisionDiff 个百分点（下降），并伴随高降级停止率，体现安全--可达性权衡。
+如图~\ref{fig:evidence-dashboard}(a,d) 所示，MIKU 在窄路多障碍中提升 \RandNarrowMikuVsBZeroSuccessDiff 个百分点，在延迟横穿中提升 \RandDelayedMikuVsBZeroSuccessDiff 个百分点。预测含噪场景到达率变化为 \RandNoiseMikuVsBZeroSuccessDiff 个百分点（下降），碰撞率配对差为 \RandNoiseMikuVsBZeroCollisionDiff 个百分点（下降），并伴随高降级停止率，体现安全--可达性权衡。图~\ref{fig:evidence-dashboard}(b,c) 同时披露 B2 的长耗时尾部以及 A1/A2/A7 的接近零效应，避免用单一总体柱图隐藏边界。
 
 \subsection{大规模随机消融}
 
@@ -120,6 +120,15 @@ B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用
 \end{table}
 
 联合参照中，MIKU 与 B3 的到达率差为 \JointMikuVsBThreeSuccessDiff 个百分点，95\% CI [\JointMikuVsBThreeSuccessCiLow,\JointMikuVsBThreeSuccessCiHigh]，McNemar $p=\JointMikuVsBThreeSuccessMcNemarP$；该差异显著。由于 B3 使用不同粗网格和碰撞检查器，本结果仅作诊断，不宣称质量或计算优势。
+
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.62\textwidth]{generated/joint_search_scaling.pdf}
+\caption{非平凡有限联合域的规模诊断。每层含两个可行空间带，并叠加一个动态横穿。候选域与 QP 评估数重合，说明当前零下界不产生剪枝。}
+\label{fig:joint-stress}
+\end{figure}
+
+图~\ref{fig:joint-stress} 将相互分离的空间冲突层从 1 增至 \StressMaxLayers。最大实例含 \StressSpatialCount 个空间同伦与 \StressDomainSize 个联合候选，搜索执行 \StressEvaluatedCount 次 QP 验收，三次重复的中位完整耗时为 \StressRuntimeMedian\,ms。该压力协议证明实现能枚举并证书化多分支域，也同时量化了零下界下的指数最坏代价，不作剪枝优势主张。
 
 \subsection{灵敏度与适用范围}
 

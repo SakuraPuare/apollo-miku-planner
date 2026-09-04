@@ -53,6 +53,11 @@ def test_path_rollout_splits_lateral_v_shape_at_station_knot() -> None:
     assert not certificate.certified
 
 
+def test_obstacle_rejects_negative_prediction_uncertainty() -> None:
+    with pytest.raises(ValueError, match="uncertainty"):
+        Obstacle(1.0, 0.0, uncertainty_vs=-0.1)
+
+
 def test_single_conflict_has_before_and_after_candidates() -> None:
     windows = safe_time_windows(
         [OccupancyInterval(3.0, 5.0)],

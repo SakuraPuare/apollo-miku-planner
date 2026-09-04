@@ -13,7 +13,7 @@
 
 随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-当前固定版本的自动验证结果为 `95 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
+当前固定版本的自动验证结果为 `98 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
 
 ## 完整复现命令
 
@@ -25,14 +25,18 @@ uv run ruff check .
 PYTHONPATH=可视化 uv run python 可视化/apollo_pipeline.py
 PYTHONPATH=可视化 uv run python 可视化/run_ablation.py
 PYTHONPATH=可视化 uv run python 可视化/sensitivity_analysis.py
-PYTHONPATH=可视化 uv run python 可视化/run_randomized_experiments.py --seeds 500
-PYTHONPATH=可视化 uv run python 可视化/run_randomized_ablation.py --seeds 500
+PYTHONPATH=可视化 uv run python 可视化/run_randomized_experiments.py --seeds 100
+PYTHONPATH=可视化 uv run python 可视化/run_randomized_ablation.py --seeds 100
 PYTHONPATH=可视化 uv run python 可视化/run_joint_reference_experiments.py --seeds 10
 PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py --seeds 100
+PYTHONPATH=可视化 uv run python 可视化/run_joint_search_stress.py
+PYTHONPATH=可视化 uv run python 可视化/generate_submission_figures.py
 cd 小论文-2
 latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
 latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 ```
+
+上述 `--seeds 100` 生成当前论文的每类 100 个样本；`--seeds 500` 可用于额外的扩展稳健性运行，但不对应当前已固定宏和 PDF 数值。
 
 ## 协议和产物
 
@@ -44,6 +48,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | 7 类配对主实验 | 700 场景 × 4 方法（2,800 次） | `run_randomized_experiments.py` | `randomized_raw.csv`, `randomized_summary.csv`, `paired_statistics.csv`, JSON/图/宏；原始行含 `joint_*` 证书列 |
 | 7 模块随机消融 | 700 场景 × 8 配置（5,600 次） | `run_randomized_ablation.py` | `randomized_ablation_raw.csv`, summary/paired/JSON/宏 |
 | B3 联合网格参照 | 70 场景 × 2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, summary/paired/JSON/宏 |
+| 非平凡联合域压力诊断 | 1--5 个空间冲突层 × 3 次 | `run_joint_search_stress.py` | raw/summary/JSON/宏与 `joint_search_scaling.pdf`；显式披露零下界全枚举 |
 | 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 

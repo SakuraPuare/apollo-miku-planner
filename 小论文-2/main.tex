@@ -54,6 +54,7 @@
 \input{generated/randomized_ablation_macros}
 \input{generated/joint_reference_macros}
 \input{generated/closed_loop_macros}
+\input{generated/joint_search_stress_macros}
 \input{generated/sensitivity_macros}
 \addbibresource{references.bib}
 \renewcommand*{\bibfont}{\footnotesize}
@@ -69,7 +70,7 @@
 \begin{abstract}
 \small
 \noindent
-路径--速度解耦规划具有成熟的凸优化求解链，但路径侧的空间选向与速度侧的时序决策缺少统一的同伦表示，易在密集障碍物与动态横穿中丧失可行解。本文提出交互感知运动学约束统一方法 MIKU。该方法在保留 Apollo 路径 QP 与速度 QP 的前提下，构造差异化安全裕度与时变占据管，将组内 $2^k$ 个空间避让组合归约为 $k+1$ 个连续通行带，并以 Top-K 空间同伦和多冲突时序同伦图联合生成双向 ST 走廊。固定离散同伦后，路径与速度子问题仍为凸 QP；按需交替细化用速度解更新到达时间，滚动规划以语义同伦标签与先行承诺保持周期间一致性。在 7 类 \RandCaseCount 个配对随机场景中，MIKU 的无碰撞到达率为 \RandAllMikuSuccessPct\%，比 B0 提升 \RandAllMikuVsBZeroSuccessDiff 个百分点（95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]）；碰撞率为 \RandAllMikuCollisionPct\%，相对 B0 的配对差为 \RandAllMikuVsBZeroCollisionDiff 个百分点。完整规划耗时 P95 为 \RandAllMikuRuntimePninetyfive\,ms。在 \ClosedCaseCount 个滚动场景中，MIKU 到达率比 B0 提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，两者碰撞率相同。结果表明，MIKU 在不替换现有解耦 QP 的条件下，同时提升了多障碍物通行能力、动态交互一致性与预测偏差下的安全性。
+路径--速度解耦规划具有成熟的凸优化求解链，但路径侧的空间选向与速度侧的时序决策缺少统一的同伦表示，易在密集障碍物与动态横穿中丧失可行解。本文提出交互感知运动学约束统一方法 MIKU。该方法在保留 Apollo 路径 QP 与速度 QP 的前提下，构造差异化安全裕度与时变占据管，将组内 $2^k$ 个空间避让组合归约为 $k+1$ 个连续通行带，并以 Top-K 空间同伦和多冲突时序同伦图联合生成双向 ST 走廊。固定离散同伦后，路径与速度子问题仍为凸 QP；按需交替细化用速度解更新到达时间，滚动规划以语义同伦标签与先行承诺保持周期间一致性。在 7 类 \RandCaseCount 个配对随机场景中，MIKU 的无碰撞到达率为 \RandAllMikuSuccessPct\%，比 B0 提升 \RandAllMikuVsBZeroSuccessDiff 个百分点（95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]）；碰撞率为 \RandAllMikuCollisionPct\%，相对 B0 的配对差为 \RandAllMikuVsBZeroCollisionDiff 个百分点。完整规划耗时 P95 为 \RandAllMikuRuntimePninetyfive\,ms。在 \ClosedCaseCount 个滚动场景中，MIKU 到达率比 B0 提升 \ClosedMikuVsBZeroSuccessDiff 个百分点；碰撞率差异不显著（配对 McNemar $p=\ClosedMikuVsBZeroCollisionMcNemarP$）。结果表明，MIKU 在不替换现有解耦 QP 的条件下，在声明的有限标签域与运动契约下提高了多障碍物通行能力；预测含噪子集以更高安全未到达换取零碰撞，不作均匀收益宣称。
 
 \vspace{0.5em}
 \noindent\textbf{关键词：}自动驾驶；路径--速度解耦；时空同伦；安全走廊；多障碍物

@@ -1,5 +1,5 @@
 {
-  "protocol": "miku-random-v2",
+  "protocol": "miku-random-v3",
   "case_kinds": [
     "crossing_pedestrian",
     "vehicle_cut_in",

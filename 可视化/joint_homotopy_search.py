@@ -599,9 +599,13 @@ def validate_candidate_constant_acceleration_safety(
             lateral_separated = not lateral_intervals
         else:
             lateral_intervals = ()
+            lateral_threshold = lateral_extent + lateral_guard
             lateral_separated = (
-                abs(left.relative_lateral) > lateral_extent + lateral_guard
-                or abs(right.relative_lateral) > lateral_extent + lateral_guard
+                left.relative_lateral > lateral_threshold
+                and right.relative_lateral > lateral_threshold
+            ) or (
+                left.relative_lateral < -lateral_threshold
+                and right.relative_lateral < -lateral_threshold
             )
         maximum_longitudinal_guard = max(
             maximum_longitudinal_guard, longitudinal_bound * dt

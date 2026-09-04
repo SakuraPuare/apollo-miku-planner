@@ -325,7 +325,7 @@ def _write_derived(
         _latex_macros(aggregates, statistics), encoding="utf-8"
     )
     metadata = {
-        "protocol": "miku-random-v2",
+        "protocol": "miku-random-v3",
         "case_kinds": list(CASE_KINDS),
         "methods": [
             {

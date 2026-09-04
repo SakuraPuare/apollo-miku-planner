@@ -249,12 +249,12 @@ MIKU reaches \RandAllMikuSuccessPct\% collision-free success versus \RandAllBZer
 
 MIKU's P95 complete-planning latency is \RandAllMikuRuntimePninetyfive\,ms, comparable to B0 at \RandAllBZeroRuntimePninetyfive\,ms and substantially below the unconditional iterative B2 at \RandAllBTwoRuntimePninetyfive\,ms. Its higher P99 reflects on-demand candidate fallback, while the P95 shows that most cases terminate on an early feasible homotopy.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
-\includegraphics[width=\columnwidth]{generated/randomized_summary.png}
-\caption{Aggregate paired-randomized evaluation.}
-\label{fig:summary}
-\end{figure}
+\includegraphics[width=0.92\textwidth]{generated/evidence_dashboard.pdf}
+\caption{CSV-generated evidence dashboard. (a) Paired MIKU--B0 success-rate effects by family with 95\% CIs. (b) Empirical CDF of complete-planning latency. (c) Full-MIKU success-rate effects relative to each ablation. (d) MIKU success, safe non-arrival, and collision outcomes by family.}
+\label{fig:evidence-dashboard}
+\end{figure*}
 
 \subsection{Scenario-Wise Effects}
 
@@ -278,7 +278,7 @@ Delayed crossing & \RandDelayedBZeroSuccessPct & \RandDelayedMikuSuccessPct & \R
 \end{tabular}
 \end{table}
 
-The largest spatial gain occurs in narrow multi-obstacle passages: \RandNarrowMikuVsBZeroSuccessDiff{} points. Delayed crossing improves by \RandDelayedMikuVsBZeroSuccessDiff{} points. Under prediction noise, collision changes by \RandNoiseMikuVsBZeroCollisionDiff{} points, but success changes by \RandNoiseMikuVsBZeroSuccessDiff{} points (a decrease) because fail-closed validation turns uncertain cases into stops. This is a safety--reachability trade-off, not a robustness success gain; cut-in also shows a small success regression.
+Figure~\ref{fig:evidence-dashboard}(a,d) shows that the largest spatial gain occurs in narrow multi-obstacle passages: \RandNarrowMikuVsBZeroSuccessDiff{} points. Delayed crossing improves by \RandDelayedMikuVsBZeroSuccessDiff{} points. Under prediction noise, collision changes by \RandNoiseMikuVsBZeroCollisionDiff{} points, but success changes by \RandNoiseMikuVsBZeroSuccessDiff{} points (a decrease) because fail-closed validation turns uncertain cases into stops. This is a safety--reachability trade-off, not a robustness success gain; cut-in also shows a small success regression. Panels (b,c) disclose B2's long latency tail and the near-zero A1/A2/A7 effects instead of hiding them behind aggregate bars.
 
 \subsection{Large-Scale Paired Ablation}
 
@@ -312,6 +312,15 @@ The spatial, margin, temporal, robustness, and refinement ablations are reported
 The receding-horizon protocol repeatedly plans, executes 0.5\,s, updates ego and obstacles, and replans. It contains 100 seeds per family, or \ClosedCaseCount{} paired episodes. MIKU reaches \ClosedMikuSuccessPct\% versus B0's \ClosedBZeroSuccessPct\%, a \ClosedMikuVsBZeroSuccessDiff-point gain (95\% CI \ClosedMikuVsBZeroSuccessCiLow--\ClosedMikuVsBZeroSuccessCiHigh; $p=\ClosedMikuVsBZeroSuccessMcNemarP$). Collision rates are \ClosedMikuCollisionPct\% and \ClosedBZeroCollisionPct\%; their paired difference is not significant ($p=\ClosedMikuVsBZeroCollisionMcNemarP$).
 
 The B3 reference jointly searches $(t,s,l,v,\dot l)$ on a coarse grid. It is a diagnostic, not a continuous global optimum or external baseline. Across \JointCaseCount{} paired cases, B3 and MIKU achieve \JointBThreeSuccessPct\% and \JointMikuSuccessPct\%; the difference is \JointMikuVsBThreeSuccessDiff{} points (95\% CI \JointMikuVsBThreeSuccessCiLow--\JointMikuVsBThreeSuccessCiHigh; $p=\JointMikuVsBThreeSuccessMcNemarP$). The significant difference and runtime values are reported diagnostically because collision-checking fidelity differs.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{generated/joint_search_scaling.pdf}
+\caption{Finite-domain stress diagnostic with two feasible bands per separated spatial layer and one dynamic crossing. Domain size equals QP evaluations because the present zero lower bound gives no pruning.}
+\label{fig:joint-stress}
+\end{figure}
+
+Increasing the separated spatial-conflict layers from one to \StressMaxLayers{} produces \StressSpatialCount{} spatial homotopies and \StressDomainSize{} joint labels in the largest instance (Fig.~\ref{fig:joint-stress}). The search performs \StressEvaluatedCount{} QP validations and takes a median \StressRuntimeMedian\,ms over three repeats. This verifies multi-branch enumeration and its certificate while quantifying, rather than concealing, the exponential worst case under the current zero bound.
 
 \begin{table}[t]
 \caption{Receding-Horizon and Joint-Grid Protocols}

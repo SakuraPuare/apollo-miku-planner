@@ -134,6 +134,16 @@ class Obstacle:
     uncertainty_vs: float = 0.0
     uncertainty_vl: float = 0.0
 
+    def __post_init__(self) -> None:
+        uncertainty = (
+            self.uncertainty_s0,
+            self.uncertainty_l0,
+            self.uncertainty_vs,
+            self.uncertainty_vl,
+        )
+        if not all(math.isfinite(value) and value >= 0.0 for value in uncertainty):
+            raise ValueError("prediction uncertainty radii must be finite and non-negative")
+
     def position_at(self, t: float) -> Tuple[float, float]:
         return self.s0 + self.vs * t, self.l0 + self.vl * t
 

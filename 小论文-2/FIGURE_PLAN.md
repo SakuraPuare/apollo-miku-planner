@@ -10,10 +10,10 @@
 | 时间窗/ST 图 | before、after、intermediate 如何编译？ | `miku_time.py` 和端点单测 | 先/后通过的端点约束方向正确 | 方法时间小节；待先修代码语义 |
 | 证书搜索树 | 为什么不是固定 beam？ | 新搜索返回的节点、LB/UB、gap JSON | 可终止、预算截断有 gap，不再暗示全局最优 | 新方法小节；待接入实验 |
 | 典型轨迹对比 | MIKU 的收益来自哪类困难？ | 7 类主实验原始 CSV；失败样本 | 窄路、延迟横穿、含噪和滚动各显示 SL/ST/安全差异 | 实验定性小节；待生成 |
-| 分族成功率 + 95% CI | 总体提升是否由单一族驱动？ | `paired_statistics.csv` 分层 bootstrap | 各族效应与总体宏平均分开 | 主结果；待生成 |
-| 运行时间 ECDF/箱线图 | P95 是否被少量尾部掩盖？ | 每次运行原始 runtime 列 | 展示 P50/P95/P99 和超时比例 | 实时性小节；待生成 |
-| 消融效应 forest plot | 模块是否有独立作用？ | `randomized_ablation_paired.csv` | 点估计、CI、预注册主要比较 | 消融小节；已有 `fig_q34_ablation_results.tex` 为占位，需改为真实宏 |
-| 失败边界/连续安全 | 何时失效，降级是否安全？ | 连续 certifier 输出、failure log | 区分可证安全、需细分、不可行；不隐藏失败 | 讨论/附录；待生成 |
+| 分族成功率 + 95% CI | 总体提升是否由单一族驱动？ | `paired_statistics.csv` 分层 bootstrap | 窄路驱动主要收益，切入/含噪存在负效应 | 四联证据图(a)；已生成并接入两稿 |
+| 运行时间 ECDF | P95 是否被少量尾部掩盖？ | `randomized_raw.csv` 每次运行 runtime 列 | B2 的完整分布显示更长尾部 | 四联证据图(b)；已生成并接入两稿 |
+| 消融效应 forest plot | 模块是否有独立作用？ | `randomized_ablation_paired.csv` | 点估计与 CI 显示 A1/A2/A7 近零及 A6 负效应 | 四联证据图(c)；已生成并接入两稿 |
+| 失败构成/连续安全 | 何时失效，降级是否安全？ | `randomized_raw.csv` 的成功、碰撞和安全未到达 | 含噪场景以安全未到达为主，不隐藏降级代价 | 四联证据图(d)已接入；轨迹级失败边界图仍待生成 |
 
 ## 视觉验收
 
