@@ -1,0 +1,16 @@
+% 数据来源：窄路场景实验输出（Baseline 16.0 m，MIKU 49.0 m）
+\begin{tikzpicture}
+\begin{axis}[
+  width=0.9\linewidth,height=4.2cm,
+  ybar,bar width=20pt,
+  ymin=0,ymax=55,
+  ylabel={终点纵向位置 $s_{end}$ (m)},
+  xtick={0,1},xticklabels={Baseline,MIKU},
+  tick label style={font=\scriptsize},label style={font=\scriptsize},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  grid=major,grid style={gray!20}
+]
+\addplot[fill=deepblue!75,draw=deepblue] coordinates {(0,16.0)};
+\addplot[fill=improvedpink,draw=deeppink] coordinates {(1,49.0)};
+\end{axis}
+\end{tikzpicture}

@@ -1,0 +1,24 @@
+% 数据来源：小论文/main.tex 消融分析段；正值表示删除模块后到达率下降
+\begin{tikzpicture}
+\begin{axis}[
+  width=.92\textwidth,height=6.1cm,
+  xbar,bar width=8pt,
+  xmin=0,xmax=12,
+  xlabel={删除模块后无碰撞到达率下降 (百分点)},
+  symbolic y coords={到达时间投影,纵向连通分组,Top-K空间同伦,差异化威胁裕度,时间同伦图,鲁棒占据管,交替到达时间更新},
+  ytick=data,y dir=reverse,
+  tick label style={font=\scriptsize},label style={font=\footnotesize},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  grid=major,grid style={gray!20},
+]
+\addplot[fill=improvedpink,draw=deeppink] coordinates {
+  (0.2,到达时间投影)
+  (0.6,纵向连通分组)
+  (10.2,Top-K空间同伦)
+  (10.7,差异化威胁裕度)
+  (3.3,时间同伦图)
+  (0.5,鲁棒占据管)
+  (0.8,交替到达时间更新)
+};
+\end{axis}
+\end{tikzpicture}

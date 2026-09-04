@@ -1,0 +1,21 @@
+% 数据来源：小论文/main.tex 表 randomized_overall
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=5.0cm,
+  ybar,bar width=4.2pt,
+  ymin=0,ymax=190,
+  ylabel={完整规划耗时 (ms)},
+  symbolic x coords={P50,P95},xtick=data,
+  tick label style={font=\scriptsize},label style={font=\footnotesize},
+  legend style={at={(.5,1.04)},anchor=south,legend columns=4,
+    font=\scriptsize,draw=none,/tikz/every even column/.append style={column sep=.5em}},
+  nodes near coords,nodes near coords style={font=\tiny,rotate=90,anchor=west},
+  grid=major,grid style={gray!20},
+]
+\addplot[fill=deepblue!75,draw=deepblue] coordinates {(P50,10.08) (P95,57.26)};
+\addplot[fill=lightblue,draw=deepblue] coordinates {(P50,11.38) (P95,63.32)};
+\addplot[fill=lightorange,draw=vibrantorange] coordinates {(P50,31.20) (P95,170.53)};
+\addplot[fill=improvedpink,draw=deeppink] coordinates {(P50,9.97) (P95,69.15)};
+\legend{B0,B1,B2,MIKU}
+\end{axis}
+\end{tikzpicture}

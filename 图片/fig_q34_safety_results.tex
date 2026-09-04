@@ -1,0 +1,18 @@
+% 数据来源：小论文/main.tex 表 randomized_overall
+\begin{tikzpicture}
+\begin{axis}[
+  width=\linewidth,height=5.0cm,
+  ybar,bar width=13pt,
+  ymin=0,ymax=2.6,
+  ylabel={碰撞率 (\%)},
+  xtick={0,1,2,3},xticklabels={B0,B1,B2,MIKU},
+  tick label style={font=\scriptsize},label style={font=\footnotesize},
+  nodes near coords,nodes near coords style={font=\scriptsize},
+  grid=major,grid style={gray!20},
+]
+\addplot[fill=deepblue!75,draw=deepblue] coordinates {(0,2.2)};
+\addplot[fill=lightblue,draw=deepblue] coordinates {(1,2.1)};
+\addplot[fill=lightorange,draw=vibrantorange] coordinates {(2,2.2)};
+\addplot[fill=improvedpink,draw=deeppink] coordinates {(3,1.1)};
+\end{axis}
+\end{tikzpicture}

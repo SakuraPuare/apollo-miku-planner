@@ -1,0 +1,43 @@
+% 三区/四区稿专用：平台无关的 MIKU 算法主链
+\begin{tikzpicture}[
+  node distance=8mm and 7mm,
+  input/.style={rectangle,rounded corners=2pt,draw=deepblue,fill=inputyellow,
+    minimum width=2.6cm,minimum height=.9cm,align=center,font=\footnotesize},
+  miku/.style={rectangle,rounded corners=3pt,draw=deeppink,very thick,
+    fill=improvedpink!55,minimum width=3.05cm,minimum height=1.05cm,
+    align=center,font=\footnotesize},
+  solver/.style={rectangle,rounded corners=3pt,draw=deepblue,
+    fill=lightblue!50,minimum width=2.65cm,minimum height=1.0cm,
+    align=center,font=\footnotesize},
+  output/.style={rectangle,rounded corners=2pt,draw=deepblue,fill=outputpink,
+    minimum width=2.7cm,minimum height=.9cm,align=center,font=\footnotesize},
+  algflow/.style={-Stealth,very thick,deeppink},
+  solveflow/.style={-Stealth,thick,deepblue},
+  note/.style={font=\scriptsize,align=center,fill=white,inner sep=1pt}
+]
+
+\node[input] (input) {道路几何、自车状态\\多障碍物预测};
+\node[miku, right=of input] (occupancy) {到达时间查询\\威胁裕度与鲁棒占据};
+\node[miku, right=of occupancy] (spatial) {连续分割扫描\\Top-K 空间同伦};
+\node[solver, right=of spatial] (pathqp) {路径凸 QP\\求解 $l(s)$};
+
+\node[miku, below=of spatial] (temporal) {安全时间窗\\多冲突时间同伦};
+\node[solver, right=of temporal] (speedqp) {双向 ST 边界\\速度凸 QP};
+\node[output, right=of speedqp] (trajectory) {时空轨迹\\同伦语义标签};
+
+\draw[algflow] (input) -- (occupancy);
+\draw[algflow] (occupancy) -- (spatial);
+\draw[solveflow] (spatial) -- node[note,below]{中心路径边界} (pathqp);
+\draw[solveflow] (pathqp) |- node[note,pos=.55,right]{$l(s)$ 与冲突区} (temporal);
+\draw[algflow] (temporal) -- (speedqp);
+\draw[solveflow] (speedqp) -- (trajectory);
+\draw[algflow,rounded corners] (speedqp.south) |- ++(0,-.75) -|
+  node[note,pos=.52,below]{速度解更新 $\tau(s)$} (occupancy.south);
+\draw[solveflow,rounded corners] (trajectory.north) |- ++(0,.6) -|
+  node[note,pos=.55,above]{滚动同伦保持} (temporal.east);
+
+\node[font=\scriptsize,text=deeppink,anchor=west] at (2.7,-3.05)
+  {\rule{.7cm}{1.1pt}\;MIKU 离散候选与约束构造};
+\node[font=\scriptsize,text=deepblue,anchor=west] at (8.5,-3.05)
+  {\rule{.7cm}{1.1pt}\;通用解耦连续求解器};
+\end{tikzpicture}
