@@ -35,6 +35,7 @@ PYTHONPATH=可视化 uv run python 可视化/generate_failure_case_figure.py
 PYTHONPATH=可视化 uv run python 可视化/run_commonroad_adapter_smoke.py
 PYTHONPATH=可视化 uv run python 可视化/run_commonroad_batch.py
 uv run --with commonroad-io==2026.1 python 可视化/validate_commonroad_native.py --output 小论文-2/generated/commonroad_native_audit.json
+uv run python 小论文-2/check_submission_gates.py
 cd 小论文-2
 latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
 latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
@@ -57,6 +58,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | CommonRoad 受限 adapter smoke | 1 个公开 Lankershim XML | `run_commonroad_adapter_smoke.py` | `commonroad_adapter_smoke.json`；公开 XML 到受限 Frenet planner 调用链，含采样轨迹残差包络，非 benchmark 性能 |
 | CommonRoad 四场景批量诊断 | 4 个公开 Lankershim XML × 2 方法 | `run_commonroad_batch.py` | `commonroad_batch_raw.csv`, `commonroad_batch_results.json`；统一受限转换诊断（中心点线性插值可被包络覆盖，原始 occupancy 不保留），非官方 benchmark |
 | CommonRoad 官方语义审计 | 4 个公开 Lankershim XML | `validate_commonroad_native.py`（可选 `commonroad-io==2026.1`） | `commonroad_native_audit.json`；官方解析器实体/形状/预测状态计数，不是性能 benchmark |
+| 投稿门槛自动裁判 | 当前 HEAD 的 PDF、生成物和审计文件 | `check_submission_gates.py` | JSON 格式逐项报告通过项、阻塞项和 `accept`/`major_revision` 裁决；缺失外部证据默认不通过 |
 | 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 
