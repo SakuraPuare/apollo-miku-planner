@@ -116,4 +116,10 @@
 - 图中红色占据带、碰撞点、方法结果、同伦标签和证书状态均由运行结果自动生成；图注明确这只是算法级仿真诊断，不冒充 Apollo/CyberRT 或实车轨迹。图源、PDF 和复现命令已接入两稿及 `FIGURE_PLAN.md`。
 - 本轮不改变算法和数据，因此不重新伪造审稿结论。对照 Round 4 的独立意见，轨迹级失败边界缺口已部分关闭，但 CommonRoad 性能 adapter、忠实外部竞争方法、原生 Apollo 证据和实际下界剪枝仍未解决。
 - 随后补充了受限 `commonroad_adapter.py` 与公开 Lankershim 的实际 adapter+planner smoke。它只覆盖中心线后继链、初始状态常速度投影和轴对齐 Frenet 矩形；8/24 个障碍物被投影、16 个被明确跳过，B0/MIKU 均可调用但该拥挤样本不可行。因此“有 adapter”不等于“有 CommonRoad benchmark 性能”，外部性能门槛仍未关闭。
+
+## Round 6 — 外部适配器验收（2026-09-05）
+
+- `tests/test_commonroad_adapter.py` 的 2 个确定性单测与 `tests/test_commonroad_external.py` 的 2 个在线 smoke 均通过；公开 XML 可用时，测试实际下载并执行了 lanelet 路由、Frenet 投影和 planner adapter 链路。
+- 适配器输出固定记录在 `generated/commonroad_adapter_smoke.json`，并保留 6 m 中心线残差门限、跳过计数和明确限制。B0/MIKU 的 smoke 结果只用于证明调用链，不进入主实验统计或二区性能主张。
+- 该轮关闭“完全没有坐标/lanelet 转换”的实现缺口，但没有关闭“完整 CommonRoad 语义、批量公开场景性能、忠实外部竞争方法和原生 Apollo/CyberRT”的证据缺口。最终 Area Chair 裁决继续为 **Major Revision**，Goal 仍保持进行中。
 - 主代理验收：完整测试 `98 passed, 20 skipped`；Ruff、`git diff --check`、中英文 PDF 编译和图像视检通过。项目裁决仍为 **Major Revision**，Goal 保持进行中。
