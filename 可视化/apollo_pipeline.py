@@ -44,6 +44,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import osqp
 import scipy.sparse as sp
+from joint_homotopy_search import (
+    AxisAlignedMotionSample,
+    ContinuousSafetyCertificate,
+    validate_candidate_continuous_safety,
+)
 from matplotlib.patches import Circle, Polygon, Rectangle
 from miku_geometry import (
     ForbiddenInterval,
@@ -726,6 +731,7 @@ def _miku_path_bounds(
     tau_fn: Optional[Callable[[float], float]] = None,
     candidate_rank: int = 0,
     split_overrides: Optional[dict[int, int]] = None,
+    spatial_top_k: Optional[int] = 3,
 ):
     """MIKU PathBoundsDecider — 论文第六章算法\\ref{alg:optimal_band}：
 
@@ -772,13 +778,23 @@ def _miku_path_bounds(
         else:
             tau = tau_fn(s_minus_static)
         os_, ol_ = obs.position_at(tau)
-        s_minus = os_ - obs.L / 2
-        s_plus = os_ + obs.L / 2
+        robust_s = (
+            obs.uncertainty_s0 + abs(tau) * obs.uncertainty_vs
+            if flags.robust_prediction and not obs.is_static
+            else 0.0
+        )
+        robust_l = (
+            obs.uncertainty_l0 + abs(tau) * obs.uncertainty_vl
+            if flags.robust_prediction and not obs.is_static
+            else 0.0
+        )
+        s_minus = os_ - obs.L / 2 - robust_s
+        s_plus = os_ + obs.L / 2 + robust_s
         # C4：差异化 δ_i 关闭时退化为统一 delta_baseline
         delta = compute_delta(obs, scn) if flags.threat_delta else scn.delta_baseline
         center_buffer = e.W / 2 + delta
-        u = ol_ - obs.W / 2 - center_buffer
-        v = ol_ + obs.W / 2 + center_buffer
+        u = ol_ - obs.W / 2 - center_buffer - robust_l
+        v = ol_ + obs.W / 2 + center_buffer + robust_l
         obs_proj.append(
             {
                 "obs": obs,
@@ -894,7 +910,7 @@ def _miku_path_bounds(
                 [ForbiddenInterval(r["u"], r["v"]) for r in active],
                 center_road_min,
                 center_road_max,
-                top_k=3,
+                top_k=None,
             )
             selected_band = ranked_bands[min(candidate_rank, len(ranked_bands) - 1)]
             p_star = (
@@ -945,10 +961,11 @@ def _miku_path_bounds(
         and split_overrides is None
         and spatial_layers
     ):
+        exhaustive_count = int(np.prod([len(gd["band_candidates"]) for gd in spatial_layers]))
         spatial_homotopies = enumerate_spatial_homotopies(
             [gd["band_candidates"] for gd in spatial_layers],
             initial_lateral=e.l0,
-            top_k=3,
+            top_k=exhaustive_count if spatial_top_k is None else spatial_top_k,
             transition_weight=0.05,
             gap_epsilon=PATH_GAP_EPSILON,
         )
@@ -999,15 +1016,25 @@ def _miku_path_bounds(
                 obs = r_orig["obs"]
                 tau_use = 0.0 if obs.is_static else tau_s
                 os_t, ol_t = obs.position_at(tau_use)
-                s_minus_t = os_t - obs.L / 2
-                s_plus_t = os_t + obs.L / 2
+                robust_s = (
+                    obs.uncertainty_s0 + abs(tau_use) * obs.uncertainty_vs
+                    if flags.robust_prediction and not obs.is_static
+                    else 0.0
+                )
+                robust_l = (
+                    obs.uncertainty_l0 + abs(tau_use) * obs.uncertainty_vl
+                    if flags.robust_prediction and not obs.is_static
+                    else 0.0
+                )
+                s_minus_t = os_t - obs.L / 2 - robust_s
+                s_plus_t = os_t + obs.L / 2 + robust_s
                 if not (s_minus_t - e.L / 2 <= s <= s_plus_t + e.L / 2):
                     continue
 
                 delta = r_orig["delta"]
                 center_buffer = e.W / 2 + delta
-                u_t = ol_t - obs.W / 2 - center_buffer
-                v_t = ol_t + obs.W / 2 + center_buffer
+                u_t = ol_t - obs.W / 2 - center_buffer - robust_l
+                v_t = ol_t + obs.W / 2 + center_buffer + robust_l
                 if idx < p_star:
                     left_v.append(v_t)
                 else:
@@ -1033,6 +1060,7 @@ def path_bounds_decider(
     tau_fn: Optional[Callable[[float], float]] = None,
     candidate_rank: int = 0,
     split_overrides: Optional[dict[int, int]] = None,
+    spatial_top_k: Optional[int] = 3,
 ):
     """Apollo PathBoundsDecider 入口（支持字符串 mode 与 AblationFlags 两种调用）。
 
@@ -1057,6 +1085,7 @@ def path_bounds_decider(
             tau_fn=tau_fn,
             candidate_rank=candidate_rank,
             split_overrides=split_overrides,
+            spatial_top_k=spatial_top_k,
         )
 
     # ego 当前起点位置硬约束。初次规划 s0=0；滚动重规划时将已经驶过的
@@ -1289,6 +1318,7 @@ def build_st_bounds(
     decision_log: Optional[list[dict]] = None,
     preferred_homotopy: Optional[dict[str, str]] = None,
     temporal_plan_rank: int = 0,
+    temporal_beam_width: Optional[int] = 8,
 ):
     """重建 ``s_j^ub / s_j^lb``，并将时序同伦类编码为凸约束。"""
     dt = ts[1] - ts[0]
@@ -1372,7 +1402,7 @@ def build_st_bounds(
         start_station=scn.ego.s0,
         start_time=0.0,
         max_speed=13.0,
-        beam_width=8,
+        beam_width=temporal_beam_width,
         preferred_window_labels={
             metadata["graph_name"]: preferred_homotopy[b["name"]]
             for boundary_index, b in enumerate(st_bounds)
@@ -1427,9 +1457,12 @@ def build_st_bounds(
             continue
 
         window = choice.window
+        longitudinal_guard = 0.05
         has_lower_boundary = window.start > horizon.start + 1e-9
         has_upper_boundary = window.end < horizon.end - 1e-9
-        longitudinal_guard = 0.05
+        # A safe component [a,b] is compiled at its own boundaries: remain
+        # behind the conflict until a, and be beyond it from b onward.  Thus a
+        # first component [0,b] is pass-before and a final [a,T] is yield-after.
         if has_lower_boundary:
             s_ub[ts < window.start] = np.minimum(
                 s_ub[ts < window.start], conflict_s_lo - longitudinal_guard
@@ -1564,6 +1597,8 @@ def run_pipeline(
     split_overrides: Optional[dict[int, int]] = None,
     preferred_homotopy: Optional[dict[str, str]] = None,
     temporal_plan_rank: int = 0,
+    spatial_top_k: Optional[int] = 3,
+    temporal_beam_width: Optional[int] = 8,
 ):
     flags = AblationFlags.from_mode(mode_or_flags)
     s_arr, l_min, l_max, blocked_idx, group_decisions = path_bounds_decider(
@@ -1572,6 +1607,7 @@ def run_pipeline(
         tau_fn=tau_fn,
         candidate_rank=candidate_rank,
         split_overrides=split_overrides,
+        spatial_top_k=spatial_top_k,
     )
     l_path, path_qp_ms = path_optimizer(s_arr, l_min, l_max)
     st_bounds = st_boundary_mapper(
@@ -1599,6 +1635,7 @@ def run_pipeline(
         decision_log=time_window_decisions,
         preferred_homotopy=preferred_homotopy,
         temporal_plan_rank=temporal_plan_rank,
+        temporal_beam_width=temporal_beam_width,
     )
 
     # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
@@ -1688,7 +1725,94 @@ def run_pipeline(
             "speed": speed_qp_ms,
             "total": path_qp_ms + speed_qp_ms,
         },
+        execution_interpolation_contract="piecewise_linear_centers",
     )
+
+
+def validate_pipeline_candidate_continuous_safety(
+    scn: Scenario,
+    result: dict,
+    *,
+    robust_prediction: bool = True,
+) -> dict[str, ContinuousSafetyCertificate]:
+    """Certify a pipeline candidate between its trajectory samples.
+
+    This is a callable fixed-homotopy validation interface, separate from the
+    experiment metric sampler.  It uses horizon-wide uncertainty extents and
+    conservative relative-speed bounds.  A failed certificate is inconclusive
+    and the caller must refine or reject the candidate; only ``certified=True``
+    is a continuous-time safety result under the declared motion bounds and a
+    piecewise-linear center-interpolation execution contract.  It does not
+    certify the quadratic motion between speed-QP knots.
+    """
+
+    if result.get("s_qp") is None:
+        raise ValueError("continuous safety requires a solved speed candidate")
+    if result.get("execution_interpolation_contract") not in (None, "piecewise_linear_centers"):
+        raise ValueError("unsupported execution interpolation contract")
+    ts = np.asarray(result["ts"], dtype=float)
+    longitudinal = np.asarray(result["s_qp"], dtype=float)
+    if result.get("l_qp") is not None:
+        lateral = np.asarray(result["l_qp"], dtype=float)
+    else:
+        lateral = np.interp(longitudinal, result["s_arr"], result["l_path"])
+    if len(ts) != len(longitudinal) or len(ts) != len(lateral):
+        raise ValueError("candidate time, longitudinal, and lateral arrays must align")
+
+    path_stations = np.asarray(result["s_arr"], dtype=float)
+    path_lateral = np.asarray(result["l_path"], dtype=float)
+    station_steps = np.diff(path_stations)
+    candidate_speed = result.get("v_qp")
+    maximum_speed = (
+        float(np.max(np.abs(candidate_speed)))
+        if candidate_speed is not None
+        else 13.0
+    )
+    if np.any(station_steps <= 0.0):
+        path_lateral_speed_bound = 0.0
+    else:
+        maximum_path_slope = float(
+            np.max(np.abs(np.diff(path_lateral) / station_steps))
+        )
+        path_lateral_speed_bound = maximum_path_slope * maximum_speed
+
+    maximum_time = float(ts[-1])
+    certificates = {}
+    for obstacle_index, obstacle in enumerate(scn.obstacles):
+        if robust_prediction and not obstacle.is_static:
+            longitudinal_uncertainty = (
+                obstacle.uncertainty_s0 + obstacle.uncertainty_vs * maximum_time
+            )
+            lateral_uncertainty = (
+                obstacle.uncertainty_l0 + obstacle.uncertainty_vl * maximum_time
+            )
+        else:
+            longitudinal_uncertainty = 0.0
+            lateral_uncertainty = 0.0
+        # Match the dynamic numerical guard used by the ST mapper.
+        longitudinal_numerical_guard = 0.15 if not obstacle.is_static else 0.0
+        samples = []
+        for index, time_value in enumerate(ts):
+            obstacle_s, obstacle_l = obstacle.position_at(float(time_value))
+            samples.append(
+                AxisAlignedMotionSample(
+                    float(time_value),
+                    float(longitudinal[index] - obstacle_s),
+                    float(lateral[index] - obstacle_l),
+                    (scn.ego.L + obstacle.L) / 2.0
+                    + longitudinal_uncertainty
+                    + longitudinal_numerical_guard,
+                    (scn.ego.W + obstacle.W) / 2.0 + lateral_uncertainty,
+                )
+            )
+        name = obstacle.name or f"obstacle-{obstacle_index}"
+        certificates[name] = validate_candidate_continuous_safety(
+            samples,
+            relative_longitudinal_speed_bound=maximum_speed + abs(obstacle.vs),
+            relative_lateral_speed_bound=path_lateral_speed_bound
+            + abs(obstacle.vl),
+        )
+    return certificates
 
 
 # ============================ 绘图 ============================

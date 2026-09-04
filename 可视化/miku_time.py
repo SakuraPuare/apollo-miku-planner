@@ -194,7 +194,7 @@ def enumerate_temporal_homotopies(
     start_station: float,
     start_time: float = 0.0,
     max_speed: float = 13.0,
-    beam_width: int = 8,
+    beam_width: int | None = 8,
     switch_penalty: float = 0.10,
     preferred_window_labels: dict[str, str] | None = None,
     persistence_penalty: float = 0.20,
@@ -209,7 +209,7 @@ def enumerate_temporal_homotopies(
 
     if max_speed <= 0.0 or not math.isfinite(max_speed):
         raise ValueError("max_speed must be finite and positive")
-    if beam_width <= 0:
+    if beam_width is not None and beam_width <= 0:
         raise ValueError("beam_width must be positive")
     if switch_penalty < 0.0 or not math.isfinite(switch_penalty):
         raise ValueError("switch_penalty must be finite and non-negative")
@@ -279,7 +279,7 @@ def enumerate_temporal_homotopies(
                 tuple(choice.window_index for choice in item[4]),
             )
         )
-        beam = expanded[:beam_width]
+        beam = expanded if beam_width is None else expanded[:beam_width]
         if not beam:
             return ()
 

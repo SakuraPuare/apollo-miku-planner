@@ -13,8 +13,20 @@ from typing import Callable
 
 import numpy as np
 
-from apollo_pipeline import AblationFlags, Scenario, arrival_time, run_pipeline
+from apollo_pipeline import (
+    AblationFlags,
+    Scenario,
+    arrival_time,
+    run_pipeline,
+    validate_pipeline_candidate_continuous_safety,
+)
 from joint_reference import run_joint_reference
+from joint_homotopy_search import (
+    CandidateEvaluation,
+    JointHomotopyCandidate,
+    SpatialHomotopyBranch,
+    bounded_lazy_joint_search,
+)
 
 
 @dataclass(frozen=True)
@@ -29,6 +41,8 @@ class MethodSpec:
     refine_on_demand: bool = False
     temporal_top_k: int = 1
     spatial_top_k: int = 1
+    require_continuous_certificate: bool = False
+    certified_joint_search: bool = False
 
 
 @dataclass
@@ -64,6 +78,8 @@ METHODS: tuple[MethodSpec, ...] = (
         refine_on_demand=True,
         temporal_top_k=3,
         spatial_top_k=3,
+        require_continuous_certificate=True,
+        certified_joint_search=True,
     ),
 )
 
@@ -109,60 +125,143 @@ def run_method(
 ) -> MethodRun:
     """Run one method and measure the complete planning call(s), not QP only."""
     start = time.perf_counter()
+
+    def candidate_is_acceptable(candidate: dict) -> bool:
+        if candidate.get("s_qp") is None:
+            return False
+        if not spec.require_continuous_certificate:
+            return True
+        try:
+            certificates = validate_pipeline_candidate_continuous_safety(
+                scn, candidate, robust_prediction=spec.flags.robust_prediction
+            )
+        except (KeyError, ValueError):
+            return False
+        candidate["continuous_safety_certificates"] = certificates
+        return all(certificate.certified for certificate in certificates.values())
+
+    def certified_objective(candidate: dict) -> float:
+        """Non-negative objective used by the finite-domain certificate."""
+        s_qp = np.asarray(candidate["s_qp"], dtype=float)
+        a_qp = np.asarray(candidate["a_qp"], dtype=float)
+        l_path = np.asarray(candidate["l_path"], dtype=float)
+        target = max(scn.s_max - 1.0, scn.ego.s0)
+        goal_error = max(target - float(s_qp[-1]), 0.0)
+        jerk_energy = 0.0
+        if len(a_qp) > 1:
+            time_step = float(candidate["ts"][1] - candidate["ts"][0])
+            jerk_energy = float(np.mean((np.diff(a_qp) / time_step) ** 2))
+        return (
+            100.0 * goal_error**2
+            + float(np.mean(a_qp**2))
+            + 0.1 * jerk_energy
+            + 0.001 * float(np.mean(l_path**2))
+        )
+
+    def plan_pipeline_once(
+        tau_fn: Callable[[float], float] | None = None,
+    ) -> dict:
+        common = dict(
+            tau_fn=tau_fn,
+            preferred_homotopy=preferred_homotopy,
+        )
+        if not spec.certified_joint_search:
+            candidate = run_pipeline(spec.flags, scn, **common)
+            if candidate_is_acceptable(candidate):
+                return candidate
+            spatial_count = max(
+                1,
+                min(spec.spatial_top_k, int(candidate.get("spatial_homotopy_candidate_count", 0))),
+            )
+            for spatial_rank in range(spatial_count):
+                temporal_count = max(
+                    1,
+                    min(spec.temporal_top_k, int(candidate.get("temporal_homotopy_candidate_count", 0))),
+                )
+                for temporal_rank in range(temporal_count):
+                    alternative = run_pipeline(
+                        spec.flags,
+                        scn,
+                        candidate_rank=spatial_rank,
+                        temporal_plan_rank=temporal_rank,
+                        **common,
+                    )
+                    if candidate_is_acceptable(alternative):
+                        return alternative
+            failed = dict(candidate)
+            failed["s_qp"] = failed["v_qp"] = failed["a_qp"] = None
+            return failed
+
+        cache: dict[tuple[int, int], dict] = {}
+
+        def solve(spatial_rank: int, temporal_rank: int) -> dict:
+            key = (spatial_rank, temporal_rank)
+            if key not in cache:
+                cache[key] = run_pipeline(
+                    spec.flags,
+                    scn,
+                    candidate_rank=spatial_rank,
+                    temporal_plan_rank=temporal_rank,
+                    spatial_top_k=None,
+                    temporal_beam_width=None,
+                    **common,
+                )
+            return cache[key]
+
+        seed = solve(0, 0)
+        spatial_count = max(1, int(seed.get("spatial_homotopy_candidate_count", 0)))
+
+        def make_branch(spatial_rank: int) -> SpatialHomotopyBranch[tuple[int, int]]:
+            def expand() -> tuple[JointHomotopyCandidate[tuple[int, int]], ...]:
+                first = solve(spatial_rank, 0)
+                temporal_count = max(
+                    1, int(first.get("temporal_homotopy_candidate_count", 0))
+                )
+                return tuple(
+                    JointHomotopyCandidate(
+                        (spatial_rank,), (temporal_rank,), 0.0, (spatial_rank, temporal_rank)
+                    )
+                    for temporal_rank in range(temporal_count)
+                )
+
+            return SpatialHomotopyBranch((spatial_rank,), 0.0, expand)
+
+        def evaluate(
+            joint: JointHomotopyCandidate[tuple[int, int]],
+        ) -> CandidateEvaluation[dict]:
+            candidate = solve(*joint.payload)
+            if not candidate_is_acceptable(candidate):
+                return CandidateEvaluation(False)
+            return CandidateEvaluation(True, certified_objective(candidate), candidate)
+
+        certificate = bounded_lazy_joint_search(
+            (make_branch(rank) for rank in range(spatial_count)), evaluate
+        )
+        selected = certificate.solution
+        if selected is None:
+            selected = dict(seed)
+            selected["s_qp"] = selected["v_qp"] = selected["a_qp"] = None
+        else:
+            selected = dict(selected)
+        selected["joint_search_certificate"] = {
+            "status": certificate.status,
+            "lower_bound": certificate.lower_bound,
+            "upper_bound": certificate.upper_bound,
+            "absolute_gap": certificate.absolute_gap,
+            "relative_gap": certificate.relative_gap,
+            "evaluated_candidates": certificate.evaluated_candidates,
+            "expanded_spatial_branches": certificate.expanded_spatial_branches,
+            "remaining_queue_items": certificate.remaining_queue_items,
+            "domain": "finite enumerated spatial-temporal homotopy labels",
+        }
+        return selected
+
     if spec.solver == "joint_grid":
         result = run_joint_reference(scn)
     elif spec.solver == "pipeline":
-        result = run_pipeline(
-            spec.flags,
-            scn,
-            preferred_homotopy=preferred_homotopy,
-        )
+        result = plan_pipeline_once()
     else:
         raise ValueError(f"unknown method solver: {spec.solver}")
-    if spec.solver == "pipeline" and result.get("s_qp") is None:
-        # Validate the Cartesian product lazily: temporal alternatives on the
-        # best spatial class first, then the remaining spatial classes.  Stop
-        # as soon as a convex QP certifies feasibility.
-        spatial_count = max(
-            1,
-            min(
-                spec.spatial_top_k,
-                int(result.get("spatial_homotopy_candidate_count", 0)),
-            ),
-        )
-        for spatial_rank in range(spatial_count):
-            spatial_result = result
-            if spatial_rank > 0:
-                spatial_result = run_pipeline(
-                    spec.flags,
-                    scn,
-                    preferred_homotopy=preferred_homotopy,
-                    candidate_rank=spatial_rank,
-                    temporal_plan_rank=0,
-                )
-                if spatial_result.get("s_qp") is not None:
-                    result = spatial_result
-                    break
-            temporal_count = max(
-                1,
-                min(
-                    spec.temporal_top_k,
-                    int(spatial_result.get("temporal_homotopy_candidate_count", 0)),
-                ),
-            )
-            for temporal_rank in range(1, temporal_count):
-                temporal_result = run_pipeline(
-                    spec.flags,
-                    scn,
-                    preferred_homotopy=preferred_homotopy,
-                    candidate_rank=spatial_rank,
-                    temporal_plan_rank=temporal_rank,
-                )
-                if temporal_result.get("s_qp") is not None:
-                    result = temporal_result
-                    break
-            if result.get("s_qp") is not None:
-                break
     iterations = 1
     converged = not spec.iterative
 
@@ -201,12 +300,7 @@ def run_method(
             def damped_tau(s: float) -> float:
                 return float(np.interp(s, probe_s, updated_tau))
 
-            result = run_pipeline(
-                spec.flags,
-                scn,
-                tau_fn=damped_tau,
-                preferred_homotopy=preferred_homotopy,
-            )
+            result = plan_pipeline_once(damped_tau)
             iterations = iteration
             if planner_score(result) > planner_score(best_result):
                 best_result = result

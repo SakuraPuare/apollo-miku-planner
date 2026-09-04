@@ -43,3 +43,12 @@ def test_default_miku_uses_temporal_homotopy_corridor_semantics():
     assert result["time_window_decisions"]
     assert result["time_window_decisions"][0]["status"] == "selected"
     assert result["s_qp"][-1] >= scenario.s_max - 1.0 - 1.0e-6
+
+
+def test_miku_reports_finite_joint_search_certificate():
+    scenario = COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"]
+    run = run_method(method_by_key("MIKU"), scenario)
+    certificate = run.result["joint_search_certificate"]
+    assert certificate["status"] in {"optimal", "infeasible"}
+    assert certificate["absolute_gap"] == 0.0
+    assert certificate["evaluated_candidates"] >= 1

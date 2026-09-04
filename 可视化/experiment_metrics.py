@@ -10,6 +10,7 @@ import numpy as np
 from apollo_pipeline import Obstacle, Scenario
 from experiment_cases import RandomCase
 from experiment_methods import MethodRun
+from joint_homotopy_search import AxisAlignedMotionSample, validate_candidate_continuous_safety
 
 
 RAW_SCHEMA_VERSION = "miku-random-v2"
@@ -114,6 +115,31 @@ def _safety_metrics(trajectory: Trajectory, truth: Scenario) -> tuple[float, flo
 
         window_entries += len(current_dynamic - active_dynamic)
         active_dynamic = current_dynamic
+
+    # Sample-wise checks above remain useful for TTC and event counts.  The
+    # collision flag additionally uses a piecewise-linear swept-rectangle
+    # check so an overlap between two QP samples cannot be missed.
+    maximum_ego_speed = float(np.max(np.abs(trajectory.speed_mps)))
+    for obs in truth.obstacles:
+        samples = []
+        for index, t in enumerate(trajectory.time_s):
+            obs_s, obs_l = obs.position_at(float(t))
+            samples.append(
+                AxisAlignedMotionSample(
+                    float(t),
+                    float(trajectory.longitudinal_m[index] - obs_s),
+                    float(trajectory.lateral_m[index] - obs_l),
+                    (truth.ego.L + obs.L) / 2.0,
+                    (truth.ego.W + obs.W) / 2.0,
+                )
+            )
+        certificate = validate_candidate_continuous_safety(
+            samples,
+            relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
+            relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
+        )
+        if not certificate.certified:
+            collision = 1
 
     return min_clearance, min_ttc, collision, window_entries
 

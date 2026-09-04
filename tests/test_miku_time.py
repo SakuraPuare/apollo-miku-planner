@@ -15,7 +15,15 @@ from miku_time import (
     safe_time_windows,
     select_time_window,
 )
-from apollo_pipeline import Ego, Obstacle, Scenario, build_st_bounds, st_boundary_mapper
+from apollo_pipeline import (
+    Ego,
+    Obstacle,
+    Scenario,
+    build_st_bounds,
+    run_pipeline,
+    st_boundary_mapper,
+    validate_pipeline_candidate_continuous_safety,
+)
 
 import numpy as np
 
@@ -118,7 +126,9 @@ def test_st_bounds_encode_reachable_before_pass_window() -> None:
         safe_window_mode=True,
         decision_log=decisions,
     )
+    # Pass-before is complete by the first safe-window end, before occupancy.
     assert decisions[0]["window"][1] == pytest.approx(2.85)
+    assert decisions[0]["homotopy_label"] == "pass_before"
     assert np.all(lower[ts >= 2.85] >= 10.05)
     window_start = decisions[0]["window"][0]
     assert np.all(upper[ts >= window_start] == 1e4)
@@ -143,7 +153,9 @@ def test_st_bounds_encode_after_pass_window_when_before_is_unreachable() -> None
         safe_window_mode=True,
         decision_log=decisions,
     )
+    # Yield-after remains behind until the final safe-window opens.
     assert decisions[0]["window"] == pytest.approx((4.15, 6.0))
+    assert decisions[0]["homotopy_label"] == "yield_after"
     assert np.all(upper[ts < 4.15] <= 7.95)
     assert np.all(lower == 0.0)
 
@@ -245,3 +257,20 @@ def test_robust_mapper_propagates_reported_prediction_error() -> None:
     robust_interval = next(row for row in robust["intervals"] if row[0] == shared_time)
     assert robust_interval[1] < nominal_interval[1]
     assert robust_interval[2] > nominal_interval[2]
+
+
+def test_pipeline_candidate_exposes_continuous_safety_validation() -> None:
+    obstacle = Obstacle(
+        s0=10.0,
+        l0=5.0,
+        W=0.5,
+        L=1.0,
+        is_static=True,
+        name="off-road obstacle",
+    )
+    scenario = Scenario(Ego(v0=3.0), [obstacle], s_max=15.0, t_max=5.0)
+    result = run_pipeline("miku", scenario)
+
+    certificates = validate_pipeline_candidate_continuous_safety(scenario, result)
+
+    assert certificates[obstacle.name].certified

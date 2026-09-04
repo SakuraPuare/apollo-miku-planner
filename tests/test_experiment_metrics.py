@@ -3,7 +3,8 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from experiment_metrics import exact_mcnemar
+from apollo_pipeline import Ego, Obstacle, Scenario
+from experiment_metrics import Trajectory, _safety_metrics, exact_mcnemar
 
 
 def test_exact_mcnemar_counts_discordant_pairs() -> None:
@@ -30,3 +31,24 @@ def test_exact_mcnemar_detects_one_sided_discordance() -> None:
 def test_exact_mcnemar_rejects_non_binary_values() -> None:
     with pytest.raises(ValueError):
         exact_mcnemar(np.array([0.5]), np.array([0.0]))
+
+
+def test_swept_collision_is_detected_between_trajectory_samples() -> None:
+    truth = Scenario(
+        Ego(s0=-2.0, l0=0.0, v0=4.0, L=1.0, W=1.0),
+        [Obstacle(s0=0.0, l0=0.0, L=1.0, W=1.0, is_static=True)],
+        s_max=3.0,
+        t_max=1.0,
+    )
+    trajectory = Trajectory(
+        time_s=np.array([0.0, 1.0]),
+        longitudinal_m=np.array([-2.0, 2.0]),
+        lateral_m=np.array([0.0, 0.0]),
+        speed_mps=np.array([4.0, 4.0]),
+        acceleration_mps2=np.array([0.0, 0.0]),
+        fallback_stop=False,
+    )
+
+    _clearance, _ttc, collision, _entries = _safety_metrics(trajectory, truth)
+
+    assert collision == 1
