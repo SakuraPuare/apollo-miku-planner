@@ -22,6 +22,10 @@
 
 当前版本仍**不能判定为可投稿的二区竞争稿**，裁判结论为 Major Revision。联合认证路径已改为显式有限域搜索并返回 gap，候选也要求连续扫掠证书；但平台无原生 Apollo 证据、CommonRoad 目前只有输入边界 smoke、尚无忠实外部竞争方法，且联合域在多数现有场景中退化为单候选。时序标签的论文端点公式已修正。只有完成未解决事项，才可重新评估首投。
 
+当前 HEAD 可用 `uv run python 小论文-2/check_submission_gates.py` 重复得到
+`major_revision`。自动裁判未通过项为：完整 CommonRoad benchmark、忠实外部竞争
+方法、原生 Apollo/CyberRT、独立审稿人致命问题清零，以及 RA-L 六页限制。
+
 ## 最后提交顺序
 
 1. 确定首投期刊，据此完成匿名、页数和 cover letter。
