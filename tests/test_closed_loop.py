@@ -40,3 +40,10 @@ def test_pass_before_commitment_survives_rolling_replanning():
     assert metrics["success"] == 1
     assert metrics["collision"] == 0
     assert metrics["time_window_violations"] == 0
+    decisions = [
+        decision
+        for cycle in run.result["homotopy_history"]
+        for decision in cycle["decisions"]
+    ]
+    assert any(decision.get("homotopy_label") == "pass_before" for decision in decisions)
+    assert not any(decision.get("homotopy_label") == "yield_after" for decision in decisions[1:])

@@ -175,7 +175,7 @@ Spatial bands and \eqref{eq:pass}--\eqref{eq:yield} are sample-wise affine lower
 \end{proof}
 
 \begin{proposition}[Robust collision exclusion]
-If $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$, the execution adapter rolls out the speed-QP longitudinal state with constant acceleration between knots and linearly interpolates the lateral center, and that rollout remains in the corridor excluding $O_i^{\rm rob}$ and the vehicle footprint, it cannot intersect $O_i^{\rm true}(t)$. The implementation checks the resulting quadratic longitudinal overlap roots and linear lateral overlap intervals. Arbitrary model mismatch or tracking error remains outside the certificate.
+If $O_i^{\rm true}(t)\subseteq O_i^{\rm rob}(t)$, the execution adapter rolls out the speed-QP longitudinal state with constant acceleration between knots, the lateral path $l_{path}(s)$ is linearly interpolated between adjacent stations, and that rollout remains in the corridor excluding $O_i^{\rm rob}$ and the vehicle footprint, it cannot intersect $O_i^{\rm true}(t)$. The implementation splits each time interval at every crossed path station knot; both $s(t)$ and $l_{path}(s(t))$ are then quadratic on each subinterval, and the intersection of their two overlap-time sets is solved analytically. Arbitrary model mismatch or tracking error remains outside the certificate.
 \end{proposition}
 \begin{proof}
 Disjointness from a superset implies disjointness from every subset.
@@ -245,7 +245,7 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 \end{tabular}
 \end{table*}
 
-MIKU reaches \RandAllMikuSuccessPct\% collision-free success versus \RandAllBZeroSuccessPct\%, \RandAllBOneSuccessPct\%, and \RandAllBTwoSuccessPct\% for B0--B2 (Table~\ref{tab:overall}). The paired MIKU--B0 gain is \RandAllMikuVsBZeroSuccessDiff{} points (95\% CI \RandAllMikuVsBZeroSuccessCiLow--\RandAllMikuVsBZeroSuccessCiHigh; exact McNemar $p=\RandAllMikuVsBZeroSuccessMcNemarP$). Collision falls from \RandAllBZeroCollisionPct\% to \RandAllMikuCollisionPct\%, a paired difference of \RandAllMikuVsBZeroCollisionDiff{} points (95\% CI \RandAllMikuVsBZeroCollisionCiLow--\RandAllMikuVsBZeroCollisionCiHigh; $p=\RandAllMikuVsBZeroCollisionMcNemarP$). The increased traversal capability therefore does not trade against safety.
+MIKU reaches \RandAllMikuSuccessPct\% collision-free success versus \RandAllBZeroSuccessPct\%, \RandAllBOneSuccessPct\%, and \RandAllBTwoSuccessPct\% for B0--B2 (Table~\ref{tab:overall}). The paired MIKU--B0 gain is \RandAllMikuVsBZeroSuccessDiff{} points (95\% CI \RandAllMikuVsBZeroSuccessCiLow--\RandAllMikuVsBZeroSuccessCiHigh; exact McNemar $p=\RandAllMikuVsBZeroSuccessMcNemarP$). Collision falls from \RandAllBZeroCollisionPct\% to \RandAllMikuCollisionPct\%, a paired difference of \RandAllMikuVsBZeroCollisionDiff{} points (95\% CI \RandAllMikuVsBZeroCollisionCiLow--\RandAllMikuVsBZeroCollisionCiHigh; $p=\RandAllMikuVsBZeroCollisionMcNemarP$). Within this paired synthetic protocol, aggregate traversal gains coincide with a lower collision rate; noisy-prediction and rolling results are reported separately and preclude a universal claim.
 
 MIKU's P95 complete-planning latency is \RandAllMikuRuntimePninetyfive\,ms, comparable to B0 at \RandAllBZeroRuntimePninetyfive\,ms and substantially below the unconditional iterative B2 at \RandAllBTwoRuntimePninetyfive\,ms. Its higher P99 reflects on-demand candidate fallback, while the P95 shows that most cases terminate on an early feasible homotopy.
 

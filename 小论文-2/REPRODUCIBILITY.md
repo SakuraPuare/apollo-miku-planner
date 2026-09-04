@@ -13,7 +13,7 @@
 
 随机种子固定场景、轨迹和统计量；墙钟耗时仍会随系统负载变化。论文中的主实验计时来自单进程顺序执行。随机消融可并行生成，但其并行墙钟值不用于实时性结论。
 
-当前固定版本的自动验证结果为 `94 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
+当前固定版本的自动验证结果为 `95 passed, 20 skipped`；20 个跳过项来自缺失的 `outputs/thesis.docx` 文档工具资源，并不是 Apollo/CyberRT 集成测试。核心几何、时间图、QP、联合候选搜索、连续扫掠安全与滚动承诺测试全部执行并通过。另有 CommonRoad 公共 XML 的可选在线 smoke 验证。仓库当前没有原生 Apollo/CyberRT 运行证据，计时只能解释为 Python/NumPy/OSQP 原型。
 
 ## 完整复现命令
 
@@ -57,4 +57,4 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 - 滚动耗时是单场景全部规划周期的累计值，不是单周期延迟。
 - B3 与 MIKU 使用相同威胁裕度和鲁棒预测管；B3 含离散网格与 beam 截断，不称为连续全局最优。
 
-详细主张对应关系见 `CLAIM_TRACEABILITY.md`。MIKU 主实验候选接受流程要求连续扫掠验证通过；证书采用速度 QP 节点间恒加速度纵向、线性横向的执行契约和有界误差模型，不能解释为真实车辆全局安全证明。
+详细主张对应关系见 `CLAIM_TRACEABILITY.md`。MIKU 主实验候选接受流程要求连续扫掠验证通过；证书采用速度 QP 节点间恒加速度纵向运动，在每个被穿越的路径站点处分段，对各段的纵横向二次相对运动解析求交，并仅在有界误差模型下成立。它不能解释为真实车辆全局安全证明。

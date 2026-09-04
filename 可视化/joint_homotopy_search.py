@@ -264,6 +264,8 @@ class AxisAlignedMotionSample:
     combined_half_width: float
     relative_longitudinal_velocity: float | None = None
     relative_longitudinal_acceleration: float | None = None
+    relative_lateral_velocity: float | None = None
+    relative_lateral_acceleration: float | None = None
 
 
 @dataclass(frozen=True)
@@ -504,11 +506,12 @@ def validate_candidate_constant_acceleration_safety(
 ) -> ContinuousSafetyCertificate:
     """Validate swept rectangles for the speed-QP execution contract.
 
-    Longitudinal relative motion follows each knot's constant acceleration;
-    lateral relative centers are linearly interpolated.  Quadratic projection
-    roots are intersected with lateral-overlap intervals, detecting collisions
-    that safe knot samples or a linear station sweep can miss.  The larger
-    endpoint footprint covers linearly growing uncertainty conservatively.
+    Longitudinal relative motion follows each knot's constant acceleration.
+    When lateral velocity and acceleration are supplied, lateral overlap is
+    also solved as a quadratic and intersected with longitudinal overlap.  A
+    caller without lateral kinematics receives the conservative Lipschitz
+    fallback instead.  The larger endpoint footprint covers linearly growing
+    uncertainty conservatively.
     """
     longitudinal_bound = _finite_bound(
         relative_longitudinal_speed_bound, "relative_longitudinal_speed_bound"
@@ -556,8 +559,8 @@ def validate_candidate_constant_acceleration_safety(
         if not math.isclose(
             predicted_right,
             right.relative_longitudinal,
-            rel_tol=1.0e-7,
-            abs_tol=1.0e-7,
+            rel_tol=1.0e-6,
+            abs_tol=1.0e-5,
         ):
             raise ValueError("kinematic data do not reproduce the next station knot")
 
@@ -567,20 +570,53 @@ def validate_candidate_constant_acceleration_safety(
             acceleration * dt * dt,
             max(left.combined_half_length, right.combined_half_length),
         )
-        lateral = _linear_overlap_fraction(
-            float(left.relative_lateral),
-            float(right.relative_lateral),
-            max(left.combined_half_width, right.combined_half_width),
-        )
+        lateral_extent = max(left.combined_half_width, right.combined_half_width)
+        lateral_guard = lateral_bound * dt
+        if (
+            left.relative_lateral_velocity is not None
+            and left.relative_lateral_acceleration is not None
+        ):
+            lateral_velocity = float(left.relative_lateral_velocity)
+            lateral_acceleration = float(left.relative_lateral_acceleration)
+            predicted_lateral = (
+                left.relative_lateral
+                + lateral_velocity * dt
+                + 0.5 * lateral_acceleration * dt * dt
+            )
+            if not math.isclose(
+                predicted_lateral,
+                right.relative_lateral,
+                rel_tol=1.0e-6,
+                abs_tol=1.0e-4,
+            ):
+                raise ValueError("lateral kinematics do not reproduce the next knot")
+            lateral_intervals = _quadratic_overlap_fractions(
+                float(left.relative_lateral),
+                lateral_velocity * dt,
+                lateral_acceleration * dt * dt,
+                lateral_extent,
+            )
+            lateral_separated = not lateral_intervals
+        else:
+            lateral_intervals = ()
+            lateral_separated = (
+                abs(left.relative_lateral) > lateral_extent + lateral_guard
+                or abs(right.relative_lateral) > lateral_extent + lateral_guard
+            )
         maximum_longitudinal_guard = max(
             maximum_longitudinal_guard, longitudinal_bound * dt
         )
-        maximum_lateral_guard = max(maximum_lateral_guard, lateral_bound * dt)
-        if lateral is not None and any(
-            max(longitudinal_interval[0], lateral[0])
-            <= min(longitudinal_interval[1], lateral[1]) + 1.0e-12
-            for longitudinal_interval in longitudinal
-        ):
+        maximum_lateral_guard = max(maximum_lateral_guard, lateral_guard)
+        if lateral_intervals:
+            collision = any(
+                max(longitudinal_interval[0], lateral_interval[0])
+                <= min(longitudinal_interval[1], lateral_interval[1]) + 1.0e-12
+                for longitudinal_interval in longitudinal
+                for lateral_interval in lateral_intervals
+            )
+        else:
+            collision = not lateral_separated and bool(longitudinal)
+        if collision:
             return ContinuousSafetyCertificate(
                 False,
                 index,

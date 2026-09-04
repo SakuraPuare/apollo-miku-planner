@@ -20,12 +20,37 @@ from apollo_pipeline import (
     Obstacle,
     Scenario,
     build_st_bounds,
+    path_rollout_motion_samples,
     run_pipeline,
     st_boundary_mapper,
     validate_pipeline_candidate_continuous_safety,
 )
+from joint_homotopy_search import validate_candidate_constant_acceleration_safety
 
 import numpy as np
+
+
+def test_path_rollout_splits_lateral_v_shape_at_station_knot() -> None:
+    obstacle = Obstacle(1.0, 0.0, 0.0, 0.0, 1.0, 1.0, "center")
+    samples = path_rollout_motion_samples(
+        np.array([0.0, 1.0]),
+        np.array([0.0, 2.0]),
+        np.array([2.0, 2.0]),
+        np.array([0.0, 0.0]),
+        np.array([0.0, 1.0, 2.0]),
+        np.array([2.0, 0.0, 2.0]),
+        obstacle,
+        combined_half_length=0.5,
+        combined_half_width=0.5,
+    )
+
+    assert [sample.time for sample in samples] == pytest.approx([0.0, 0.5, 1.0])
+    certificate = validate_candidate_constant_acceleration_safety(
+        samples,
+        relative_longitudinal_speed_bound=2.0,
+        relative_lateral_speed_bound=4.0,
+    )
+    assert not certificate.certified
 
 
 def test_single_conflict_has_before_and_after_candidates() -> None:
@@ -274,3 +299,12 @@ def test_pipeline_candidate_exposes_continuous_safety_validation() -> None:
     certificates = validate_pipeline_candidate_continuous_safety(scenario, result)
 
     assert certificates[obstacle.name].certified
+
+    linear_result = dict(result)
+    linear_result["execution_interpolation_contract"] = "piecewise_linear_centers"
+    linear_result["v_qp"] = None
+    linear_result["a_qp"] = None
+    linear_certificates = validate_pipeline_candidate_continuous_safety(
+        scenario, linear_result
+    )
+    assert linear_certificates[obstacle.name].certified

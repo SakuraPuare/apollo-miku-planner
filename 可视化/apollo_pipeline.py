@@ -33,6 +33,7 @@ from __future__ import annotations
 import csv
 import copy
 import json
+import math
 import os
 import time
 import warnings
@@ -1743,10 +1744,10 @@ def validate_pipeline_candidate_continuous_safety(
     conservative relative-speed bounds.  A failed certificate is inconclusive
     and the caller must refine or reject the candidate; only ``certified=True``
     is a continuous-time safety result under the declared motion bounds and a
-    constant-acceleration longitudinal / linear-lateral execution contract
-    used by the speed-QP rollout.  The quadratic longitudinal roots are
-    checked analytically; arbitrary tracking or model mismatch remains outside
-    the certificate.
+    constant-acceleration longitudinal execution contract used by the speed-QP
+    rollout.  Each interval is split where it crosses a path station knot, so
+    both longitudinal motion and the piecewise-linear path composition
+    ``l_path(s(t))`` are quadratic on every checked subinterval.
     """
 
     if result.get("s_qp") is None:
@@ -1800,38 +1801,154 @@ def validate_pipeline_candidate_continuous_safety(
             lateral_uncertainty = 0.0
         # Match the dynamic numerical guard used by the ST mapper.
         longitudinal_numerical_guard = 0.15 if not obstacle.is_static else 0.0
-        samples = []
-        for index, time_value in enumerate(ts):
-            obstacle_s, obstacle_l = obstacle.position_at(float(time_value))
-            samples.append(
-                AxisAlignedMotionSample(
-                    float(time_value),
-                    float(longitudinal[index] - obstacle_s),
-                    float(lateral[index] - obstacle_l),
-                    (scn.ego.L + obstacle.L) / 2.0
-                    + longitudinal_uncertainty
-                    + longitudinal_numerical_guard,
-                    (scn.ego.W + obstacle.W) / 2.0 + lateral_uncertainty,
-                    None
-                    if candidate_speed is None
-                    else float(candidate_speed[index] - obstacle.vs),
-                    None
-                    if candidate_acceleration is None
-                    else float(candidate_acceleration[index]),
-                )
-            )
         name = obstacle.name or f"obstacle-{obstacle_index}"
-        validator = (
-            validate_candidate_constant_acceleration_safety
-            if interpolation_contract == "constant_acceleration_longitudinal"
-            else validate_candidate_continuous_safety
+        half_length = (
+            (scn.ego.L + obstacle.L) / 2.0
+            + longitudinal_uncertainty
+            + longitudinal_numerical_guard
         )
+        half_width = (scn.ego.W + obstacle.W) / 2.0 + lateral_uncertainty
+        if interpolation_contract == "constant_acceleration_longitudinal":
+            if candidate_speed is None or candidate_acceleration is None:
+                raise ValueError("constant-acceleration contract requires speed and acceleration")
+            samples = path_rollout_motion_samples(
+                ts,
+                longitudinal,
+                np.asarray(candidate_speed, dtype=float),
+                np.asarray(candidate_acceleration, dtype=float),
+                path_stations,
+                path_lateral,
+                obstacle,
+                combined_half_length=half_length,
+                combined_half_width=half_width,
+            )
+            validator = validate_candidate_constant_acceleration_safety
+        else:
+            samples = []
+            for index, time_value in enumerate(ts):
+                obstacle_s, obstacle_l = obstacle.position_at(float(time_value))
+                samples.append(
+                    AxisAlignedMotionSample(
+                        float(time_value),
+                        float(longitudinal[index] - obstacle_s),
+                        float(lateral[index] - obstacle_l),
+                        half_length,
+                        half_width,
+                    )
+                )
+            validator = validate_candidate_continuous_safety
         certificates[name] = validator(
             samples,
             relative_longitudinal_speed_bound=maximum_speed + abs(obstacle.vs),
             relative_lateral_speed_bound=path_lateral_speed_bound + abs(obstacle.vl),
         )
     return certificates
+
+
+def path_rollout_motion_samples(
+    times: np.ndarray,
+    stations: np.ndarray,
+    speeds: np.ndarray,
+    accelerations: np.ndarray,
+    path_stations: np.ndarray,
+    path_lateral: np.ndarray,
+    obstacle: Obstacle,
+    *,
+    combined_half_length: float,
+    combined_half_width: float,
+) -> list[AxisAlignedMotionSample]:
+    """Split a QP rollout wherever ``l_path(s(t))`` changes linear segment."""
+    arrays = (times, stations, speeds, accelerations)
+    if len({len(array) for array in arrays}) != 1 or len(times) < 2:
+        raise ValueError("QP rollout arrays must align and contain two knots")
+    if len(path_stations) != len(path_lateral) or len(path_stations) < 2:
+        raise ValueError("path arrays must align and contain two stations")
+    if not all(np.all(np.isfinite(array)) for array in (*arrays, path_stations, path_lateral)):
+        raise ValueError("QP rollout and path arrays must be finite")
+    if np.any(np.diff(path_stations) <= 0.0):
+        raise ValueError("path stations must be strictly increasing")
+
+    samples: list[AxisAlignedMotionSample] = []
+    for index in range(len(times) - 1):
+        dt = float(times[index + 1] - times[index])
+        if dt <= 0.0:
+            raise ValueError("QP knot times must be strictly increasing")
+        s0 = float(stations[index])
+        v0 = float(speeds[index])
+        a0 = float(accelerations[index])
+        crossing_times = [0.0, dt]
+        predicted_s1 = s0 + v0 * dt + 0.5 * a0 * dt * dt
+        traversed_stations = [s0, predicted_s1]
+        if abs(a0) > 1.0e-14:
+            turning_time = -v0 / a0
+            if 0.0 < turning_time < dt:
+                traversed_stations.append(
+                    s0 + v0 * turning_time + 0.5 * a0 * turning_time * turning_time
+                )
+        low, high = min(traversed_stations), max(traversed_stations)
+        for path_station in path_stations:
+            target = float(path_station)
+            if not low + 1.0e-10 < target < high - 1.0e-10:
+                continue
+            if abs(a0) <= 1.0e-14:
+                roots = () if abs(v0) <= 1.0e-14 else ((target - s0) / v0,)
+            else:
+                discriminant = v0 * v0 - 2.0 * a0 * (s0 - target)
+                if discriminant < 0.0:
+                    roots = ()
+                else:
+                    root = math.sqrt(max(0.0, discriminant))
+                    roots = ((-v0 - root) / a0, (-v0 + root) / a0)
+            crossing_times.extend(root for root in roots if 1.0e-10 < root < dt - 1.0e-10)
+        crossing_times = sorted(set(crossing_times))
+
+        for sub_index, elapsed in enumerate(crossing_times[:-1]):
+            next_elapsed = crossing_times[sub_index + 1]
+            midpoint = 0.5 * (elapsed + next_elapsed)
+            midpoint_station = s0 + v0 * midpoint + 0.5 * a0 * midpoint * midpoint
+            if midpoint_station <= path_stations[0] or midpoint_station >= path_stations[-1]:
+                slope = 0.0
+            else:
+                path_index = int(
+                    np.searchsorted(path_stations, midpoint_station, side="right") - 1
+                )
+                path_index = int(np.clip(path_index, 0, len(path_stations) - 2))
+                ds = float(path_stations[path_index + 1] - path_stations[path_index])
+                slope = 0.0 if ds <= 0.0 else float(
+                    (path_lateral[path_index + 1] - path_lateral[path_index]) / ds
+                )
+            station = s0 + v0 * elapsed + 0.5 * a0 * elapsed * elapsed
+            speed = v0 + a0 * elapsed
+            absolute_time = float(times[index] + elapsed)
+            obstacle_s, obstacle_l = obstacle.position_at(absolute_time)
+            sample = AxisAlignedMotionSample(
+                absolute_time,
+                station - obstacle_s,
+                float(np.interp(station, path_stations, path_lateral)) - obstacle_l,
+                combined_half_length,
+                combined_half_width,
+                speed - obstacle.vs,
+                a0,
+                slope * speed - obstacle.vl,
+                slope * a0,
+            )
+            if samples and math.isclose(samples[-1].time, absolute_time, abs_tol=1.0e-12):
+                samples[-1] = sample
+            else:
+                samples.append(sample)
+
+    final_time = float(times[-1])
+    final_obstacle_s, final_obstacle_l = obstacle.position_at(final_time)
+    samples.append(
+        AxisAlignedMotionSample(
+            final_time,
+            float(stations[-1] - final_obstacle_s),
+            float(np.interp(stations[-1], path_stations, path_lateral) - final_obstacle_l),
+            combined_half_length,
+            combined_half_width,
+        )
+    )
+    return samples
 
 
 # ============================ 绘图 ============================

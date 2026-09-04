@@ -198,7 +198,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.870744959276625
+      "runtime_p95_ms": 26.022196201665782
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -208,7 +208,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.97887405095388
+      "runtime_p95_ms": 26.04834051162469
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -218,7 +218,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.369647535786488
+      "runtime_p95_ms": 25.630264394567337
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -228,7 +228,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.62624080124077
+      "runtime_p95_ms": 25.74629420414566
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -238,7 +238,7 @@
       "success_rate": 0.47,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6172265737619195,
-      "runtime_p95_ms": 47.49949746765192
+      "runtime_p95_ms": 50.33315889013461
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -248,7 +248,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 24.07191249076276
+      "runtime_p95_ms": 25.599460137891572
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -258,7 +258,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.663090798072503
+      "runtime_p95_ms": 25.763086302322325
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -268,7 +268,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 23.662198201054693
+      "runtime_p95_ms": 25.63102971034822
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -278,7 +278,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.930052855281788,
-      "runtime_p95_ms": 38.29987200006141
+      "runtime_p95_ms": 41.12737697723783
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -288,7 +288,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.690669905976385
+      "runtime_p95_ms": 53.38411344127962
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -298,7 +298,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.63289528386667
+      "runtime_p95_ms": 53.00871665676822
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -308,7 +308,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9175607237279781,
-      "runtime_p95_ms": 50.79598160082241
+      "runtime_p95_ms": 53.20915985066676
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -318,7 +318,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 51.25756976485718
+      "runtime_p95_ms": 53.193171207385596
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -328,7 +328,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.57221332588232
+      "runtime_p95_ms": 53.17850813880795
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -338,7 +338,7 @@
       "success_rate": 0.79,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9016374503242086,
-      "runtime_p95_ms": 30.464701258460984
+      "runtime_p95_ms": 31.93886360677424
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -348,7 +348,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 49.8292437128839
+      "runtime_p95_ms": 55.373400704411324
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -357,8 +357,8 @@
       "n": 100,
       "success_rate": 0.68,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7867548472051159,
-      "runtime_p95_ms": 58.97533294919412
+      "progress_ratio_mean": 0.7921724478770265,
+      "runtime_p95_ms": 62.68254492024425
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -367,8 +367,8 @@
       "n": 100,
       "success_rate": 0.65,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7460449104384046,
-      "runtime_p95_ms": 58.950449206167825
+      "progress_ratio_mean": 0.7511267164783605,
+      "runtime_p95_ms": 61.517489278048735
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -377,8 +377,8 @@
       "n": 100,
       "success_rate": 0.58,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.6939525600502742,
-      "runtime_p95_ms": 58.60277508763829
+      "progress_ratio_mean": 0.6990343660902303,
+      "runtime_p95_ms": 61.3601327946526
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -387,8 +387,8 @@
       "n": 100,
       "success_rate": 0.57,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.6966185917549363,
-      "runtime_p95_ms": 82.37390925933138
+      "progress_ratio_mean": 0.6980314122250572,
+      "runtime_p95_ms": 88.04441105021395
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -397,8 +397,8 @@
       "n": 100,
       "success_rate": 0.67,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7744316671392104,
-      "runtime_p95_ms": 57.87317229842301
+      "progress_ratio_mean": 0.7795134731791664,
+      "runtime_p95_ms": 61.262366386654314
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -407,8 +407,8 @@
       "n": 100,
       "success_rate": 0.67,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7744316671392104,
-      "runtime_p95_ms": 59.94979784882162
+      "progress_ratio_mean": 0.7795134731791664,
+      "runtime_p95_ms": 61.38003291998756
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -417,8 +417,8 @@
       "n": 100,
       "success_rate": 0.67,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7744316671392104,
-      "runtime_p95_ms": 58.25748675997601
+      "progress_ratio_mean": 0.7795134731791664,
+      "runtime_p95_ms": 61.407210177276276
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -427,8 +427,8 @@
       "n": 100,
       "success_rate": 0.67,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.7744316671392104,
-      "runtime_p95_ms": 58.033851603977375
+      "progress_ratio_mean": 0.7795134731791664,
+      "runtime_p95_ms": 62.216994547634386
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -437,8 +437,8 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 33.1838572557899
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 40.920628899766584
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -447,8 +447,8 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 33.130167087074355
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 41.072051147057195
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -457,8 +457,8 @@
       "n": 100,
       "success_rate": 0.05,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.38513687031117805,
-      "runtime_p95_ms": 59.49775504268472
+      "progress_ratio_mean": 0.39243592208763844,
+      "runtime_p95_ms": 69.55026673385873
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -467,8 +467,8 @@
       "n": 100,
       "success_rate": 0.01,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.34142302465521834,
-      "runtime_p95_ms": 54.979540282511145
+      "progress_ratio_mean": 0.34769233344372596,
+      "runtime_p95_ms": 64.05084524885751
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -477,8 +477,8 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 31.971865093510115
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 41.395568283041925
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -487,8 +487,8 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 32.11043740302555
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 43.23708869778783
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -497,8 +497,8 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 31.859569545485996
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 42.22597571642835
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -507,88 +507,88 @@
       "n": 100,
       "success_rate": 0.74,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.8265866346449746,
-      "runtime_p95_ms": 31.78177314694038
+      "progress_ratio_mean": 0.830256417067791,
+      "runtime_p95_ms": 41.47343430522595
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A1",
       "label": "w/o arrival projection",
       "n": 100,
-      "success_rate": 0.95,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9576659622108972,
-      "runtime_p95_ms": 50.941738703113465
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 53.90504110400797
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A2",
       "label": "w/o longitudinal grouping",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 80.01710731332423
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.50337902264437
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A3",
       "label": "w/o Top-K spatial homotopy",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 80.01627260673558
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.732900991512
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A4",
       "label": "w/o threat-aware margin",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 80.65833894943353
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.69791005278239
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A5",
       "label": "w/o temporal homotopy graph",
       "n": 100,
-      "success_rate": 0.51,
+      "success_rate": 0.52,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.5938960782297018,
-      "runtime_p95_ms": 90.99859539273888
+      "progress_ratio_mean": 0.6021217427261361,
+      "runtime_p95_ms": 98.8512805342907
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A6",
       "label": "w/o robust occupancy tube",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 84.18545185704716
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.579757354513276
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "A7",
       "label": "w/o alternating refinement",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 42.29643235303229
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.601296593027655
     },
     {
       "case_kind": "interleaved_dynamic",
       "method": "MIKU",
       "label": "MIKU",
       "n": 100,
-      "success_rate": 0.9,
+      "success_rate": 1.0,
       "collision_rate": 0.0,
-      "progress_ratio_mean": 0.9159154642332674,
-      "runtime_p95_ms": 80.10887934942728
+      "progress_ratio_mean": 1.0,
+      "runtime_p95_ms": 49.46454645105405
     },
     {
       "case_kind": "prediction_noise",
@@ -598,7 +598,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.36393639597456806,
-      "runtime_p95_ms": 47.50759804155675
+      "runtime_p95_ms": 48.29559520585459
     },
     {
       "case_kind": "prediction_noise",
@@ -608,7 +608,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 43.871798904729076
+      "runtime_p95_ms": 44.53350658732232
     },
     {
       "case_kind": "prediction_noise",
@@ -618,7 +618,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 43.66746685700491
+      "runtime_p95_ms": 44.334803745732636
     },
     {
       "case_kind": "prediction_noise",
@@ -628,7 +628,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3668426381583405,
-      "runtime_p95_ms": 43.79504877870203
+      "runtime_p95_ms": 44.03138078923802
     },
     {
       "case_kind": "prediction_noise",
@@ -638,7 +638,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 43.74910079932306
+      "runtime_p95_ms": 43.81856905820313
     },
     {
       "case_kind": "prediction_noise",
@@ -648,7 +648,7 @@
       "success_rate": 0.33,
       "collision_rate": 0.1,
       "progress_ratio_mean": 0.6051906679318886,
-      "runtime_p95_ms": 34.470145900559146
+      "runtime_p95_ms": 35.59206428908509
     },
     {
       "case_kind": "prediction_noise",
@@ -658,7 +658,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 21.978230080276262
+      "runtime_p95_ms": 22.243270557373755
     },
     {
       "case_kind": "prediction_noise",
@@ -668,7 +668,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 43.94543551898096
+      "runtime_p95_ms": 44.632025240571224
     },
     {
       "case_kind": "delayed_crossing",
@@ -676,9 +676,9 @@
       "label": "w/o arrival projection",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 240.6339638982898
+      "runtime_p95_ms": 241.80356029100935
     },
     {
       "case_kind": "delayed_crossing",
@@ -686,9 +686,9 @@
       "label": "w/o longitudinal grouping",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 240.19194524007602
+      "runtime_p95_ms": 241.65254418767276
     },
     {
       "case_kind": "delayed_crossing",
@@ -696,9 +696,9 @@
       "label": "w/o Top-K spatial homotopy",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 240.23502495547277
+      "runtime_p95_ms": 241.71848216355997
     },
     {
       "case_kind": "delayed_crossing",
@@ -706,19 +706,19 @@
       "label": "w/o threat-aware margin",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.17083602759507
+      "runtime_p95_ms": 244.77859954349682
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A5",
       "label": "w/o temporal homotopy graph",
       "n": 100,
-      "success_rate": 0.38,
-      "collision_rate": 0.03,
-      "progress_ratio_mean": 0.6184239803276919,
-      "runtime_p95_ms": 242.80128459358818
+      "success_rate": 0.4,
+      "collision_rate": 0.01,
+      "progress_ratio_mean": 0.6319763000658944,
+      "runtime_p95_ms": 185.4088993204639
     },
     {
       "case_kind": "delayed_crossing",
@@ -726,9 +726,9 @@
       "label": "w/o robust occupancy tube",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 240.94736921251737
+      "runtime_p95_ms": 242.7314903165096
     },
     {
       "case_kind": "delayed_crossing",
@@ -736,9 +736,9 @@
       "label": "w/o alternating refinement",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 181.6267484944545
+      "runtime_p95_ms": 183.33409729821125
     },
     {
       "case_kind": "delayed_crossing",
@@ -746,89 +746,89 @@
       "label": "MIKU",
       "n": 100,
       "success_rate": 0.87,
-      "collision_rate": 0.03,
+      "collision_rate": 0.01,
       "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 239.98587875976216
+      "runtime_p95_ms": 241.66410856269053
     },
     {
       "case_kind": "all",
       "method": "A1",
       "label": "w/o arrival projection",
       "n": 700,
-      "success_rate": 0.7471428571428571,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.8293947599353144,
-      "runtime_p95_ms": 63.145907295984095
+      "success_rate": 0.7542857142857143,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.8367406772044329,
+      "runtime_p95_ms": 64.89842284499898
     },
     {
       "case_kind": "all",
       "method": "A2",
       "label": "w/o longitudinal grouping",
       "n": 700,
-      "success_rate": 0.7357142857142858,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.8172368893489207,
-      "runtime_p95_ms": 61.74558254133439
+      "success_rate": 0.75,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.8304991928102785,
+      "runtime_p95_ms": 62.875555142818484
     },
     {
       "case_kind": "all",
       "method": "A3",
       "label": "w/o Top-K spatial homotopy",
       "n": 700,
-      "success_rate": 0.6271428571428571,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.746730872960074,
-      "runtime_p95_ms": 62.7848432646715
+      "success_rate": 0.6414285714285715,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.7605116434719525,
+      "runtime_p95_ms": 64.60861664818367
     },
     {
       "case_kind": "all",
       "method": "A4",
       "label": "w/o threat-aware margin",
       "n": 700,
-      "success_rate": 0.62,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.7398752952513712,
-      "runtime_p95_ms": 68.87770490720861
+      "success_rate": 0.6342857142857142,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.7529848188264229,
+      "runtime_p95_ms": 66.39156529708998
     },
     {
       "case_kind": "all",
       "method": "A5",
       "label": "w/o temporal homotopy graph",
       "n": 700,
-      "success_rate": 0.5371428571428571,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.6745585037142056,
-      "runtime_p95_ms": 77.92765803460495
+      "success_rate": 0.5414285714285715,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.6789198712424068,
+      "runtime_p95_ms": 79.07666298997343
     },
     {
       "case_kind": "all",
       "method": "A6",
       "label": "w/o robust occupancy tube",
       "n": 700,
-      "success_rate": 0.7614285714285715,
-      "collision_rate": 0.018571428571428572,
-      "progress_ratio_mean": 0.855167642819721,
-      "runtime_p95_ms": 61.24837736861082
+      "success_rate": 0.7757142857142857,
+      "collision_rate": 0.015714285714285715,
+      "progress_ratio_mean": 0.8684299462810792,
+      "runtime_p95_ms": 62.7237824621261
     },
     {
       "case_kind": "all",
       "method": "A7",
       "label": "w/o alternating refinement",
       "n": 700,
-      "success_rate": 0.7342857142857143,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.8181999987012301,
-      "runtime_p95_ms": 56.807371944887535
+      "success_rate": 0.7485714285714286,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.8314623021625879,
+      "runtime_p95_ms": 59.70174685062372
     },
     {
       "case_kind": "all",
       "method": "MIKU",
       "label": "MIKU",
       "n": 700,
-      "success_rate": 0.7385714285714285,
-      "collision_rate": 0.004285714285714286,
-      "progress_ratio_mean": 0.8212921403061786,
-      "runtime_p95_ms": 61.32153102371376
+      "success_rate": 0.7528571428571429,
+      "collision_rate": 0.0014285714285714286,
+      "progress_ratio_mean": 0.8345544437675366,
+      "runtime_p95_ms": 62.97689611819805
     }
   ],
   "paired_statistics": [
@@ -1621,14 +1621,14 @@
       "comparison": "MIKU-A1",
       "metric": "success",
       "n": 100,
-      "mean_difference": -0.05,
-      "ci_low": -0.12,
-      "ci_high": 0.02,
-      "cohen_dz": -0.13932610920384722,
-      "candidate_only": 4,
-      "reference_only": 9,
-      "discordant": 13,
-      "mcnemar_exact_p": 0.266845703125
+      "mean_difference": 0.0,
+      "ci_low": 0.0,
+      "ci_high": 0.0,
+      "cohen_dz": 0.0,
+      "candidate_only": 0,
+      "reference_only": 0,
+      "discordant": 0,
+      "mcnemar_exact_p": 1.0
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -1733,14 +1733,14 @@
       "comparison": "MIKU-A5",
       "metric": "success",
       "n": 100,
-      "mean_difference": 0.39,
-      "ci_low": 0.28,
-      "ci_high": 0.5,
-      "cohen_dz": 0.6882352941176471,
-      "candidate_only": 43,
-      "reference_only": 4,
-      "discordant": 47,
-      "mcnemar_exact_p": 2.781192165457469e-09
+      "mean_difference": 0.48,
+      "ci_low": 0.38,
+      "ci_high": 0.58,
+      "cohen_dz": 0.9559530081788299,
+      "candidate_only": 48,
+      "reference_only": 0,
+      "discordant": 48,
+      "mcnemar_exact_p": 7.105427357601002e-15
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -2125,14 +2125,14 @@
       "comparison": "MIKU-A5",
       "metric": "success",
       "n": 100,
-      "mean_difference": 0.49,
-      "ci_low": 0.37,
-      "ci_high": 0.6,
-      "cohen_dz": 0.8016254775928932,
-      "candidate_only": 55,
+      "mean_difference": 0.47,
+      "ci_low": 0.35,
+      "ci_high": 0.59,
+      "cohen_dz": 0.7697388960097729,
+      "candidate_only": 53,
       "reference_only": 6,
-      "discordant": 61,
-      "mcnemar_exact_p": 5.380614009897755e-11
+      "discordant": 59,
+      "mcnemar_exact_p": 1.7539187463500028e-10
     },
     {
       "case_kind": "delayed_crossing",
@@ -2209,14 +2209,14 @@
       "comparison": "MIKU-A1",
       "metric": "success",
       "n": 700,
-      "mean_difference": -0.008571428571428572,
-      "ci_low": -0.02,
+      "mean_difference": -0.0014285714285714286,
+      "ci_low": -0.007142857142857143,
       "ci_high": 0.002857142857142857,
-      "cohen_dz": -0.05674543170195107,
-      "candidate_only": 5,
-      "reference_only": 11,
-      "discordant": 16,
-      "mcnemar_exact_p": 0.210113525390625
+      "cohen_dz": -0.021811390267219573,
+      "candidate_only": 1,
+      "reference_only": 2,
+      "discordant": 3,
+      "mcnemar_exact_p": 1.0
     },
     {
       "case_kind": "all",
@@ -2321,14 +2321,14 @@
       "comparison": "MIKU-A5",
       "metric": "success",
       "n": 700,
-      "mean_difference": 0.20142857142857143,
-      "ci_low": 0.16857142857142857,
-      "ci_high": 0.2357142857142857,
-      "cohen_dz": 0.46247710515379986,
-      "candidate_only": 151,
-      "reference_only": 10,
-      "discordant": 161,
-      "mcnemar_exact_p": 1.7749265939716998e-33
+      "mean_difference": 0.21142857142857144,
+      "ci_low": 0.18,
+      "ci_high": 0.24428571428571427,
+      "cohen_dz": 0.4927181134848965,
+      "candidate_only": 154,
+      "reference_only": 6,
+      "discordant": 160,
+      "mcnemar_exact_p": 3.0161601998957896e-38
     },
     {
       "case_kind": "all",

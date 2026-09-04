@@ -55,7 +55,7 @@ narrow_multi_obstacle,MIKU-A6,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 narrow_multi_obstacle,MIKU-A6,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 narrow_multi_obstacle,MIKU-A7,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 narrow_multi_obstacle,MIKU-A7,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
-interleaved_dynamic,MIKU-A1,success,100,-0.05,-0.12,0.02,-0.13932610920384722,4,9,13,0.266845703125
+interleaved_dynamic,MIKU-A1,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A1,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A2,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A2,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
@@ -63,7 +63,7 @@ interleaved_dynamic,MIKU-A3,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A3,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A4,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A4,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
-interleaved_dynamic,MIKU-A5,success,100,0.39,0.28,0.5,0.6882352941176471,43,4,47,2.781192165457469e-09
+interleaved_dynamic,MIKU-A5,success,100,0.48,0.38,0.58,0.9559530081788299,48,0,48,7.105427357601002e-15
 interleaved_dynamic,MIKU-A5,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A6,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 interleaved_dynamic,MIKU-A6,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
@@ -91,13 +91,13 @@ delayed_crossing,MIKU-A3,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A3,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A4,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A4,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
-delayed_crossing,MIKU-A5,success,100,0.49,0.37,0.6,0.8016254775928932,55,6,61,5.380614009897755e-11
+delayed_crossing,MIKU-A5,success,100,0.47,0.35,0.59,0.7697388960097729,53,6,59,1.7539187463500028e-10
 delayed_crossing,MIKU-A5,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A6,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A6,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A7,success,100,0.0,0.0,0.0,0.0,0,0,0,1.0
 delayed_crossing,MIKU-A7,collision,100,0.0,0.0,0.0,0.0,0,0,0,1.0
-all,MIKU-A1,success,700,-0.008571428571428572,-0.02,0.002857142857142857,-0.05674543170195107,5,11,16,0.210113525390625
+all,MIKU-A1,success,700,-0.0014285714285714286,-0.007142857142857143,0.002857142857142857,-0.021811390267219573,1,2,3,1.0
 all,MIKU-A1,collision,700,0.0,0.0,0.0,0.0,0,0,0,1.0
 all,MIKU-A2,success,700,0.002857142857142857,0.0,0.007142857142857143,0.053490524254473516,2,0,2,0.5
 all,MIKU-A2,collision,700,0.0,0.0,0.0,0.0,0,0,0,1.0
@@ -105,7 +105,7 @@ all,MIKU-A3,success,700,0.11142857142857143,0.08857142857142856,0.13571428571428
 all,MIKU-A3,collision,700,0.0,0.0,0.0,0.0,0,0,0,1.0
 all,MIKU-A4,success,700,0.11857142857142858,0.09428571428571429,0.14285714285714285,0.3665101716875692,83,0,83,2.0679515313825692e-25
 all,MIKU-A4,collision,700,0.0,0.0,0.0,0.0,0,0,0,1.0
-all,MIKU-A5,success,700,0.20142857142857143,0.16857142857142857,0.2357142857142857,0.46247710515379986,151,10,161,1.7749265939716998e-33
+all,MIKU-A5,success,700,0.21142857142857144,0.18,0.24428571428571427,0.4927181134848965,154,6,160,3.0161601998957896e-38
 all,MIKU-A5,collision,700,0.0,0.0,0.0,0.0,0,0,0,1.0
 all,MIKU-A6,success,700,-0.022857142857142857,-0.03428571428571429,-0.012857142857142857,-0.15283453794864216,0,16,16,3.0517578125e-05
 all,MIKU-A6,collision,700,-0.014285714285714285,-0.024285714285714285,-0.005714285714285714,-0.12029983245807531,0,10,10,0.001953125

@@ -7,13 +7,13 @@ import math
 
 import numpy as np
 
-from apollo_pipeline import Obstacle, Scenario
+from apollo_pipeline import Obstacle, Scenario, path_rollout_motion_samples
 from experiment_cases import RandomCase
 from experiment_methods import MethodRun
 from joint_homotopy_search import (
     AxisAlignedMotionSample,
-    certify_sampled_axis_aligned_motion,
     validate_candidate_constant_acceleration_safety,
+    validate_candidate_continuous_safety,
 )
 
 
@@ -73,7 +73,10 @@ def _signed_clearance(
     return float(np.hypot(max(ds, 0.0), max(dl, 0.0)))
 
 
-def _safety_metrics(trajectory: Trajectory, truth: Scenario) -> tuple[float, float, int, int]:
+def _safety_metrics(
+    trajectory: Trajectory, truth: Scenario, result: dict | None = None
+) -> tuple[float, float, int, int]:
+    result = result or {}
     min_clearance = float("inf")
     min_ttc = float("inf")
     collision = 0
@@ -125,32 +128,47 @@ def _safety_metrics(trajectory: Trajectory, truth: Scenario) -> tuple[float, flo
     # rectangle check so an overlap between two QP samples cannot be missed.
     maximum_ego_speed = float(np.max(np.abs(trajectory.speed_mps)))
     for obs in truth.obstacles:
-        samples = []
-        for index, t in enumerate(trajectory.time_s):
-            obs_s, obs_l = obs.position_at(float(t))
-            samples.append(
-                AxisAlignedMotionSample(
-                    float(t),
-                    float(trajectory.longitudinal_m[index] - obs_s),
-                    float(trajectory.lateral_m[index] - obs_l),
-                    (truth.ego.L + obs.L) / 2.0,
-                    (truth.ego.W + obs.W) / 2.0,
-                    float(trajectory.speed_mps[index] - obs.vs),
-                    float(trajectory.acceleration_mps2[index]),
-                )
+        if (
+            not trajectory.fallback_stop
+            and
+            result.get("execution_interpolation_contract")
+            == "constant_acceleration_longitudinal"
+            and result.get("s_arr") is not None
+            and result.get("l_path") is not None
+        ):
+            samples = path_rollout_motion_samples(
+                trajectory.time_s,
+                trajectory.longitudinal_m,
+                trajectory.speed_mps,
+                trajectory.acceleration_mps2,
+                np.asarray(result["s_arr"], dtype=float),
+                np.asarray(result["l_path"], dtype=float),
+                obs,
+                combined_half_length=(truth.ego.L + obs.L) / 2.0,
+                combined_half_width=(truth.ego.W + obs.W) / 2.0,
             )
-        try:
             certificate = validate_candidate_constant_acceleration_safety(
                 samples,
                 relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
                 relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
             )
-        except ValueError:
-            # Concatenated rolling-horizon segments can introduce a state
-            # reset at the replan boundary.  Fall back to the sound Lipschitz
-            # certificate rather than silently treating that boundary as a
-            # quadratic segment it does not satisfy.
-            certificate = certify_sampled_axis_aligned_motion(
+        else:
+            # A rolling episode is the actual sequence of executed sampled
+            # centers from several plans.  Its adapter connects those centers
+            # linearly; it has no single underlying QP/path pair.
+            samples = []
+            for index, t in enumerate(trajectory.time_s):
+                obs_s, obs_l = obs.position_at(float(t))
+                samples.append(
+                    AxisAlignedMotionSample(
+                        float(t),
+                        float(trajectory.longitudinal_m[index] - obs_s),
+                        float(trajectory.lateral_m[index] - obs_l),
+                        (truth.ego.L + obs.L) / 2.0,
+                        (truth.ego.W + obs.W) / 2.0,
+                    )
+                )
+            certificate = validate_candidate_continuous_safety(
                 samples,
                 relative_longitudinal_speed_bound=maximum_ego_speed + abs(obs.vs),
                 relative_lateral_speed_bound=maximum_ego_speed + abs(obs.vl),
@@ -165,7 +183,7 @@ def evaluate_run(run: MethodRun, case: RandomCase) -> dict[str, object]:
     planning = case.planning_scenario
     trajectory = trajectory_from_run(run, planning)
     min_clearance, min_ttc, collision, window_violations = _safety_metrics(
-        trajectory, case.truth_scenario
+        trajectory, case.truth_scenario, run.result
     )
 
     target = case.truth_scenario.s_max - 1.0
