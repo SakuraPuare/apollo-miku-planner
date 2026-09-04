@@ -166,6 +166,17 @@ The graph cost combines deviation from nominal arrival, waiting, class switching
  \label{eq:yield}
 \end{align}
 Equation~\eqref{eq:pass} commits the ego beyond the conflict before the obstacle enters, whereas \eqref{eq:yield} keeps it behind the conflict until the obstacle exits. An intermediate window applies both bounds with respect to adjacent occupied components. Each fixed label is evaluated by the path/speed QPs and a continuous swept-rectangle certificate. Joint search returns the finite-domain minimum with an auditable $U-L$ gap; an uncertified candidate is not reported as feasible.
+To make this search prunable without weakening its certificate, let the spatial corridor at station $s_j$ be $[l_j^-,l_j^+]$ and define
+\begin{equation}
+\begin{aligned}
+d_j&=\begin{cases}0,&l_j^-\leq0\leq l_j^+,\\
+\min(|l_j^-|,|l_j^+|),&\text{otherwise,}\end{cases}
+\\
+L_h&=w_lN^{-1}\sum_{j=1}^{N}d_j^2 .
+\end{aligned}
+\label{eq:corridor-lb}
+\end{equation}
+The lateral term of every fixed-label objective is $w_lN^{-1}\sum_j l_{path}(s_j)^2$ with $l_{path}(s_j)\in[l_j^-,l_j^+]$; terminal error, acceleration, and jerk terms are non-negative. Therefore $J\geq L_h$. Temporal labels under one spatial corridor share this bound, so lazy search may prune an open item when its bound is no smaller than the incumbent while preserving the finite-domain $U-L$ certificate. If the bound is insufficient, the finite domain is still exhaustively evaluated.
 
 \begin{proposition}[Convexity preservation]
 If the original path and speed objectives are convex quadratic and their dynamics are linear, fixing $(h_l,h_t)$ leaves both subproblems convex QPs.

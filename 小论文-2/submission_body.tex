@@ -165,7 +165,14 @@ MIKU 不只保留 $g^*$ 对应的一条通行带，而是依据净宽度、参�
  \text{pass-before:}&\quad s(t_j)\ge s_i^++\varepsilon_s, &&t_j\ge b_i,\label{eq:pass}\\
  \text{yield-after:}&\quad s(t_j)\le s_i^--\varepsilon_s, &&t_j<a_i .\label{eq:yield}
 \end{align}
-式\eqref{eq:pass}要求自车在障碍进入冲突区前完成通过，式\eqref{eq:yield}要求自车在障碍离开冲突区前保持在其后方。中间安全窗同时施加前一占用的后通过上界与后一占用的先通过下界。两者共同构成双向时序走廊，避免把所有动态冲突都退化为停车让行。候选的下界取为零，固定标签的目标由终点误差、加速度、jerk 和横向偏移构成，均为非负项。惰性搜索在有限域耗尽或 incumbent 不大于所有未展开下界时返回 $U-L=0$；若设置评估预算，则仅报告可审计的 $U-L$ 间隙。连续扫掠矩形验证失败的候选被 fail-closed，不能以“QP solved”替代安全可行性。
+式\eqref{eq:pass}要求自车在障碍进入冲突区前完成通过，式\eqref{eq:yield}要求自车在障碍离开冲突区前保持在其后方。中间安全窗同时施加前一占用的后通过上界与后一占用的先通过下界。两者共同构成双向时序走廊，避免把所有动态冲突都退化为停车让行。为使联合搜索具有可验证的剪枝，令空间走廊在路径站点 $s_j$ 的横向盒为 $[l_j^-,l_j^+]$，并定义
+\begin{equation}
+ d_j=\begin{cases}0,&l_j^-\leq0\leq l_j^+,\\
+ \min(|l_j^-|,|l_j^+|),&\text{otherwise.}\end{cases}
+ \qquad L_h=w_l\frac{1}{N}\sum_{j=1}^N d_j^2 .
+ \label{eq:corridor-lb}
+\end{equation}
+固定标签目标 $J$ 的横向项为 $w_lN^{-1}\sum_j l_{path}(s_j)^2$，且 $l_{path}(s_j)\in[l_j^-,l_j^+]$，其余终点误差、加速度和 jerk 项均非负，故 $J\geq L_h$。同一空间走廊下的时间标签共享该下界，惰性搜索可在 incumbent 不小于所有未展开下界时安全剪枝并返回 $U-L$；若下界不足以剪枝，则仍完整评估有限域。连续扫掠矩形验证失败的候选被 fail-closed，不能以“QP solved”替代安全可行性。
 
 \begin{proposition}[固定同伦下的凸性保持]
 若原路径与速度目标为凸二次函数、动力学约束为线性约束，则固定 $(h_l,h_t)$ 后，MIKU 生成的空间带、式\eqref{eq:pass}与式\eqref{eq:yield}均为逐点线性盒约束，路径 QP 与速度 QP 的凸性不变。
