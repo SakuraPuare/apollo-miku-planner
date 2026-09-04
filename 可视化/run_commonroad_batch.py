@@ -87,7 +87,7 @@ def run(timeout: float = 30.0) -> dict[str, object]:
         "adapter_limitations": [
             "centerline-only lanelet route",
             "constant-velocity obstacle model with sampled-trajectory residual envelope",
-            "trajectory envelope covers supplied samples only, not inter-sample occupancy",
+            "linear center interpolation is bounded; original inter-sample occupancy is not preserved",
             "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
             "not a native CommonRoad planner benchmark",
         ],

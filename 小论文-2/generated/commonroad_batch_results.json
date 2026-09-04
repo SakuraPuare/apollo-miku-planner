@@ -4,7 +4,7 @@
   "adapter_limitations": [
     "centerline-only lanelet route",
     "constant-velocity obstacle model with sampled-trajectory residual envelope",
-    "trajectory envelope covers supplied samples only, not inter-sample occupancy",
+    "linear center interpolation is bounded; original inter-sample occupancy is not preserved",
     "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
     "not a native CommonRoad planner benchmark"
   ],
@@ -76,7 +76,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 25.535547989420593,
+      "runtime_ms": 25.099569000303745,
       "joint_status": null,
       "joint_domain_size": null,
       "joint_evaluated_candidates": null
@@ -89,7 +89,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 159.77351000765339,
+      "runtime_ms": 157.50163301709108,
       "joint_status": "infeasible",
       "joint_domain_size": 6,
       "joint_evaluated_candidates": 6
@@ -102,7 +102,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -2.1796414510385205,
-      "runtime_ms": 23.119536985177547,
+      "runtime_ms": 23.858679021941498,
       "joint_status": null,
       "joint_domain_size": null,
       "joint_evaluated_candidates": null
@@ -115,7 +115,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -2.1796414510385205,
-      "runtime_ms": 96.10760697978549,
+      "runtime_ms": 95.35377801512368,
       "joint_status": "infeasible",
       "joint_domain_size": 4,
       "joint_evaluated_candidates": 4
@@ -128,7 +128,7 @@
       "collision": 1,
       "degraded_stop": 0,
       "min_clearance_m": -0.013375396648597881,
-      "runtime_ms": 12.803190998965874,
+      "runtime_ms": 12.75823698961176,
       "joint_status": null,
       "joint_domain_size": null,
       "joint_evaluated_candidates": null
@@ -141,7 +141,7 @@
       "collision": 0,
       "degraded_stop": 1,
       "min_clearance_m": 0.5764831643374437,
-      "runtime_ms": 323.43952599330805,
+      "runtime_ms": 324.53860199893825,
       "joint_status": "infeasible",
       "joint_domain_size": 12,
       "joint_evaluated_candidates": 12
@@ -154,7 +154,7 @@
       "collision": 0,
       "degraded_stop": 0,
       "min_clearance_m": 3.3390941142769157,
-      "runtime_ms": 5.4312460124492645,
+      "runtime_ms": 5.419332010205835,
       "joint_status": null,
       "joint_domain_size": null,
       "joint_evaluated_candidates": null
@@ -167,7 +167,7 @@
       "collision": 0,
       "degraded_stop": 1,
       "min_clearance_m": 3.352282553185657,
-      "runtime_ms": 21.273001009831205,
+      "runtime_ms": 21.303193003404886,
       "joint_status": "infeasible",
       "joint_domain_size": 1,
       "joint_evaluated_candidates": 1
@@ -180,8 +180,8 @@
       "success_rate": 0.25,
       "collision_rate": 0.75,
       "degraded_stop_rate": 0.5,
-      "median_runtime_ms": 17.96136399207171,
-      "max_runtime_ms": 25.535547989420593
+      "median_runtime_ms": 18.30845800577663,
+      "max_runtime_ms": 25.099569000303745
     },
     {
       "method": "MIKU",
@@ -189,8 +189,8 @@
       "success_rate": 0.0,
       "collision_rate": 0.5,
       "degraded_stop_rate": 1.0,
-      "median_runtime_ms": 127.94055849371944,
-      "max_runtime_ms": 323.43952599330805
+      "median_runtime_ms": 126.42770551610738,
+      "max_runtime_ms": 324.53860199893825
     }
   ]
 }

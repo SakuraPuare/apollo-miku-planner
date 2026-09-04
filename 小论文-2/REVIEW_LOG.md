@@ -161,7 +161,7 @@
 ## Round 12 — 公开轨迹残差包络与外部 smoke 重跑（2026-09-05）
 
 - 受限 CommonRoad adapter 不再只读取动态障碍物初始状态；对 XML 中已提供的轨迹状态，建立首状态常速度 Frenet 模型，并用样本残差拟合非负的 affine 位置误差包络。
-- 最小 XML 回归验证横向/纵向残差进入 `Obstacle.uncertainty_*`；四场景公开 smoke 重新运行，限制元数据同步为“轨迹包络仅覆盖 supplied samples，不覆盖 inter-sample occupancy”。
+- 最小 XML 回归验证横向/纵向残差进入 `Obstacle.uncertainty_*`；四场景公开 smoke 重新运行，限制元数据同步为“线性中心插值可被包络覆盖，但不保留原始 inter-sample occupancy、姿态和规则语义”。
 - 重新生成的四场景转换诊断为 B0/MIKU 到达率 25%/0%、碰撞率 75%/50%，MIKU 中位耗时 127.9 ms、最大 323.4 ms。结果显示更保守的输入转换会触发 fail-closed，不进入主实验统计，也不冒充 CommonRoad benchmark。
 - 该修正加强了公开轨迹输入的可追溯性，但仍未关闭完整 CommonRoad occupancy/rule 语义、忠实外部竞争方法和原生 Apollo/CyberRT 证据缺口；Area-Chair 裁决保持 **Major Revision**。
 
@@ -170,3 +170,9 @@
 - 连续证书入口新增运行时校验，拒绝对象构造后被突变为负值或非有限值的障碍物预测不确定性；新增回归测试覆盖 NaN 输入。
 - 最新完整验证为 `109 passed, 20 skipped`，Ruff 与 `git diff --check` 通过；中英文 PDF 仍为 10/9 页，未重新生成论文统计数字。
 - 独立证据终审评分为正确性 3.5/5、证据 3.0/5、图表 3.0/5、复现性 3.5/5、新颖性 2.5--3.0/5，裁决仍为 **Major Revision**。外部 benchmark、忠实竞争方法、原生 Apollo/CyberRT、非平凡主实验联合域和 RA-L 六页压缩仍未完成。
+
+## Round 14 — 外部包络边界表述与产物再一致性（2026-09-05）
+
+- 将 adapter 限制从“只覆盖离散样本”细化为：在中心点线性插值假设下，残差包络覆盖样本间中心轨迹；原始 CommonRoad occupancy、姿态和规则语义仍不保留。
+- 重新生成单场景与四场景 smoke 产物，B0/MIKU 到达率仍为 25%/0%、碰撞率仍为 75%/50%，MIKU 中位耗时 126.4 ms、最大 324.5 ms；该诊断仍不进入主实验统计。
+- 该轮只修正外部边界表述与产物一致性，不改变 Area-Chair 的 **Major Revision** 裁决。
