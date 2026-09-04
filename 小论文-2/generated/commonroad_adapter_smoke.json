@@ -1,0 +1,47 @@
+{
+  "url": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/Lankershim/USA_Lanker-1_1_T-1.xml",
+  "adapter": {
+    "benchmark_id": "USA_Lanker-1_1_T-1",
+    "route_lanelet_ids": [
+      "3630",
+      "3650",
+      "3614"
+    ],
+    "source_lanelets": 95,
+    "source_dynamic_obstacles": 24,
+    "projected_obstacles": 8,
+    "skipped_obstacles": 16,
+    "maximum_projection_residual_m": 5.98618642838818,
+    "limitations": [
+      "centerline-only lanelet route",
+      "initial-state constant-velocity obstacle projection",
+      "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
+      "not a native CommonRoad planner benchmark"
+    ]
+  },
+  "methods": {
+    "B0": {
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -1.9971781055603122,
+      "runtime_ms": 24.845086998539045,
+      "joint_search_status": null,
+      "joint_search_certificate": null
+    },
+    "MIKU": {
+      "success": 0,
+      "collision": 1,
+      "degraded_stop": 1,
+      "min_clearance_m": -1.9971781055603122,
+      "runtime_ms": 297.30678600026295,
+      "joint_search_status": null,
+      "joint_search_certificate": {
+        "status": "infeasible",
+        "domain_size": 12,
+        "evaluated_candidates": 12,
+        "expanded_spatial_branches": 12
+      }
+    }
+  }
+}

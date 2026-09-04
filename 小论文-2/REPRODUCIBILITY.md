@@ -32,6 +32,7 @@ PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py --se
 PYTHONPATH=可视化 uv run python 可视化/run_joint_search_stress.py
 PYTHONPATH=可视化 uv run python 可视化/generate_submission_figures.py
 PYTHONPATH=可视化 uv run python 可视化/generate_failure_case_figure.py
+PYTHONPATH=可视化 uv run python 可视化/run_commonroad_adapter_smoke.py
 cd 小论文-2
 latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
 latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
@@ -50,6 +51,7 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex
 | 7 模块随机消融 | 700 场景 × 8 配置（5,600 次） | `run_randomized_ablation.py` | `randomized_ablation_raw.csv`, summary/paired/JSON/宏 |
 | B3 联合网格参照 | 70 场景 × 2 方法 | `run_joint_reference_experiments.py` | `joint_reference_raw.csv`, summary/paired/JSON/宏 |
 | 非平凡联合域压力诊断 | 1--5 个空间冲突层 × 3 次 | `run_joint_search_stress.py` | raw/summary/JSON/宏与 `joint_search_scaling.pdf`；显式披露零下界全枚举 |
+| CommonRoad 受限 adapter smoke | 1 个公开 Lankershim XML | `run_commonroad_adapter_smoke.py` | `commonroad_adapter_smoke.json`；公开 XML 到受限 Frenet planner 调用链，非 benchmark 性能 |
 | 滚动重规划 | 700 场景 × 2 方法 | `run_closed_loop_experiments.py` | `closed_loop_raw.csv`, summary/paired/JSON/宏；MIKU 行汇总每轮 `joint_*` 证书 |
 | 权重灵敏度 | 80 条完整轨迹 | `sensitivity_analysis.py` | `sensitivity_trajectory.csv`, JSON/宏 |
 

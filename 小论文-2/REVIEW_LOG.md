@@ -115,4 +115,5 @@
 - 新增 `generate_failure_case_figure.py`，从固定种子重放真实规划代码，生成 S-L/S-T 双视图：`delayed_crossing/9` 展示 B0 安全停车与 MIKU `pass_before` 到达，`prediction_noise/18` 展示 B0 在 $t=2.2$ s 碰撞与 MIKU 因有限域不可证而安全停车。
 - 图中红色占据带、碰撞点、方法结果、同伦标签和证书状态均由运行结果自动生成；图注明确这只是算法级仿真诊断，不冒充 Apollo/CyberRT 或实车轨迹。图源、PDF 和复现命令已接入两稿及 `FIGURE_PLAN.md`。
 - 本轮不改变算法和数据，因此不重新伪造审稿结论。对照 Round 4 的独立意见，轨迹级失败边界缺口已部分关闭，但 CommonRoad 性能 adapter、忠实外部竞争方法、原生 Apollo 证据和实际下界剪枝仍未解决。
+- 随后补充了受限 `commonroad_adapter.py` 与公开 Lankershim 的实际 adapter+planner smoke。它只覆盖中心线后继链、初始状态常速度投影和轴对齐 Frenet 矩形；8/24 个障碍物被投影、16 个被明确跳过，B0/MIKU 均可调用但该拥挤样本不可行。因此“有 adapter”不等于“有 CommonRoad benchmark 性能”，外部性能门槛仍未关闭。
 - 主代理验收：完整测试 `98 passed, 20 skipped`；Ruff、`git diff --check`、中英文 PDF 编译和图像视检通过。项目裁决仍为 **Major Revision**，Goal 保持进行中。
