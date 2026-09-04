@@ -19,3 +19,24 @@ def test_native_commonroad_audit_artifact_has_standard_entities() -> None:
         row["rectangular_obstacles"] == row["dynamic_obstacles"] for row in rows
     )
     assert all(row["predicted_trajectory_states"] > 0 for row in rows)
+
+
+def test_restricted_adapter_preserves_native_entity_counts() -> None:
+    native = {
+        row["benchmark_id"]: row
+        for row in json.loads(
+            (
+                ROOT / "小论文-2" / "generated" / "commonroad_native_audit.json"
+            ).read_text(encoding="utf-8")
+        )
+    }
+    batch = json.loads(
+        (
+            ROOT / "小论文-2" / "generated" / "commonroad_batch_results.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    for item in batch["scenarios"]:
+        reference = native[item["benchmark_id"]]
+        assert item["source_lanelets"] == reference["lanelets"]
+        assert item["source_dynamic_obstacles"] == reference["dynamic_obstacles"]

@@ -155,4 +155,5 @@
 
 - 在不改变基础依赖的前提下，使用隔离的 `uv run --with commonroad-io==2026.1` 调用官方 `CommonRoadFileReader` 解析四个公开 Lankershim XML；结果确认每个场景含 95 个 lanelet、1 个 planning problem，动态障碍物为 24--42 个，且矩形形状与预测轨迹状态均可读取。
 - 新增 `validate_commonroad_native.py`、`commonroad_native_audit.json` 和对应 schema 回归测试；文档和主张追踪表将其定义为标准化输入语义审计，不冒充 CommonRoad 规划性能 benchmark。
+- 受限 adapter 的 lanelet/动态障碍物计数与官方审计产物加入交叉断言；当前完整测试计数为 108 passed / 20 skipped。
 - 该轮加强了外部来源的可核验性，但没有关闭完整 lanelet/occupancy 规划语义、忠实外部竞争方法和原生 Apollo/CyberRT 证据缺口，Area-Chair 裁决仍为 **Major Revision**。
