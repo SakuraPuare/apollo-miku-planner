@@ -14,6 +14,7 @@ def test_native_commonroad_audit_artifact_has_standard_entities() -> None:
     assert len(rows) == 4
     assert {row["lanelets"] for row in rows} == {95}
     assert all(row["planning_problems"] == 1 for row in rows)
+    assert all(row["goal_regions"] >= row["planning_problems"] for row in rows)
     assert all(row["dynamic_obstacles"] > 0 for row in rows)
     assert all(
         row["rectangular_obstacles"] == row["dynamic_obstacles"] for row in rows

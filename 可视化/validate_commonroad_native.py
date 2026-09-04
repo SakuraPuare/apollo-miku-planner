@@ -37,6 +37,7 @@ def _parse(path: Path) -> dict[str, object]:
         ) from exc
 
     scenario, problem_set = CommonRoadFileReader(str(path)).open()
+    planning_problems = tuple(problem_set.planning_problem_dict.values())
     dynamic = tuple(scenario.dynamic_obstacles)
     static = tuple(scenario.static_obstacles)
     rectangle_count = sum(
@@ -55,10 +56,10 @@ def _parse(path: Path) -> dict[str, object]:
         "lanelets": len(scenario.lanelet_network.lanelets),
         "dynamic_obstacles": len(dynamic),
         "static_obstacles": len(static),
-        "planning_problems": len(problem_set.planning_problem_dict),
+        "planning_problems": len(planning_problems),
         "rectangular_obstacles": rectangle_count,
         "predicted_trajectory_states": predicted_states,
-        "goal_regions": len(problem_set.planning_problem_dict),
+        "goal_regions": sum(len(problem.goal.state_list) for problem in planning_problems),
     }
 
 
