@@ -3,57 +3,57 @@
   "max_spatial_layers": 5,
   "repeats": 3,
   "construction": "Two feasible lateral bands per separated static layer plus one dynamic crossing.",
-  "scope": "Complexity diagnostic. Zero lower bounds imply exhaustive evaluation; this is not a pruning claim.",
+  "scope": "Complexity diagnostic. Corridor-distance lower bounds are admissible for the certificate objective; evaluated/domain ratios quantify actual pruning.",
   "summary": [
     {
       "spatial_layers": 1,
       "spatial_homotopies": 2,
       "domain_size": 2,
-      "evaluated_candidates": 2,
-      "expanded_spatial_branches": 2,
-      "runtime_median_ms": 21.192321000853553,
-      "runtime_min_ms": 20.62629899592139,
-      "runtime_max_ms": 21.487383026396856
+      "evaluated_candidates": 1,
+      "expanded_spatial_branches": 1,
+      "runtime_median_ms": 18.254898983286694,
+      "runtime_min_ms": 18.16510400385596,
+      "runtime_max_ms": 19.131300010485575
     },
     {
       "spatial_layers": 2,
       "spatial_homotopies": 4,
       "domain_size": 5,
-      "evaluated_candidates": 5,
-      "expanded_spatial_branches": 4,
-      "runtime_median_ms": 75.50188800087199,
-      "runtime_min_ms": 75.4033990087919,
-      "runtime_max_ms": 77.84006302244961
+      "evaluated_candidates": 4,
+      "expanded_spatial_branches": 3,
+      "runtime_median_ms": 72.23475101636723,
+      "runtime_min_ms": 71.9056689995341,
+      "runtime_max_ms": 73.94894000026397
     },
     {
       "spatial_layers": 3,
       "spatial_homotopies": 8,
       "domain_size": 10,
-      "evaluated_candidates": 10,
-      "expanded_spatial_branches": 8,
-      "runtime_median_ms": 273.3837690029759,
-      "runtime_min_ms": 273.2602269970812,
-      "runtime_max_ms": 273.6961319751572
+      "evaluated_candidates": 5,
+      "expanded_spatial_branches": 4,
+      "runtime_median_ms": 201.48345999768935,
+      "runtime_min_ms": 201.24702699831687,
+      "runtime_max_ms": 204.69805799075402
     },
     {
       "spatial_layers": 4,
       "spatial_homotopies": 16,
       "domain_size": 20,
-      "evaluated_candidates": 20,
-      "expanded_spatial_branches": 16,
-      "runtime_median_ms": 778.1987870112062,
-      "runtime_min_ms": 775.1981589826755,
-      "runtime_max_ms": 778.3527669962496
+      "evaluated_candidates": 3,
+      "expanded_spatial_branches": 3,
+      "runtime_median_ms": 358.3641689911019,
+      "runtime_min_ms": 358.24682301608846,
+      "runtime_max_ms": 358.9247140043881
     },
     {
       "spatial_layers": 5,
       "spatial_homotopies": 32,
       "domain_size": 40,
-      "evaluated_candidates": 40,
-      "expanded_spatial_branches": 32,
-      "runtime_median_ms": 1545.3840720001608,
-      "runtime_min_ms": 1541.1094989976846,
-      "runtime_max_ms": 1551.044380001258
+      "evaluated_candidates": 3,
+      "expanded_spatial_branches": 3,
+      "runtime_median_ms": 600.4180430027191,
+      "runtime_min_ms": 599.0353479865007,
+      "runtime_max_ms": 606.6897290002089
     }
   ]
 }

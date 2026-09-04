@@ -43,6 +43,7 @@ class MethodSpec:
     spatial_top_k: int = 1
     require_continuous_certificate: bool = False
     certified_joint_search: bool = False
+    certificate_lateral_weight: float = 0.001
 
 
 @dataclass
@@ -155,7 +156,7 @@ def run_method(
             100.0 * goal_error**2
             + float(np.mean(a_qp**2))
             + 0.1 * jerk_energy
-            + 0.001 * float(np.mean(l_path**2))
+            + spec.certificate_lateral_weight * float(np.mean(l_path**2))
         )
 
     def plan_pipeline_once(
@@ -211,20 +212,38 @@ def run_method(
         seed = solve(0, 0)
         spatial_count = max(1, int(seed.get("spatial_homotopy_candidate_count", 0)))
 
+        def corridor_lower_bound(candidate: dict) -> float:
+            """Admissible bound from the squared distance of the corridor to l=0."""
+            lower = np.asarray(candidate.get("l_min"), dtype=float)
+            upper = np.asarray(candidate.get("l_max"), dtype=float)
+            if lower.shape != upper.shape or lower.ndim != 1 or len(lower) == 0:
+                return 0.0
+            nearest = np.where(
+                (lower <= 0.0) & (upper >= 0.0),
+                0.0,
+                np.minimum(np.abs(lower), np.abs(upper)),
+            )
+            return float(spec.certificate_lateral_weight * np.mean(nearest**2))
+
         def make_branch(spatial_rank: int) -> SpatialHomotopyBranch[tuple[int, int]]:
+            first = solve(spatial_rank, 0)
+            branch_lower_bound = corridor_lower_bound(first)
+
             def expand() -> tuple[JointHomotopyCandidate[tuple[int, int]], ...]:
-                first = solve(spatial_rank, 0)
                 temporal_count = max(
                     1, int(first.get("temporal_homotopy_candidate_count", 0))
                 )
                 return tuple(
                     JointHomotopyCandidate(
-                        (spatial_rank,), (temporal_rank,), 0.0, (spatial_rank, temporal_rank)
+                        (spatial_rank,),
+                        (temporal_rank,),
+                        branch_lower_bound,
+                        (spatial_rank, temporal_rank),
                     )
                     for temporal_rank in range(temporal_count)
                 )
 
-            return SpatialHomotopyBranch((spatial_rank,), 0.0, expand)
+            return SpatialHomotopyBranch((spatial_rank,), branch_lower_bound, expand)
 
         def evaluate(
             joint: JointHomotopyCandidate[tuple[int, int]],

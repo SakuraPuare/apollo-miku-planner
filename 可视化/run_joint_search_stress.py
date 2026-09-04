@@ -107,7 +107,7 @@ def _plot(summary: list[dict[str, object]], output: Path) -> None:
         frameon=False,
         loc="upper left",
     )
-    left.set_title("Certified search scaling with zero lower bounds", loc="left")
+    left.set_title("Certified search scaling with lateral lower bounds", loc="left")
 
     figure.savefig(
         output / "joint_search_scaling.pdf",
@@ -128,6 +128,7 @@ def run(max_layers: int, repeats: int, output: Path) -> None:
         label="MIKU certified stress",
         iterative=False,
         refine_on_demand=False,
+        certificate_lateral_weight=1.0,
     )
     raw: list[dict[str, object]] = []
     for layers in range(1, max_layers + 1):
@@ -193,7 +194,7 @@ def run(max_layers: int, repeats: int, output: Path) -> None:
         "max_spatial_layers": max_layers,
         "repeats": repeats,
         "construction": "Two feasible lateral bands per separated static layer plus one dynamic crossing.",
-        "scope": "Complexity diagnostic. Zero lower bounds imply exhaustive evaluation; this is not a pruning claim.",
+        "scope": "Complexity diagnostic. Corridor-distance lower bounds are admissible for the certificate objective; evaluated/domain ratios quantify actual pruning.",
         "summary": summary,
     }
     (output / "joint_search_stress_results.json").write_text(

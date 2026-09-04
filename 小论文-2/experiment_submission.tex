@@ -131,11 +131,11 @@ B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.62\textwidth]{generated/joint_search_scaling.pdf}
-\caption{非平凡有限联合域的规模诊断。每层含两个可行空间带，并叠加一个动态横穿。候选域与 QP 评估数重合，说明当前零下界不产生剪枝。}
+\caption{非平凡有限联合域的规模诊断。每层含两个可行空间带，并叠加一个动态横穿。走廊到零线的平方距离提供可采纳下界，候选域与 QP 评估数的差异直接显示实际剪枝。}
 \label{fig:joint-stress}
 \end{figure}
 
-图~\ref{fig:joint-stress} 将相互分离的空间冲突层从 1 增至 \StressMaxLayers。最大实例含 \StressSpatialCount 个空间同伦与 \StressDomainSize 个联合候选，搜索执行 \StressEvaluatedCount 次 QP 验收，三次重复的中位完整耗时为 \StressRuntimeMedian\,ms。该压力协议证明实现能枚举并证书化多分支域，也同时量化了零下界下的指数最坏代价，不作剪枝优势主张。
+图~\ref{fig:joint-stress} 将相互分离的空间冲突层从 1 增至 \StressMaxLayers。最大实例含 \StressSpatialCount 个空间同伦与 \StressDomainSize 个联合候选，搜索仅执行 \StressEvaluatedCount 次 QP 验收，三次重复的中位完整耗时为 \StressRuntimeMedian\,ms。该压力协议同时证明有限域证书和走廊距离下界的实际剪枝；最坏复杂度仍随联合域指数增长，因此不作无条件实时性主张。
 
 \subsection{灵敏度与适用范围}
 

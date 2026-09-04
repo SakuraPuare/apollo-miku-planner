@@ -323,11 +323,11 @@ The B3 reference jointly searches $(t,s,l,v,\dot l)$ on a coarse grid. It is a d
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{generated/joint_search_scaling.pdf}
-\caption{Finite-domain stress diagnostic with two feasible bands per separated spatial layer and one dynamic crossing. Domain size equals QP evaluations because the present zero lower bound gives no pruning.}
+\caption{Finite-domain stress diagnostic with two feasible bands per separated spatial layer and one dynamic crossing. The squared distance of each corridor to $l=0$ supplies an admissible lower bound; the domain/evaluation gap exposes actual pruning.}
 \label{fig:joint-stress}
 \end{figure}
 
-Increasing the separated spatial-conflict layers from one to \StressMaxLayers{} produces \StressSpatialCount{} spatial homotopies and \StressDomainSize{} joint labels in the largest instance (Fig.~\ref{fig:joint-stress}). The search performs \StressEvaluatedCount{} QP validations and takes a median \StressRuntimeMedian\,ms over three repeats. This verifies multi-branch enumeration and its certificate while quantifying, rather than concealing, the exponential worst case under the current zero bound.
+Increasing the separated spatial-conflict layers from one to \StressMaxLayers{} produces \StressSpatialCount{} spatial homotopies and \StressDomainSize{} joint labels in the largest instance (Fig.~\ref{fig:joint-stress}). The search performs only \StressEvaluatedCount{} QP validations and takes a median \StressRuntimeMedian\,ms over three repeats. This verifies multi-branch enumeration, an admissible corridor-distance bound, and actual pruning while retaining an explicit exponential worst-case caveat.
 
 \begin{table}[t]
 \caption{Receding-Horizon and Joint-Grid Protocols}

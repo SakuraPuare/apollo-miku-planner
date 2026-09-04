@@ -35,8 +35,8 @@
       "progress_ratio_mean": 0.8255343764534869,
       "penalized_travel_time_mean_s": 12.092714285714289,
       "planning_cycles_mean": 20.554285714285715,
-      "episode_runtime_p50_ms": 186.75511887704488,
-      "episode_runtime_p95_ms": 1235.1390505471493
+      "episode_runtime_p50_ms": 185.5928514705738,
+      "episode_runtime_p95_ms": 1231.841368811728
     },
     {
       "method": "MIKU",
@@ -48,8 +48,8 @@
       "progress_ratio_mean": 0.8898285710035068,
       "penalized_travel_time_mean_s": 11.450714285714286,
       "planning_cycles_mean": 20.147142857142857,
-      "episode_runtime_p50_ms": 239.59259649564046,
-      "episode_runtime_p95_ms": 1407.2160599142073
+      "episode_runtime_p50_ms": 238.44977248518262,
+      "episode_runtime_p95_ms": 1389.6267296120627
     }
   ],
   "paired_statistics": [
