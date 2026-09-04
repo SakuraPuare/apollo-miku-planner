@@ -1799,6 +1799,19 @@ def validate_pipeline_candidate_continuous_safety(
     maximum_time = float(ts[-1])
     certificates = {}
     for obstacle_index, obstacle in enumerate(scn.obstacles):
+        uncertainty_values = (
+            obstacle.uncertainty_s0,
+            obstacle.uncertainty_l0,
+            obstacle.uncertainty_vs,
+            obstacle.uncertainty_vl,
+        )
+        if not all(
+            math.isfinite(float(value)) and float(value) >= 0.0
+            for value in uncertainty_values
+        ):
+            raise ValueError(
+                "obstacle prediction uncertainty radii must be finite and non-negative"
+            )
         if robust_prediction and not obstacle.is_static:
             longitudinal_uncertainty = (
                 obstacle.uncertainty_s0 + obstacle.uncertainty_vs * maximum_time

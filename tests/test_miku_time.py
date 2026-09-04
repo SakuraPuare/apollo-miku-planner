@@ -313,3 +313,19 @@ def test_pipeline_candidate_exposes_continuous_safety_validation() -> None:
         scenario, linear_result
     )
     assert linear_certificates[obstacle.name].certified
+
+
+def test_pipeline_certificate_rejects_mutated_prediction_uncertainty() -> None:
+    obstacle = Obstacle(
+        s0=10.0,
+        l0=5.0,
+        W=0.5,
+        L=1.0,
+        name="mutated uncertainty",
+    )
+    scenario = Scenario(Ego(v0=3.0), [obstacle], s_max=15.0, t_max=5.0)
+    result = run_pipeline("miku", scenario)
+    obstacle.uncertainty_vs = float("nan")
+
+    with pytest.raises(ValueError, match="uncertainty radii"):
+        validate_pipeline_candidate_continuous_safety(scenario, result)
