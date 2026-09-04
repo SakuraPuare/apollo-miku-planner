@@ -25,7 +25,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 24.845086998539045,
+      "runtime_ms": 24.877788993762806,
       "joint_search_status": null,
       "joint_search_certificate": null
     },
@@ -34,7 +34,7 @@
       "collision": 1,
       "degraded_stop": 1,
       "min_clearance_m": -1.9971781055603122,
-      "runtime_ms": 297.30678600026295,
+      "runtime_ms": 297.8221809898969,
       "joint_search_status": null,
       "joint_search_certificate": {
         "status": "infeasible",
