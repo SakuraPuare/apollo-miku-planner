@@ -32,7 +32,7 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 
 表~\ref{tab:overall}表明，MIKU 的无碰撞到达率达到 \RandAllMikuSuccessPct\%，B0、B1 和 B2 分别为 \RandAllBZeroSuccessPct\%、\RandAllBOneSuccessPct\% 和 \RandAllBTwoSuccessPct\%。相对 B0，MIKU 的配对提升为 \RandAllMikuVsBZeroSuccessDiff 个百分点，95\% CI [\RandAllMikuVsBZeroSuccessCiLow,\RandAllMikuVsBZeroSuccessCiHigh]，精确 McNemar $p=\RandAllMikuVsBZeroSuccessMcNemarP$。这意味着提升来自大量相同场景上的结果翻转，而非不同难度样本的非配对均值差。
 
-安全性方面，MIKU 碰撞率为 \RandAllMikuCollisionPct\%，B0 为 \RandAllBZeroCollisionPct\%，配对差为 \RandAllMikuVsBZeroCollisionDiff 个百分点，95\% CI [\RandAllMikuVsBZeroCollisionCiLow,\RandAllMikuVsBZeroCollisionCiHigh]，McNemar $p=\RandAllMikuVsBZeroCollisionMcNemarP$。因此，通行率提升没有以增加碰撞为代价；鲁棒占据使总体碰撞率同步下降。MIKU 完整周期 P95 为 \RandAllMikuRuntimePninetyfive\,ms，保持在线规划所需的毫秒至百毫秒内求解量级，并显著低于多轮 B2 的 \RandAllBTwoRuntimePninetyfive\,ms。
+安全性方面，MIKU 碰撞率为 \RandAllMikuCollisionPct\%，B0 为 \RandAllBZeroCollisionPct\%，配对差为 \RandAllMikuVsBZeroCollisionDiff 个百分点，95\% CI [\RandAllMikuVsBZeroCollisionCiLow,\RandAllMikuVsBZeroCollisionCiHigh]，McNemar $p=\RandAllMikuVsBZeroCollisionMcNemarP$。总体通行率提升没有以增加碰撞为代价；但预测含噪子集以更高降级停止换取零碰撞，不能概括为单向收益。MIKU 完整周期 P95 为 \RandAllMikuRuntimePninetyfive\,ms。
 
 \begin{figure}[htbp]
 \centering
@@ -65,7 +65,7 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 \end{adjustbox}
 \end{table}
 
-MIKU 在窄路多障碍中提升 \RandNarrowMikuVsBZeroSuccessDiff 个百分点，说明连续分割与差异化裕度能够恢复被贪心边界压缩的空间通道；在延迟横穿中提升 \RandDelayedMikuVsBZeroSuccessDiff 个百分点，体现了先通过/后通过双向 ST 同伦对通行时机的表达能力。预测含噪场景的到达率提升为 \RandNoiseMikuVsBZeroSuccessDiff 个百分点，其碰撞率配对差为 \RandNoiseMikuVsBZeroCollisionDiff 个百分点，验证了鲁棒占据管的安全作用。行人横穿和多动态交织两类已接近饱和，MIKU 与 B0 保持相当成功率。
+MIKU 在窄路多障碍中提升 \RandNarrowMikuVsBZeroSuccessDiff 个百分点，在延迟横穿中提升 \RandDelayedMikuVsBZeroSuccessDiff 个百分点。预测含噪场景到达率变化为 \RandNoiseMikuVsBZeroSuccessDiff 个百分点（下降），碰撞率配对差为 \RandNoiseMikuVsBZeroCollisionDiff 个百分点（下降），并伴随高降级停止率，体现安全--可达性权衡。
 
 \subsection{大规模随机消融}
 
@@ -94,11 +94,11 @@ A7 无交替细化 & \AblASevenSuccessPct & \AblASevenCollisionPct & \AblMikuVsA
 \end{adjustbox}
 \end{table}
 
-Top-K 空间同伦和威胁相关裕度分别贡献 \AblMikuVsAThreeSuccessDiff 与 \AblMikuVsAFourSuccessDiff 个百分点，是恢复窄路空间可行性的主要来源；时间同伦图贡献 \AblMikuVsAFiveSuccessDiff 个百分点，表明动态冲突需要显式的通行次序。关闭鲁棒占据后碰撞率从 \AblMikuCollisionPct\% 增至 \AblASixCollisionPct\%，完整方法的碰撞率配对差为 \AblMikuVsASixCollisionDiff 个百分点（$p=\AblMikuVsASixCollisionMcNemarP$），直接验证了不确定性管的安全收益。交替细化带来 \AblMikuVsASevenSuccessDiff 个百分点增益，而 A1 差异未达显著，说明二阶到达时间主要提供首轮初始化，最终性能来自同伦搜索、QP 验证和反馈细化的共同作用。
+各组件消融均按配对差报告，不预设每项都带来正收益。A6 同时关闭路径/ST 鲁棒膨胀与候选证书中的鲁棒误差管，其碰撞差为 \AblMikuVsASixCollisionDiff 个百分点（$p=\AblMikuVsASixCollisionMcNemarP$）；置信区间跨零的效果视为不确定。A7 的小幅变化不作显著性外推。
 
 \subsection{滚动规划与联合参照}
 
-滚动实验以 0.5\,s 为执行步长循环“规划--执行--更新预测”，每类 100 个种子，共 \ClosedCaseCount 个场景。MIKU 到达率为 \ClosedMikuSuccessPct\%，B0 为 \ClosedBZeroSuccessPct\%，配对提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，95\% CI [\ClosedMikuVsBZeroSuccessCiLow,\ClosedMikuVsBZeroSuccessCiHigh]，McNemar $p=\ClosedMikuVsBZeroSuccessMcNemarP$。两者碰撞率均为 \ClosedMikuCollisionPct\%。这说明语义同伦保持和先行承诺能够把单周期收益延续到连续重规划，同时没有增加碰撞。表~\ref{tab:closed-joint}中的滚动 P95 是每个场景约 20 个规划周期的累计墙钟时间，并非单周期延迟。
+滚动实验以 0.5\,s 为执行步长循环“规划--执行--更新预测”，每类 100 个种子，共 \ClosedCaseCount 个场景。MIKU 到达率为 \ClosedMikuSuccessPct\%，B0 为 \ClosedBZeroSuccessPct\%，配对提升 \ClosedMikuVsBZeroSuccessDiff 个百分点，95\% CI [\ClosedMikuVsBZeroSuccessCiLow,\ClosedMikuVsBZeroSuccessCiHigh]，McNemar $p=\ClosedMikuVsBZeroSuccessMcNemarP$。MIKU/B0 碰撞率分别为 \ClosedMikuCollisionPct\%/\ClosedBZeroCollisionPct\%，配对差不显著（$p=0.34375$）。
 
 B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用相同的威胁相关裕度和鲁棒预测管。它不使用路径--速度顺序 QP，因此用于检验解耦方法与联合候选搜索的质量--开销关系，而不是作为连续全局最优上界。
 
@@ -119,7 +119,7 @@ B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用
 \end{tabular}
 \end{table}
 
-联合参照中，MIKU 与 B3 的到达率差为 \JointMikuVsBThreeSuccessDiff 个百分点，95\% CI [\JointMikuVsBThreeSuccessCiLow,\JointMikuVsBThreeSuccessCiHigh]，McNemar $p=\JointMikuVsBThreeSuccessMcNemarP$；两者在当前样本中的到达率无显著差异。B3 的 P95 为 \JointBThreeRuntimePninetyfive\,ms，MIKU 为 \JointMikuRuntimePninetyfive\,ms。该对照显示，MIKU 以两个凸 QP 和有限同伦候选取得了与联合网格参照相当的可达性，同时将计算开销降低两个数量级。B3 在成功样本上的通行效率更高，说明联合搜索在时间最优性上仍有优势。
+联合参照中，MIKU 与 B3 的到达率差为 \JointMikuVsBThreeSuccessDiff 个百分点，95\% CI [\JointMikuVsBThreeSuccessCiLow,\JointMikuVsBThreeSuccessCiHigh]，McNemar $p=\JointMikuVsBThreeSuccessMcNemarP$；该差异显著。由于 B3 使用不同粗网格和碰撞检查器，本结果仅作诊断，不宣称质量或计算优势。
 
 \subsection{灵敏度与适用范围}
 
