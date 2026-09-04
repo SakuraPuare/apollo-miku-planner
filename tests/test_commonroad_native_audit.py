@@ -41,3 +41,5 @@ def test_restricted_adapter_preserves_native_entity_counts() -> None:
         reference = native[item["benchmark_id"]]
         assert item["source_lanelets"] == reference["lanelets"]
         assert item["source_dynamic_obstacles"] == reference["dynamic_obstacles"]
+        assert 0 < item["trajectory_states_used"]
+        assert item["trajectory_states_used"] <= reference["predicted_trajectory_states"]
