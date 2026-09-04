@@ -178,6 +178,13 @@ L_h&=w_lN^{-1}\sum_{j=1}^{N}d_j^2 .
 \end{equation}
 The lateral term of every fixed-label objective is $w_lN^{-1}\sum_j l_{path}(s_j)^2$ with $l_{path}(s_j)\in[l_j^-,l_j^+]$; terminal error, acceleration, and jerk terms are non-negative. Therefore $J\geq L_h$. Temporal labels under one spatial corridor share this bound, so lazy search may prune an open item when its bound is no smaller than the incumbent while preserving the finite-domain $U-L$ certificate. If the bound is insufficient, the finite domain is still exhaustively evaluated.
 
+\begin{proposition}[Admissibility of the corridor lower bound]
+If a fixed-label path satisfies $l_{path}(s_j)\in[l_j^-,l_j^+]$ and $w_l\geq0$, then the $L_h$ in \eqref{eq:corridor-lb} does not exceed the complete fixed-label objective $J$. Using $L_h$ for a spatial branch and all of its temporal children therefore cannot prune the finite-domain optimal feasible label.
+\end{proposition}
+\begin{proof}
+The minimum absolute distance from zero to $[l_j^-,l_j^+]$ is $d_j$, hence $l_{path}(s_j)^2\geq d_j^2$. Nonnegative weighting and averaging give a lateral cost no smaller than $L_h$; terminal error, acceleration, and jerk terms are also non-negative, so $J\geq L_h$. Temporal labels under one spatial branch do not change the lateral intervals and share this bound. Pruning only occurs when the bound is no smaller than the incumbent, which preserves the finite-domain optimum.
+\end{proof}
+
 \begin{proposition}[Convexity preservation]
 If the original path and speed objectives are convex quadratic and their dynamics are linear, fixing $(h_l,h_t)$ leaves both subproblems convex QPs.
 \end{proposition}

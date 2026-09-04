@@ -2,8 +2,28 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from experiment_methods import method_by_key, run_method
+import pytest
+
+from experiment_methods import (
+    corridor_lateral_lower_bound,
+    method_by_key,
+    run_method,
+)
 from run_joint_search_stress import build_stress_scenario
+
+
+def test_corridor_lateral_lower_bound_is_zero_only_when_centerline_is_reachable() -> None:
+    assert corridor_lateral_lower_bound(
+        {"l_min": [-2.0, -0.5], "l_max": [1.0, 0.5]}, 2.0
+    ) == pytest.approx(0.0)
+    assert corridor_lateral_lower_bound(
+        {"l_min": [1.0, -3.0], "l_max": [2.0, -2.0]}, 2.0
+    ) == pytest.approx(5.0)
+
+
+def test_corridor_lateral_lower_bound_rejects_invalid_weight() -> None:
+    with pytest.raises(ValueError, match="finite and non-negative"):
+        corridor_lateral_lower_bound({"l_min": [1.0], "l_max": [2.0]}, -1.0)
 
 
 def test_stress_scenario_exercises_nontrivial_joint_domain() -> None:

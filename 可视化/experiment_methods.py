@@ -55,6 +55,23 @@ class MethodRun:
     converged: bool
 
 
+def corridor_lateral_lower_bound(candidate: dict, weight: float) -> float:
+    """Return the admissible lateral-cost lower bound for one corridor."""
+    weight = float(weight)
+    if not np.isfinite(weight) or weight < 0.0:
+        raise ValueError("certificate lateral weight must be finite and non-negative")
+    lower = np.asarray(candidate.get("l_min"), dtype=float)
+    upper = np.asarray(candidate.get("l_max"), dtype=float)
+    if lower.shape != upper.shape or lower.ndim != 1 or len(lower) == 0:
+        return 0.0
+    nearest = np.where(
+        (lower <= 0.0) & (upper >= 0.0),
+        0.0,
+        np.minimum(np.abs(lower), np.abs(upper)),
+    )
+    return float(weight * np.mean(nearest**2))
+
+
 METHODS: tuple[MethodSpec, ...] = (
     MethodSpec("B0", "B0-TimeBlind", AblationFlags.baseline()),
     MethodSpec(
@@ -212,22 +229,11 @@ def run_method(
         seed = solve(0, 0)
         spatial_count = max(1, int(seed.get("spatial_homotopy_candidate_count", 0)))
 
-        def corridor_lower_bound(candidate: dict) -> float:
-            """Admissible bound from the squared distance of the corridor to l=0."""
-            lower = np.asarray(candidate.get("l_min"), dtype=float)
-            upper = np.asarray(candidate.get("l_max"), dtype=float)
-            if lower.shape != upper.shape or lower.ndim != 1 or len(lower) == 0:
-                return 0.0
-            nearest = np.where(
-                (lower <= 0.0) & (upper >= 0.0),
-                0.0,
-                np.minimum(np.abs(lower), np.abs(upper)),
-            )
-            return float(spec.certificate_lateral_weight * np.mean(nearest**2))
-
         def make_branch(spatial_rank: int) -> SpatialHomotopyBranch[tuple[int, int]]:
             first = solve(spatial_rank, 0)
-            branch_lower_bound = corridor_lower_bound(first)
+            branch_lower_bound = corridor_lateral_lower_bound(
+                first, spec.certificate_lateral_weight
+            )
 
             def expand() -> tuple[JointHomotopyCandidate[tuple[int, int]], ...]:
                 temporal_count = max(
