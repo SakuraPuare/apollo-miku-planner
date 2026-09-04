@@ -13,7 +13,7 @@
 | 分族成功率 + 95% CI | 总体提升是否由单一族驱动？ | `paired_statistics.csv` 分层 bootstrap | 窄路驱动主要收益，切入/含噪存在负效应 | 四联证据图(a)；已生成并接入两稿 |
 | 运行时间 ECDF | P95 是否被少量尾部掩盖？ | `randomized_raw.csv` 每次运行 runtime 列 | B2 的完整分布显示更长尾部 | 四联证据图(b)；已生成并接入两稿 |
 | 消融效应 forest plot | 模块是否有独立作用？ | `randomized_ablation_paired.csv` | 点估计与 CI 显示 A1/A2/A7 近零及 A6 负效应 | 四联证据图(c)；已生成并接入两稿 |
-| 失败构成/连续安全 | 何时失效，降级是否安全？ | `randomized_raw.csv` 的成功、碰撞和安全未到达 | 含噪场景以安全未到达为主，不隐藏降级代价 | 四联证据图(d)已接入；轨迹级失败边界图仍待生成 |
+| 失败构成/连续安全 | 何时失效，降级是否安全？ | `generate_failure_case_figure.py` 重放 `delayed_crossing/9` 与 `prediction_noise/18` | 延迟横穿展示 `pass_before` 可达性；含噪样本展示碰撞与 fail-closed 停车的边界 | `generated/failure_case_qualitative.pdf` 已生成并接入；明确为算法级仿真诊断 |
 
 ## 视觉验收
 

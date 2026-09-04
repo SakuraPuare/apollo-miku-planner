@@ -31,6 +31,7 @@ PYTHONPATH=可视化 uv run python 可视化/run_joint_reference_experiments.py 
 PYTHONPATH=可视化 uv run python 可视化/run_closed_loop_experiments.py --seeds 100
 PYTHONPATH=可视化 uv run python 可视化/run_joint_search_stress.py
 PYTHONPATH=可视化 uv run python 可视化/generate_submission_figures.py
+PYTHONPATH=可视化 uv run python 可视化/generate_failure_case_figure.py
 cd 小论文-2
 latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex
 latexmk -pdf -interaction=nonstopmode -halt-on-error main_ieee.tex

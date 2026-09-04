@@ -109,3 +109,10 @@
 ## Round 2 — 修改后复审门槛
 
 复审必须由两位审稿人重新读取修改后的代码、实验产物和中英文稿，逐项回答：创新性是否脱离 Esterle 等先行工作、证书是否与实现一致、连续安全是否有有效条件、外部场景与平台证据是否真实、图表是否覆盖失败边界。任一项仍为致命问题，裁判结论保持 Major Revision。
+
+## Round 5 — 轨迹级证据补强后的主代理验收（2026-09-05）
+
+- 新增 `generate_failure_case_figure.py`，从固定种子重放真实规划代码，生成 S-L/S-T 双视图：`delayed_crossing/9` 展示 B0 安全停车与 MIKU `pass_before` 到达，`prediction_noise/18` 展示 B0 在 $t=2.2$ s 碰撞与 MIKU 因有限域不可证而安全停车。
+- 图中红色占据带、碰撞点、方法结果、同伦标签和证书状态均由运行结果自动生成；图注明确这只是算法级仿真诊断，不冒充 Apollo/CyberRT 或实车轨迹。图源、PDF 和复现命令已接入两稿及 `FIGURE_PLAN.md`。
+- 本轮不改变算法和数据，因此不重新伪造审稿结论。对照 Round 4 的独立意见，轨迹级失败边界缺口已部分关闭，但 CommonRoad 性能 adapter、忠实外部竞争方法、原生 Apollo 证据和实际下界剪枝仍未解决。
+- 主代理验收：完整测试 `98 passed, 20 skipped`；Ruff、`git diff --check`、中英文 PDF 编译和图像视检通过。项目裁决仍为 **Major Revision**，Goal 保持进行中。

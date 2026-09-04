@@ -67,6 +67,13 @@ MIKU & \RandAllMikuSuccessPct & \RandAllMikuCollisionPct & \RandAllMikuStopPct &
 
 如图~\ref{fig:evidence-dashboard}(a,d) 所示，MIKU 在窄路多障碍中提升 \RandNarrowMikuVsBZeroSuccessDiff 个百分点，在延迟横穿中提升 \RandDelayedMikuVsBZeroSuccessDiff 个百分点。预测含噪场景到达率变化为 \RandNoiseMikuVsBZeroSuccessDiff 个百分点（下降），碰撞率配对差为 \RandNoiseMikuVsBZeroCollisionDiff 个百分点（下降），并伴随高降级停止率，体现安全--可达性权衡。图~\ref{fig:evidence-dashboard}(b,c) 同时披露 B2 的长耗时尾部以及 A1/A2/A7 的接近零效应，避免用单一总体柱图隐藏边界。
 
+\begin{figure}[htbp]
+\centering
+\includegraphics[width=0.98\textwidth]{generated/failure_case_qualitative.pdf}
+\caption{由固定种子和同一规划代码生成的轨迹级边界诊断。上行延迟横穿样本中，B0 停车而 MIKU 选择 \texttt{pass\_before} 时窗并到达；下行预测含噪样本中，B0 在 $t=2.2$\,s 碰撞，而 MIKU 因有限域不可证而安全停车。红色带为真值障碍物占据，图例同时报告结果、同伦标签和证书状态。该图是算法级仿真诊断，不是实车或 Apollo/CyberRT 轨迹。}
+\label{fig:failure-qualitative}
+\end{figure}
+
 \subsection{大规模随机消融}
 
 为避免只在少数手工构型中解释模块作用，消融实验复用主实验相同的 7 类、\RandCaseCount 个种子配对，分别关闭：A1 到达时间初始化投影，A2 障碍物分组，A3 Top-K 连续空间同伦，A4 威胁相关裕度，A5 时间同伦图，A6 鲁棒占据管，A7 交替细化。表~\ref{tab:ablation}中的差值均定义为完整 MIKU 减对应消融版本。

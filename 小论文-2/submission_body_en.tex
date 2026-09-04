@@ -280,6 +280,13 @@ Delayed crossing & \RandDelayedBZeroSuccessPct & \RandDelayedMikuSuccessPct & \R
 
 Figure~\ref{fig:evidence-dashboard}(a,d) shows that the largest spatial gain occurs in narrow multi-obstacle passages: \RandNarrowMikuVsBZeroSuccessDiff{} points. Delayed crossing improves by \RandDelayedMikuVsBZeroSuccessDiff{} points. Under prediction noise, collision changes by \RandNoiseMikuVsBZeroCollisionDiff{} points, but success changes by \RandNoiseMikuVsBZeroSuccessDiff{} points (a decrease) because fail-closed validation turns uncertain cases into stops. This is a safety--reachability trade-off, not a robustness success gain; cut-in also shows a small success regression. Panels (b,c) disclose B2's long latency tail and the near-zero A1/A2/A7 effects instead of hiding them behind aggregate bars.
 
+\begin{figure*}[t]
+\centering
+\includegraphics[width=0.92\textwidth]{generated/failure_case_qualitative.pdf}
+\caption{Trajectory-level boundary diagnostics generated from fixed seeds and the same planning code. In the delayed-crossing case (top), B0 stops while MIKU selects a \texttt{pass\_before} window and reaches the goal. Under prediction noise (bottom), B0 collides at $t=2.2$\,s whereas MIKU fails closed and stops because no finite-domain candidate is certifiable. Red bands show truth obstacle occupancy; legends report outcomes, homotopy labels, and certificate status. These are algorithm-level simulation diagnostics, not real Apollo/CyberRT trajectories.}
+\label{fig:failure-qualitative}
+\end{figure*}
+
 \subsection{Large-Scale Paired Ablation}
 
 Each ablation uses the same seven families and \RandCaseCount{} paired seeds. A1 removes arrival-time initialization, A2 grouping, A3 K-best spatial homotopy, A4 threat-adaptive margins, A5 the temporal graph, A6 robust occupancy, and A7 alternating refinement. Differences in Table~\ref{tab:ablation} are full MIKU minus the ablation.
