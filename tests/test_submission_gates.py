@@ -22,3 +22,17 @@ def test_submission_gate_audit_is_conservative() -> None:
     assert "commonroad_full_benchmark" in report["blockers"]
     assert "native_apollo_cyberrt" in report["blockers"]
     assert "ral_page_limit" in report["blockers"]
+
+
+def test_submission_papers_do_not_expose_internal_verifier_terms() -> None:
+    paper_paths = [
+        "小论文/main.tex",
+        "小论文-2/main.tex",
+        "小论文-2/experiment_submission.tex",
+        "小论文-2/submission_body.tex",
+        "小论文-2/submission_body_en.tex",
+    ]
+    forbidden = ("lean", "mathlib", "proof artifact", "机器检查")
+    for path in paper_paths:
+        text = open(path, encoding="utf-8").read().lower()
+        assert not any(term in text for term in forbidden), path
