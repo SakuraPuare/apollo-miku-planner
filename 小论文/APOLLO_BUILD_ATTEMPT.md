@@ -61,3 +61,43 @@ The same missing-header failure was reproduced with `--config=opt` after a
 fresh analysis.  Older `k8-opt` shared objects found in the local Bazel cache
 were not treated as evidence because their producing action, dependency
 snapshot, and source commit could not be reconstructed from the current run.
+
+## Dependency-repaired build
+
+The AEM image's Apollo package index provides the missing dependency as
+`bvar=9.0.0-rc-r2` (package SHA-256
+`e030e72f3d2c03ba71d621bf895aa1ecc3d35798598b10d00df25ece70cd674f`).  It was
+installed only inside the disposable `apollo_neo_dev_11.0.0_pkg` container.  The
+package installs `/usr/local/include/third_party/var` and `/usr/local/lib/libbvar.so`.
+
+With that package and the explicit Apollo package-library search paths, the
+modified corridor library and the full Planning component both built
+successfully:
+
+```text
+bazel --bazelrc=/dev/null build --config=opt \
+  //modules/planning/tasks/speed_bounds_decider:multi_obstacle_corridor \
+  --cxxopt=-I/usr/local/include --linkopt=-L/usr/local/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-boost/latest/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-libtorch-gpu/latest/lib/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-libtorch-cpu/latest/lib/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-opencv/latest/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-osqp/latest/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-fastrtps/latest/lib \
+  --linkopt=-L/opt/apollo/neo/packages/3rd-proj/latest/lib
+
+bazel --bazelrc=/dev/null build --config=opt \
+  //modules/planning/planning_component:libplanning_component.so \
+  [same cxxopt/linkopt arguments]
+```
+
+Resulting artifacts (source commit `57460908954e3188f640a813d26180e862d62a5f`):
+
+| Target | SHA-256 | Size |
+|---|---|---:|
+| `libmulti_obstacle_corridor.so` | `ca3b1907dbea075139beea7365919d8b8da8095779a01c11b5d0c43c5c40aa72` | 816,712 B |
+| `libplanning_component.so` | `be83d1d0270c005a4c3e6a2d7aff4a90752008cbcaa7bfc7a1221f0d38223c3f` | 774,072 B |
+
+This closes the source/build part of the Apollo evidence boundary.  It does
+not by itself close the separate fixture-to-runtime mapping gate: a successful
+compile is not a successful scenario replay.

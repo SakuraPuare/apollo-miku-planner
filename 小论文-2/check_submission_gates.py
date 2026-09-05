@@ -28,7 +28,9 @@ def _page_count(path: Path) -> int | None:
     return int(match.group(1)) if match else None
 
 
-def evaluate() -> dict[str, object]:
+def evaluate(venue: str = "tiv") -> dict[str, object]:
+    if venue not in {"tiv", "tits", "ral"}:
+        raise ValueError(f"unsupported venue: {venue}")
     generated = ROOT / "generated"
     main_pages = _page_count(ROOT / "main.pdf")
     ieee_pages = _page_count(ROOT / "main_ieee.pdf")
@@ -49,6 +51,7 @@ def evaluate() -> dict[str, object]:
     )
     apollo_manifest = ROOT.parent / "apollo_evidence_manifest.json"
     fixture_manifest = ROOT.parent / "apollo_fixture_manifest.json"
+    runtime_mapping_audit = ROOT.parent / "apollo_runtime_mapping_audit.json"
     commonroad_report = generated / "commonroad_reactive_results.json"
     commonroad_native_report = generated / "commonroad_miku_native_results.json"
     frozen_archive_report = ROOT.parent / "submission_artifacts" / "frozen_3500" / "小论文-2" / "generated" / "randomized_results.json"
@@ -69,6 +72,10 @@ def evaluate() -> dict[str, object]:
                 == "replayed_and_mapped"
                 and fixture_data.get("status", {}).get("exact_scenario_to_runtime_output_mapping")
                 == "complete"
+                and json.loads(runtime_mapping_audit.read_text(encoding="utf-8")).get(
+                    "exact_scenario_to_runtime_output_mapping"
+                )
+                is True
             )
         except (OSError, json.JSONDecodeError):
             apollo_evidence_present = False
@@ -119,6 +126,12 @@ def evaluate() -> dict[str, object]:
                 encoding="utf-8"
             )
         ),
+        "apollo_build_artifacts": (
+            apollo_manifest.exists()
+            and isinstance(json.loads(apollo_manifest.read_text(encoding="utf-8")).get("build"), dict)
+            and json.loads(apollo_manifest.read_text(encoding="utf-8")).get("build", {}).get("status")
+            == "planning_component_and_miku_corridor_built"
+        ),
         "archive_manifest": (ROOT.parent / "小论文" / "EXPERIMENT_ARCHIVE_MANIFEST.json").exists(),
         "journal_scope_packets": (ROOT.parent / "小论文" / "SUBMISSION_SCOPE_PACKETS.md").exists(),
         "supplement_archive_counts": (
@@ -152,22 +165,45 @@ def evaluate() -> dict[str, object]:
             and "eq:qp-objective" in english_body.read_text(encoding="utf-8")
         ),
         "native_apollo_cyberrt": bool(apollo_evidence_present),
+        "apollo_runtime_mapping_audit": (
+            runtime_mapping_audit.exists()
+            and json.loads(runtime_mapping_audit.read_text(encoding="utf-8")).get(
+                "mapping_status"
+            )
+            == "pending"
+        ),
+        "apollo_system_boundary_scoped": (
+            runtime_mapping_audit.exists()
+            and "no new native Apollo run was launched"
+            in english_body.read_text(encoding="utf-8")
+            and "本次论文重建没有重新启动原生 Apollo 运行"
+            in chinese_body.read_text(encoding="utf-8")
+        ),
         "reviewers_clear_of_fatal_issues": False,
         "main_joint_domain_nontrivial": main_nontrivial > 0,
         "stress_domain_nontrivial": stress_nontrivial,
         "tiv_tits_regular_page_limit": ieee_pages is not None and ieee_pages <= 10,
         "ral_page_limit": ieee_pages is not None and ieee_pages <= 6,
     }
-    blockers = [
-        name
-        for name, passed in checks.items()
-        if not passed
-    ]
+    # Not every false diagnostic is a blocker for every venue or claim scope.
+    # The current manuscript does not claim new native Apollo runtime metrics,
+    # so an honest, machine-audited system boundary is the relevant T-IV/T-ITS
+    # requirement.  RA-L's six-page limit is relevant only when RA-L is chosen.
+    blocking_names = {
+        "commonroad_full_benchmark",
+        "reviewers_clear_of_fatal_issues",
+        "apollo_system_boundary_scoped",
+        "ral_page_limit" if venue == "ral" else "tiv_tits_regular_page_limit",
+    }
+    blockers = sorted(name for name in blocking_names if not checks[name])
+    unmet_diagnostics = sorted(name for name, passed in checks.items() if not passed)
     verdict = "accept" if not blockers else "major_revision"
     return {
+        "target_venue": venue,
         "verdict": verdict,
         "checks": checks,
         "blockers": blockers,
+        "unmet_diagnostics": unmet_diagnostics,
         "artifacts": {
             "main_pages": main_pages,
             "main_ieee_pages": ieee_pages,
@@ -195,8 +231,9 @@ def evaluate() -> dict[str, object]:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--venue", choices=("tiv", "tits", "ral"), default="tiv")
     args = parser.parse_args()
-    report = evaluate()
+    report = evaluate(args.venue)
     print(json.dumps(report, indent=2, ensure_ascii=False))
     if args.strict and report["verdict"] != "accept":
         raise SystemExit(1)

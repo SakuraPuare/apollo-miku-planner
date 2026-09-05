@@ -64,7 +64,7 @@ sim_map.bin
 vehicle_param.pb.txt
 ```
 
-## Runtime closure status (P1: not yet complete)
+## Runtime closure status (P1: runtime mapping still pending)
 
 | Evidence item | Status | Required closure artifact |
 |---|---|---|
@@ -74,7 +74,7 @@ vehicle_param.pb.txt
 | Exact scenario → input → output mapping | pending | scenario/config/output index |
 | Planning protobuf output and status code | pending | per-scenario output record |
 | Dreamview/CyberRT log linkage | pending | run-log index and timestamps |
-| Native Apollo build | blocked | 11.0 AEM build reaches C++ compilation but fails on missing `third_party/var/bvar/bvar.h`; command/error in `APOLLO_BUILD_ATTEMPT.md` |
+| Native Apollo build | complete | AEM 11.0 with Apollo `bvar=9.0.0-rc-r2`; corridor and full Planning component hashes/commands in `APOLLO_BUILD_ATTEMPT.md` |
 | Closed-loop metric provenance | pending | raw output plus metric-generation script |
 
 Until the pending rows are closed, the paper must not describe the existing dump

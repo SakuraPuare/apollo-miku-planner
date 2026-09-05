@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "created": "2026-09-06",
+  "project": "apollo-miku-planner",
+  "apollo_source": {
+    "path_from_project": "../core-11.0",
+    "branch": "2026/11.0",
+    "commit": "57460908954e3188f640a813d26180e862d62a5f",
+    "commit_subject": "feat(planning): add multi-obstacle spatiotemporal corridor optimization",
+    "commit_date": "2026-02-19T02:19:53+08:00",
+    "modified_planning_files_in_commit": [
+      "modules/planning/tasks/piecewise_jerk_speed/piecewise_jerk_speed_optimizer.cc",
+      "modules/planning/tasks/speed_bounds_decider/BUILD",
+      "modules/planning/tasks/speed_bounds_decider/proto/speed_bounds_decider.proto",
+      "modules/planning/tasks/speed_bounds_decider/speed_bounds_decider.cc",
+      "modules/planning/tasks/speed_bounds_decider/speed_bounds_decider.h",
+      "modules/planning/tasks/speed_bounds_decider/st_corridor_generator.cc",
+      "modules/planning/tasks/speed_bounds_decider/st_corridor_generator.h",
+      "modules/planning/tasks/speed_bounds_decider/threat_assessor.cc",
+      "modules/planning/tasks/speed_bounds_decider/threat_assessor.h"
+    ],
+    "consumed_existing_planning_interfaces": [
+      "modules/planning/planning_base/proto/st_drivable_boundary.proto",
+      "modules/planning/planning_base/common/st_graph_data.cc"
+    ],
+    "feature_flag": {
+      "field": "use_multi_obstacle_corridor",
+      "default": false,
+      "config_file": "modules/planning/tasks/speed_bounds_decider/proto/speed_bounds_decider.proto"
+    },
+    "source_audit": {
+      "status": "confirmed_by_git_show",
+      "note": "The commit directly changes Apollo Planning speed-bound, corridor, threat-assessment and piecewise-jerk speed modules."
+    }
+  },
+  "runtime_assets": {
+    "root_from_apollo_source": "dumps",
+    "observed_files": [
+      "planning.dag_external_command_process.dag.data",
+      "planning.dag_external_command_process.dag.latency.data",
+      "prediction.dag.data",
+      "control.dag.data",
+      "mainboard_default_*.data",
+      "mainboard_default_*.latency.data",
+      "bvar.dreamview_plus.data",
+      "bvar.dreamview_plus.latency.data",
+      "bvar.cyber_monitor.data",
+      "bvar.cyber_monitor.latency.data"
+    ],
+    "runtime_components_observed": [
+      "Apollo Planning",
+      "CyberRT mainboard",
+      "Dreamview Plus",
+      "Prediction",
+      "Control",
+      "Cyber monitor"
+    ],
+    "status": "artifacts_present",
+    "verification_scope": "source_and_runtime_asset_inventory_only; no new Apollo run was launched while creating this manifest",
+    "runtime_mapping_audit": "apollo_runtime_mapping_audit.json",
+    "exact_scenario_to_runtime_output_mapping": false
+  },
+  "build": {
+    "status": "planning_component_and_miku_corridor_built",
+    "environment": "AEM 11.0.0_pkg",
+    "bvar_package": "9.0.0-rc-r2",
+    "source_commit": "57460908954e3188f640a813d26180e862d62a5f",
+    "corridor_sha256": "ca3b1907dbea075139beea7365919d8b8da8095779a01c11b5d0c43c5c40aa72",
+    "planning_component_sha256": "be83d1d0270c005a4c3e6a2d7aff4a90752008cbcaa7bfc7a1221f0d38223c3f",
+    "runtime_replay_status": "pending_exact_fixture_mapping"
+  },
+  "reproducibility": {
+    "official_scenario_and_vehicle_model_claim": "project_owner_asserted; attach exact scenario/config index before publication",
+    "required_next_artifacts": [
+      "scenario_manifest.json",
+      "vehicle_model_manifest.json",
+      "planning_config_manifest.json",
+      "Apollo Planning input/output fixture index",
+      "Dreamview/CyberRT run log index",
+      "closed-loop result index"
+    ]
+  },
+  "provenance_rule": "Apollo source/runtime evidence must not be inferred from a filename alone; every reported metric must reference a source commit, scenario, configuration and raw output."
+}
