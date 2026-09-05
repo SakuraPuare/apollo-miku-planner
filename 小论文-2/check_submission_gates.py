@@ -50,6 +50,7 @@ def evaluate() -> dict[str, object]:
     apollo_manifest = ROOT.parent / "apollo_evidence_manifest.json"
     fixture_manifest = ROOT.parent / "apollo_fixture_manifest.json"
     commonroad_report = generated / "commonroad_reactive_results.json"
+    commonroad_native_report = generated / "commonroad_miku_native_results.json"
     commonroad_macros = generated / "commonroad_macros.tex"
     english_body = ROOT / "submission_body_en.tex"
     chinese_body = ROOT / "experiment_submission.tex"
@@ -70,10 +71,17 @@ def evaluate() -> dict[str, object]:
         except (OSError, json.JSONDecodeError):
             apollo_evidence_present = False
     commonroad_data = {}
+    commonroad_native_data = {}
     try:
         commonroad_data = json.loads(commonroad_report.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         commonroad_data = {}
+    try:
+        commonroad_native_data = json.loads(
+            commonroad_native_report.read_text(encoding="utf-8")
+        )
+    except (OSError, json.JSONDecodeError):
+        commonroad_native_data = {}
     competitor_evidence_present = bool(
         commonroad_data.get("competitor") == "commonroad-reactive-planner"
         and commonroad_data.get("scenario_count", 0) >= 1
@@ -87,6 +95,13 @@ def evaluate() -> dict[str, object]:
             (ROOT.parent / "小论文" / "PUBLIC_BASELINE_AUDIT.md").exists()
             and (ROOT.parent / "小论文" / "P1_METRICS_AUDIT.md").exists()
         ),
+        "apollo_runtime_log_index": (
+            (ROOT.parent / "小论文" / "APOLLO_RUNTIME_RUN_INDEX.md").exists()
+            and "planning has no trajectory point"
+            in (ROOT.parent / "小论文" / "APOLLO_RUNTIME_RUN_INDEX.md").read_text(
+                encoding="utf-8"
+            )
+        ),
         "standardized_external_source": (generated / "commonroad_native_audit.json").exists(),
         # A competitor-only run is not a MIKU CommonRoad benchmark.  The gate
         # remains closed until the native MIKU adapter preserves the declared
@@ -96,6 +111,14 @@ def evaluate() -> dict[str, object]:
             and commonroad_data.get("miku_native_benchmark") is True
         ),
         "faithful_external_competitor": competitor_evidence_present,
+        "commonroad_native_output_boundary": (
+            commonroad_native_data.get("native_solution_protocol") is True
+            and len(commonroad_native_data.get("rows", [])) >= 1
+            and all(
+                row.get("native_commonroad_protocol") is True
+                for row in commonroad_native_data.get("rows", [])
+            )
+        ),
         "commonroad_paper_audit": (
             commonroad_macros.exists()
             and "External CommonRoad Audit" in english_body.read_text(encoding="utf-8")
@@ -137,6 +160,9 @@ def evaluate() -> dict[str, object]:
             ),
             "commonroad_scenario_count": commonroad_data.get("scenario_count"),
             "commonroad_valid_solution_count": commonroad_data.get("valid_solution_count"),
+            "commonroad_miku_native_valid_solution_count": commonroad_native_data.get(
+                "miku_valid_solution_count"
+            ),
         },
     }
 

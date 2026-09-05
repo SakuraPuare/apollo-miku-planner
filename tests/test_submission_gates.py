@@ -13,9 +13,11 @@ def test_submission_gate_audit_is_conservative() -> None:
     assert report["verdict"] == "major_revision"
     assert report["checks"]["standardized_external_source"]
     assert report["checks"]["public_baseline_audit"]
+    assert report["checks"]["apollo_runtime_log_index"]
     assert report["checks"]["stress_domain_nontrivial"]
     assert report["artifacts"]["randomized_case_count"] == 700
     assert report["checks"]["faithful_external_competitor"]
+    assert report["checks"]["commonroad_native_output_boundary"]
     assert not report["checks"]["commonroad_full_benchmark"]
     assert not report["checks"]["native_apollo_cyberrt"]
     assert report["checks"]["commonroad_paper_audit"]
