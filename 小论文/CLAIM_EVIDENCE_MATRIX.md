@@ -16,7 +16,7 @@
 | MIKU 相对工业解耦基线有统计收益 | 随机实验、结论 | 冻结 `miku-random-v2` 数据和统计脚本 | 已有证据 | 将原始 CSV/JSON 纳入补充材料或归档包 |
 | B3 代表联合搜索参考 | 联合参考节 | 70 场景有限网格搜索结果 | 已有证据 | 始终标为有限离散参考，不称连续全局最优 |
 | 可迁移到公开外部场景 | 当前正文未作性能主张 | CommonRoad 官方 XML 和独立 Reactive Planner 结果 | 外部审计完成；MIKU 原生 benchmark 待完成 | 若加入正文，单独标注为外部诊断/基线，不与 Apollo 统计混合 |
-| 算法优于近期外部方法 | 当前不应强主张 | 尚无公平、同条件的完整外部方法比较 | 未满足 | 增加至少两个可审计外部基线，或明确不作该结论 |
+| 算法优于近期外部方法 | 当前不应强主张 | `PUBLIC_BASELINE_AUDIT.md`：Reactive Planner 与 Cortado/SSC/EM/Frenet/NLVO 公共资产 | 外部方法资产可审计；公平跨数据集比较未完成 | 只作外部诊断，不作 leaderboard 或 SOTA 结论；后续可补 native CommonRoad exporter |
 
 ## 强制措辞规则
 
