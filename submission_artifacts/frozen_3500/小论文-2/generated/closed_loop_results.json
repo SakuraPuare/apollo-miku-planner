@@ -1,0 +1,83 @@
+{
+  "protocol": "miku-rolling-v1",
+  "case_kinds": [
+    "crossing_pedestrian",
+    "vehicle_cut_in",
+    "parked_and_oncoming",
+    "narrow_multi_obstacle",
+    "interleaved_dynamic",
+    "prediction_noise",
+    "delayed_crossing"
+  ],
+  "seed_start": 0,
+  "seed_count_per_kind": 100,
+  "paired_case_count": 700,
+  "methods": [
+    "B0",
+    "MIKU"
+  ],
+  "config": {
+    "replan_period_s": 0.5,
+    "minimum_cycle_horizon_s": 2.0,
+    "target_tolerance_m": 1.0,
+    "terminal_lookahead_m": 3.0
+  },
+  "execution": "Execute the first 0.5 s segment, update ego/obstacles, and replan until arrival or scenario horizon.",
+  "noise": "The initial observation biases are held fixed across replans; execution applies planned increments to truth state.",
+  "summaries": [
+    {
+      "method": "B0",
+      "n": 700,
+      "success_rate": 0.6228571428571429,
+      "collision_rate": 0.012857142857142857,
+      "degraded_stop_rate": 0.37,
+      "min_clearance_mean_m": 1.2830149968775268,
+      "progress_ratio_mean": 0.8255343764534869,
+      "penalized_travel_time_mean_s": 12.058142857142858,
+      "planning_cycles_mean": 20.554285714285715,
+      "episode_runtime_p50_ms": 181.94716398284072,
+      "episode_runtime_p95_ms": 827.2001565892415
+    },
+    {
+      "method": "MIKU",
+      "n": 700,
+      "success_rate": 0.7228571428571429,
+      "collision_rate": 0.012857142857142857,
+      "degraded_stop_rate": 0.26857142857142857,
+      "min_clearance_mean_m": 1.2003908648480648,
+      "progress_ratio_mean": 0.9025475654259452,
+      "penalized_travel_time_mean_s": 11.379571428571428,
+      "planning_cycles_mean": 20.142857142857142,
+      "episode_runtime_p50_ms": 163.55582903634058,
+      "episode_runtime_p95_ms": 1361.509155471867
+    }
+  ],
+  "paired_statistics": [
+    {
+      "comparison": "MIKU-B0",
+      "metric": "success",
+      "n": 700,
+      "mean_difference": 0.1,
+      "ci_low": 0.07571428571428572,
+      "ci_high": 0.12571428571428572,
+      "cohen_dz": 0.29745758127542804,
+      "candidate_only": 78,
+      "reference_only": 8,
+      "discordant": 86,
+      "mcnemar_exact_p": 1.5235832099273424e-15
+    },
+    {
+      "comparison": "MIKU-B0",
+      "metric": "collision",
+      "n": 700,
+      "mean_difference": 0.0,
+      "ci_low": -0.005714285714285714,
+      "ci_high": 0.005714285714285714,
+      "cohen_dz": 0.0,
+      "candidate_only": 2,
+      "reference_only": 2,
+      "discordant": 4,
+      "mcnemar_exact_p": 1.0
+    }
+  ]
+}

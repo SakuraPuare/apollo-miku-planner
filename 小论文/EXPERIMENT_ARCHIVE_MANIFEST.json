@@ -6,15 +6,15 @@
     "frozen_artifacts": {
       "randomized_raw.csv": {
         "git_blob": "d63c27814ea625310e970f76412a81015506cddc",
-        "sha256_after_export": "required_before_submission"
+        "sha256_after_export": "d858e6ffdef2e72d8111cab4b22ae335a697ec6709a28b3214374258b70bbca7"
       },
       "randomized_results.json": {
         "git_blob": "7f867d587c6d55a40cc42bb42c425ac0df97e5d3",
-        "sha256_after_export": "required_before_submission"
+        "sha256_after_export": "10ba825b23967160c51a7710ac6fe985be9f8dba63bce89fc212f6e937df5034"
       },
       "randomized_summary.csv": {
         "git_blob": "ccbdfa1c5cee7b521a4db50161e65f729653d368",
-        "sha256_after_export": "required_before_submission"
+        "sha256_after_export": "d8d5c347da110223ff38b27367fbd52d13f39c0420d6c7c10074c58dadc5fcd5"
       }
     }
   },

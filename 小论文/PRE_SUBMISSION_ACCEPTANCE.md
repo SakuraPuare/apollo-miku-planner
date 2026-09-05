@@ -6,7 +6,7 @@
 - Q3/Q4 投稿正文已收缩为可审计的 Apollo Planning 接口与代表性回放表述，不声称实车道路测试。
 - 外部公开方法资产已登记：CommonRoad Reactive Planner，以及 Cortado 公开基准中的 SSC、EM、Frenet、NLVO；不作跨数据集 leaderboard 结论。
 - 系统级指标审计已完成；缺少原生 runtime 证据的 P99 和跟踪误差不再被正文暗示为已测量。
-- 期刊适配包和实验产物哈希清单已建立；投稿压缩包仍需把冻结 3,500 行数据从 Git 历史实际导出。
+- 期刊适配包和实验产物哈希清单已建立；冻结 3,500 行数据已实际导出到 `submission_artifacts/frozen_3500/`，并与 700 回归包分离。
 - 论文投稿文件内部验证术语扫描通过。
 - 回归测试：`115 passed, 20 skipped`。
 - Apollo snapshot/fixture 路径校验通过。
