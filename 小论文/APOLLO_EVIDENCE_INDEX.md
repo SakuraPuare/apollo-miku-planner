@@ -81,6 +81,10 @@ Until the pending rows are closed, the paper must not describe the existing dump
 inventory alone as a newly replayed native Apollo benchmark, and must not attach
 the 3,500-scenario aggregate to an unindexed runtime output.
 
+The existing process run is indexed separately in `APOLLO_RUNTIME_RUN_INDEX.md`.
+It provides launch and diagnostic evidence, but its repeated planning failures
+mean that it cannot close the successful closed-loop replay gate.
+
 ## Manuscript wording boundary
 
 The supported claim is that MIKU is integrated at the Apollo Planning-compatible
@@ -88,4 +92,3 @@ path/velocity boundary and that representative interface behavior is documented.
 The 3,500-scenario aggregate is a frozen numerical protocol result and must carry
 its own seed/configuration provenance. It is not silently reclassified as a fresh
 Dreamview/CyberRT replay. No physical-road test is claimed.
-
