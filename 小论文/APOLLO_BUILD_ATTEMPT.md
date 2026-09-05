@@ -101,3 +101,20 @@ Resulting artifacts (source commit `57460908954e3188f640a813d26180e862d62a5f`):
 This closes the source/build part of the Apollo evidence boundary.  It does
 not by itself close the separate fixture-to-runtime mapping gate: a successful
 compile is not a successful scenario replay.
+
+## Runtime launch attempt after build
+
+The rebuilt component was copied into the temporary `/apollo` module path and
+`mainboard` was launched with the package-library search paths.  The process
+reached module loading, but stopped because the generated component depends on
+`libDO_NOT_IMPORT_planning_component.so` and the corresponding dependent
+package libraries were not installed in that temporary module path.  The
+observed diagnostic was:
+
+```text
+LibraryLoadException: libapollo_planning_planning_interface_base.so:
+cannot open shared object file: No such file or directory
+```
+
+This is retained as a failed launch diagnostic.  It is not presented as a
+successful CyberRT replay, and no runtime metric is derived from it.
