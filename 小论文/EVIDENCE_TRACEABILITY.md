@@ -61,7 +61,15 @@ B3 是固定网格分辨率和有限 beam width 下的联合搜索参考，不�
 - 时间同伦：把所选安全窗编译为速度 QP 的线性盒约束，不改变原 QP 的凸性和稀疏结构。
 - Apollo 在环：证明工程接口兼容性和典型场景行为；大样本收益由冻结数值协议提供。
 
-## 6. 投稿前一致性检查
+## 6. Lean 形式化证明
+
+- 环境：Lean 4.33.1，Mathlib v4.33.1（依赖版本已写入 `lean_proofs/MIKUProofs/lakefile.toml`）。
+- 三区专属证书：`小论文/lean/Paper3.lean`，对固定三障碍物截面枚举全部 `2^3` 方向组合，并验证四个连续切分候选的最大中心间隙。
+- 共享数学契约：`lean_proofs/MIKUProofs/Partition.lean`、`MaxGap.lean` 及覆盖矩阵所列模块。
+- 一键复核：在仓库根目录执行 `cd lean_proofs/MIKUProofs && ./verify_all.sh`；该脚本同时检查 Python 符号链接、禁止词和回归测试。
+- 证据边界：形式化结果覆盖有理数/实数规格与固定实例，不等同于 Python 浮点实现、Apollo QP 求解器或端到端控制链的 refinement。
+
+## 7. 投稿前一致性检查
 
 1. `latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex`
 2. 检查正文所有样本数、百分比、置信区间和运行时间是否对应 `29a337a`

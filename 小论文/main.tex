@@ -410,6 +410,9 @@ MIKU 为每个障碍物定义归一化威胁度 $\Theta_i$，综合 5 个因子�
 
 定理\ref{thm:max_gap}中 $g_p<\varepsilon$ 表示该中心带不可用；当 $\max_p g_p<\varepsilon$ 时，才在当前中心安全边界下判定截面阻塞。由于半车宽已同时进入式\eqref{eq:center_road}和式\eqref{eq:center_forbidden}，此处不再与 $W_{ego}$ 比较。组内排序为 $O(k\log k)$，区间筛选、前缀最大值递推和候选扫描均为 $O(k)$，因而单截面组内求解为 $O(k\log k)$。第\ref{subsec:exp_exactness}节以 $2^k$ 穷举最优解为独立 oracle，对扫描实现的精确性进行大样本对照。
 
+\subsection{机器检查的形式化证书}
+为使上述离散几何结论可独立复核，本文随补充材料提供 Lean 4.33.1 + Mathlib v4.33.1 证明工程。共享模块 \texttt{Partition.lean} 在有序、正宽度且满足安全侧约束的有理数区间模型下证明方向序列不存在“先右后左”；\texttt{MaxGap.lean} 证明有限个候选间隙的最大值存在、可达并支配所有候选；论文专属文件 \texttt{Paper3.lean} 则对道路 $[-5,8]$ 与三个固定障碍区间的截面，逐一枚举全部 $2^3$ 方向组合并验证四个连续切分候选得到相同最优中心间隙。该证书支撑连续分割与最大间隙定理的离散核心，但不将固定实例外推为浮点程序、Apollo 求解器或端到端系统的形式化证明；完整覆盖边界和一键验证命令见补充材料中的 \texttt{FORMAL\_COVERAGE.md} 与 \texttt{MIKUProofs/verify\_all.sh}。
+
 单组最宽间隙并不必然组成纵向上最连续的整体路径。因此，MIKU 为每个连通分量 $C_j$ 保留宽度排名前 $Q$ 的正宽候选带 $B_{jq}=[a_{jq},b_{jq}]$，其中心为 $c_{jq}=(a_{jq}+b_{jq})/2$、宽度为 $g_{jq}=b_{jq}-a_{jq}$，实现中取 $Q=3$。将纵向相邻分量视为分层图，通过动态规划选择空间同伦序列
 
 \begin{equation}
