@@ -49,7 +49,7 @@ MINIMAL_XML = b"""
 
 
 def test_commonroad_adapter_projects_route_and_obstacle():
-    result = adapt_commonroad_xml(MINIMAL_XML)
+    result = adapt_commonroad_xml(MINIMAL_XML, preserve_sampled_prediction=True)
     assert result.benchmark_id == "unit-test"
     assert result.route_lanelet_ids == ("a", "b")
     assert result.projected_obstacles == 1
@@ -62,6 +62,13 @@ def test_commonroad_adapter_projects_route_and_obstacle():
     assert obstacle.vs == pytest.approx(3.0)
     assert obstacle.uncertainty_vs == pytest.approx(0.2)
     assert obstacle.uncertainty_vl == pytest.approx(0.2)
+    assert obstacle.prediction_t == pytest.approx((0.0, 1.0))
+    assert obstacle.position_at(0.5)[0] == pytest.approx(8.6)
+    assert obstacle.position_at(0.5)[1] == pytest.approx(0.6)
+    assert obstacle.occupancy_t == pytest.approx((0.0, 1.0))
+    assert obstacle.occupancy_s_min[0] < obstacle.occupancy_s_max[0]
+    assert obstacle.occupancy_l_min[0] < obstacle.occupancy_l_max[0]
+    assert obstacle.occupancy_bounds_at(0.5)[0] < obstacle.occupancy_bounds_at(0.5)[1]
 
 
 def test_commonroad_adapter_rejects_missing_route():

@@ -34,8 +34,11 @@ converted into a success or a leaderboard score.
 
 ## Evidence boundary
 
-The output/evaluator boundary is native CommonRoad, but MIKU still receives the
-explicitly bounded `restricted_frenet_adapter_all_dynamic_obstacles` input.
-Lanelet occupancy sets, full vehicle orientation, and planning-rule semantics
-are not preserved.  The `commonroad_full_benchmark` gate therefore remains
-closed, as required by the acceptance policy.
+The output/evaluator boundary is native CommonRoad. MIKU receives the official
+reference route and every published dynamic-obstacle rectangle pose; the four
+corners of each state are projected into a conservative, time-interpolated
+Frenet occupancy envelope consumed by ST mapping and continuous safety
+validation. Lanelet routing and the planning-problem goal remain official.
+Traffic-control rules are recorded but are not optimized by the current Frenet
+planner, so the result is a scoped compatibility benchmark rather than a
+general leaderboard claim.

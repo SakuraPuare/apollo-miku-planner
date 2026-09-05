@@ -66,6 +66,17 @@ from miku_time import (
     safe_time_windows,
 )
 
+# Keep the scalar objective weights in one place.  The certified finite-label
+# search imports these values so its certificate cannot silently drift from
+# the path/speed QP builders below.
+PATH_W_L = 0.5
+PATH_W_DL = 100.0
+PATH_W_DDL = 800.0
+SPEED_W_V = 5.0
+SPEED_W_A = 1.0
+SPEED_W_JERK = 100.0
+SPEED_W_TERMINAL = 20.0
+
 warnings.filterwarnings("ignore")
 
 # CJK 字体兜底
@@ -133,6 +144,22 @@ class Obstacle:
     uncertainty_l0: float = 0.0
     uncertainty_vs: float = 0.0
     uncertainty_vl: float = 0.0
+    # Optional CommonRoad sampled prediction.  The ordinary Apollo-style
+    # experiments leave these empty and use the constant-velocity model above.
+    # External adapters may provide a time-indexed centerline projection so
+    # the planner does not silently discard the published trajectory states.
+    prediction_t: Tuple[float, ...] = ()
+    prediction_s: Tuple[float, ...] = ()
+    prediction_l: Tuple[float, ...] = ()
+    # Optional conservative body-occupancy envelope sampled from an external
+    # scenario format.  The envelope is expressed in the same Frenet frame as
+    # the planner and is consumed by both ST mapping and continuous safety
+    # certificates.  Empty arrays retain the ordinary axis-aligned fallback.
+    occupancy_t: Tuple[float, ...] = ()
+    occupancy_s_min: Tuple[float, ...] = ()
+    occupancy_s_max: Tuple[float, ...] = ()
+    occupancy_l_min: Tuple[float, ...] = ()
+    occupancy_l_max: Tuple[float, ...] = ()
 
     def __post_init__(self) -> None:
         uncertainty = (
@@ -143,9 +170,95 @@ class Obstacle:
         )
         if not all(math.isfinite(value) and value >= 0.0 for value in uncertainty):
             raise ValueError("prediction uncertainty radii must be finite and non-negative")
+        if self.prediction_t or self.prediction_s or self.prediction_l:
+            lengths = {len(self.prediction_t), len(self.prediction_s), len(self.prediction_l)}
+            if len(lengths) != 1 or len(self.prediction_t) < 2:
+                raise ValueError("sampled prediction arrays must have equal length >= 2")
+            if not all(math.isfinite(value) for value in (*self.prediction_t, *self.prediction_s, *self.prediction_l)):
+                raise ValueError("sampled prediction arrays must be finite")
+            if any(next_t <= current_t for current_t, next_t in zip(self.prediction_t, self.prediction_t[1:])):
+                raise ValueError("sampled prediction times must be strictly increasing")
+        occupancy_arrays = (
+            self.occupancy_t,
+            self.occupancy_s_min,
+            self.occupancy_s_max,
+            self.occupancy_l_min,
+            self.occupancy_l_max,
+        )
+        if any(occupancy_arrays):
+            lengths = {len(array) for array in occupancy_arrays}
+            if len(lengths) != 1 or len(self.occupancy_t) < 2:
+                raise ValueError("occupancy arrays must have equal length >= 2")
+            if not all(
+                math.isfinite(value)
+                for array in occupancy_arrays
+                for value in array
+            ):
+                raise ValueError("occupancy arrays must be finite")
+            if any(
+                next_t <= current_t
+                for current_t, next_t in zip(self.occupancy_t, self.occupancy_t[1:])
+            ):
+                raise ValueError("occupancy times must be strictly increasing")
+            if any(
+                s_min > s_max or l_min > l_max
+                for s_min, s_max, l_min, l_max in zip(
+                    self.occupancy_s_min,
+                    self.occupancy_s_max,
+                    self.occupancy_l_min,
+                    self.occupancy_l_max,
+                )
+            ):
+                raise ValueError("occupancy bounds must be ordered")
 
     def position_at(self, t: float) -> Tuple[float, float]:
+        if self.prediction_t:
+            query = float(t)
+            times = np.asarray(self.prediction_t, dtype=float)
+            stations = np.asarray(self.prediction_s, dtype=float)
+            laterals = np.asarray(self.prediction_l, dtype=float)
+            if query < times[0]:
+                slope_s = (stations[1] - stations[0]) / (times[1] - times[0])
+                slope_l = (laterals[1] - laterals[0]) / (times[1] - times[0])
+                return (
+                    float(stations[0] + slope_s * (query - times[0])),
+                    float(laterals[0] + slope_l * (query - times[0])),
+                )
+            if query > times[-1]:
+                slope_s = (stations[-1] - stations[-2]) / (times[-1] - times[-2])
+                slope_l = (laterals[-1] - laterals[-2]) / (times[-1] - times[-2])
+                return (
+                    float(stations[-1] + slope_s * (query - times[-1])),
+                    float(laterals[-1] + slope_l * (query - times[-1])),
+                )
+            return (
+                float(np.interp(query, times, stations)),
+                float(np.interp(query, times, laterals)),
+            )
         return self.s0 + self.vs * t, self.l0 + self.vl * t
+
+    def occupancy_bounds_at(self, t: float) -> Tuple[float, float, float, float]:
+        """Return conservative ``(s_min, s_max, l_min, l_max)`` at time ``t``."""
+        if self.occupancy_t:
+            query = float(t)
+            times = np.asarray(self.occupancy_t, dtype=float)
+            values = tuple(
+                np.asarray(array, dtype=float)
+                for array in (
+                    self.occupancy_s_min,
+                    self.occupancy_s_max,
+                    self.occupancy_l_min,
+                    self.occupancy_l_max,
+                )
+            )
+            return tuple(float(np.interp(query, times, array)) for array in values)  # type: ignore[return-value]
+        center_s, center_l = self.position_at(float(t))
+        return (
+            center_s - self.L / 2.0,
+            center_s + self.L / 2.0,
+            center_l - self.W / 2.0,
+            center_l + self.W / 2.0,
+        )
 
 
 @dataclass
@@ -1131,9 +1244,9 @@ def path_bounds_decider(
 def path_optimizer(s_arr, l_min, l_max):
     N = len(s_arr)
     ds = s_arr[1] - s_arr[0]
-    w_l = 0.5
-    w_dl = 100.0
-    w_ddl = 800.0
+    w_l = PATH_W_L
+    w_dl = PATH_W_DL
+    w_ddl = PATH_W_DDL
 
     P = np.zeros((N, N))
     for j in range(N):
@@ -1200,9 +1313,17 @@ def st_boundary_mapper(
             # lateral-offset path, querying l(s) only at the obstacle centre
             # misses collisions near the front/rear corners.  Use the complete
             # path envelope over that interval.
-            longitudinal_half_extent = (obs.L + e.L) / 2.0
-            envelope_lo = max(float(s_arr_path[0]), os_ - longitudinal_half_extent)
-            envelope_hi = min(float(s_arr_path[-1]), os_ + longitudinal_half_extent)
+            if obs.occupancy_t:
+                obs_s_lo, obs_s_hi, obs_l_lo, obs_l_hi = obs.occupancy_bounds_at(float(t))
+                longitudinal_half_extent = e.L / 2.0
+            else:
+                obs_s_lo = os_ - obs.L / 2.0
+                obs_s_hi = os_ + obs.L / 2.0
+                obs_l_lo = ol_ - obs.W / 2.0
+                obs_l_hi = ol_ + obs.W / 2.0
+                longitudinal_half_extent = (obs.L + e.L) / 2.0
+            envelope_lo = max(float(s_arr_path[0]), obs_s_lo - e.L / 2.0)
+            envelope_hi = min(float(s_arr_path[-1]), obs_s_hi + e.L / 2.0)
             envelope_mask = (s_arr_path >= envelope_lo) & (s_arr_path <= envelope_hi)
             envelope_values = list(np.asarray(l_path)[envelope_mask])
             envelope_values.extend(
@@ -1225,12 +1346,19 @@ def st_boundary_mapper(
             # of the method-specific prediction tube.
             if not obs.is_static:
                 longitudinal_uncertainty += 0.15
-            obs_l_lo = ol_ - obs.W / 2 - lateral_uncertainty
-            obs_l_hi = ol_ + obs.W / 2 + lateral_uncertainty
+            if not obs.occupancy_t:
+                obs_l_lo = obs_l_lo - lateral_uncertainty
+                obs_l_hi = obs_l_hi + lateral_uncertainty
             if obs_l_lo >= ego_l_hi or obs_l_hi <= ego_l_lo:
                 continue  # 横向不重叠（含边界严格分离）
-            s_lo = os_ - obs.L / 2 - e.L / 2 - longitudinal_uncertainty
-            s_hi = os_ + obs.L / 2 + e.L / 2 + longitudinal_uncertainty
+            if obs.occupancy_t:
+                s_lo = obs_s_lo - e.L / 2.0
+                s_hi = obs_s_hi + e.L / 2.0
+            else:
+                s_lo = os_ - obs.L / 2 - e.L / 2
+                s_hi = os_ + obs.L / 2 + e.L / 2
+            s_lo -= longitudinal_uncertainty
+            s_hi += longitudinal_uncertainty
             if s_hi < e.s0 - 1e-9:
                 continue
             intervals.append((float(t), float(s_lo), float(s_hi)))
@@ -1514,7 +1642,13 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     K = len(ts)
     dt = ts[1] - ts[0]
     n = 3 * K  # [s, v, a] × K
-    v_ref, w_v, w_a, w_jerk, w_terminal = e.v0, 5.0, 1.0, 100.0, 20.0
+    v_ref = e.v0
+    w_v, w_a, w_jerk, w_terminal = (
+        SPEED_W_V,
+        SPEED_W_A,
+        SPEED_W_JERK,
+        SPEED_W_TERMINAL,
+    )
     v_max, a_min, a_max = 13.0, -4.0, 2.0
 
     P = np.zeros((n, n))
@@ -1741,6 +1875,56 @@ def run_pipeline(
     )
 
 
+def path_qp_objective(result: dict) -> float:
+    """Return the objective represented by :func:`path_optimizer`."""
+    l_path = np.asarray(result["l_path"], dtype=float)
+    s_arr = np.asarray(result["s_arr"], dtype=float)
+    if l_path.ndim != 1 or len(l_path) != len(s_arr) or len(s_arr) < 2:
+        raise ValueError("candidate path samples do not match station grid")
+    ds = float(s_arr[1] - s_arr[0])
+    if ds <= 0.0:
+        raise ValueError("candidate station grid must be strictly increasing")
+    path_cost = PATH_W_L * float(np.sum(l_path**2))
+    path_cost += PATH_W_DL * float(np.sum((np.diff(l_path) / ds) ** 2))
+    if len(l_path) > 2:
+        path_cost += PATH_W_DDL * float(
+            np.sum((np.diff(l_path, n=2) / ds**2) ** 2)
+        )
+    return float(path_cost)
+
+
+def speed_qp_objective(scn: Scenario, result: dict) -> float:
+    """Return the objective represented by :func:`speed_qp`."""
+    s_qp = np.asarray(result["s_qp"], dtype=float)
+    v_qp = np.asarray(result["v_qp"], dtype=float)
+    a_qp = np.asarray(result["a_qp"], dtype=float)
+    ts = np.asarray(result["ts"], dtype=float)
+    if len(ts) < 1 or len(s_qp) != len(ts) or len(v_qp) != len(ts):
+        raise ValueError("candidate speed samples do not match time grid")
+    dt = float(ts[1] - ts[0]) if len(ts) > 1 else 1.0
+    if dt <= 0.0:
+        raise ValueError("candidate time grid must be strictly increasing")
+    speed_cost = SPEED_W_V * float(np.sum((v_qp - scn.ego.v0) ** 2))
+    speed_cost += SPEED_W_A * float(np.sum(a_qp**2))
+    if len(a_qp) > 1:
+        speed_cost += SPEED_W_JERK * float(np.sum((np.diff(a_qp) / dt) ** 2))
+    s_ub = np.asarray(result["s_ub"], dtype=float)
+    terminal_target = min(float(s_ub[-1]), scn.s_max - 1.0)
+    speed_cost += SPEED_W_TERMINAL * float((s_qp[-1] - terminal_target) ** 2)
+    return float(speed_cost)
+
+
+def pipeline_objective(scn: Scenario, result: dict) -> float:
+    """Return the scalar objective represented by the two QP builders.
+
+    This is the objective used by the finite-label certificate.  It mirrors
+    the quadratic terms assembled in :func:`path_optimizer` and
+    :func:`speed_qp`, including the terminal reference selected for the
+    candidate's longitudinal upper bound.
+    """
+    return path_qp_objective(result) + speed_qp_objective(scn, result)
+
+
 def validate_pipeline_candidate_continuous_safety(
     scn: Scenario,
     result: dict,
@@ -1845,18 +2029,47 @@ def validate_pipeline_candidate_continuous_safety(
                 combined_half_length=half_length,
                 combined_half_width=half_width,
             )
+            if obstacle.occupancy_t:
+                # Replace the fixed body rectangle with the official
+                # occupancy envelope at each rollout knot.  The validator is
+                # still axis-aligned in Frenet coordinates, but now covers
+                # the published shape/orientation trajectory conservatively.
+                adjusted = []
+                for sample in samples:
+                    s_lo, s_hi, l_lo, l_hi = obstacle.occupancy_bounds_at(sample.time)
+                    center_s = (s_lo + s_hi) / 2.0
+                    center_l = (l_lo + l_hi) / 2.0
+                    adjusted.append(
+                        AxisAlignedMotionSample(
+                            sample.time,
+                            sample.relative_longitudinal + obstacle.position_at(sample.time)[0] - center_s,
+                            sample.relative_lateral + obstacle.position_at(sample.time)[1] - center_l,
+                            (s_hi - s_lo) / 2.0 + scn.ego.L / 2.0,
+                            (l_hi - l_lo) / 2.0 + scn.ego.W / 2.0,
+                        )
+                    )
+                samples = adjusted
             validator = validate_candidate_constant_acceleration_safety
         else:
             samples = []
             for index, time_value in enumerate(ts):
-                obstacle_s, obstacle_l = obstacle.position_at(float(time_value))
+                if obstacle.occupancy_t:
+                    s_lo, s_hi, l_lo, l_hi = obstacle.occupancy_bounds_at(float(time_value))
+                    obstacle_s = (s_lo + s_hi) / 2.0
+                    obstacle_l = (l_lo + l_hi) / 2.0
+                    sample_half_length = (s_hi - s_lo) / 2.0 + scn.ego.L / 2.0
+                    sample_half_width = (l_hi - l_lo) / 2.0 + scn.ego.W / 2.0
+                else:
+                    obstacle_s, obstacle_l = obstacle.position_at(float(time_value))
+                    sample_half_length = half_length
+                    sample_half_width = half_width
                 samples.append(
                     AxisAlignedMotionSample(
                         float(time_value),
                         float(longitudinal[index] - obstacle_s),
                         float(lateral[index] - obstacle_l),
-                        half_length,
-                        half_width,
+                        sample_half_length,
+                        sample_half_width,
                     )
                 )
             validator = validate_candidate_continuous_safety

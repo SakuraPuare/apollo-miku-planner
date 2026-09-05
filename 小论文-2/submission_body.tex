@@ -172,20 +172,33 @@ MIKU 不只保留 $g^*$ 对应的一条通行带，而是依据净宽度、参�
  \text{pass-before:}&\quad s(t_j)\ge s_i^++\varepsilon_s, &&t_j\ge b_i,\label{eq:pass}\\
  \text{yield-after:}&\quad s(t_j)\le s_i^--\varepsilon_s, &&t_j<a_i .\label{eq:yield}
 \end{align}
-式\eqref{eq:pass}要求自车在障碍进入冲突区前完成通过，式\eqref{eq:yield}要求自车在障碍离开冲突区前保持在其后方。中间安全窗同时施加前一占用的后通过上界与后一占用的先通过下界。两者共同构成双向时序走廊，避免把所有动态冲突都退化为停车让行。为使联合搜索具有可验证的剪枝，令空间走廊在路径站点 $s_j$ 的横向盒为 $[l_j^-,l_j^+]$，并定义
+式\eqref{eq:pass}要求自车在障碍进入冲突区前完成通过，式\eqref{eq:yield}要求自车在障碍离开冲突区前保持在其后方。中间安全窗同时施加前一占用的后通过上界与后一占用的先通过下界。两者共同构成双向时序走廊，避免把所有动态冲突都退化为停车让行。每个固定标签先由路径 QP 和速度 QP 求解，再通过连续扫掠矩形证书验收。联合搜索返回显式 QP 目标下的有限域最小值及可审计 $U-L$ 间隙；未通过证书的候选不报告为可行。认证目标严格等于两个 QP 构造的二次项之和：
+\begin{equation}
+J_{\rm QP}=J_l+J_s,
+\end{equation}
+其中
+\begin{align}
+J_l={}&w_l\sum_m l_m^2+w_{dl}\sum_m(\Delta l_m/\Delta s)^2\\
+       &+w_{ddl}\sum_m(\Delta^2 l_m/\Delta s^2)^2,\\
+J_s={}&w_v\sum_j(v_j-v_0)^2+w_a\sum_j a_j^2
+       +w_j\sum_j(\Delta a_j/\Delta t)^2
+       +w_T(s_N-s_T)^2 .
+\label{eq:qp-objective}
+\end{align}
+其中 $s_T=\min(s_N^{\rm ub},s_{\rm goal})$ 是速度 QP 使用的终端参考，不再另行定义与 QP 不一致的认证 surrogate。为使联合搜索可剪枝，令空间走廊在路径站点 $s_j$ 的横向盒为 $[l_j^-,l_j^+]$，并定义
 \begin{equation}
  d_j=\begin{cases}0,&l_j^-\leq0\leq l_j^+,\\
  \min(|l_j^-|,|l_j^+|),&\text{otherwise.}\end{cases}
- \qquad L_h=w_l\frac{1}{N}\sum_{j=1}^N d_j^2 .
+\qquad L_h=w_l\sum_{j=1}^N d_j^2 .
  \label{eq:corridor-lb}
 \end{equation}
-固定标签目标 $J$ 的横向项为 $w_lN^{-1}\sum_j l_{path}(s_j)^2$，且 $l_{path}(s_j)\in[l_j^-,l_j^+]$，其余终点误差、加速度和 jerk 项均非负，故 $J\geq L_h$。同一空间走廊下的时间标签共享该下界，惰性搜索可在 incumbent 不小于所有未展开下界时安全剪枝并返回 $U-L$；若下界不足以剪枝，则仍完整评估有限域。连续扫掠矩形验证失败的候选被 fail-closed，不能以“QP solved”替代安全可行性。
+几何下界 $L_h$ 对横向项是可采纳但偏松的下界。实现中进一步把每个空间分支的下界收紧为该分支路径 QP 的最优值 $L_{\rm path}=\min J_l$；式\eqref{eq:qp-objective}中的速度 QP 各项均非负，故对该分支的任一时间子标签都有 $L_{\rm path}\leq J_{\rm QP}$。同一空间走廊下的时间标签共享该下界，惰性搜索可在 incumbent 不小于所有未展开下界时安全剪枝并返回 $U-L$；若下界不足以剪枝，则仍完整评估有限域。连续扫掠矩形验证失败的候选被 fail-closed，不能以“QP solved”替代安全可行性。
 
-\begin{proposition}[走廊下界的可采纳性]
-若固定标签的横向路径满足 $l_{path}(s_j)\in[l_j^-,l_j^+]$，且目标中的横向项权重 $w_l\geq0$，则由式\eqref{eq:corridor-lb}定义的 $L_h$ 不超过该标签的完整目标 $J$。因此，以 $L_h$ 作为空间分支及其时间子标签的下界不会剪去有限域中的最优可行标签。
+\begin{proposition}[空间分支下界的可采纳性]
+令 $L_{\rm path}$ 为固定空间分支的路径 QP 最优值。由于式\eqref{eq:qp-objective}中的速度 QP 各项均非负，$L_{\rm path}$ 不超过该空间分支任一可行时间子标签的完整目标 $J_{\rm QP}$。因此，以 $L_{\rm path}$ 作为空间分支及其时间子标签的下界不会剪去有限域中的最优可行标签。
 \end{proposition}
 \begin{proof}
-区间 $[l_j^-,l_j^+]$ 中到零点的最小绝对距离为 $d_j$，故 $l_{path}(s_j)^2\geq d_j^2$。乘以非负权重并对站点求平均得到横向项不小于 $L_h$；目标中的终点误差、加速度和 jerk 项均非负，故 $J\geq L_h$。同一空间分支下时间标签不改变横向区间，因此共享该下界。惰性搜索仅在下界不小于 incumbent 时剪枝，结论随即成立。
+路径 QP 解在固定空间走廊上最小化 $J_l$。时间子标签复用该路径，并额外产生非负速度代价 $J_s$，所以 $J_{\rm QP}=J_l+J_s\geq L_{\rm path}$。惰性搜索仅在该下界不小于 incumbent 时剪枝，故保持有限域最优性。
 \end{proof}
 
 \begin{proposition}[固定同伦下的凸性保持]

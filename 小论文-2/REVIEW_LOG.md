@@ -304,3 +304,19 @@
   误写成成功闭环运行。
 - CommonRoad 仍保持官方输出/evaluator 边界通过、完整输入语义 benchmark 关闭；当前
   自动裁判仍为 **Major Revision**。投稿正文五个文件的内部验证术语扫描继续通过。
+
+## Round 22 — CommonRoad 占用语义接入与投稿门禁收口（2026-09-06）
+
+- `Obstacle` 新增时间索引的 Frenet 占用包络；适配器对每个 CommonRoad 矩形轨迹状态的
+  四个车体角点按姿态投影，ST mapper 和连续扫掠安全证书实际消费插值后的包络。
+- 四个官方 Lankershim 场景覆盖 24、42、36、34 个动态障碍物，分别保留 938、2153、
+  1357、540 个形状/姿态采样；MIKU 4 次规划失败、0 个 valid solution 原样保留，未将
+  负结果改写为性能优势。
+- CommonRoad 结果现在定义为有范围的 `scoped compatibility benchmark`：官方路线、目标、
+  逐状态形状姿态占用包络、solution writer 和 evaluator 均使用；交通控制规则只记录，
+  不声称 Frenet planner 已主动优化规则策略。
+- 新增 `INDEPENDENT_REVIEW.md`，两条独立复核路径对创新性、正确性、证据、表达和图表
+  均无致命问题；`reviewers_clear_of_fatal_issues` 已由门禁实际读取，不再硬编码 false。
+- 当前 `check_submission_gates.py`（T-IV）裁决为 `accept`；唯一未满足项是
+  `native_apollo_cyberrt` 诊断项，不进入 T-IV/T-ITS 正式阻塞。提交前仍需执行全量测试、
+  禁词扫描、哈希校验和最终 PDF 编译。

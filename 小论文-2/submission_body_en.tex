@@ -172,24 +172,38 @@ The graph cost combines deviation from nominal arrival, waiting, class switching
  \text{yield-after: }&s(t_j)\le s_i^--\varepsilon_s, &&t_j<a_i.
  \label{eq:yield}
 \end{align}
-Equation~\eqref{eq:pass} commits the ego beyond the conflict before the obstacle enters, whereas \eqref{eq:yield} keeps it behind the conflict until the obstacle exits. An intermediate window applies both bounds with respect to adjacent occupied components. Each fixed label is evaluated by the path/speed QPs and a continuous swept-rectangle certificate. Joint search returns the finite-domain minimum with an auditable $U-L$ gap; an uncertified candidate is not reported as feasible.
-To make this search prunable without weakening its certificate, let the spatial corridor at station $s_j$ be $[l_j^-,l_j^+]$ and define
+Equation~\eqref{eq:pass} commits the ego beyond the conflict before the obstacle enters, whereas \eqref{eq:yield} keeps it behind the conflict until the obstacle exits. An intermediate window applies both bounds with respect to adjacent occupied components. Each fixed label is evaluated by the path/speed QPs and a continuous swept-rectangle certificate. Joint search returns the finite-domain minimum of the explicitly defined QP objective with an auditable $U-L$ gap; an uncertified candidate is not reported as feasible.
+The certified objective is exactly the sum of the scalar quadratic terms assembled by the two QP builders,
+\begin{equation}
+J_{\rm QP}=J_l+J_s,
+\end{equation}
+where
+\begin{align}
+J_l={}&w_l\sum_m l_m^2+w_{dl}\sum_m(\Delta l_m/\Delta s)^2\\
+       &+w_{ddl}\sum_m(\Delta^2 l_m/\Delta s^2)^2,\\
+ J_s={}&w_v\sum_j(v_j-v_0)^2+w_a\sum_j a_j^2\\
+       &+w_j\sum_j(\Delta a_j/\Delta t)^2
+       +w_T(s_N-s_T)^2 .
+\label{eq:qp-objective}
+\end{align}
+Here $s_T=\min(s_N^{\rm ub},s_{\rm goal})$ is the terminal reference used by the speed QP. No separate surrogate objective is used by the certificate.
+To obtain an admissible branch bound without weakening the certificate, let the spatial corridor at station $s_j$ be $[l_j^-,l_j^+]$ and define
 \begin{equation}
 \begin{aligned}
 d_j&=\begin{cases}0,&l_j^-\leq0\leq l_j^+,\\
 \min(|l_j^-|,|l_j^+|),&\text{otherwise,}\end{cases}
 \\
-L_h&=w_lN^{-1}\sum_{j=1}^{N}d_j^2 .
+L_h&=w_l\sum_{j=1}^{N}d_j^2 .
 \end{aligned}
 \label{eq:corridor-lb}
 \end{equation}
-The lateral term of every fixed-label objective is $w_lN^{-1}\sum_j l_{path}(s_j)^2$ with $l_{path}(s_j)\in[l_j^-,l_j^+]$; terminal error, acceleration, and jerk terms are non-negative. Therefore $J\geq L_h$. Temporal labels under one spatial corridor share this bound, so lazy search may prune an open item when its bound is no smaller than the incumbent while preserving the finite-domain $U-L$ certificate. If the bound is insufficient, the finite domain is still exhaustively evaluated.
+The geometric bound $L_h$ is a valid but deliberately loose bound on the lateral term. In the implementation, each spatial branch is tightened to the solved path-QP value $L_{\rm path}=\min J_l$ for that branch; all speed-QP terms are non-negative, hence $L_{\rm path}\leq J_{\rm QP}$ for every temporal child. Temporal labels under one spatial corridor share this bound, so lazy search may prune an open item when its bound is no smaller than the incumbent while preserving the finite-domain $U-L$ certificate. If the bound is insufficient, the finite domain is still exhaustively evaluated.
 
-\begin{proposition}[Admissibility of the corridor lower bound]
-If a fixed-label path satisfies $l_{path}(s_j)\in[l_j^-,l_j^+]$ and $w_l\geq0$, then the $L_h$ in \eqref{eq:corridor-lb} does not exceed the complete fixed-label objective $J$. Using $L_h$ for a spatial branch and all of its temporal children therefore cannot prune the finite-domain optimal feasible label.
+\begin{proposition}[Admissibility of the branch lower bound]
+Let $L_{\rm path}$ be the optimum of the path QP for a fixed spatial branch. Since every speed-QP term in \eqref{eq:qp-objective} is non-negative, $L_{\rm path}$ does not exceed the complete objective $J_{\rm QP}$ of any feasible temporal child. Using $L_{\rm path}$ for a spatial branch therefore cannot prune the finite-domain optimal feasible label.
 \end{proposition}
 \begin{proof}
-The minimum absolute distance from zero to $[l_j^-,l_j^+]$ is $d_j$, hence $l_{path}(s_j)^2\geq d_j^2$. Nonnegative weighting and averaging give a lateral cost no smaller than $L_h$; terminal error, acceleration, and jerk terms are also non-negative, so $J\geq L_h$. Temporal labels under one spatial branch do not change the lateral intervals and share this bound. Pruning only occurs when the bound is no smaller than the incumbent, which preserves the finite-domain optimum.
+The path-QP solution minimizes $J_l$ over the fixed spatial corridor. A temporal child reuses that spatial path and adds the non-negative speed cost $J_s$, so $J_{\rm QP}=J_l+J_s\geq L_{\rm path}$. Pruning only occurs when this bound is no smaller than the incumbent, which preserves the finite-domain optimum.
 \end{proof}
 
 \begin{proposition}[Convexity preservation]
@@ -288,6 +302,7 @@ MIKU's P95 complete-planning latency is \RandAllMikuRuntimePninetyfive\,ms, comp
 \label{tab:family}
 \centering
 \scriptsize
+\begin{adjustbox}{max width=\columnwidth}
 \begin{tabular}{lrrrr}
 \toprule
 Family & B0 & MIKU & Diff. & 95\% CI\\
@@ -301,6 +316,7 @@ Prediction noise & \RandNoiseBZeroSuccessPct & \RandNoiseMikuSuccessPct & \RandN
 Delayed crossing & \RandDelayedBZeroSuccessPct & \RandDelayedMikuSuccessPct & \RandDelayedMikuVsBZeroSuccessDiff & [\RandDelayedMikuVsBZeroSuccessCiLow,\RandDelayedMikuVsBZeroSuccessCiHigh]\\
 \bottomrule
 \end{tabular}
+\end{adjustbox}
 \end{table}
 
 Figure~\ref{fig:evidence-dashboard}(a,d) shows that the largest spatial gain occurs in narrow multi-obstacle passages: \RandNarrowMikuVsBZeroSuccessDiff{} points. Delayed crossing improves by \RandDelayedMikuVsBZeroSuccessDiff{} points. Under prediction noise, collision changes by \RandNoiseMikuVsBZeroCollisionDiff{} points, but success changes by \RandNoiseMikuVsBZeroSuccessDiff{} points (a decrease) because fail-closed validation turns uncertain cases into stops. This is a safety--reachability trade-off, not a robustness success gain; cut-in also shows a small success regression. Panels (b,c) disclose B2's long latency tail and the near-zero A1/A2/A7 effects instead of hiding them behind aggregate bars.
@@ -348,11 +364,58 @@ The B3 reference jointly searches $(t,s,l,v,\dot l)$ on a coarse grid. It is a d
 \begin{figure}[t]
 \centering
 \includegraphics[width=\columnwidth]{generated/joint_search_scaling.pdf}
-\caption{Finite-domain stress diagnostic with two feasible bands per separated spatial layer and one dynamic crossing. The squared distance of each corridor to $l=0$ supplies an admissible lower bound; the domain/evaluation gap exposes actual pruning.}
+\caption{Finite-domain stress diagnostic with two feasible bands per separated spatial layer and one dynamic crossing. The solved path-QP value supplies an admissible branch lower bound; the domain/evaluation gap exposes actual pruning.}
 \label{fig:joint-stress}
 \end{figure}
 
-Increasing the separated spatial-conflict layers from one to \StressMaxLayers{} produces \StressSpatialCount{} spatial homotopies and \StressDomainSize{} joint labels in the largest instance (Fig.~\ref{fig:joint-stress}). The search performs only \StressEvaluatedCount{} QP validations and takes a median \StressRuntimeMedian\,ms over three repeats. This verifies multi-branch enumeration, an admissible corridor-distance bound, and actual pruning while retaining an explicit exponential worst-case caveat.
+Increasing the separated spatial-conflict layers from one to \StressMaxLayers{} produces \StressSpatialCount{} spatial homotopies and \StressDomainSize{} joint labels in the largest instance (Fig.~\ref{fig:joint-stress}). The search performs only \StressEvaluatedCount{} QP validations and takes a median \StressRuntimeMedian\,ms over three repeats. This verifies multi-branch enumeration, an admissible path-QP branch bound, and actual pruning while retaining an explicit exponential worst-case caveat.
+
+\subsection{External CommonRoad Audit}
+\label{sec:commonroad}
+
+To separate public-benchmark provenance from the paired synthetic protocol, we
+also pin four NGSIM Lankershim scenarios from CommonRoad~\cite{althoff2017commonroad}.
+The official CommonRoad reader, route/reference-path utilities, Reactive Planner,
+solution writer, and Drivability Checker~\cite{pek2020drivability} are executed
+in an isolated environment with $\Delta t=0.1$ s and a 40-step horizon. The
+official competitor runner completes all four scenario files: two trajectories
+are valid under the official dynamics, collision, boundary, and goal checks,
+and two runs terminate as planner failures (Table~\ref{tab:commonroad}).
+
+The MIKU-side result is reported in two layers. The native boundary runner
+reads the official planning problem, converts any successful rollout to
+standard \texttt{KSState}/\texttt{PlanningProblemSolution} objects, invokes the
+official evaluator, and retains planner failures. On these four files MIKU
+produces four explicit planner failures and zero valid solutions; this is a
+negative result, not an external superiority claim. Its planner input uses the
+official reference route and every published dynamic-obstacle rectangle and
+pose. The four body corners at each state are projected into Frenet coordinates
+and interpolated as a conservative time-varying occupancy envelope consumed by
+the ST mapper and continuous safety certificate. Lanelet routing and the
+planning-problem goal remain official; traffic-control rules are recorded but
+are not optimized by the current Frenet planner. The resulting benchmark is
+therefore scoped and auditable, not a general leaderboard claim.
+
+\begin{table}[t]
+\caption{Pinned CommonRoad external audit. The native-boundary row uses official
+lanelet routing, sampled shape/pose occupancy envelopes, solution writing, and
+evaluation; it is not a general leaderboard score.}
+\label{tab:commonroad}
+\centering
+\scriptsize
+\begin{adjustbox}{max width=\columnwidth}
+\begin{tabular}{lrrrr}
+\toprule
+Protocol & $n$ & Valid/Success(\%) & Collision(\%) & Median ms\\
+\midrule
+Official Reactive Planner & \CRReactiveScenarioCount & \CRReactiveValidCount/\CRReactiveValidPct & -- & --\\
+Native MIKU boundary & \CRNativeMikuScenarioCount & \CRNativeMikuValidCount/\CRNativeMikuValidPct & -- & \CRNativeMikuMedianRuntime\\
+Adapter B0 & \CRAdapterCaseCount & \CRBZeroSuccessPct & \CRBZeroCollisionPct & \CRBZeroMedianRuntime\\
+Adapter MIKU & \CRAdapterCaseCount & \CRMikuSuccessPct & \CRMikuCollisionPct & \CRMikuMedianRuntime\\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
 
 \begin{table}[t]
 \caption{Receding-Horizon and Joint-Grid Protocols}
@@ -376,6 +439,13 @@ Joint ($n=\JointCaseCount$) & B3 & \JointBThreeSuccessPct & \JointBThreeCollisio
 Perturbing all five threat weights by $\pm\SensPerturbPct\%$ and renormalizing changes the resulting margin by at most \SensWorstRelDev\%. Twenty full-planning perturbations in each of four representative scenarios (80 trajectories total) all succeed; the maximum lateral trajectory deviation is 0.011\,m. The core effect is therefore locally stable rather than dependent on one exact weight vector.
 
 The evaluation covers planner-in-the-loop structured-road scenarios and bounded prediction perturbations. It does not yet include perception false detections, complex intersection rules, or physical actuator errors. These are the next interfaces for probabilistic prediction and vehicle experiments, while the reported theorem, convexity property, executable implementation, and paired simulation evidence remain directly reproducible.
+
+For system provenance, the repository pins Apollo Planning commit
+\texttt{57460908954e3188f640a813d26180e862d62a5f}, indexes the Planning/CyberRT/Dreamview
+fixtures, and records the available runtime artifacts. Those manifests establish
+source and asset lineage; no new native Apollo run was launched during this
+manuscript rebuild, so the metrics above remain algorithm-level results rather
+than native Apollo runtime claims.
 
 \section{Conclusion}
 

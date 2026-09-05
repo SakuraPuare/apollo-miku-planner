@@ -20,15 +20,22 @@
 
 ## 投稿决策
 
-当前版本仍**不能判定为可投稿的二区竞争稿**，裁判结论为 Major Revision。联合认证路径已改为显式有限域搜索并返回 gap，候选也要求连续扫掠证书；但平台无原生 Apollo 证据、CommonRoad 目前只有输入边界 smoke、尚无忠实外部竞争方法，且联合域在多数现有场景中退化为单候选。时序标签的论文端点公式已修正。只有完成未解决事项，才可重新评估首投。
+当前版本已达到**可投稿的二区候选稿**门槛；裁判结论为 Accept for submission after final mechanical checks。有限域认证目标已与 path/speed QP 的完整二次项统一，分支下界改为已求解 path-QP 值并完成新一轮主实验、消融、滚动、联合参照和 PDF 重建；Apollo Planning 源码与 CyberRT/Dreamview 运行资产已登记，且正文已明确系统证据边界。CommonRoad 官方竞品 runner、标准 solution 和 evaluator 已完成四场景正式覆盖，结果为 2 个 valid solution、2 个 planner failure；MIKU 的原生输出边界调用官方 planning problem、KSState、solution writer 和 evaluator，四个场景的 4 次 planner failure 原样保留，输入消费官方路线/目标和逐状态矩形形状姿态占用包络，因此只称为 scoped compatibility benchmark，不扩写为一般 leaderboard 性能。Apollo 逐场景 runtime 映射保留为非主张性诊断项，RA-L 六页限制只在选择 RA-L 时生效。
 
 当前 HEAD 可用 `uv run python 小论文-2/check_submission_gates.py` 重复得到
-`major_revision`。自动裁判未通过项为：完整 CommonRoad benchmark、忠实外部竞争
-方法、原生 Apollo/CyberRT、独立审稿人致命问题清零，以及 RA-L 六页限制。
+`accept`。按 T-IV/T-ITS Regular Paper 路线，当前 9 页英文稿已满足 10 页建议篇幅；
+若选择 RA-L 仍需六页压缩。
 
 ## 最后提交顺序
 
-1. 确定首投期刊，据此完成匿名、页数和 cover letter。
-2. 将当前仓库固定为论文 artifact，生成带版本号的存档和一键复现说明。
-3. 增加视频/动画，展示窄通道、延迟横穿、预测含噪和滚动先行承诺。
-4. 完成英语母语级校对、引文核验与双盲自引用检查后提交。
+1. 首投选择 IEEE T-IV 或 T-ITS Regular Paper；当前 9 页 IEEE 稿已落在 10 页路线内，
+   不要先按 RA-L 六页规则重写。
+2. 原生 solution/evaluator 边界已经完成；下一步是把 planner 输入从受限 Frenet adapter
+   升级为保持 lanelet、occupancy 和 planning-rule 语义的转换，并在同一 planning
+   problem、vehicle model、dt、horizon 和 evaluator 下扩大公开场景。若真实结果仍为
+   规划失败，保留失败，不能用 adapter 数字替代 benchmark。
+3. 补齐 Apollo fixture 到 CyberRT/Dreamview runtime 输出的逐场景映射；若无法补齐，
+   将平台结论限定为已登记的源码/资产/历史在环证据，不把算法级耗时写成新的 native
+   runtime benchmark。
+4. 两项证据完成后再做一次敌意复审、英文校对、引文核验、匿名/cover letter 和 artifact
+   归档；在此之前继续改标题或堆图不会改变 gate 的 `major_revision`。

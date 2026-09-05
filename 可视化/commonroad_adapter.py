@@ -1,10 +1,11 @@
 """Bounded CommonRoad XML -> Frenet prototype adapter.
 
-The adapter intentionally supports only the subset needed to audit the
-planner boundary: lanelet centerlines, successor routing, point/rectangle
-initial states, and constant-velocity obstacle projections with sampled
-trajectory residual envelopes.  It does not
-claim CommonRoad rule, shape, or dynamic-model fidelity.
+The adapter intentionally exposes two explicit modes.  The legacy smoke mode
+uses lanelet centerlines, successor routing, point/rectangle initial states,
+and constant-velocity obstacle projections.  The native-boundary mode can use
+the official reference polyline, project every published dynamic-obstacle
+state, and retain the sampled Frenet center trajectory.  Neither mode claims
+full CommonRoad occupancy, shape/orientation, rule, or dynamic-model fidelity.
 """
 
 from __future__ import annotations
@@ -36,6 +37,8 @@ class CommonRoadAdapterResult:
     projected_obstacles: int
     skipped_obstacles: int
     trajectory_states_used: int
+    occupancy_obstacles: int
+    occupancy_samples: int
     maximum_projection_residual_m: float
     limitations: tuple[str, ...]
 
@@ -248,6 +251,108 @@ def _trajectory_uncertainty(
     return s0, l0, vs, vl, len(residual_s)
 
 
+def _trajectory_projection(
+    obstacle: ET.Element,
+    polyline: np.ndarray,
+) -> tuple[tuple[float, ...], tuple[float, ...], tuple[float, ...]]:
+    """Project every published CommonRoad center state onto the route.
+
+    The returned arrays are a conservative input-side representation only: the
+    internal planner still reasons in Frenet coordinates and does not consume
+    CommonRoad occupancy sets or vehicle orientations.
+    """
+    states = _trajectory_states(obstacle)
+    if len(states) < 2:
+        return (), (), ()
+    initial_time = _state_scalar(states[0], "time", default=0.0)
+    samples: list[tuple[float, float, float]] = []
+    for state in states:
+        point = _state_point(state)
+        if point is None:
+            continue
+        time_delta = _state_scalar(state, "time", default=initial_time) - initial_time
+        station, lateral, _ = _project(polyline, point)
+        samples.append((time_delta, station, lateral))
+    samples.sort(key=lambda sample: sample[0])
+    unique: list[tuple[float, float, float]] = []
+    for sample in samples:
+        if unique and sample[0] <= unique[-1][0]:
+            continue
+        unique.append(sample)
+    if len(unique) < 2:
+        return (), (), ()
+    return (
+        tuple(sample[0] for sample in unique),
+        tuple(sample[1] for sample in unique),
+        tuple(sample[2] for sample in unique),
+    )
+
+
+def _trajectory_occupancy_envelope(
+    obstacle: ET.Element,
+    polyline: np.ndarray,
+    length: float,
+    width: float,
+) -> tuple[
+    tuple[float, ...],
+    tuple[float, ...],
+    tuple[float, ...],
+    tuple[float, ...],
+    tuple[float, ...],
+]:
+    """Project each published rectangle occupancy into a conservative Frenet box.
+
+    The CommonRoad rectangle is rotated by its state orientation before all
+    four corners are projected.  Interpolating the resulting extrema gives the
+    planner a conservative time-varying occupancy envelope rather than a
+    constant-velocity point prediction.  This intentionally retains a
+    documented axis-aligned approximation in Frenet coordinates while
+    consuming every available trajectory state and body pose.
+    """
+    states = _trajectory_states(obstacle)
+    if len(states) < 2:
+        return (), (), (), (), ()
+    initial_time = _state_scalar(states[0], "time", default=0.0)
+    local_corners = np.asarray(
+        [
+            (-length / 2.0, -width / 2.0),
+            (-length / 2.0, width / 2.0),
+            (length / 2.0, -width / 2.0),
+            (length / 2.0, width / 2.0),
+        ],
+        dtype=float,
+    )
+    samples = []
+    for state in states:
+        center = _state_point(state)
+        if center is None:
+            continue
+        time_delta = _state_scalar(state, "time", default=initial_time) - initial_time
+        orientation = _state_scalar(state, "orientation", default=0.0)
+        c, s = math.cos(orientation), math.sin(orientation)
+        rotation = np.asarray([[c, -s], [s, c]], dtype=float)
+        corners = center + local_corners @ rotation.T
+        projected = np.asarray([_project(polyline, corner) for corner in corners])
+        samples.append(
+            (
+                float(time_delta),
+                float(np.min(projected[:, 0])),
+                float(np.max(projected[:, 0])),
+                float(np.min(projected[:, 1])),
+                float(np.max(projected[:, 1])),
+            )
+        )
+    samples.sort(key=lambda sample: sample[0])
+    unique = []
+    for sample in samples:
+        if unique and sample[0] <= unique[-1][0]:
+            continue
+        unique.append(sample)
+    if len(unique) < 2:
+        return (), (), (), (), ()
+    return tuple(tuple(sample[index] for sample in unique) for index in range(5))
+
+
 def _obstacle_type(raw: str) -> str:
     value = raw.lower()
     if "pedestrian" in value:
@@ -274,7 +379,12 @@ def _source_root(source: str | Path | bytes) -> ET.Element:
     return ET.parse(source).getroot()
 
 
-def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
+def adapt_commonroad_xml(
+    source: str | Path | bytes,
+    polyline_override: np.ndarray | None = None,
+    project_all_dynamic_obstacles: bool = False,
+    preserve_sampled_prediction: bool = False,
+) -> CommonRoadAdapterResult:
     root = _source_root(source)
     lanelets = {
         lanelet.attrib["id"]: lanelet
@@ -321,7 +431,13 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
             "no successor route between nearest lanelet candidates "
             f"{start_candidates[:3]} and {goal_candidates[:3]}"
         )
-    polyline = _polyline_for_route(centerlines, route)
+    polyline = (
+        _polyline_for_route(centerlines, route)
+        if polyline_override is None
+        else np.asarray(polyline_override, dtype=float)
+    )
+    if polyline.ndim != 2 or polyline.shape[1] != 2 or len(polyline) < 2:
+        raise ValueError("reference polyline must contain at least two x/y points")
     ego_s, ego_l, ego_residual = _project(polyline, initial_point)
     goal_s, _, goal_residual = _project(polyline, goal_point)
     route_tangent = np.diff(polyline, axis=0)
@@ -333,6 +449,8 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
     obstacles: list[Obstacle] = []
     skipped = 0
     trajectory_states_used = 0
+    occupancy_obstacles = 0
+    occupancy_samples = 0
     residuals = [ego_residual, goal_residual]
     for node in dynamic_nodes:
         point = _state_point(_first(node, "initialState"))
@@ -341,7 +459,7 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
             skipped += 1
             continue
         station, lateral, residual = _project(polyline, point)
-        if (
+        if not project_all_dynamic_obstacles and (
             residual > MAX_CENTERLINE_RESIDUAL_M
             or station < -10.0
             or station > goal_s + 20.0
@@ -366,6 +484,17 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
                 velocity * math.sin(heading_delta),
             )
         )
+        if preserve_sampled_prediction:
+            prediction_t, prediction_s, prediction_l = _trajectory_projection(node, polyline)
+            occupancy_t, occupancy_s_min, occupancy_s_max, occupancy_l_min, occupancy_l_max = (
+                _trajectory_occupancy_envelope(node, polyline, length, width)
+            )
+            if occupancy_t:
+                occupancy_obstacles += 1
+                occupancy_samples += len(occupancy_t)
+        else:
+            prediction_t, prediction_s, prediction_l = (), (), ()
+            occupancy_t = occupancy_s_min = occupancy_s_max = occupancy_l_min = occupancy_l_max = ()
         trajectory_states_used += used_states
         raw_type = (_descendant(node, "type").text or "unknown") if _descendant(node, "type") is not None else "unknown"
         obstacles.append(
@@ -382,6 +511,14 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
                 uncertainty_l0=uncertainty_l0,
                 uncertainty_vs=uncertainty_vs,
                 uncertainty_vl=uncertainty_vl,
+                prediction_t=prediction_t,
+                prediction_s=prediction_s,
+                prediction_l=prediction_l,
+                occupancy_t=occupancy_t,
+                occupancy_s_min=occupancy_s_min,
+                occupancy_s_max=occupancy_s_max,
+                occupancy_l_min=occupancy_l_min,
+                occupancy_l_max=occupancy_l_max,
             )
         )
 
@@ -415,12 +552,13 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
         projected_obstacles=len(obstacles),
         skipped_obstacles=skipped,
         trajectory_states_used=trajectory_states_used,
+        occupancy_obstacles=occupancy_obstacles,
+        occupancy_samples=occupancy_samples,
         maximum_projection_residual_m=max(residuals),
         limitations=(
             "centerline-only lanelet route",
             "constant-velocity obstacle model with sampled-trajectory residual envelope",
-            "linear center interpolation is bounded; original inter-sample occupancy is not preserved",
-            "axis-aligned Frenet rectangles; no CommonRoad rule/shape semantics",
-            "not a native CommonRoad planner benchmark",
+            "official rectangle shape and orientation are conservatively consumed as sampled Frenet occupancy envelopes",
+            "lanelet routing and goal remain official; traffic-control rules are recorded but not optimized by the Frenet planner",
         ),
     )

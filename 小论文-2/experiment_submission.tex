@@ -131,14 +131,46 @@ B3 联合参照在 $(t,s,l,v,\dot l)$ 网格上同步搜索，并与 MIKU 使用
 \begin{figure}[htbp]
 \centering
 \includegraphics[width=0.62\textwidth]{generated/joint_search_scaling.pdf}
-\caption{非平凡有限联合域的规模诊断。每层含两个可行空间带，并叠加一个动态横穿。走廊到零线的平方距离提供可采纳下界，候选域与 QP 评估数的差异直接显示实际剪枝。}
+\caption{非平凡有限联合域的规模诊断。每层含两个可行空间带，并叠加一个动态横穿。空间分支的路径 QP 最优值提供可采纳下界，候选域与 QP 评估数的差异直接显示实际剪枝。}
 \label{fig:joint-stress}
 \end{figure}
 
-图~\ref{fig:joint-stress} 将相互分离的空间冲突层从 1 增至 \StressMaxLayers。最大实例含 \StressSpatialCount 个空间同伦与 \StressDomainSize 个联合候选，搜索仅执行 \StressEvaluatedCount 次 QP 验收，三次重复的中位完整耗时为 \StressRuntimeMedian\,ms。该压力协议同时证明有限域证书和走廊距离下界的实际剪枝；最坏复杂度仍随联合域指数增长，因此不作无条件实时性主张。
+图~\ref{fig:joint-stress} 将相互分离的空间冲突层从 1 增至 \StressMaxLayers。最大实例含 \StressSpatialCount 个空间同伦与 \StressDomainSize 个联合候选，搜索仅执行 \StressEvaluatedCount 次 QP 验收，三次重复的中位完整耗时为 \StressRuntimeMedian\,ms。该压力协议同时证明有限域证书和路径 QP 分支下界的实际剪枝；最坏复杂度仍随联合域指数增长，因此不作无条件实时性主张。
+
+\subsection{外部 CommonRoad 审计}
+\label{sec:commonroad}
+
+为将公开基准来源与配对随机协议分开，本文固定 CommonRoad~\citep{althoff2017commonroad}
+NGSIM Lankershim 的 4 个场景，并在隔离环境中以 $\Delta t=0.1$ s、40 步时域运行官方
+reader、路线/参考线工具、Reactive Planner、solution writer 以及 Drivability Checker~\citep{pek2020drivability}。
+官方竞品入口完成了全部 4 个 XML：其中 2 条轨迹通过官方动力学、碰撞、道路边界与目标检查，另有 2 次为规划器失败（表~\ref{tab:commonroad}）。
+
+MIKU 侧结果分为两层报告。新增原生边界 runner 读取官方 planning problem，将成功轨迹转换为标准 KSState/PlanningProblemSolution，调用官方 evaluator，并保留规划失败；在这 4 个文件上 MIKU 真实产生 4 次 planner failure、0 条 valid solution，这是负结果而非外部优越性主张。其规划输入使用官方参考路线、全部动态障碍物的矩形形状与姿态轨迹：每个发布状态的四个车体角点被投影到 Frenet 坐标，并以时间插值的保守占用包络进入 ST 边界和连续安全证书。官方 lanelet 路由与 planning-problem goal 保持不变，但交通控制规则尚未由当前 Frenet planner 主动优化；因此这里报告的是语义范围明确的 CommonRoad 兼容性基准，不将未覆盖的规则策略扩写成 leaderboard 性能结论。
+
+\begin{table}[htbp]
+\centering
+\scriptsize
+\caption{固定 CommonRoad 外部审计；Native MIKU 行使用官方路由、逐状态形状/姿态占用包络、
+solution/evaluator，但不解释为一般 leaderboard 分数。}
+\label{tab:commonroad}
+\begin{tabular}{lrrrr}
+\toprule
+协议 & $n$ & 有效/到达(\%) & 碰撞(\%) & 中位耗时(ms)\\
+\midrule
+官方 Reactive Planner & \CRReactiveScenarioCount & \CRReactiveValidCount/\CRReactiveValidPct & -- & --\\
+Native MIKU boundary & \CRNativeMikuScenarioCount & \CRNativeMikuValidCount/\CRNativeMikuValidPct & -- & \CRNativeMikuMedianRuntime\\
+适配器 B0 & \CRAdapterCaseCount & \CRBZeroSuccessPct & \CRBZeroCollisionPct & \CRBZeroMedianRuntime\\
+适配器 MIKU & \CRAdapterCaseCount & \CRMikuSuccessPct & \CRMikuCollisionPct & \CRMikuMedianRuntime\\
+\bottomrule
+\end{tabular}
+\end{table}
 
 \subsection{灵敏度与适用范围}
 
 对五项威胁权重同时施加 $\pm\SensPerturbPct\%$ 扰动并重新归一，安全裕度最大相对偏差为 \SensWorstRelDev\%；4 个代表性场景各运行 \SensTrajectoryTrialCount 条完整轨迹，共 80 条均保持成功，最大横向轨迹偏差为 0.011\,m。结果表明，方法对权重的局部变化稳定，核心收益不依赖单个精确调参点。
 
 本文实验覆盖规划器在环的结构化道路与有界预测扰动，尚未包含真实感知误检、复杂路口规则和车辆执行器误差。该范围不影响本文对同伦候选、凸性保持和配对仿真结果的验证，也明确了下一阶段实车与概率预测实验的接口。
+
+系统证据方面，仓库固定 Apollo Planning commit
+\texttt{57460908954e3188f640a813d26180e862d62a5f}，并索引 Planning/CyberRT/Dreamview
+fixture 与已有 runtime 产物。这些清单证明源码和资产来源；本次论文重建没有重新启动原生 Apollo 运行，因此本文数值仍属于算法级结果，不把它们表述为原生 Apollo runtime 性能。

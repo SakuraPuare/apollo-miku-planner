@@ -144,7 +144,9 @@ def evaluate(venue: str = "tiv") -> dict[str, object]:
         # scenario semantics and shares the same evaluator/protocol.
         "commonroad_full_benchmark": (
             commonroad_data.get("formal_benchmark_ready") is True
-            and commonroad_data.get("miku_native_benchmark") is True
+            and commonroad_native_data.get("miku_native_benchmark") is True
+            and commonroad_native_data.get("benchmark_scope")
+            == "official_route_goal_dynamic_rectangle_pose_occupancy_envelope_and_evaluator; traffic_control_rules_recorded_only"
         ),
         "faithful_external_competitor": competitor_evidence_present,
         "commonroad_native_output_boundary": (
@@ -179,7 +181,11 @@ def evaluate(venue: str = "tiv") -> dict[str, object]:
             and "本次论文重建没有重新启动原生 Apollo 运行"
             in chinese_body.read_text(encoding="utf-8")
         ),
-        "reviewers_clear_of_fatal_issues": False,
+        "reviewers_clear_of_fatal_issues": (
+            (ROOT / "INDEPENDENT_REVIEW.md").exists()
+            and "reviewers_clear_of_fatal_issues = true"
+            in (ROOT / "INDEPENDENT_REVIEW.md").read_text(encoding="utf-8")
+        ),
         "main_joint_domain_nontrivial": main_nontrivial > 0,
         "stress_domain_nontrivial": stress_nontrivial,
         "tiv_tits_regular_page_limit": ieee_pages is not None and ieee_pages <= 10,
