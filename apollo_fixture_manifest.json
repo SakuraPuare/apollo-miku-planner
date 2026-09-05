@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "created": "2026-09-06",
+  "apollo_source_root": "../core-11.0",
+  "apollo_commit": "57460908954e3188f640a813d26180e862d62a5f",
+  "fixtures": {
+    "planning_inputs": [
+      {
+        "name": "garage_initial_state",
+        "root": "../core-11.0/modules/planning/planning_base/testdata/garage_test",
+        "files": {
+          "chassis": "1_chassis.pb.txt",
+          "localization": "1_localization.pb.txt",
+          "prediction": "1_prediction.pb.txt",
+          "routing": "garage_routing.pb.txt"
+        },
+        "sha256": {
+          "1_chassis.pb.txt": "a79c0088d56778a2dba9389a6ee623211bb3e1ac8718fd59a0bb1f23efff5cdb",
+          "1_localization.pb.txt": "27afecc05e7b05d2033c8425a613c037de19c461d6dd713b86e8ee67b2515986",
+          "1_prediction.pb.txt": "5f3a5f7811a69f0c578d37399be840ff4fddb2f26a008109f804c39488d647c9"
+        }
+      },
+      {
+        "name": "sunnyvale_big_loop_replay",
+        "root": "../core-11.0/modules/planning/planning_base/testdata/sunnyvale_big_loop_test",
+        "pattern": "*_chassis.pb.txt, *_localization.pb.txt, *_prediction.pb.txt, *_routing.pb.txt",
+        "map_root": "../core-11.0/data/map_data/sunnyvale_big_loop"
+      }
+    ],
+    "planning_configuration": [
+      "../core-11.0/modules/planning/planners/public_road/conf/planner_config.pb.txt",
+      "../core-11.0/modules/planning/tasks/speed_bounds_decider/proto/speed_bounds_decider.proto",
+      "../core-11.0/modules/planning/planning_base/proto/st_drivable_boundary.proto"
+    ],
+    "vehicle_model": [
+      "../core-11.0/.aem/envroot/opt/apollo/neo/src/modules/common/data/vehicle_param.pb.txt",
+      "../core-11.0/.aem/envroot/opt/apollo/neo/src/modules/common/vehicle_model/conf/vehicle_model_config.pb.txt"
+    ],
+    "map": [
+      "../core-11.0/data/map_data/sunnyvale_big_loop/sim_map.bin",
+      "../core-11.0/data/map_data/sunnyvale_big_loop/base_map.bin",
+      "../core-11.0/data/map_data/sunnyvale_big_loop/routing_map.bin",
+      "../core-11.0/data/map_data/sunnyvale_big_loop/map.json",
+      "../core-11.0/data/map_data/sunnyvale_big_loop/default_end_way_point.txt"
+    ]
+  },
+  "runtime_outputs": {
+    "root": "../core-11.0/dumps",
+    "planning": "planning.dag_external_command_process.dag.data",
+    "planning_latency": "planning.dag_external_command_process.dag.latency.data",
+    "cyber": "mainboard_default_*.data",
+    "dreamview": "bvar.dreamview_plus*.data",
+    "control": "control.dag*.data",
+    "prediction": "prediction.dag*.data"
+  },
+  "status": {
+    "fixture_paths_indexed": true,
+    "fixture_content_replayed_in_this_turn": false,
+    "exact_scenario_to_runtime_output_mapping": "pending",
+    "planning_component_build": "successful_with_bvar_package",
+    "runtime_launch_after_build": "failed_dependency_path_resolution"
+  }
+}
