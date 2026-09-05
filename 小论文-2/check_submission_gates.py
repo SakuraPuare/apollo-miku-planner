@@ -83,6 +83,10 @@ def evaluate() -> dict[str, object]:
         "novelty_audit": (ROOT / "NOVELTY_AUDIT.md").exists(),
         "related_work_matrix": (ROOT / "RELATED_WORK_MATRIX.md").exists(),
         "claim_traceability": (ROOT / "CLAIM_TRACEABILITY.md").exists(),
+        "public_baseline_audit": (
+            (ROOT.parent / "小论文" / "PUBLIC_BASELINE_AUDIT.md").exists()
+            and (ROOT.parent / "小论文" / "P1_METRICS_AUDIT.md").exists()
+        ),
         "standardized_external_source": (generated / "commonroad_native_audit.json").exists(),
         # A competitor-only run is not a MIKU CommonRoad benchmark.  The gate
         # remains closed until the native MIKU adapter preserves the declared
