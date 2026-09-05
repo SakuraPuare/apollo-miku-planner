@@ -104,17 +104,31 @@ compile is not a successful scenario replay.
 
 ## Runtime launch attempt after build
 
-The rebuilt component was copied into the temporary `/apollo` module path and
-`mainboard` was launched with the package-library search paths.  The process
-reached module loading, but stopped because the generated component depends on
-`libDO_NOT_IMPORT_planning_component.so` and the corresponding dependent
-package libraries were not installed in that temporary module path.  The
-observed diagnostic was:
+The rebuilt component and its package dependencies were then copied/located in
+the temporary `/apollo` module path, and `mainboard` was launched with all
+Apollo package-library search paths.  This time the process reached the
+Planning component and emitted plugin-load diagnostics, but did not produce a
+mapped trajectory before the bounded 25-second run ended:
 
 ```text
-LibraryLoadException: libapollo_planning_planning_interface_base.so:
-cannot open shared object file: No such file or directory
+plugin of class apollo::planning::LaneFollowMap have not been loaded
+plugin of class apollo::planning::PublicRoadPlanner have not been loaded
 ```
 
-This is retained as a failed launch diagnostic.  It is not presented as a
-successful CyberRT replay, and no runtime metric is derived from it.
+The command returned `124` under `timeout` and the process emitted a core-dump
+diagnostic.  This is retained as a partial launch diagnostic only.  It is not
+presented as a successful CyberRT replay, and no runtime metric is derived
+from it; exact fixture-to-output mapping remains pending.
+
+The prebuilt plugin packages did not include a usable LaneFollowMap library, so
+the two missing plugins were also rebuilt from the pinned source targets
+(`liblane_follow_map.so` and `libpublic_road_planner.so`).  A second launch
+still stopped at the same plugin-manager stage and produced no trajectory.  The
+result is therefore a reproducible build-and-launch diagnostic, not a successful
+fixture replay.
+
+Plugin build hashes from the same source/dependency environment are
+`liblane_follow_map.so` =
+`0f9fcf9eb135da9be28dfd354f216db757c4263cb7ac77ccfabfe4ddbe00c120` and
+`libpublic_road_planner.so` =
+`38698306826ecc8fab0127346cca83f603bf5bf0a351a7d66a158c82b0027d63`.
