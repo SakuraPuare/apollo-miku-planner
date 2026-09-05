@@ -29,6 +29,10 @@
 - Apollo 11.0 的窄 corridor 目标和 `--config=opt` 重建均复现缺失
   `third_party/var/bvar/bvar.h`，旧 Bazel 缓存中的共享库未被冒充为当前构建证据。
 
+上述构建阻塞已在临时 AEM 容器安装官方 `bvar=9.0.0-rc-r2` 后关闭：MIKU corridor、
+完整 Planning component 以及两个缺失插件均完成构建，并记录 SHA-256。随后 mainboard
+进入插件加载阶段但未形成 fixture→trajectory 映射，因此 `native_apollo_cyberrt` 仍不放行。
+
 ## 投稿决策
 
 自动门禁当前仍为 `major_revision`。因此本次验收把“论文写作与证据边界闭环”标记为完成，
