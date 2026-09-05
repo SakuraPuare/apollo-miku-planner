@@ -56,3 +56,8 @@ Consequently, this narrower attempt does not establish a successful native
 Apollo build or runtime replay. It is retained as a diagnostic record only;
 the native-Apollo gate remains open until the source/dependency overlay is
 restored and a successful target plus mapped runtime output is produced.
+
+The same missing-header failure was reproduced with `--config=opt` after a
+fresh analysis.  Older `k8-opt` shared objects found in the local Bazel cache
+were not treated as evidence because their producing action, dependency
+snapshot, and source commit could not be reconstructed from the current run.

@@ -8,7 +8,7 @@
 - 系统级指标审计已完成；缺少原生 runtime 证据的 P99 和跟踪误差不再被正文暗示为已测量。
 - 期刊适配包和实验产物哈希清单已建立；冻结 3,500 行数据已实际导出到 `submission_artifacts/frozen_3500/`，并与 700 回归包分离。
 - 论文投稿文件内部验证术语扫描通过。
-- 回归测试：`115 passed, 20 skipped`。
+- 回归测试：`116 passed, 20 skipped`。
 - Apollo snapshot/fixture 路径校验通过。
 - Q3 中文稿 XeLaTeX 编译通过，当前 15 页；T-IV/T-ITS 10 页门限通过。
 
@@ -20,6 +20,14 @@
 | `commonroad_full_benchmark` | blocked | MIKU 输入仍为受限 Frenet adapter，尚未保留完整 lanelet/occupancy/rule 语义 |
 | `reviewers_clear_of_fatal_issues` | open | 以上两项证据缺口仍会触发工程审稿人的 major revision |
 | `ral_page_limit` | blocked | IEEE 版当前 9 页，超过 6 页路线；不应直接投 RA-L |
+
+## 本轮新增审计
+
+- CommonRoad 原生输出边界在独立 Python 3.12 环境中重新执行，四个官方
+  Lankershim 场景均保留 MIKU 规划失败行；由于输入仍是受限 Frenet adapter，
+  `commonroad_full_benchmark` 继续关闭。
+- Apollo 11.0 的窄 corridor 目标和 `--config=opt` 重建均复现缺失
+  `third_party/var/bvar/bvar.h`，旧 Bazel 缓存中的共享库未被冒充为当前构建证据。
 
 ## 投稿决策
 
