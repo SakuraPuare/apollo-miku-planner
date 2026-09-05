@@ -16,6 +16,9 @@ def test_submission_gate_audit_is_conservative() -> None:
     assert report["checks"]["apollo_runtime_log_index"]
     assert report["checks"]["archive_manifest"]
     assert report["checks"]["journal_scope_packets"]
+    assert report["checks"]["supplement_archive_counts"]
+    assert report["artifacts"]["frozen_archive_case_count"] == 3500
+    assert report["artifacts"]["regression_archive_case_count"] == 700
     assert report["checks"]["stress_domain_nontrivial"]
     assert report["artifacts"]["randomized_case_count"] == 700
     assert report["checks"]["faithful_external_competitor"]

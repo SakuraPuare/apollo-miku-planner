@@ -51,6 +51,8 @@ def evaluate() -> dict[str, object]:
     fixture_manifest = ROOT.parent / "apollo_fixture_manifest.json"
     commonroad_report = generated / "commonroad_reactive_results.json"
     commonroad_native_report = generated / "commonroad_miku_native_results.json"
+    frozen_archive_report = ROOT.parent / "submission_artifacts" / "frozen_3500" / "小论文-2" / "generated" / "randomized_results.json"
+    regression_archive_report = ROOT.parent / "submission_artifacts" / "regression_700" / "randomized_results.json"
     commonroad_macros = generated / "commonroad_macros.tex"
     english_body = ROOT / "submission_body_en.tex"
     chinese_body = ROOT / "experiment_submission.tex"
@@ -72,6 +74,8 @@ def evaluate() -> dict[str, object]:
             apollo_evidence_present = False
     commonroad_data = {}
     commonroad_native_data = {}
+    frozen_archive_data = {}
+    regression_archive_data = {}
     try:
         commonroad_data = json.loads(commonroad_report.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -82,6 +86,12 @@ def evaluate() -> dict[str, object]:
         )
     except (OSError, json.JSONDecodeError):
         commonroad_native_data = {}
+    try:
+        frozen_archive_data = json.loads(frozen_archive_report.read_text(encoding="utf-8"))
+        regression_archive_data = json.loads(regression_archive_report.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        frozen_archive_data = {}
+        regression_archive_data = {}
     competitor_evidence_present = bool(
         commonroad_data.get("competitor") == "commonroad-reactive-planner"
         and commonroad_data.get("scenario_count", 0) >= 1
@@ -104,6 +114,10 @@ def evaluate() -> dict[str, object]:
         ),
         "archive_manifest": (ROOT.parent / "小论文" / "EXPERIMENT_ARCHIVE_MANIFEST.json").exists(),
         "journal_scope_packets": (ROOT.parent / "小论文" / "SUBMISSION_SCOPE_PACKETS.md").exists(),
+        "supplement_archive_counts": (
+            frozen_archive_data.get("paired_case_count") == 3500
+            and regression_archive_data.get("paired_case_count") == 700
+        ),
         "standardized_external_source": (generated / "commonroad_native_audit.json").exists(),
         # A competitor-only run is not a MIKU CommonRoad benchmark.  The gate
         # remains closed until the native MIKU adapter preserves the declared
@@ -165,6 +179,8 @@ def evaluate() -> dict[str, object]:
             "commonroad_miku_native_valid_solution_count": commonroad_native_data.get(
                 "miku_valid_solution_count"
             ),
+            "frozen_archive_case_count": frozen_archive_data.get("paired_case_count"),
+            "regression_archive_case_count": regression_archive_data.get("paired_case_count"),
         },
     }
 
