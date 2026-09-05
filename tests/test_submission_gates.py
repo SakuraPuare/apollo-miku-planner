@@ -14,6 +14,7 @@ def test_submission_gate_audit_is_conservative() -> None:
     assert report["checks"]["standardized_external_source"]
     assert report["checks"]["public_baseline_audit"]
     assert report["checks"]["apollo_runtime_log_index"]
+    assert report["checks"]["apollo_build_attempt_index"]
     assert report["checks"]["archive_manifest"]
     assert report["checks"]["journal_scope_packets"]
     assert report["checks"]["supplement_archive_counts"]

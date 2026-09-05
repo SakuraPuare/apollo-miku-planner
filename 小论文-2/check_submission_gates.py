@@ -112,6 +112,13 @@ def evaluate() -> dict[str, object]:
                 encoding="utf-8"
             )
         ),
+        "apollo_build_attempt_index": (
+            (ROOT.parent / "小论文" / "APOLLO_BUILD_ATTEMPT.md").exists()
+            and "third_party/var/bvar/bvar.h"
+            in (ROOT.parent / "小论文" / "APOLLO_BUILD_ATTEMPT.md").read_text(
+                encoding="utf-8"
+            )
+        ),
         "archive_manifest": (ROOT.parent / "小论文" / "EXPERIMENT_ARCHIVE_MANIFEST.json").exists(),
         "journal_scope_packets": (ROOT.parent / "小论文" / "SUBMISSION_SCOPE_PACKETS.md").exists(),
         "supplement_archive_counts": (

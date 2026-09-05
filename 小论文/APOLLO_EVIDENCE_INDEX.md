@@ -74,7 +74,7 @@ vehicle_param.pb.txt
 | Exact scenario → input → output mapping | pending | scenario/config/output index |
 | Planning protobuf output and status code | pending | per-scenario output record |
 | Dreamview/CyberRT log linkage | pending | run-log index and timestamps |
-| Native Apollo build | blocked | missing `/opt/apollo/neo/.../bazel-extend-tools` dependency |
+| Native Apollo build | blocked | 11.0 AEM build reaches C++ compilation but fails on missing `third_party/var/bvar/bvar.h`; command/error in `APOLLO_BUILD_ATTEMPT.md` |
 | Closed-loop metric provenance | pending | raw output plus metric-generation script |
 
 Until the pending rows are closed, the paper must not describe the existing dump
