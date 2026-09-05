@@ -26,6 +26,9 @@ MAX_CENTERLINE_RESIDUAL_M = 6.0
 @dataclass(frozen=True)
 class CommonRoadAdapterResult:
     scenario: Scenario
+    route_polyline: np.ndarray
+    initial_time_step: int
+    planning_problem_id: int | str
     benchmark_id: str
     route_lanelet_ids: tuple[str, ...]
     source_lanelets: int
@@ -393,8 +396,18 @@ def adapt_commonroad_xml(source: str | Path | bytes) -> CommonRoadAdapterResult:
         l_road_max=3.75,
         lane_borrow="both",
     )
+    planning_problem_id_raw = problem.attrib.get("id", "0")
+    try:
+        planning_problem_id: int | str = int(planning_problem_id_raw)
+    except ValueError:
+        # CommonRoad permits opaque string identifiers; preserve them instead
+        # of making the adapter fail on otherwise valid XML fixtures.
+        planning_problem_id = planning_problem_id_raw
     return CommonRoadAdapterResult(
         scenario=scenario,
+        route_polyline=polyline,
+        initial_time_step=int(round(_state_scalar(initial_state, "time", default=0.0))),
+        planning_problem_id=planning_problem_id,
         benchmark_id=root.attrib.get("benchmarkID", "unknown"),
         route_lanelet_ids=route,
         source_lanelets=len(lanelets),
