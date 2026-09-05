@@ -102,6 +102,8 @@ def evaluate() -> dict[str, object]:
                 encoding="utf-8"
             )
         ),
+        "archive_manifest": (ROOT.parent / "小论文" / "EXPERIMENT_ARCHIVE_MANIFEST.json").exists(),
+        "journal_scope_packets": (ROOT.parent / "小论文" / "SUBMISSION_SCOPE_PACKETS.md").exists(),
         "standardized_external_source": (generated / "commonroad_native_audit.json").exists(),
         # A competitor-only run is not a MIKU CommonRoad benchmark.  The gate
         # remains closed until the native MIKU adapter preserves the declared
