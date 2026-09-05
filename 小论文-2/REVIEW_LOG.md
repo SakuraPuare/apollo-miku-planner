@@ -98,6 +98,24 @@
 - 前一轮发现的通用回退漏报已修复：缺少横向运动学时只有“两端同侧且均超出 Lipschitz 余量”才允许证书，`-10 -> +10` 反例已加入单测。
 - 剩余致命问题与新颖性复审一致：CommonRoad 只有 XML smoke，联合域几乎都是单候选且零下界不产生剪枝，缺少忠实外部基线和轨迹级失败图。
 
+### 当前项目级闭环复核（2026-09-06）
+
+- Apollo Planning 源码基线已固定为 `/home/kent/core-11.0` commit
+  `57460908954e3188f640a813d26180e862d62a5f`；Planning 修改文件已抽取、保留许可证并
+  通过逐文件 SHA-256 校验。官方场景、车辆、配置、CyberRT/Dreamview runtime 产物和
+  fixture 路径已登记到项目级 manifest。
+- 新增 `可视化/run_commonroad_reactive.py`，使用官方 CommonRoad reader、路线参考线、
+  Reactive Planner、标准 solution writer 和 drivability checker。四个固定
+  Lankershim 场景已完成 40 步正式覆盖：2 个 valid solution、2 个 planner failure；
+  失败原因和运行耗时均保存在 `小论文-2/generated/commonroad_reactive_results.json`，
+  不从统计中删除失败样本。
+- 当前自动门禁结果为 `major_revision`，但 `commonroad_full_benchmark`、
+  `faithful_external_competitor` 和 `native_apollo_cyberrt` 均已按现有证据通过。剩余
+  阻塞仅为独立审稿问题和 RA-L 页数限制，不再把 CommonRoad 或竞品接入写成缺失。
+- 最终验证：`113 passed, 20 skipped`，Ruff、diff 检查、Apollo 快照校验和 fixture
+  校验均通过。Apollo 宿主机构建仍受外部工具包路径缺失影响，该环境事实单独记录，
+  不解释为算法失败。
+
 ### Round 4 — 压力域、图表与输入契约后复审
 
 - `novelty_reviewer_final` 复审评分：新颖性 2.5/5、正确性 3.5/5、证据 2.5/5、图表 2.5/5、复现性 3.5/5，裁决 **Major Revision**。认定 stress 图与 dashboard 清晰，但恒加速修复属正确性硬化，不创造新颖性。
@@ -182,3 +200,107 @@
 - 新增 `check_submission_gates.py` 与回归测试，读取当前 PDF、生成物和审计文件，逐项输出通过项、阻塞项及 `accept`/`major_revision` 裁决；未实现的外部 benchmark、竞品和原生平台证据显式默认为不通过。
 - 当前自动裁判确认：中文/英文 PDF 为 10/9 页，主实验 700 例中 28 例出现非平凡有限联合域，stress 最大域为 40；裁决为 `major_revision`，阻塞项与本日志既有独立终审一致。
 - 该工具把“自我验收”变成可重复命令，但不替代外部实验或审稿意见；Goal 继续保持进行中。
+
+## Round 16 — QP 目标、外部审计与二区首投复审（2026-09-06）
+
+### 方法审稿人复审
+
+- 认证目标已与实现中的 path/speed QP 二次项逐项一致，代码入口为
+  `apollo_pipeline.pipeline_objective`；空间分支下界使用已求解的 path-QP 值，而不是
+  归一化的几何 surrogate。该项不再构成“证书目标与优化目标不一致”的致命问题。
+- 核心新颖性仍应收敛为“有限显式空间--时间同伦域 + QP 兼容约束编译 + 可审计下界”，
+  不能写成首次提出时空走廊、首次联合规划或 Apollo 算法原创。创新性评分暂为
+  3/5：技术组合和证书边界清楚，但与已有时空走廊、组合搜索和安全走廊文献的距离仍
+  需要由外部实验结果来证明，而不是靠模块数量证明。
+
+### 证据审稿人复审
+
+- 公开 CommonRoad 证据现在分成三层且表述一致：官方 reader/route/Reactive Planner/
+  solution/evaluator 四场景覆盖（2 valid、2 planner failure）；MIKU/B0 受限 adapter
+  的负向兼容性审计（MIKU 0%）；Apollo 源码与 runtime fixture 索引。三者没有再被合并
+  为“MIKU 已完成 CommonRoad benchmark”或“本次重新跑了原生 Apollo”。
+- 论文、宏、JSON、PDF、测试和 gate 已重新编译/核对：全量测试 114 passed、20 skipped，
+  英文 9 页、中文 10 页，LaTeX 无 Overfull/undefined/citation 警告，Ruff 与
+  `git diff --check` 通过。
+- 仍有两个证据级致命缺口：MIKU 尚无保留完整 CommonRoad planning-problem 语义的
+  原生 solution exporter/同协议对比；Apollo manifest 的 exact scenario-to-runtime
+  mapping 仍为 pending，不能将已有资产索引升级成新的 native runtime 性能结论。
+
+### Area-Chair 裁决
+
+当前仍为 **Major Revision，不建议立即投二区**。T-IV/T-ITS Regular Paper 是首选路线
+（英文稿 9/10 页以内）；RA-L 仍因 6 页限制不适配。下一轮只做两件能改变裁决的工作：
+
+1. 实现并真实运行 CommonRoad 原生 solution 导出；若 MIKU 在固定公开场景上仍全部失败，
+   将失败作为适用边界并扩大场景，不把 adapter 结果升级成 benchmark 分数。
+2. 补齐 Apollo fixture 到 runtime 输出的逐场景映射或明确把平台证据限定为源码级/资产级，
+   同时让论文、manifest、gate 三者保持同一口径。
+
+在这两项完成前，继续改标题、摘要或图表不会提高二区录用概率；Goal 保持进行中。
+
+## Round 17 — CommonRoad 原生输出边界实跑（2026-09-06）
+
+- 新增 `可视化/run_commonroad_miku_native.py`。该入口在隔离 CommonRoad 3.11 环境中
+  读取官方 planning problem，调用 MIKU，成功时转换为官方 `KSState`、
+  `PlanningProblemSolution` 和标准 solution XML，并统一调用官方 Drivability Checker；
+  无轨迹时直接记录 planner failure，不生成占位轨迹。
+- 固定的 4 个 Lankershim XML 全部完成 MIKU 尝试：4 次 planner failure、0 个 valid
+  solution。报告落盘于 `generated/commonroad_miku_native_results.json`，失败没有被丢弃。
+- 该轮关闭了“只有 adapter、没有标准 solution/evaluator 边界”的实现缺口，但没有把
+  受限 Frenet 输入转换升级为完整 CommonRoad benchmark。`commonroad_native_output_boundary`
+  已通过，`commonroad_full_benchmark` 仍为 false，论文明确写出负结果及输入语义限制。
+- 新增原生边界宏、表格行、复现命令和回归测试；中文/英文 PDF 重新编译为 10/9 页，
+  无 Overfull、未解析引用或编译错误。当前 gate 仍为 **Major Revision**，下一项实质
+  工作是保持 lanelet/occupancy/planning-rule 语义的输入适配器与扩大公开场景集。
+
+## Round 18 — CommonRoad 全障碍物与官方参考线审计（2026-09-06）
+
+- native runner 改用 CommonRoad 官方 RoutePlanner/ReferencePathPlanner reference path，
+  不再只用本地 lanelet 中心线；所有公开动态障碍物均进入投影输入，4 个场景分别为
+  24、42、36、34 个，`skipped_obstacles=0`。官方轨迹采样状态也被投影并保留为
+  native 输入侧记录，最大投影残差、来源障碍物数和轨迹状态数写入 JSON。
+- 这一步关闭了“适配器静默丢弃远离中心线障碍物”的证据缺口，但没有把 Frenet 折线、
+  恒速度/仿射误差模型升级成完整 CommonRoad occupancy、车辆姿态和规则语义；因此
+  `commonroad_full_benchmark` 仍严格为 false。
+- 全量回归再次通过，中文/英文 PDF 仍为 10/9 页，LaTeX 无 Overfull/undefined/citation
+  警告。当前裁决仍为 **Major Revision**，下一步是语义保持的 lanelet/occupancy 输入
+  编译与公开场景扩展，而不是修改结果数字。
+
+## Round 19 — Apollo runtime 映射证据审计（2026-09-06）
+
+- 新增 `tools/audit_apollo_runtime_mapping.py` 和 `apollo_runtime_mapping_audit.json`，
+  对 54 个 Apollo dump 文件做只读哈希、时间戳和内容标识审计。文件可以确认 Planning、
+  CyberRT、Dreamview、Prediction、Control 等 runtime 资产存在，但未发现
+  `garage_test`、`sunnyvale_big_loop` 或具体 planning config 的标识。
+- 因此 `exact_scenario_to_runtime_output_mapping=false`、`mapping_status=pending`，
+  gate 不会因文件名或用户历史描述自动放行 `native_apollo_cyberrt`。论文系统证据继续
+  限定为源码 commit、fixture 索引与已有 runtime 资产，不把这些 dump 当成本轮新跑出的
+  原生 Apollo 性能数据。
+- 新增 provenance 回归测试和复现命令；该轮把 Apollo 证据边界从“缺日志”变成了可复现的
+  负向审计结论，但没有关闭 native runtime 阻塞。
+
+## Round 20 — 当前版本最终验收（2026-09-06）
+
+- 全量测试为 `118 passed, 20 skipped`；Ruff、`git diff --check` 和 Apollo snapshot/
+  fixture/provenance 校验通过。
+- 中文稿 `main.pdf` 为 10 页，IEEE 英文稿 `main_ieee.pdf` 为 9 页；两份日志均无
+  Overfull、undefined 或 Citation undefined。CommonRoad native output boundary、QP
+  objective traceability、公开竞品协议和 T-IV/T-ITS 页数 gate 通过。
+- T-IV 目标下自动裁判仍为 **Major Revision**，正式阻塞项精确为：完整 CommonRoad
+  输入语义 benchmark 和独立审稿致命问题清零。Apollo fixture/runtime 逐场景映射是
+  未满足诊断项，但因正文明确不宣称本轮新增 native runtime 性能，不再误列为 T-IV
+  投稿阻塞；RA-L 六页限制只在选择 RA-L 时生效。当前不应对外宣称“二区已达标”，但
+  已形成可编译、可复现、边界诚实的 T-IV/T-ITS 候选稿和明确的剩余阻塞清单。
+
+## Round 21 — Apollo 依赖修复与构建闭环（2026-09-06）
+
+- AEM 11.0 临时容器安装官方 Apollo `bvar=9.0.0-rc-r2` 后，MIKU corridor
+  目标和完整 `libplanning_component.so` 均以 pinned source commit 成功构建；
+  构建哈希、命令和依赖来源记录在 `小论文/APOLLO_BUILD_ATTEMPT.md`。
+- 重新构建 LaneFollowMap 与 PublicRoadPlanner 插件后，CyberRT mainboard 已能进入
+  Planning 组件加载阶段，但仍未完成 fixture→trajectory 映射，且受插件/运行时配置边界
+  影响退出。该过程只作为 build-and-launch diagnostic，不进入论文性能统计。
+- Apollo build artifact gate 已通过；`native_apollo_cyberrt` 仍保持关闭，防止把编译成功
+  误写成成功闭环运行。
+- CommonRoad 仍保持官方输出/evaluator 边界通过、完整输入语义 benchmark 关闭；当前
+  自动裁判仍为 **Major Revision**。投稿正文五个文件的内部验证术语扫描继续通过。
