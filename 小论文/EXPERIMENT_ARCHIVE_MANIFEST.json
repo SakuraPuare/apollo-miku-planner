@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "manuscript_protocol": {
+    "frozen_case_count": 3500,
+    "frozen_commit": "29a337a",
+    "frozen_artifacts": {
+      "randomized_raw.csv": {
+        "git_blob": "d63c27814ea625310e970f76412a81015506cddc",
+        "sha256_after_export": "required_before_submission"
+      },
+      "randomized_results.json": {
+        "git_blob": "7f867d587c6d55a40cc42bb42c425ac0df97e5d3",
+        "sha256_after_export": "required_before_submission"
+      },
+      "randomized_summary.csv": {
+        "git_blob": "ccbdfa1c5cee7b521a4db50161e65f729653d368",
+        "sha256_after_export": "required_before_submission"
+      }
+    }
+  },
+  "regression_checkout": {
+    "case_count": 700,
+    "artifacts": {
+      "小论文-2/generated/randomized_raw.csv": "32e44885c32fcdca0a19cb3326125b1144388c28423f9dea31ea6adfce133a5c",
+      "小论文-2/generated/randomized_results.json": "46a9b94b98df5113f950c2e13a5137edc74683fb4e22bc293ecee187fdb08e94",
+      "小论文-2/generated/randomized_summary.csv": "b5acdbc652b9fc3330d87755519829a36b725a2c746ec00f5f908c59d274dd87"
+    }
+  },
+  "secondary_artifacts": {
+    "randomized_ablation_raw.csv": "7da046599419300136cbca8921be9cabf45a47e950d3a20ae929248f34d3ae07",
+    "joint_reference_raw.csv": "671c598d2c3069dece12d4b0a8d307c6db3d3a2ff95af705120de49f6747f4b3",
+    "joint_search_stress_raw.csv": "f7477c11a5f7cff098516b6c672f18e011f41c8baee3aa3d1c0338a80cd79819",
+    "closed_loop_raw.csv": "2edadf0de461c80b87dc49591c17c610b616d55bb4fafc27046b169c89003ec6"
+  },
+  "rule": "The 700-case checkout is a regression package; it cannot silently replace the 3500-case manuscript archive."
+}
