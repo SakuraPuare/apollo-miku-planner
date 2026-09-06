@@ -33,14 +33,14 @@ uv run python 小论文-2/check_submission_gates.py --venue tiv
 | 有限域下界可审计 | 已满足但有边界 | `joint_homotopy_search.py`、stress JSON、path-QP lower-bound tests；不宣称连续全局最优 |
 | CommonRoad 外部来源 | 已满足 | 官方 XML、`commonroad_native_audit.json`、CommonRoad 文献条目 |
 | 独立竞争方法 | 已满足但结果非全有效 | Reactive Planner 4 场景：2 valid、2 planner failure；失败计入 |
-| MIKU 标准 solution/evaluator 边界 | 已满足但结果为负 | `run_commonroad_miku_native.py`；4 planner failures、0 valid；官方 solution/evaluator 调用 |
+| MIKU 标准 solution/evaluator 边界 | 已满足但仍有失败 | `run_commonroad_miku_native.py`；主四场景 2 valid、1 planner failure、1 evaluator-invalid；官方 solution/evaluator 调用 |
 | CommonRoad scoped benchmark | 已满足但有边界 | 官方路线/目标、逐状态矩形形状姿态占用包络、solution/evaluator；交通规则仅记录 |
 | Apollo/CyberRT/Dreamview 边界 | 已满足但不扩张性能结论 | `apollo_evidence_manifest.json`、`apollo_runtime_mapping_audit.json`、正文 provenance 段落 |
 | Apollo 逐场景 runtime 映射 | 未满足，已审计 | 54 个 dump 无 fixture/config 标识；`mapping_status=pending` |
 | 统计实验重生成 | 已满足 | 700 主场景、700 滚动、消融/联合参照/stress 生成物 |
 | 中英文稿、引用、页数 | 已满足 | `main.pdf` 10 页、`main_ieee.pdf` 9 页；无 LaTeX citation/overfull 警告 |
 | 可复现性 | 已满足 | `REPRODUCIBILITY.md`、一键命令、原始 CSV/JSON/宏、archive manifests |
-| 自动化验收 | 已满足 | `118 passed, 20 skipped`；Ruff；`git diff --check` |
+| 自动化验收 | 已满足 | `134 passed, 20 skipped`；Ruff；`git diff --check` |
 | 独立审稿致命问题清零 | 已满足 | `INDEPENDENT_REVIEW.md` 两条独立复核均为无致命问题 |
 
 ## Submission decision

@@ -1,0 +1,394 @@
+{
+  "schema_version": 1,
+  "apollo_source_commit": "57460908954e3188f640a813d26180e862d62a5f",
+  "runtime_root": "/home/kent/core-11.0/dumps",
+  "runtime_file_count": 54,
+  "runtime_files": [
+    {
+      "path": "dumps/bvar.cyber_monitor.data",
+      "size_bytes": 20918,
+      "mtime_utc": "2026-04-03T18:12:04.657124+00:00",
+      "sha256": "6a4ce7e91958f3c2249337d4765e868363cfa8121017ff6f7564e5a5b0c3c5fa",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.cyber_monitor.latency.data",
+      "size_bytes": 78413,
+      "mtime_utc": "2026-04-03T18:12:04.657124+00:00",
+      "sha256": "4af0f1f5f50917ab334019960a8db521bbf25c98e945c3596415cfba36d07d6a",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.cyber_monitor.system.data",
+      "size_bytes": 1507,
+      "mtime_utc": "2026-04-03T18:12:04.657124+00:00",
+      "sha256": "19a3c4ce0a6cdc0d5ffe084e1a5d5b7dfd5d755173754fbc8cfae7d19dbf7f09",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.dreamview_plus.data",
+      "size_bytes": 25288,
+      "mtime_utc": "2026-04-03T18:27:18.016514+00:00",
+      "sha256": "ccf3ee484ea7f98bdf699298530ac7d7ba3edec464197bed986a3470202110af",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.dreamview_plus.latency.data",
+      "size_bytes": 87954,
+      "mtime_utc": "2026-04-03T18:27:18.016270+00:00",
+      "sha256": "819be585ca827f0d2bf9c42909dc42457eb6a5b4e5d208e5457f93348643e9bd",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.dreamview_plus.system.data",
+      "size_bytes": 1605,
+      "mtime_utc": "2026-04-03T18:27:18.016514+00:00",
+      "sha256": "419660125cc804db1ecf4e7b39991a41e49d82c366d0ef2819047e2eb2aa05c2",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.service.data",
+      "size_bytes": 334,
+      "mtime_utc": "2026-03-29T13:26:39.850204+00:00",
+      "sha256": "6bd8304d230e55de00dc3754bbaefe2e574c80c0b1b965d8e738b238e9dd8aa4",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.service.latency.data",
+      "size_bytes": 541,
+      "mtime_utc": "2026-03-29T13:26:39.849343+00:00",
+      "sha256": "d25cc5e4239a2b763fb8aa405ef451279c6a065dfe210f8d7d3e7b43211d2684",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.service.system.data",
+      "size_bytes": 1306,
+      "mtime_utc": "2026-03-29T13:26:39.850204+00:00",
+      "sha256": "940342094986a6bbdc4b2ab1a033319b7407b4c57f75d7c6b7ea55ea4643579a",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.sim_obstacle.data",
+      "size_bytes": 903,
+      "mtime_utc": "2026-04-03T17:18:52.584127+00:00",
+      "sha256": "9f7de1468ace5d15b41b5dfe7cdb9f9150139ff6cf6dafbc47c5dd918366899f",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.sim_obstacle.latency.data",
+      "size_bytes": 2327,
+      "mtime_utc": "2026-04-03T17:18:52.584127+00:00",
+      "sha256": "8f471a73b28c354e3fdd7dab72f6f7bf5abf7469a8a7dd7fe0401c46973f7b79",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/bvar.sim_obstacle.system.data",
+      "size_bytes": 1564,
+      "mtime_utc": "2026-04-03T17:18:52.584127+00:00",
+      "sha256": "68e9b68d07e9dfed3ecafff9bee74cd6be96b3d3bee8920806d3d72fd29ac7f8",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/control.dag.data",
+      "size_bytes": 2482,
+      "mtime_utc": "2026-04-03T18:27:11.235514+00:00",
+      "sha256": "11fb57ab9ed45bc37ba33375ea94adc2587efc622481ec973027b1040e216726",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/control.dag.latency.data",
+      "size_bytes": 7682,
+      "mtime_utc": "2026-04-03T18:27:11.235485+00:00",
+      "sha256": "050bc12327dfce04868cf1a7db3f70f13eadfeb343ab33ec5cde848ec7193d0f",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/control.dag.system.data",
+      "size_bytes": 1451,
+      "mtime_utc": "2026-04-03T18:27:11.235514+00:00",
+      "sha256": "25e3840bb468b9cfe836a9caef96d91ce3fd3dca209a4607bc1aaca03bf71512",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_12384.data",
+      "size_bytes": 1112,
+      "mtime_utc": "2026-04-03T07:55:12.503290+00:00",
+      "sha256": "31746810364cfa55dd44578b2fd09b3869e2d7134afe6a322bd906d4e94b9769",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_12384.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T07:55:12.503290+00:00",
+      "sha256": "e9854c65d6d8db15228d580c7680ef02bf17385790abbcd6684d3113afc0d9af",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_12384.system.data",
+      "size_bytes": 1503,
+      "mtime_utc": "2026-04-03T07:55:12.503290+00:00",
+      "sha256": "5c5e6586a66727048421214e153f1e16cc3d187feb763781e0b0ee2b4d3141ba",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_19537.data",
+      "size_bytes": 1108,
+      "mtime_utc": "2026-04-03T15:04:40.370210+00:00",
+      "sha256": "5123f5cc7e29fbe3b688e6e92a9a67b290072a28a1002517f5be70794942eb78",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_19537.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:04:40.370210+00:00",
+      "sha256": "b1cd409f15b0bd4758075745c201ac003d8888766ac0cfc86f7dd29054d5b371",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_19537.system.data",
+      "size_bytes": 1501,
+      "mtime_utc": "2026-04-03T15:04:40.370210+00:00",
+      "sha256": "f5087482da666f8b2253a0d99a93dd762b0abae9a8eb739bbec205e1eef39f03",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_20707.data",
+      "size_bytes": 1108,
+      "mtime_utc": "2026-04-03T15:08:15.387387+00:00",
+      "sha256": "d27c673e9801bce870ee977c0cb464dfc062f0cf0cd0adca0777577bb0c6b93b",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_20707.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:08:15.387387+00:00",
+      "sha256": "87264cb2a9553e9fed859eb9fab2bcd070e09831b4dae409bf53c9fccaf32c91",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_20707.system.data",
+      "size_bytes": 1501,
+      "mtime_utc": "2026-04-03T15:08:15.387387+00:00",
+      "sha256": "e2ad6093538c4c1f3b2532b6eee4690882727ce2cbd3fed3d1c85d5b9531551d",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_22740.data",
+      "size_bytes": 1107,
+      "mtime_utc": "2026-04-03T15:12:01.453668+00:00",
+      "sha256": "e128406c6895f356160ce1968740b4d8ffe52203e12c8b83734e6a0a05ae41e8",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_22740.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:12:01.453668+00:00",
+      "sha256": "c3cd2de32429aec54983007eb06fe52492223135ec52ca0d10e92f23af3562ad",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_22740.system.data",
+      "size_bytes": 1501,
+      "mtime_utc": "2026-04-03T15:12:01.453668+00:00",
+      "sha256": "e7fa5b4f2c4a2eae4e4febf4f712f6ed8decc8d12aa5485b377ba3a264e78a9b",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_30635.data",
+      "size_bytes": 1108,
+      "mtime_utc": "2026-04-03T15:15:46.625887+00:00",
+      "sha256": "d33340c82ac692429bb79a8aa69d148539399055109d5c6d2c8f66dc85330e24",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_30635.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:15:46.625887+00:00",
+      "sha256": "79023c4179b277568085af9e2b5ec0fa9d76be116084551b0e2ce98c358cb78f",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_30635.system.data",
+      "size_bytes": 1501,
+      "mtime_utc": "2026-04-03T15:15:46.625887+00:00",
+      "sha256": "cb66dac30bcf1207ce70e2004c8c520ea9e62eb0c5c05cdeffb2e83a2e6b22c6",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_32329.data",
+      "size_bytes": 1106,
+      "mtime_utc": "2026-04-03T15:17:20.576950+00:00",
+      "sha256": "c93359a9e50c3a2d2772d48c80f6af0803a65f947e4f91df35c7fdc1cc072444",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_32329.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:17:20.576950+00:00",
+      "sha256": "9c92ca5370bb67a76c3ccc02f73ec6c77e273667dfc3752e340783f632e9012c",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_32329.system.data",
+      "size_bytes": 1500,
+      "mtime_utc": "2026-04-03T15:17:20.576950+00:00",
+      "sha256": "bc3c4863d4988a493a8e5f73c7e7b2377d338feaf304a2dedf5ea75f5703ebbd",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_33845.data",
+      "size_bytes": 1108,
+      "mtime_utc": "2026-04-03T15:21:29.586994+00:00",
+      "sha256": "8e61a2a00c5c8061263c024f47b2d9a33a6dde973c9422f2fc86531d06b902a9",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_33845.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T15:21:29.586245+00:00",
+      "sha256": "a04640c191ad027213020f987ed7ac8ec26264726758f2cbc65435874182c4bb",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_33845.system.data",
+      "size_bytes": 1501,
+      "mtime_utc": "2026-04-03T15:21:29.586994+00:00",
+      "sha256": "7266d0093b6cf9df8944b541da0c4f84c89f81c7d63551d5dbf84f54ca7f9b20",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_569003.data",
+      "size_bytes": 1112,
+      "mtime_utc": "2026-04-03T17:18:56.675020+00:00",
+      "sha256": "e5e9fe61533b083b925bbd43125daa9e3cc86591a9efc5c76ee67b2a07902668",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_569003.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T17:18:56.675020+00:00",
+      "sha256": "d2d6b50396470c0759b2dbc50094e54e3e54ece28a0e23fd960c2441934d61fb",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_569003.system.data",
+      "size_bytes": 1503,
+      "mtime_utc": "2026-04-03T17:18:56.675020+00:00",
+      "sha256": "566362548f2ba62735fef84fd5a040c2431e9ec76ca43ee99094d66663d7045d",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_966029.data",
+      "size_bytes": 1111,
+      "mtime_utc": "2026-04-03T18:07:39.445062+00:00",
+      "sha256": "fa8c9912c4d24185493ff7834171b1524b8300120ad5bd241db3688f86e8c847",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_966029.latency.data",
+      "size_bytes": 2747,
+      "mtime_utc": "2026-04-03T18:07:39.445062+00:00",
+      "sha256": "e738afdeb02e08860c70c3be706465a992eef0ea606b03f9f631beb3cbbc7221",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_966029.system.data",
+      "size_bytes": 1503,
+      "mtime_utc": "2026-04-03T18:07:39.445062+00:00",
+      "sha256": "1099c980e5e8ee0942427e29f706b05368b3ca9445c6312a2dee28b7b9c5c354",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_972347.data",
+      "size_bytes": 1113,
+      "mtime_utc": "2026-04-03T18:27:17.510399+00:00",
+      "sha256": "0e5428509861e551c6cd77b6ffdb1079d802835218d16689d9ab75b1b4a3784e",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_972347.latency.data",
+      "size_bytes": 2774,
+      "mtime_utc": "2026-04-03T18:27:17.510399+00:00",
+      "sha256": "9c8bd360139755a5b7ae1fc760ef9ce415507f6db43f60229477385089fa728f",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/mainboard_default_972347.system.data",
+      "size_bytes": 1508,
+      "mtime_utc": "2026-04-03T18:27:17.510399+00:00",
+      "sha256": "83bc25530c160cca0fb20432d002a5dcbaf04725838bd5dd2434f64a5ec76e42",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/monitor.data",
+      "size_bytes": 1307,
+      "mtime_utc": "2026-04-03T18:27:17.441514+00:00",
+      "sha256": "7416877ab716df03dff5d2df3ca1065eb242dc7ca028a90338fc31ca92bc46fe",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/monitor.latency.data",
+      "size_bytes": 5390,
+      "mtime_utc": "2026-04-03T18:27:17.441417+00:00",
+      "sha256": "b4d3232a8617431989566f412472960ce481edcb532c8bce56f8564507a150df",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/monitor.system.data",
+      "size_bytes": 1458,
+      "mtime_utc": "2026-04-03T18:27:17.441514+00:00",
+      "sha256": "5c4cab1a584129304416f19e1e22d47bc6d89a1a7d8055d97bfc4f0c8e2a0bb1",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/planning.dag_external_command_process.dag.data",
+      "size_bytes": 5603,
+      "mtime_utc": "2026-04-03T18:27:11.369514+00:00",
+      "sha256": "06791e06b30fb31059403bfe899c8af7d2e55e6edf8a78380c07cdc11d90a9e8",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/planning.dag_external_command_process.dag.latency.data",
+      "size_bytes": 17353,
+      "mtime_utc": "2026-04-03T18:27:11.369481+00:00",
+      "sha256": "2397d987c013e6476d5b5ab5d39284b0c141a20a82a63786127c2ec8ce509a1d",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/planning.dag_external_command_process.dag.system.data",
+      "size_bytes": 2077,
+      "mtime_utc": "2026-04-03T18:27:11.369514+00:00",
+      "sha256": "ef90c3305c9d56f5d3cc8715104841396603d23860eeeb9528df0b6ec43093d7",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/prediction.dag.data",
+      "size_bytes": 2146,
+      "mtime_utc": "2026-04-03T18:27:11.192076+00:00",
+      "sha256": "3641e94d203291ac45ca8522528401b6b044ee8e4c6fc6d8196d9b5c696824b3",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/prediction.dag.latency.data",
+      "size_bytes": 6075,
+      "mtime_utc": "2026-04-03T18:27:11.192076+00:00",
+      "sha256": "4e33f9c778bbaa498392f79b34b4ba991579e4210cd91ca5a0aa756dca540e1b",
+      "fixture_tokens_found": []
+    },
+    {
+      "path": "dumps/prediction.dag.system.data",
+      "size_bytes": 1435,
+      "mtime_utc": "2026-04-03T18:27:11.192076+00:00",
+      "sha256": "5e0d5b5be37e780b1784f8775075dce6ae6c2634e17f8d3f477b035dac0e768e",
+      "fixture_tokens_found": []
+    }
+  ],
+  "indexed_fixture_tokens": [
+    "garage_initial_state",
+    "sunnyvale_big_loop_replay"
+  ],
+  "matched_fixture_tokens": {},
+  "exact_scenario_to_runtime_output_mapping": false,
+  "mapping_status": "pending",
+  "blocking_reason": "Runtime dumps expose component/process statistics but contain no indexed planning fixture, scenario, or configuration identifier."
+}

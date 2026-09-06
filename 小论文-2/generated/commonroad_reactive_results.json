@@ -1,0 +1,83 @@
+{
+  "benchmark": "CommonRoad NGSIM Lankershim",
+  "source": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/Lankershim/",
+  "competitor": "commonroad-reactive-planner",
+  "parameters": {
+    "dt": 0.1,
+    "horizon_steps": 100
+  },
+  "packages": {
+    "commonroad-io": "2024.3",
+    "commonroad-drivability-checker": "2025.4.0",
+    "commonroad-route-planner": "2025.1.0",
+    "commonroad-clcs": "2025.2.0",
+    "commonroad-reactive-planner": "2025.1"
+  },
+  "scenario_count": 4,
+  "rows": [
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "planning_problem_id": 1215,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 0,
+      "planned": false,
+      "runtime_ms": 81.72292896779254,
+      "planner_error": "CurvilinearProjectionDomainLongitudinalError: Longitudinal coordinate outside of curvilinear projection domain",
+      "planner_exception": true,
+      "outcome": "planner_failure"
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "planning_problem_id": 11425,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 0,
+      "planned": false,
+      "runtime_ms": 14079.552261973731,
+      "planner_error": "ReactivePlanner returned no trajectory",
+      "outcome": "planner_failure"
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "planning_problem_id": 1590,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "runtime_ms": 187.69754498498514,
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1590": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": null,
+      "boundary_collision_error": "CollisionException: There is a collision between lanelet boundaries and the ego vehicle in planning problem solution 1590",
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "planning_problem_id": 1737,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 0,
+      "planned": false,
+      "runtime_ms": 27.090052026323974,
+      "planner_error": "CurvilinearProjectionDomainLongitudinalError: Longitudinal coordinate outside of curvilinear projection domain",
+      "planner_exception": true,
+      "outcome": "planner_failure"
+    }
+  ],
+  "planned_count": 1,
+  "valid_solution_count": 0,
+  "all_solutions_valid": false,
+  "benchmark_complete": true,
+  "formal_benchmark_ready": true
+}

@@ -32,7 +32,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A2",
@@ -54,7 +55,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A3",
@@ -76,7 +78,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A4",
@@ -98,7 +101,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A5",
@@ -120,7 +124,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A6",
@@ -142,7 +147,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "A7",
@@ -164,7 +170,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     },
     {
       "key": "MIKU",
@@ -186,7 +193,8 @@
       "temporal_top_k": 3,
       "spatial_top_k": 3,
       "require_continuous_certificate": true,
-      "certified_joint_search": true
+      "certified_joint_search": true,
+      "certificate_lateral_weight": 0.5
     }
   ],
   "summary": [
@@ -198,7 +206,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 26.022196201665782
+      "runtime_p95_ms": 25.2650401322171
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -208,7 +216,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 26.04834051162469
+      "runtime_p95_ms": 25.50045761745422
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -218,7 +226,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 25.630264394567337
+      "runtime_p95_ms": 25.585236569168035
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -228,7 +236,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 25.74629420414566
+      "runtime_p95_ms": 25.642727490048845
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -238,7 +246,7 @@
       "success_rate": 0.47,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6172265737619195,
-      "runtime_p95_ms": 50.33315889013461
+      "runtime_p95_ms": 49.56170717778146
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -248,7 +256,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 25.599460137891572
+      "runtime_p95_ms": 25.45611068198922
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -258,7 +266,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 25.763086302322325
+      "runtime_p95_ms": 25.6352332769893
     },
     {
       "case_kind": "crossing_pedestrian",
@@ -268,7 +276,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9999999999999999,
-      "runtime_p95_ms": 25.63102971034822
+      "runtime_p95_ms": 25.335705385077734
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -278,7 +286,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.930052855281788,
-      "runtime_p95_ms": 41.12737697723783
+      "runtime_p95_ms": 40.95975029049438
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -288,7 +296,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 53.38411344127962
+      "runtime_p95_ms": 54.2319079831941
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -298,7 +306,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 53.00871665676822
+      "runtime_p95_ms": 54.577463044552125
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -308,7 +316,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9175607237279781,
-      "runtime_p95_ms": 53.20915985066676
+      "runtime_p95_ms": 56.0217783524422
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -318,7 +326,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 53.193171207385596
+      "runtime_p95_ms": 54.895349283469834
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -328,7 +336,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 53.17850813880795
+      "runtime_p95_ms": 53.82093985390383
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -338,7 +346,7 @@
       "success_rate": 0.79,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9016374503242086,
-      "runtime_p95_ms": 31.93886360677424
+      "runtime_p95_ms": 32.121868332615115
     },
     {
       "case_kind": "vehicle_cut_in",
@@ -348,7 +356,7 @@
       "success_rate": 0.82,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.9232824415588496,
-      "runtime_p95_ms": 55.373400704411324
+      "runtime_p95_ms": 53.77948439854662
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -358,7 +366,7 @@
       "success_rate": 0.68,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7921724478770265,
-      "runtime_p95_ms": 62.68254492024425
+      "runtime_p95_ms": 64.9097829737002
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -368,7 +376,7 @@
       "success_rate": 0.65,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7511267164783605,
-      "runtime_p95_ms": 61.517489278048735
+      "runtime_p95_ms": 63.01739216723945
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -378,7 +386,7 @@
       "success_rate": 0.58,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6990343660902303,
-      "runtime_p95_ms": 61.3601327946526
+      "runtime_p95_ms": 61.45208322268444
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -388,7 +396,7 @@
       "success_rate": 0.57,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6980314122250572,
-      "runtime_p95_ms": 88.04441105021395
+      "runtime_p95_ms": 88.36556872702202
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -398,7 +406,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 61.262366386654314
+      "runtime_p95_ms": 61.98992138961329
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -408,7 +416,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 61.38003291998756
+      "runtime_p95_ms": 62.595910258824
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -418,7 +426,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 61.407210177276276
+      "runtime_p95_ms": 61.98889006045646
     },
     {
       "case_kind": "parked_and_oncoming",
@@ -428,7 +436,7 @@
       "success_rate": 0.67,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.7795134731791664,
-      "runtime_p95_ms": 62.216994547634386
+      "runtime_p95_ms": 62.9149674292421
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -438,7 +446,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 40.920628899766584
+      "runtime_p95_ms": 42.74838916317093
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -448,7 +456,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 41.072051147057195
+      "runtime_p95_ms": 42.82677678565959
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -458,7 +466,7 @@
       "success_rate": 0.05,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.39243592208763844,
-      "runtime_p95_ms": 69.55026673385873
+      "runtime_p95_ms": 71.1095852922881
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -468,7 +476,7 @@
       "success_rate": 0.01,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.34769233344372596,
-      "runtime_p95_ms": 64.05084524885751
+      "runtime_p95_ms": 66.55550475989003
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -478,7 +486,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 41.395568283041925
+      "runtime_p95_ms": 42.63144620927049
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -488,7 +496,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 43.23708869778783
+      "runtime_p95_ms": 43.02378387365023
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -498,7 +506,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 42.22597571642835
+      "runtime_p95_ms": 44.05355742201207
     },
     {
       "case_kind": "narrow_multi_obstacle",
@@ -508,7 +516,7 @@
       "success_rate": 0.74,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.830256417067791,
-      "runtime_p95_ms": 41.47343430522595
+      "runtime_p95_ms": 43.34852875326759
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -518,7 +526,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 53.90504110400797
+      "runtime_p95_ms": 55.003716275678016
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -528,7 +536,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.50337902264437
+      "runtime_p95_ms": 51.14563839742913
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -538,7 +546,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.732900991512
+      "runtime_p95_ms": 51.52686204237398
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -548,7 +556,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.69791005278239
+      "runtime_p95_ms": 52.10058063676115
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -558,7 +566,7 @@
       "success_rate": 0.52,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.6021217427261361,
-      "runtime_p95_ms": 98.8512805342907
+      "runtime_p95_ms": 101.02795074053574
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -568,7 +576,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.579757354513276
+      "runtime_p95_ms": 51.23877800360787
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -578,7 +586,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.601296593027655
+      "runtime_p95_ms": 51.89318424090742
     },
     {
       "case_kind": "interleaved_dynamic",
@@ -588,7 +596,7 @@
       "success_rate": 1.0,
       "collision_rate": 0.0,
       "progress_ratio_mean": 1.0,
-      "runtime_p95_ms": 49.46454645105405
+      "runtime_p95_ms": 51.662103540729724
     },
     {
       "case_kind": "prediction_noise",
@@ -598,7 +606,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.36393639597456806,
-      "runtime_p95_ms": 48.29559520585459
+      "runtime_p95_ms": 48.36879573413167
     },
     {
       "case_kind": "prediction_noise",
@@ -608,7 +616,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.53350658732232
+      "runtime_p95_ms": 46.348679464426816
     },
     {
       "case_kind": "prediction_noise",
@@ -618,7 +626,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.334803745732636
+      "runtime_p95_ms": 46.37244066107086
     },
     {
       "case_kind": "prediction_noise",
@@ -628,7 +636,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3668426381583405,
-      "runtime_p95_ms": 44.03138078923802
+      "runtime_p95_ms": 45.49263128137681
     },
     {
       "case_kind": "prediction_noise",
@@ -638,7 +646,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 43.81856905820313
+      "runtime_p95_ms": 44.772403294336975
     },
     {
       "case_kind": "prediction_noise",
@@ -648,7 +656,7 @@
       "success_rate": 0.33,
       "collision_rate": 0.1,
       "progress_ratio_mean": 0.6051906679318886,
-      "runtime_p95_ms": 35.59206428908509
+      "runtime_p95_ms": 36.06371622590813
     },
     {
       "case_kind": "prediction_noise",
@@ -658,7 +666,7 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 22.243270557373755
+      "runtime_p95_ms": 22.37467181694228
     },
     {
       "case_kind": "prediction_noise",
@@ -668,47 +676,47 @@
       "success_rate": 0.17,
       "collision_rate": 0.0,
       "progress_ratio_mean": 0.3680621503370913,
-      "runtime_p95_ms": 44.632025240571224
+      "runtime_p95_ms": 44.549562755855725
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A1",
       "label": "w/o arrival projection",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.80356029100935
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 248.78777336271003
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A2",
       "label": "w/o longitudinal grouping",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.65254418767276
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 253.53475667361627
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A3",
       "label": "w/o Top-K spatial homotopy",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.71848216355997
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 251.0385689878602
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A4",
       "label": "w/o threat-aware margin",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 244.77859954349682
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 249.0690286969765
     },
     {
       "case_kind": "delayed_crossing",
@@ -718,77 +726,77 @@
       "success_rate": 0.4,
       "collision_rate": 0.01,
       "progress_ratio_mean": 0.6319763000658944,
-      "runtime_p95_ms": 185.4088993204639
+      "runtime_p95_ms": 185.5893811502026
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A6",
       "label": "w/o robust occupancy tube",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 242.7314903165096
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 248.5771935083902
     },
     {
       "case_kind": "delayed_crossing",
       "method": "A7",
       "label": "w/o alternating refinement",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 183.33409729821125
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 186.318791087251
     },
     {
       "case_kind": "delayed_crossing",
       "method": "MIKU",
       "label": "MIKU",
       "n": 100,
-      "success_rate": 0.87,
+      "success_rate": 0.86,
       "collision_rate": 0.01,
-      "progress_ratio_mean": 0.9407666242298578,
-      "runtime_p95_ms": 241.66410856269053
+      "progress_ratio_mean": 0.9371388262270841,
+      "runtime_p95_ms": 244.12836474366472
     },
     {
       "case_kind": "all",
       "method": "A1",
       "label": "w/o arrival projection",
       "n": 700,
-      "success_rate": 0.7542857142857143,
+      "success_rate": 0.7528571428571429,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.8367406772044329,
-      "runtime_p95_ms": 64.89842284499898
+      "progress_ratio_mean": 0.8362224203468939,
+      "runtime_p95_ms": 67.83268426370337
     },
     {
       "case_kind": "all",
       "method": "A2",
       "label": "w/o longitudinal grouping",
       "n": 700,
-      "success_rate": 0.75,
+      "success_rate": 0.7485714285714286,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.8304991928102785,
-      "runtime_p95_ms": 62.875555142818484
+      "progress_ratio_mean": 0.8299809359527396,
+      "runtime_p95_ms": 64.12337056535752
     },
     {
       "case_kind": "all",
       "method": "A3",
       "label": "w/o Top-K spatial homotopy",
       "n": 700,
-      "success_rate": 0.6414285714285715,
+      "success_rate": 0.64,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.7605116434719525,
-      "runtime_p95_ms": 64.60861664818367
+      "progress_ratio_mean": 0.7599933866144134,
+      "runtime_p95_ms": 66.76943305938038
     },
     {
       "case_kind": "all",
       "method": "A4",
       "label": "w/o threat-aware margin",
       "n": 700,
-      "success_rate": 0.6342857142857142,
+      "success_rate": 0.6328571428571429,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.7529848188264229,
-      "runtime_p95_ms": 66.39156529708998
+      "progress_ratio_mean": 0.7524665619688837,
+      "runtime_p95_ms": 68.62684804073068
     },
     {
       "case_kind": "all",
@@ -798,37 +806,37 @@
       "success_rate": 0.5414285714285715,
       "collision_rate": 0.0014285714285714286,
       "progress_ratio_mean": 0.6789198712424068,
-      "runtime_p95_ms": 79.07666298997343
+      "runtime_p95_ms": 84.24675631104033
     },
     {
       "case_kind": "all",
       "method": "A6",
       "label": "w/o robust occupancy tube",
       "n": 700,
-      "success_rate": 0.7757142857142857,
+      "success_rate": 0.7742857142857142,
       "collision_rate": 0.015714285714285715,
-      "progress_ratio_mean": 0.8684299462810792,
-      "runtime_p95_ms": 62.7237824621261
+      "progress_ratio_mean": 0.86791168942354,
+      "runtime_p95_ms": 63.99862927210049
     },
     {
       "case_kind": "all",
       "method": "A7",
       "label": "w/o alternating refinement",
       "n": 700,
-      "success_rate": 0.7485714285714286,
+      "success_rate": 0.7471428571428571,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.8314623021625879,
-      "runtime_p95_ms": 59.70174685062372
+      "progress_ratio_mean": 0.8309440453050488,
+      "runtime_p95_ms": 60.29120854509526
     },
     {
       "case_kind": "all",
       "method": "MIKU",
       "label": "MIKU",
       "n": 700,
-      "success_rate": 0.7528571428571429,
+      "success_rate": 0.7514285714285714,
       "collision_rate": 0.0014285714285714286,
-      "progress_ratio_mean": 0.8345544437675366,
-      "runtime_p95_ms": 62.97689611819805
+      "progress_ratio_mean": 0.8340361869099976,
+      "runtime_p95_ms": 63.92657043470534
     }
   ],
   "paired_statistics": [
@@ -2125,14 +2133,14 @@
       "comparison": "MIKU-A5",
       "metric": "success",
       "n": 100,
-      "mean_difference": 0.47,
-      "ci_low": 0.35,
-      "ci_high": 0.59,
-      "cohen_dz": 0.7697388960097729,
+      "mean_difference": 0.46,
+      "ci_low": 0.34,
+      "ci_high": 0.58,
+      "cohen_dz": 0.734405327013656,
       "candidate_only": 53,
-      "reference_only": 6,
-      "discordant": 59,
-      "mcnemar_exact_p": 1.7539187463500028e-10
+      "reference_only": 7,
+      "discordant": 60,
+      "mcnemar_exact_p": 7.671918274276823e-10
     },
     {
       "case_kind": "delayed_crossing",
@@ -2321,14 +2329,14 @@
       "comparison": "MIKU-A5",
       "metric": "success",
       "n": 700,
-      "mean_difference": 0.21142857142857144,
-      "ci_low": 0.18,
-      "ci_high": 0.24428571428571427,
-      "cohen_dz": 0.4927181134848965,
+      "mean_difference": 0.21,
+      "ci_low": 0.17857142857142858,
+      "ci_high": 0.24285714285714285,
+      "cohen_dz": 0.48670876535155766,
       "candidate_only": 154,
-      "reference_only": 6,
-      "discordant": 160,
-      "mcnemar_exact_p": 3.0161601998957896e-38
+      "reference_only": 7,
+      "discordant": 161,
+      "mcnemar_exact_p": 3.4918388675773617e-37
     },
     {
       "case_kind": "all",

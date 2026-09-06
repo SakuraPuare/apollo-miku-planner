@@ -18,7 +18,7 @@ def test_corridor_lateral_lower_bound_is_zero_only_when_centerline_is_reachable(
     ) == pytest.approx(0.0)
     assert corridor_lateral_lower_bound(
         {"l_min": [1.0, -3.0], "l_max": [2.0, -2.0]}, 2.0
-    ) == pytest.approx(5.0)
+    ) == pytest.approx(10.0)
 
 
 def test_corridor_lateral_lower_bound_rejects_invalid_weight() -> None:

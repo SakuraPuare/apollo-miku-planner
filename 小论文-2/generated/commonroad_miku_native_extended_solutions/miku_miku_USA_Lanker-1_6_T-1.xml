@@ -1,0 +1,55 @@
+<?xml version="1.0" ?>
+<CommonRoadSolution benchmark_id="KS2:JB1:USA_Lanker-1_6_T-1:2020a" date="2026-09-06T17:28:55">
+  <inputVector planningProblem="1664">
+    <input>
+      <steeringAngleSpeed>0.39999999999999997</steeringAngleSpeed>
+      <acceleration>-4.549459475811091e-08</acceleration>
+      <time>0</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.39999999999999997</steeringAngleSpeed>
+      <acceleration>-5.442680250814087</acceleration>
+      <time>1</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.39999999999940433</steeringAngleSpeed>
+      <acceleration>-8.07951742841877</acceleration>
+      <time>2</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.3999999675228036</steeringAngleSpeed>
+      <acceleration>-8.461213998372541</acceleration>
+      <time>3</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.39999999963473587</steeringAngleSpeed>
+      <acceleration>-7.138206469015769</acceleration>
+      <time>4</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.399889421456228</steeringAngleSpeed>
+      <acceleration>-4.66071857215244</acceleration>
+      <time>5</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>-0.10912071674281792</steeringAngleSpeed>
+      <acceleration>-1.5788229004800902</acceleration>
+      <time>6</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>-0.3999999885621814</steeringAngleSpeed>
+      <acceleration>1.5574916976923037</acceleration>
+      <time>7</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>-0.3763647580342041</steeringAngleSpeed>
+      <acceleration>4.198249710061903</acceleration>
+      <time>8</time>
+    </input>
+    <input>
+      <steeringAngleSpeed>0.3999997655159843</steeringAngleSpeed>
+      <acceleration>5.793418281188725</acceleration>
+      <time>9</time>
+    </input>
+  </inputVector>
+</CommonRoadSolution>

@@ -32,8 +32,8 @@
       "min_clearance_mean_m": 0.8222737710562116,
       "progress_ratio_mean": 0.9152933729477579,
       "penalized_travel_time_mean_s": 11.8,
-      "runtime_p50_ms": 1809.5052464923356,
-      "runtime_p95_ms": 12701.399170834338
+      "runtime_p50_ms": 1851.9463525153697,
+      "runtime_p95_ms": 13663.761629641522
     },
     {
       "method": "MIKU",
@@ -43,8 +43,8 @@
       "min_clearance_mean_m": 1.9321650739623448,
       "progress_ratio_mean": 0.8258886838800302,
       "penalized_travel_time_mean_s": 11.775714285714285,
-      "runtime_p50_ms": 11.555307995877229,
-      "runtime_p95_ms": 45.807537288055755
+      "runtime_p50_ms": 21.24171200557612,
+      "runtime_p95_ms": 54.61855330504476
     }
   ],
   "paired_statistics": [

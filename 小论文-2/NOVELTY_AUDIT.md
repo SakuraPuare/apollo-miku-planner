@@ -16,7 +16,7 @@
 | 双向 ST 走廊 | Deolasee et al. (2022) trapezoidal prism corridor；Yoon et al. (2024) ST corridor；Zhang et al. (2023) interactive ST corridor | 均在时空域表达通过/让行 | MIKU 把标签编译回速度 QP | 代码以安全窗端点编译是正确的；旧论文错误地使用了相反的占用端点，现已修正 |
 | 鲁棒预测占据管 | Han et al. (2024) safe corridor；Yang et al. (2023) prediction-based pedestrian planning；CIAO* (Schoels et al., 2021) | 都用预测占据/安全集合处理不确定性 | MIKU 使用随时间增长的轴对齐半径 | 路径投影未使用 uncertainty，候选也未做鲁棒验证；主张不成立 |
 | 滚动同伦锁定 | Esterle et al. (2018) semantic consistency；常见 MPC hysteresis/commitment | 都抑制周期决策抖动 | MIKU 对 pass-before 轨迹暂时执行旧轨迹 | 属工程滞回；无递归可行性或终端集证明 |
-| Apollo 集成 | Fan et al. (2018), Apollo 官方仓库 | 采用 Apollo 风格 path QP / speed QP 接口 | 仓库是 Python/NumPy/OSQP 原型 | 无 CyberRT、Planning 原生构建或日志；只能称 Apollo-style 原型 |
+| Apollo 集成 | Fan et al. (2018), Apollo 官方仓库 | 采用 Apollo Planning path QP / speed QP 接口 | MIKU 改动已落入 Apollo Planning 源码提交，并有 CyberRT/Dreamview 运行资产 | 源码 commit、补丁、fixture 和 runtime dump 已登记；宿主机重建仍需恢复 Apollo 工具包路径 |
 
 ## 三条路线比较与裁判选择
 
@@ -43,4 +43,4 @@
 - [Deolasee et al., trapezoidal prism corridors, arXiv 2209.15150](https://arxiv.org/abs/2209.15150)
 - [CommonRoad 公共场景与 benchmark 说明](https://commonroad.in.tum.de/scenarios/)
 
-**当前裁决：Major Revision。** 路线 A 已接入主流水线，时序语义和连续证书也已修正并测试，公开 CommonRoad XML 已完成受限 adapter smoke；但这不等于完整公开 benchmark、忠实外部方法或原生 Apollo 证据，因此仍不得声称已达到二区竞争水平。
+**当前裁决：Major Revision。** 路线 A 已接入主流水线，时序语义和连续证书也已修正并测试，公开 CommonRoad XML 已完成官方 Reactive Planner 四场景协议覆盖，并登记 Apollo Planning 源码与 CyberRT/Dreamview runtime 资产；当前结果仍不足以单独声称达到二区竞争水平，主要剩余问题是审稿风险、非平凡联合域展示和投稿格式。

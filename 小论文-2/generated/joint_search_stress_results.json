@@ -9,11 +9,11 @@
       "spatial_layers": 1,
       "spatial_homotopies": 2,
       "domain_size": 2,
-      "evaluated_candidates": 1,
-      "expanded_spatial_branches": 1,
-      "runtime_median_ms": 18.254898983286694,
-      "runtime_min_ms": 18.16510400385596,
-      "runtime_max_ms": 19.131300010485575
+      "evaluated_candidates": 2,
+      "expanded_spatial_branches": 2,
+      "runtime_median_ms": 21.760761039331555,
+      "runtime_min_ms": 21.364409010857344,
+      "runtime_max_ms": 22.17696199659258
     },
     {
       "spatial_layers": 2,
@@ -21,39 +21,39 @@
       "domain_size": 5,
       "evaluated_candidates": 4,
       "expanded_spatial_branches": 3,
-      "runtime_median_ms": 72.23475101636723,
-      "runtime_min_ms": 71.9056689995341,
-      "runtime_max_ms": 73.94894000026397
+      "runtime_median_ms": 72.31864100322127,
+      "runtime_min_ms": 71.80178695125505,
+      "runtime_max_ms": 74.45918401936069
     },
     {
       "spatial_layers": 3,
       "spatial_homotopies": 8,
       "domain_size": 10,
-      "evaluated_candidates": 5,
-      "expanded_spatial_branches": 4,
-      "runtime_median_ms": 201.48345999768935,
-      "runtime_min_ms": 201.24702699831687,
-      "runtime_max_ms": 204.69805799075402
+      "evaluated_candidates": 6,
+      "expanded_spatial_branches": 5,
+      "runtime_median_ms": 213.10433704638854,
+      "runtime_min_ms": 211.80717798415571,
+      "runtime_max_ms": 213.11856398824602
     },
     {
       "spatial_layers": 4,
       "spatial_homotopies": 16,
       "domain_size": 20,
-      "evaluated_candidates": 3,
-      "expanded_spatial_branches": 3,
-      "runtime_median_ms": 358.3641689911019,
-      "runtime_min_ms": 358.24682301608846,
-      "runtime_max_ms": 358.9247140043881
+      "evaluated_candidates": 10,
+      "expanded_spatial_branches": 8,
+      "runtime_median_ms": 513.3754659909755,
+      "runtime_min_ms": 508.75238300068304,
+      "runtime_max_ms": 513.951922999695
     },
     {
       "spatial_layers": 5,
       "spatial_homotopies": 32,
       "domain_size": 40,
-      "evaluated_candidates": 3,
-      "expanded_spatial_branches": 3,
-      "runtime_median_ms": 600.4180430027191,
-      "runtime_min_ms": 599.0353479865007,
-      "runtime_max_ms": 606.6897290002089
+      "evaluated_candidates": 16,
+      "expanded_spatial_branches": 13,
+      "runtime_median_ms": 949.9596719979309,
+      "runtime_min_ms": 945.9517000359483,
+      "runtime_max_ms": 954.5213200035505
     }
   ]
 }

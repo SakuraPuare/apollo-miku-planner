@@ -68,6 +68,18 @@ def test_single_conflict_has_before_and_after_candidates() -> None:
     assert windows == (TimeWindow(0.0, 2.5), TimeWindow(5.5, 10.0))
 
 
+def test_safe_window_endpoints_are_not_strict_collision_free_witnesses() -> None:
+    windows = safe_time_windows(
+        [OccupancyInterval(3.0, 5.0)],
+        TimeWindow(0.0, 10.0),
+        safety_guard=0.5,
+    )
+    # The numeric component endpoint is retained for ST compilation, but the
+    # expanded closed occupancy owns the boundary itself.
+    assert not any(window.start < 2.5 < window.end for window in windows)
+    assert 3.0 - 0.5 <= 2.5 <= 5.0 + 0.5
+
+
 def test_interleaved_occupancies_are_merged_before_complement() -> None:
     windows = safe_time_windows(
         [
@@ -313,6 +325,25 @@ def test_pipeline_candidate_exposes_continuous_safety_validation() -> None:
         scenario, linear_result
     )
     assert linear_certificates[obstacle.name].certified
+
+
+def test_commonroad_goal_time_and_velocity_are_compiled_into_speed_qp() -> None:
+    scenario = Scenario(
+        Ego(v0=4.0),
+        [],
+        s_max=8.0,
+        t_max=2.0,
+        goal_lateral=0.0,
+        goal_time_start=1.0,
+        goal_time_end=2.0,
+        goal_v_min=2.0,
+        goal_v_max=4.5,
+    )
+    result = run_pipeline("miku", scenario)
+    assert result["s_qp"] is not None
+    goal_index = int(round(scenario.goal_time_end / (result["ts"][1] - result["ts"][0])))
+    assert scenario.goal_v_min - 1.0e-4 <= result["v_qp"][goal_index]
+    assert result["v_qp"][goal_index] <= scenario.goal_v_max + 1.0e-4
 
 
 def test_pipeline_certificate_rejects_mutated_prediction_uncertainty() -> None:

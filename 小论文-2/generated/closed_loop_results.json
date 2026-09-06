@@ -35,21 +35,21 @@
       "progress_ratio_mean": 0.8255343764534869,
       "penalized_travel_time_mean_s": 12.092714285714289,
       "planning_cycles_mean": 20.554285714285715,
-      "episode_runtime_p50_ms": 185.5928514705738,
-      "episode_runtime_p95_ms": 1231.841368811728
+      "episode_runtime_p50_ms": 195.35088090924546,
+      "episode_runtime_p95_ms": 1275.1541500096207
     },
     {
       "method": "MIKU",
       "n": 700,
-      "success_rate": 0.71,
+      "success_rate": 0.7071428571428572,
       "collision_rate": 0.012857142857142857,
-      "degraded_stop_rate": 0.2842857142857143,
-      "min_clearance_mean_m": 1.5137170007359129,
-      "progress_ratio_mean": 0.8898285710035068,
-      "penalized_travel_time_mean_s": 11.450714285714286,
-      "planning_cycles_mean": 20.147142857142857,
-      "episode_runtime_p50_ms": 238.44977248518262,
-      "episode_runtime_p95_ms": 1389.6267296120627
+      "degraded_stop_rate": 0.28714285714285714,
+      "min_clearance_mean_m": 1.5138082685737952,
+      "progress_ratio_mean": 0.8891633639540003,
+      "penalized_travel_time_mean_s": 11.48,
+      "planning_cycles_mean": 20.185714285714287,
+      "episode_runtime_p50_ms": 255.87278651073575,
+      "episode_runtime_p95_ms": 1402.189620319404
     }
   ],
   "paired_statistics": [
@@ -57,14 +57,14 @@
       "comparison": "MIKU-B0",
       "metric": "success",
       "n": 700,
-      "mean_difference": 0.09285714285714286,
-      "ci_low": 0.06714285714285714,
-      "ci_high": 0.12,
-      "cohen_dz": 0.25462194782704933,
-      "candidate_only": 82,
+      "mean_difference": 0.09,
+      "ci_low": 0.06428571428571428,
+      "ci_high": 0.11714285714285715,
+      "cohen_dz": 0.24898567908487682,
+      "candidate_only": 80,
       "reference_only": 17,
-      "discordant": 99,
-      "mcnemar_exact_p": 2.180641080014394e-11
+      "discordant": 97,
+      "mcnemar_exact_p": 6.007962189879816e-11
     },
     {
       "comparison": "MIKU-B0",

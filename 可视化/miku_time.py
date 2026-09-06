@@ -111,7 +111,11 @@ def safe_time_windows(
     Each occupancy is expanded by ``safety_guard`` and clipped to the planning
     horizon.  The result is the complement of the merged occupied set.  A
     single conflict therefore naturally yields the before-pass and after-pass
-    candidates; interleaved obstacles may yield more components.
+    candidates; interleaved obstacles may yield more components.  The returned
+    ``TimeWindow`` endpoints are closed for projection and QP compilation, but
+    safety is interpreted on each component's strict interior: an endpoint
+    equal to an expanded occupancy bound is not silently treated as a safe
+    collision-free witness.
     """
 
     if safety_guard < 0.0 or not math.isfinite(safety_guard):

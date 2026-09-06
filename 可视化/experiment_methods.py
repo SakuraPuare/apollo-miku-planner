@@ -15,8 +15,11 @@ import numpy as np
 
 from apollo_pipeline import (
     AblationFlags,
+    PATH_W_L,
     Scenario,
     arrival_time,
+    path_qp_objective,
+    pipeline_objective,
     run_pipeline,
     validate_pipeline_candidate_continuous_safety,
 )
@@ -43,7 +46,10 @@ class MethodSpec:
     spatial_top_k: int = 1
     require_continuous_certificate: bool = False
     certified_joint_search: bool = False
-    certificate_lateral_weight: float = 0.001
+    # Retained as a diagnostic knob for stress fixtures, but the production
+    # certificate always uses PATH_W_L so its lower bound is admissible for
+    # the actual path/speed QP objective.
+    certificate_lateral_weight: float = PATH_W_L
 
 
 @dataclass
@@ -69,7 +75,10 @@ def corridor_lateral_lower_bound(candidate: dict, weight: float) -> float:
         0.0,
         np.minimum(np.abs(lower), np.abs(upper)),
     )
-    return float(weight * np.mean(nearest**2))
+    # path_optimizer uses PATH_W_L * sum(l_j^2) (the solver's objective is
+    # represented up to the same fixed discretisation).  Keep the lower bound
+    # in that exact scale rather than silently normalising by grid length.
+    return float(weight * np.sum(nearest**2))
 
 
 METHODS: tuple[MethodSpec, ...] = (
@@ -158,24 +167,6 @@ def run_method(
         candidate["continuous_safety_certificates"] = certificates
         return all(certificate.certified for certificate in certificates.values())
 
-    def certified_objective(candidate: dict) -> float:
-        """Non-negative objective used by the finite-domain certificate."""
-        s_qp = np.asarray(candidate["s_qp"], dtype=float)
-        a_qp = np.asarray(candidate["a_qp"], dtype=float)
-        l_path = np.asarray(candidate["l_path"], dtype=float)
-        target = max(scn.s_max - 1.0, scn.ego.s0)
-        goal_error = max(target - float(s_qp[-1]), 0.0)
-        jerk_energy = 0.0
-        if len(a_qp) > 1:
-            time_step = float(candidate["ts"][1] - candidate["ts"][0])
-            jerk_energy = float(np.mean((np.diff(a_qp) / time_step) ** 2))
-        return (
-            100.0 * goal_error**2
-            + float(np.mean(a_qp**2))
-            + 0.1 * jerk_energy
-            + spec.certificate_lateral_weight * float(np.mean(l_path**2))
-        )
-
     def plan_pipeline_once(
         tau_fn: Callable[[float], float] | None = None,
     ) -> dict:
@@ -231,9 +222,10 @@ def run_method(
 
         def make_branch(spatial_rank: int) -> SpatialHomotopyBranch[tuple[int, int]]:
             first = solve(spatial_rank, 0)
-            branch_lower_bound = corridor_lateral_lower_bound(
-                first, spec.certificate_lateral_weight
-            )
+            # All temporal children reuse this spatial path.  The solved path
+            # QP objective is therefore an admissible branch lower bound; all
+            # speed-QP terms are non-negative.
+            branch_lower_bound = path_qp_objective(first)
 
             def expand() -> tuple[JointHomotopyCandidate[tuple[int, int]], ...]:
                 temporal_count = max(
@@ -257,7 +249,7 @@ def run_method(
             candidate = solve(*joint.payload)
             if not candidate_is_acceptable(candidate):
                 return CandidateEvaluation(False)
-            return CandidateEvaluation(True, certified_objective(candidate), candidate)
+            return CandidateEvaluation(True, pipeline_objective(scn, candidate), candidate)
 
         certificate = bounded_lazy_joint_search(
             (make_branch(rank) for rank in range(spatial_count)), evaluate
@@ -286,6 +278,10 @@ def run_method(
                 )
             ),
             "domain": "finite enumerated spatial-temporal homotopy labels",
+            "objective": "path_speed_qp_quadratic_cost_v1",
+            "objective_definition": (
+                "path and speed QP quadratic terms with the candidate terminal reference"
+            ),
         }
         return selected
 

@@ -1,0 +1,109 @@
+{
+  "benchmark": "CommonRoad NGSIM Peachtree",
+  "source": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/Peachtree/",
+  "competitor": "commonroad-reactive-planner",
+  "parameters": {
+    "dt": 0.1,
+    "horizon_steps": 100
+  },
+  "packages": {
+    "commonroad-io": "2024.3",
+    "commonroad-drivability-checker": "2025.4.0",
+    "commonroad-route-planner": "2025.1.0",
+    "commonroad-clcs": "2025.2.0",
+    "commonroad-reactive-planner": "2025.1"
+  },
+  "scenario_count": 4,
+  "rows": [
+    {
+      "scenario": "USA_Peach-1_1_T-1",
+      "benchmark_id": "USA_Peach-1_1_T-1",
+      "planning_problem_id": 1500,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 0,
+      "planned": false,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 33.41213800013065,
+      "planner_error": "CurvilinearProjectionDomainLongitudinalError: Longitudinal coordinate outside of curvilinear projection domain",
+      "planner_exception": true,
+      "outcome": "planner_failure"
+    },
+    {
+      "scenario": "USA_Peach-2_1_T-1",
+      "benchmark_id": "USA_Peach-2_1_T-1",
+      "planning_problem_id": 1500,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 222.20367199042812,
+      "dynamics_feasible": false,
+      "dynamics_details": {
+        "1500": false
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1500.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    },
+    {
+      "scenario": "USA_Peach-3_1_T-1",
+      "benchmark_id": "USA_Peach-3_1_T-1",
+      "planning_problem_id": 1500,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 235.15635100193322,
+      "dynamics_feasible": false,
+      "dynamics_details": {
+        "1500": false
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1500.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    },
+    {
+      "scenario": "USA_Peach-4_1_T-1",
+      "benchmark_id": "USA_Peach-4_1_T-1",
+      "planning_problem_id": 1500,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 272.9231290286407,
+      "dynamics_feasible": false,
+      "dynamics_details": {
+        "1500": false
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1500.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    }
+  ],
+  "planned_count": 3,
+  "valid_solution_count": 0,
+  "all_solutions_valid": false,
+  "benchmark_complete": true,
+  "formal_benchmark_ready": true,
+  "protocol_scope": "one-shot official ReactivePlanner; same initial state, dt, horizon, solution writer and evaluator as native comparison"
+}

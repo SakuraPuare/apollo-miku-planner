@@ -1037,6 +1037,7 @@ delayed_crossing,78,MIKU,unreached_or_fallback_stop,0.5860998725276207,0.1376616
 delayed_crossing,79,B0,unreached_or_fallback_stop,0.6394252291042419,0.07348255865463568
 delayed_crossing,79,B1,unreached_or_fallback_stop,0.5267912630523406,0.1532119285690302
 delayed_crossing,79,B2,unreached_or_fallback_stop,0.6756974571970937,0.06268626670465773
+delayed_crossing,79,MIKU,unreached_or_fallback_stop,0.637220199722639,0.11124692813271647
 delayed_crossing,80,B1,unreached_or_fallback_stop,0.5000000303021588,0.1499813442931459
 delayed_crossing,83,B0,unreached_or_fallback_stop,0.36376894716495933,0.280975820394604
 delayed_crossing,83,B1,unreached_or_fallback_stop,0.36376894716495933,0.280975820394604

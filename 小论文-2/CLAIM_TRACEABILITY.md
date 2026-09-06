@@ -14,7 +14,7 @@
 | 曲线路径整段包络避免角点漏检 | 方法3.1 | `st_boundary_mapper` | 几何/ST 回归测试 | 离散采样及车辆 Minkowski 模型 |
 | 固定同伦后保持凸 QP | 凸性命题 | `path_optimizer`, `speed_qp`, `build_st_bounds` | 约束均为逐点上下界；QP 回归测试 | 只说明固定标签子问题，不含候选安全性 |
 | 按需交替细化修正到达时间 | 式(15)、算法1 | `experiment_methods.run_method` | A7：`+0.43 pp`, `p=.25` | 初始求解+至多一次反馈细化；效果不显著，不作独立贡献主张 |
-| 有限联合同伦搜索与最优性 gap | 新算法接口 | `joint_homotopy_search.py::bounded_lazy_joint_search`, `experiment_methods.corridor_lateral_lower_bound` | 100 个随机域穷举、预算截断、下界反例；走廊下界直接值/输入契约单测；`joint_search_stress_*` 的 2--40 联合候选规模曲线；主/滚动原始行的 `joint_*` 字段 | 证书只相对于显式有限候选域；走廊到零线的平方距离是证书目标的可采纳下界；不宣称连续全局最优 |
+| 有限联合同伦搜索与最优性 gap | 新算法接口 | `joint_homotopy_search.py::bounded_lazy_joint_search`, `experiment_methods.path_qp_objective`, `apollo_pipeline.pipeline_objective` | 100 个随机域穷举、预算截断、下界反例；path-QP 分支下界与 QP 目标一致性单测；`joint_search_stress_*` 的 2--40 联合候选规模曲线；主/滚动原始行的 `joint_*` 字段 | 证书相对于显式有限候选域与明确的 path+speed QP 二次目标；不宣称连续全局最优 |
 | 候选连续安全验证 | 新安全接口 | `path_rollout_motion_samples`, `validate_pipeline_candidate_continuous_safety`, `experiment_methods.run_method` | 路径 V 形折点反例、二次纵横向根相交测试；MIKU 候选 fail-closed | 仅在节点间恒加速度、分段线性路径和误差包络条件下证书化 |
 | 滚动语义保持与先行承诺避免临近翻转 | 方法3.4 | `closed_loop.py` | `test_pass_before_commitment_survives_rolling_replanning`; 700 例滚动数据 | 工程承诺机制；不是递归可行性证明 |
 | 主实验到达率提升 | 摘要、实验4.2、结论 | 主实验脚本和方法注册 | 700 对：MIKU/B0 `75.3%/60.4%`, 差 `+14.9 pp`, CI `[11.9,18.0]`, `p=7.71e-20` | 公开随机生成分布 |
@@ -23,6 +23,8 @@
 | 滚动规划延续单周期收益 | 实验4.5 | `closed_loop.py`, rolling runner | 700 对：到达率差 `+9.29 pp`, CI `[6.71,12.0]`, `p=2.18e-11`; 碰撞差 `-0.57 pp`, CI `[-1.43,0.29]`, `p=.344` | 不等同于实车全系统闭环 |
 | 联合网格诊断参照 | 实验4.5 | `joint_reference.py`, joint runner | 70 对：MIKU 比 B3 到达率高 `+28.6 pp`，碰撞低 `-35.7 pp`，差异显著 | B3 是自建粗网格、不同碰撞检查器，不是外部方法或全局最优 |
 | CommonRoad 外部输入链路 | 外部验证附录 | `commonroad_adapter.py`, `run_commonroad_adapter_smoke.py`, `validate_commonroad_native.py` | 公开 Lankershim XML：官方解析器确认 95 lanelets、24--42 动态障碍、矩形形状和 506--2111 个预测状态；受限 adapter 另完成后继链、Frenet 障碍投影、采样轨迹残差包络和 B0/MIKU 调用 | 官方语义审计 + 严格子集 adapter smoke；中心点线性插值可被包络覆盖，但不保留原始 occupancy，不代表 CommonRoad benchmark、规则语义或外部性能 |
+| CommonRoad 独立竞品正式覆盖 | 外部验证附录 | `run_commonroad_reactive.py` | 四个固定 Lankershim XML；官方 reader、RoutePlanner/ReferencePathPlanner、CommonRoad Reactive Planner、标准 solution writer 与 `commonroad_dc` evaluator；2 个 valid solution、2 个 planner failure | 结果是完整四场景协议覆盖，失败计入统计；不将该竞品结果解释为 MIKU 或 Apollo runtime 数据 |
+| CommonRoad 原生输出边界 | 外部验证附录 | `run_commonroad_miku_native.py` | 四个固定 XML；官方 planning problem、`KSState`、`PlanningProblemSolution`、solution writer 和 evaluator；MIKU 4 次 planner failure、0 个 valid solution | 输出与 evaluator 语义可审计；规划输入仍为受限 Frenet adapter，故不等同于完整 CommonRoad benchmark |
 | 威胁权重局部稳定 | 实验4.6 | `sensitivity_analysis.py` | ±20% 权重扰动；80 条完整轨迹均成功 | 局部权重稳定性 |
 
 文献条目由 `references.bib` 与 LaTeX/Biber 构建共同检查；实验脚本不会修改论文中的理论表述。

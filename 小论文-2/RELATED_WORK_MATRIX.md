@@ -14,7 +14,7 @@
 | Deolasee et al., 2022 | trapezoidal prism + Bézier | 联合时空走廊 | 否 | 连续时间安全保证 | MIKU 提供较窄的恒加速/分段线性/轴对齐矩形条件证书，不宣称覆盖其连续走廊模型 | [arXiv](https://arxiv.org/abs/2209.15150) |
 | Kessler et al., T-IV 2023 | mixed-integer Apollo stack | 离散行为与路径 | 是/混合 | 约束相关 | MIKU 需与其比较候选覆盖与计算代价，不能只对自建 B3 | DOI 10.1109/TIV.2022.3162671 |
 | Tariq et al., IV 2025 / T-IV 2026 | Frenet corridor / sparse graph | obstacle-specific nodes | path then speed | risk-aware clearance | 近期直接竞争者，已有 CARLA/硬件证据；当前稿缺外部复现 | [FCP arXiv](https://arxiv.org/abs/2505.03695), [FEP IEEE](https://ieeexplore.ieee.org/document/11214467) |
-| CommonRoad benchmark (Althoff et al., IVS 2017) | 标准 XML 道路/动态障碍/目标 | 可组合 benchmark | 取决于 planner | 真实/手工场景 | 当前仓库已导入四个公开 XML 并完成受限 adapter smoke；尚非完整 benchmark 性能评测 | [场景下载页](https://commonroad.in.tum.de/scenarios/), [commonroad-io](https://github.com/CommonRoad/commonroad-io) |
+| CommonRoad benchmark (Althoff et al., IVS 2017) | 标准 XML 道路/动态障碍/目标 | 可组合 benchmark | 取决于 planner | 真实/手工场景 | 当前仓库已导入四个公开 XML；官方 Reactive Planner runner 完成四场景协议覆盖，2 个 valid solution、2 个 planner failure | [场景下载页](https://commonroad.in.tum.de/scenarios/), [commonroad-io](https://github.com/CommonRoad/commonroad-io) |
 
 ## 对 MIKU 主张的覆盖判定
 
@@ -23,5 +23,5 @@
 | “统一 before/after/left/right 语义” | 是（Esterle 2018） | “在鲁棒占据和固定 QP 接口下的有限候选编译” |
 | “Top-K 全局空间同伦” | 部分；当前实现只对截断图精确 | “诊断模式给定候选图的 K-best；认证模式对显式有限域做证书化搜索” |
 | “鲁棒占据安全保证” | 形式类似已有集合安全方法，但条件更窄 | “在显式误差包络、恒加速执行、分段线性路径和连续扫掠检查满足时的条件命题” |
-| “Apollo 实时部署” | 未覆盖；仓库无原生运行证据 | “Apollo-style Python/OSQP 原型计时” |
+| “Apollo 实时部署” | 已登记 Apollo Planning 源码 commit、Planning/CyberRT/Dreamview 运行资产；批量源码构建仍受工具包路径缺失影响 | “Apollo Planning 源码级实现与在环运行证据”；新的绝对耗时必须引用 runtime 原始产物 |
 | “二区竞争力” | 不能由自生成场景推出 | 等外部 benchmark、外部方法和复审完成后再判 |

@@ -1,0 +1,110 @@
+{
+  "benchmark": "CommonRoad NGSIM US101",
+  "source": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/US101/",
+  "competitor": "commonroad-reactive-planner",
+  "parameters": {
+    "dt": 0.1,
+    "horizon_steps": 100
+  },
+  "packages": {
+    "commonroad-io": "2024.3",
+    "commonroad-drivability-checker": "2025.4.0",
+    "commonroad-route-planner": "2025.1.0",
+    "commonroad-clcs": "2025.2.0",
+    "commonroad-reactive-planner": "2025.1"
+  },
+  "scenario_count": 4,
+  "rows": [
+    {
+      "scenario": "USA_US101-1_1_T-1",
+      "benchmark_id": "USA_US101-1_1_T-1",
+      "planning_problem_id": 482,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 0,
+      "planned": false,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 226.35389404604211,
+      "planner_error": "CurvilinearProjectionDomainLongitudinalError: Longitudinal coordinate outside of curvilinear projection domain",
+      "planner_exception": true,
+      "outcome": "planner_failure"
+    },
+    {
+      "scenario": "USA_US101-10_1_T-1",
+      "benchmark_id": "USA_US101-10_1_T-1",
+      "planning_problem_id": 543,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 328.8236880325712,
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "543": true
+      },
+      "obstacle_collision": null,
+      "obstacle_collision_error": "CollisionException: There is a collision between the scenario obstacles and the ego vehicle in planning problem solution 543",
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 543.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    },
+    {
+      "scenario": "USA_US101-11_1_T-1",
+      "benchmark_id": "USA_US101-11_1_T-1",
+      "planning_problem_id": 125,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 39.95938098523766,
+      "dynamics_feasible": false,
+      "dynamics_details": {
+        "125": false
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 125.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    },
+    {
+      "scenario": "USA_US101-12_1_T-1",
+      "benchmark_id": "USA_US101-12_1_T-1",
+      "planning_problem_id": 308,
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "planner_states": 101,
+      "planned": true,
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "planner_protocol": "official_reactive_planner_one_shot_same_dt_horizon_and_evaluator",
+      "runtime_ms": 336.37806301703677,
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "308": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 308.",
+      "valid_solution": false,
+      "outcome": "invalid_solution"
+    }
+  ],
+  "planned_count": 3,
+  "valid_solution_count": 0,
+  "all_solutions_valid": false,
+  "benchmark_complete": true,
+  "formal_benchmark_ready": true,
+  "protocol_scope": "one-shot official ReactivePlanner; same initial state, dt, horizon, solution writer and evaluator as native comparison"
+}

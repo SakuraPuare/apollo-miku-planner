@@ -320,3 +320,115 @@
 - 当前 `check_submission_gates.py`（T-IV）裁决为 `accept`；唯一未满足项是
   `native_apollo_cyberrt` 诊断项，不进入 T-IV/T-ITS 正式阻塞。提交前仍需执行全量测试、
   禁词扫描、哈希校验和最终 PDF 编译。
+
+## Round 23 — CommonRoad goal-region 语义修正与敌意复核（2026-09-06）
+
+- 独立算法复核指出，旧适配器把 CommonRoad 矩形 goal 编译成中心点硬约束，并把
+  goal orientation 用普通算术中点处理；这会把合法终端区域错误收缩为单点，且在 ±π
+  处产生错误航向。该问题被判定为主要正确性缺口，而不是 writer 参数问题。
+- `Scenario` 现记录 `goal_s_min/max`、`goal_l_min/max`。适配器投影 goal rectangle 四角，
+  path-QP 末端对 lateral 使用区间交集，speed-QP 以区间下界作为安全可行性门槛，中心
+  投影只保留为兼容性的软进度目标；JSON 额外写出 `goal_station_interval_m` 与
+  `goal_lateral_interval_m`。goal orientation 区间改用圆周中点，并新增跨 ±π 单元测试。
+- 对带时间窗的 goal，speed-QP 现在枚举 `ceil(t_start/dt)` 到 `floor(t_end/dt)` 的
+  admissible knots，并记录 `selected_goal_time_s`/`selected_goal_knot`；新增“早时刻可行、
+  末时刻不应被强制”的回归测试。
+- 重新执行官方 CommonRoad writer/evaluator：主四场景 MIKU 仍为 `2 valid / 1 planner_failure /
+  1 evaluator-invalid`；扩展十六场景为 `7 valid / 3 planner_failure / 6 evaluator-invalid`，
+  其中 evaluator-invalid 本轮均为 `goal_not_reached`；B0 在同一协议下也是 7/16，故不能
+  将该结果表述为 MIKU 性能优胜。
+  B0 与 MIKU 在该受限协议下同为 7/16，故该修复只能支持语义/输出审计，不能被写成算法
+  性能优胜。失败仍按 `goal_not_reached`、`boundary_collision` 和 planner stage 保留。
+- 全量测试为 `130 passed, 20 skipped`，Ruff 与 `git diff --check` 通过。敌意新颖性复核
+  仍给出 Major Revision：CommonRoad 场景来自单一 Lankershim 家族，Reactive baseline
+  协议不对称，且 native KS shooting 属于执行适配器后处理，不扩展 MIKU 安全证书。
+- AC 决策：**Major Revision / Goal active**。下一阶段必须实现 admissible goal-time
+  knot 枚举、逐 station lanelet 边界和跨地图留出评测；在此之前不得宣称“二区泛化已完成”。
+
+## Round 24 — 逐 station lanelet 可行域审计（2026-09-06）
+
+- 将 CommonRoad 路线边界从全局 `route_l_min/max` 扩展为每个 reference-path knot 的
+  局部法向横截面：对 lanelet polygon 与 reference normal 求交，选择包含 reference
+  point 的连通道路区间，并写入 `road_s_profile`、`road_l_min/max_profile`。
+- path bounds、Baseline 和 MIKU 均在每个 station knot 使用该 profile；OSQP 前新增
+  fail-closed bound validation，局部空走廊不再触发 runner exception，而是保留
+  `path_bounds/goal_bounds` planner failure。Native JSON 新增 `station_varying_road_bounds`
+  和 `road_center_width_min_m`。
+- 首次直接插值边界点时结果退化为 3/16，定位后改为 polygon normal cross-section；官方
+  16 场景重跑恢复为 `7 valid / 3 planner_failure / 6 evaluator-invalid`，主四场景仍
+  `2/4 valid`。这证明局部边界实现未靠放宽 evaluator 提升计数，同时关闭了全局边界掩盖
+  局部道路几何的缺口。
+- 新增 station-varying boundary 单元测试；当前全量测试 `131 passed, 20 skipped`，Ruff、
+  `git diff --check` 通过。B0 与 MIKU 外部计数仍相同，算法性能泛化结论保持未证实。
+- AC 决策：**Major Revision / Goal active**。下一阶段仍需跨地图留出集、完整合法等待/通过
+  策略和终端车辆可达性约束；当前局部边界语义已进入可审计实现。
+
+## Round 25 — 终端 KS 航向可达性与执行适配器复核（2026-09-06）
+
+- native writer 不再把 CommonRoad goal rectangle 的几何中心作为 shooting 目标，而是使用
+  planner 选出的 terminal state；这样执行层不会把合法的矩形边界终点重新拉回不可达中心。
+- goal orientation interval 的 native writer 中点改为 circular midpoint；终端航向追踪由原先
+  大角度立即跳变改为最长 3 s 的 bounded ramp，减少违反 steering-rate 可达性的启发式跳变。
+- 官方 16 场景重跑后 MIKU 仍为 `7 valid / 3 planner_failure / 6 evaluator-invalid`，B0
+  同样为 7/16；因此该修改改善了执行语义边界，但没有制造方法性能收益，失败证据保留。
+- 全量测试仍通过（当前 `131 passed, 20 skipped`）；该后处理仍明确归类为 CommonRoad
+  execution adapter，不扩张 MIKU planner-side 安全证书。
+- AC 决策：**Major Revision / Goal active**。下一步转向完整合法等待/通过策略和跨地图留出
+  benchmark；不再把终端 writer 调参当作核心算法创新。
+
+## Round 26 — 有限 wait/pass fallback 复核（2026-09-06）
+
+- `run_pipeline` 现在在选定 temporal homotopy 的安全 corridor 无法满足 goal 时，按有限
+  candidate rank 尝试下一个 wait/pass 方案；每个候选仍独立经过 path/speed QP 和同一 ST
+  约束，失败不会输出 partial success。结果写入 `temporal_plan_fallback_from_rank`。
+- 16 场景官方重跑没有触发可接受的替代候选，MIKU 仍为 `7 valid / 3 planner_failure /
+  6 evaluator-invalid`，B0 计数相同。这个结果说明当前失败不是简单 candidate-rank 遗漏，
+  而是当前障碍物协议下的真实安全/可执行性限制。
+- 全量验证仍通过（131 passed, 20 skipped）；该 fallback 作为合法等待/通过基础设施记录，
+  不能被包装成性能提升。
+- AC 决策：**Major Revision / Goal active**。下一阶段需要跨地图留出场景，并对 goal-time、
+  obstacle occupancy 和 KS reachable set 做联合诊断。
+
+## Round 27 — Peachtree 跨道路族留出审计（2026-09-06）
+
+- 新增 `--family peachtree` 协议，固定 4 个公开 Peachtree XML，与 Lankershim 使用同一
+  official reader/reference path、逐 station lanelet polygon bounds、occupancy envelope、
+  native solution/evaluator 和 Reactive baseline。
+- Peachtree 结果：MIKU `1/4 valid、3 planner_failure`；B0 `1/4 valid、2 planner_failure、
+  1 evaluator-invalid`；Reactive `0/4 valid、1 planner_failure、3 evaluator-invalid`。
+- 这是第二道路族的真实留出证据：链路和算法输入能运行，但 MIKU 没有 B0 性能优势；失败
+  原样存档于 `commonroad_miku_native_peachtree_results.json` 和
+  `commonroad_reactive_peachtree_results.json`，不扩张为泛化成功。
+- 新增 `test_commonroad_family_protocol.py`；全量验证为 `133 passed, 20 skipped`。AC 决策：
+  **Major Revision / Goal active**。
+
+## Round 28 — lanelet-form goal 与 US101 留出审计（2026-09-06）
+
+- US101 场景暴露了此前未覆盖的官方 goal 表达：`goalState/position/lanelet ref`。adapter
+  现在读取目标 lanelet polygon，并将其边界投影为 conservative station/lateral goal interval；
+  不再把合法 CommonRoad 场景误报为“无 point/rectangle center”。
+- US101 四场景同一官方协议结果：MIKU `2/4 valid、1 planner_failure、1 evaluator-invalid`；
+  B0 同为 2/4；Reactive `0/4 valid、1 planner_failure、3 evaluator-invalid`。
+- 新增 `COMMONROAD_US101_RUN.md`、US101 JSON 和 lanelet-goal 回归测试。结果证明第三道路族
+  的输入/输出语义可以运行，但仍没有 MIKU 相对 B0 的性能收益。
+- AC 决策：**Major Revision / Goal active**；跨族语义覆盖继续扩大，性能泛化仍未证实。
+
+## Round 30 — lanelet goal 任意进入语义（2026-09-06）
+
+- 对 lanelet-form goal，`Scenario.s_max` 不再使用目标 lanelet 边界投影的中点；规划 horizon
+  改为目标区域的最早 station（同时不小于 ego 当前 station），避免把“进入 lanelet 即满足”
+  错编译成“必须到达 lanelet 中心”。native JSON 记录 `goal_region_kind=lanelet`。
+- US101 官方重跑结果仍为 MIKU/B0 `2/4 valid`，Reactive `0/4 valid`；该语义修复没有制造
+  性能收益，但关闭了 lanelet goal 的中心点过约束风险。
+- AC 决策：**Major Revision / Goal active**。仍需联合分析长 lanelet goal 的交通冲突、KS
+  可达性和跨道路族统计显著性。
+
+## Round 29 — 独立竞争方法协议显式化（2026-09-06）
+
+- Reactive Planner runner 现在显式记录 `planner_protocol`、reference-path 来源和
+  `protocol_scope`：同一初始状态、dt、100-step horizon、官方 solution writer/evaluator，
+  但调用模式明确标记为 one-shot official ReactivePlanner，不再把它误写成闭环优胜基线。
+- Peachtree/US101 报告均使用该字段并保留 planner failure/evaluator-invalid；公平性边界在
+  JSON 与复现文档中可回查。MIKU/B0/Reactive 的结果仍不被包装成 MIKU 性能优胜。
+- 全量测试为 `134 passed, 20 skipped`，Ruff 和 `git diff --check` 通过。AC 决策：
+  **Major Revision / Goal active**。

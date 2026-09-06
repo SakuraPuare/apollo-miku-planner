@@ -10,16 +10,16 @@
 - 论文投稿文件内部验证术语扫描通过。
 - 回归测试：`116 passed, 20 skipped`。
 - Apollo snapshot/fixture 路径校验通过。
-- Q3 中文稿 XeLaTeX 编译通过，当前 15 页；T-IV/T-ITS 10 页门限通过。
+- Q3 中文稿 XeLaTeX 编译通过，当前 14 页；三区/四区期刊路线不套用 T-IV/T-ITS 10 页门限。
 
-## 尚未通过的硬门禁
+## 当前仍需在小论文一投稿前完成的门禁
 
 | 门禁 | 当前状态 | 原因 |
 |---|---|---|
-| `native_apollo_cyberrt` | blocked | fixture 尚未完成本轮新重放和逐场景输入—输出—日志映射；宿主机缺少 `/opt/apollo/neo` 构建依赖路径 |
-| `commonroad_full_benchmark` | blocked | MIKU 输入仍为受限 Frenet adapter，尚未保留完整 lanelet/occupancy/rule 语义 |
-| `reviewers_clear_of_fatal_issues` | open | 以上两项证据缺口仍会触发工程审稿人的 major revision |
-| `ral_page_limit` | blocked | IEEE 版当前 9 页，超过 6 页路线；不应直接投 RA-L |
+| `native_apollo_cyberrt` | 非本稿必需的诊断项 | 小论文一不把本轮新 native runtime 性能作为投稿主张；保留接口、场景和 Dreamview 回放证据边界 |
+| `commonroad_full_benchmark` | 不属于本稿协议 | 小论文一正文不把 CommonRoad 结果作为性能主张；不将二区稿门禁移植到本稿 |
+| `reviewers_clear_of_fatal_issues` | 已通过 | `Q3Q4_REVIEW_ROUNDS.md` 三轮本稿专属审阅均无投稿阻塞项 |
+| `ral_page_limit` | 不适用 | 小论文一按三区/四区期刊路线准备，不投 RA-L |
 
 ## 本轮新增审计
 
@@ -35,7 +35,7 @@
 
 ## 投稿决策
 
-自动门禁当前仍为 `major_revision`。因此本次验收把“论文写作与证据边界闭环”标记为完成，
-把“原生 Apollo 重放和公平 CommonRoad benchmark”保留为明确的外部工作项：四区路线可以
-继续准备，三区投稿需先补齐至少一个原生 Apollo fixture 映射和公平外部比较。该结论不是
-对论文工作的否定，而是避免在投稿材料中把资产登记误写成运行结果。
+小论文一当前的投稿决策不再由二区稿的 CommonRoad 或 T-IV/T-ITS 门禁决定。三区优先、
+四区保底路线的主张—证据反查、Apollo 平台边界措辞、图表解释、禁词扫描、编译和三轮
+编辑/工程/理论审阅均已完成。原生 Apollo 逐场景 runtime 映射不是本稿的新增性能主张；
+若在投稿信中提及，只能表述为接口与代表性回放证据。

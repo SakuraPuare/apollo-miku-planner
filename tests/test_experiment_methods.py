@@ -1,6 +1,19 @@
 from __future__ import annotations
 
-from apollo_pipeline import COMPARABLE_SCENARIOS, run_pipeline
+import pytest
+import numpy as np
+
+from apollo_pipeline import (
+    COMPARABLE_SCENARIOS,
+    Ego,
+    Scenario,
+    path_bounds_decider,
+    path_optimizer,
+    path_qp_objective,
+    pipeline_objective,
+    run_pipeline,
+    speed_qp_objective,
+)
 from experiment_cases import generate_case
 from experiment_methods import METHODS, method_by_key, run_method
 
@@ -45,6 +58,65 @@ def test_default_miku_uses_temporal_homotopy_corridor_semantics():
     assert result["s_qp"][-1] >= scenario.s_max - 1.0 - 1.0e-6
 
 
+def test_external_goal_station_is_an_exact_path_qp_knot():
+    scenario = Scenario(
+        Ego(v0=2.0),
+        [],
+        s_max=2.3,
+        goal_lateral=0.4,
+    )
+    s_arr, *_ = path_bounds_decider(scenario, "miku")
+    assert s_arr[-1] == pytest.approx(scenario.s_max)
+    assert np.max(np.diff(s_arr)) <= 0.5 + 1.0e-12
+
+
+def test_external_goal_rectangle_compiles_terminal_lateral_interval():
+    scenario = Scenario(
+        Ego(v0=2.0),
+        [],
+        s_max=2.3,
+        goal_s_min=1.8,
+        goal_s_max=2.3,
+        goal_l_min=-0.4,
+        goal_l_max=0.6,
+    )
+    s_arr, l_min, l_max, blocked, _ = path_bounds_decider(scenario, "miku")
+    assert blocked == -1
+    assert s_arr[-1] == pytest.approx(2.3)
+    assert l_min[-1] == pytest.approx(-0.4)
+    assert l_max[-1] == pytest.approx(0.6)
+
+
+def test_external_goal_time_window_selects_an_admissible_early_knot():
+    scenario = Scenario(
+        Ego(v0=1.0),
+        [],
+        s_max=2.0,
+        goal_s_min=0.5,
+        goal_s_max=1.5,
+        goal_l_min=-0.5,
+        goal_l_max=0.5,
+        goal_time_start=0.2,
+        goal_time_end=0.8,
+    )
+    result = run_pipeline("miku", scenario)
+    assert result["s_qp"] is not None
+    assert result["selected_goal_time"] is not None
+    assert 0.2 - 1.0e-9 <= result["selected_goal_time"] <= 0.8 + 1.0e-9
+
+
+def test_external_goal_heading_shapes_terminal_path_slope():
+    stations = np.linspace(0.0, 5.0, 11)
+    path, _ = path_optimizer(
+        stations,
+        np.full(11, -3.0),
+        np.full(11, 3.0),
+        terminal_slope=0.5,
+    )
+    terminal_slope = (path[-1] - path[-2]) / (stations[-1] - stations[-2])
+    assert terminal_slope > 0.4
+
+
 def test_miku_reports_finite_joint_search_certificate():
     scenario = COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"]
     run = run_method(method_by_key("MIKU"), scenario)
@@ -56,3 +128,12 @@ def test_miku_reports_finite_joint_search_certificate():
         assert certificate["absolute_gap"] == 0.0
     else:
         assert certificate["absolute_gap"] == float("inf")
+
+
+def test_certificate_objective_is_the_path_plus_speed_qp_objective():
+    scenario = COMPARABLE_SCENARIOS["06_ped_plus_parked_cmp"]
+    result = run_pipeline("miku", scenario)
+    assert result["s_qp"] is not None
+    assert pipeline_objective(scenario, result) == pytest.approx(
+        path_qp_objective(result) + speed_qp_objective(scenario, result)
+    )

@@ -1,0 +1,3 @@
+项目统一口径与数据来源边界见 [`PROJECT_MEMORY.md`](PROJECT_MEMORY.md)。
+
+Apollo Planning 自动化测试规范见 [`APOLLO_AUTOMATION_TESTING.md`](APOLLO_AUTOMATION_TESTING.md)。

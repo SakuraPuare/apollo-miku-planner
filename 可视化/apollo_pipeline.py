@@ -72,6 +72,8 @@ from miku_time import (
 PATH_W_L = 0.5
 PATH_W_DL = 100.0
 PATH_W_DDL = 800.0
+PATH_W_GOAL_HEADING = 5000.0
+PATH_GOAL_HEADING_WINDOW = 4
 SPEED_W_V = 5.0
 SPEED_W_A = 1.0
 SPEED_W_JERK = 100.0
@@ -269,6 +271,12 @@ class Scenario:
     t_max: float = 3.5
     l_road_min: float = -1.875
     l_road_max: float = 1.875
+    # Optional station-indexed lanelet center-feasible bounds.  External
+    # adapters populate these from the route polygon; synthetic Apollo cases
+    # retain the scalar bounds above.
+    road_s_profile: np.ndarray | None = None
+    road_l_min_profile: np.ndarray | None = None
+    road_l_max_profile: np.ndarray | None = None
     # Baseline 用统一 δ（Apollo `GetBufferBetweenADCCenterAndEdge`）
     delta_baseline: float = DELTA_BASELINE
     # MIKU 差异化 δ_i 上下界（论文第五章第四节 式(5.10)）
@@ -277,6 +285,36 @@ class Scenario:
     # LaneBorrow：模拟 Apollo LaneBorrowPath
     lane_borrow: str = "none"  # "none" | "left" | "right" | "both"
     lane_width: float = 3.75
+    # Optional external-benchmark goal lateral coordinate.  Apollo-style
+    # synthetic fixtures leave this unset and retain the original soft
+    # centreline terminal objective.
+    goal_lateral: float | None = None
+    # CommonRoad goal-region projection.  When present, the terminal state
+    # may land anywhere inside this conservative Frenet box; the centre
+    # remains only a soft preference (and ``goal_lateral`` is retained for
+    # legacy synthetic fixtures).
+    goal_s_min: float | None = None
+    goal_s_max: float | None = None
+    goal_l_min: float | None = None
+    goal_l_max: float | None = None
+    goal_region_kind: str = "point"
+    # Desired terminal heading relative to the reference-path tangent.  The
+    # external adapter fills this from the official goal orientation; Apollo
+    # synthetic fixtures leave it unset.
+    goal_heading_error: float | None = None
+    # External lanelet benchmarks can keep moving obstacles in ST only.  The
+    # Apollo-style synthetic protocol retains the original dynamic path-bound
+    # behavior for backwards-compatible ablations.
+    dynamic_path_bounds: bool = True
+    # Longitudinal limits are Apollo defaults for synthetic fixtures and are
+    # overridden by the external adapter to match the official vehicle model.
+    v_max: float = 13.0
+    a_min: float = -4.0
+    a_max: float = 2.0
+    goal_time_start: float | None = None
+    goal_time_end: float | None = None
+    goal_v_min: float | None = None
+    goal_v_max: float | None = None
 
 
 # ============================ 第八章 消融开关（5 个正交组件） ============================
@@ -817,18 +855,42 @@ def arrival_time(s: float, scn: Scenario) -> float:
 # ============================ ① PathBoundsDecider ============================
 
 
+def _road_center_bounds(scn: Scenario, s_arr: np.ndarray):
+    """Return lanelet-derived road bounds sampled at the path knots."""
+    if (
+        scn.road_s_profile is not None
+        and scn.road_l_min_profile is not None
+        and scn.road_l_max_profile is not None
+        and len(scn.road_s_profile) >= 2
+    ):
+        profile_s = np.asarray(scn.road_s_profile, dtype=float)
+        l_min = np.interp(
+            s_arr,
+            profile_s,
+            np.asarray(scn.road_l_min_profile, dtype=float),
+        )
+        l_max = np.interp(
+            s_arr,
+            profile_s,
+            np.asarray(scn.road_l_max_profile, dtype=float),
+        )
+    else:
+        l_min = np.full_like(s_arr, float(scn.l_road_min), dtype=float)
+        l_max = np.full_like(s_arr, float(scn.l_road_max), dtype=float)
+    if scn.lane_borrow in ("right", "both"):
+        l_min = l_min - scn.lane_width
+    if scn.lane_borrow in ("left", "both"):
+        l_max = l_max + scn.lane_width
+    return l_min, l_max
+
+
 def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
     """Apollo PathBoundsDecider 复刻 — IsStatic 过滤 + 逐障碍物贪心 nudge。"""
     e = scn.ego
-    eff_l_max = scn.l_road_max + (
-        scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0
-    )
-    eff_l_min = scn.l_road_min - (
-        scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0
-    )
+    eff_l_min, eff_l_max = _road_center_bounds(scn, s_arr)
     road_buffer = scn.delta_baseline
-    l_min = np.full_like(s_arr, eff_l_min + road_buffer + e.W / 2)
-    l_max = np.full_like(s_arr, eff_l_max - road_buffer - e.W / 2)
+    l_min = eff_l_min + road_buffer + e.W / 2
+    l_max = eff_l_max - road_buffer - e.W / 2
 
     for obs in scn.obstacles:
         if not obs.is_static:
@@ -839,8 +901,8 @@ def _baseline_path_bounds(scn: Scenario, s_arr: np.ndarray):
                 continue
             obs_l_left = ol_ + obs.W / 2 + scn.delta_baseline + e.W / 2
             obs_l_right = ol_ - obs.W / 2 - scn.delta_baseline - e.W / 2
-            room_left = eff_l_max - obs_l_left
-            room_right = obs_l_right - eff_l_min
+            room_left = eff_l_max[i] - obs_l_left
+            room_right = obs_l_right - eff_l_min[i]
             if room_right >= room_left:
                 l_max[i] = min(l_max[i], obs_l_right)
             else:
@@ -880,22 +942,24 @@ def _miku_path_bounds(
 
         tau_fn = default_tau
     e = scn.ego
-    eff_l_max = scn.l_road_max + (
-        scn.lane_width if scn.lane_borrow in ("left", "both") else 0.0
-    )
-    eff_l_min = scn.l_road_min - (
-        scn.lane_width if scn.lane_borrow in ("right", "both") else 0.0
-    )
+    eff_l_min, eff_l_max = _road_center_bounds(scn, s_arr)
+    # The discrete homotopy solver uses a conservative global envelope for
+    # ordering; each station is still clamped to its local lanelet bounds
+    # before the path QP is formed.
+    global_eff_l_min = float(np.min(eff_l_min))
+    global_eff_l_max = float(np.max(eff_l_max))
 
     road_buffer = scn.delta_min  # 道路物理边界内缩半车宽与路侧安全裕度
-    center_road_min = eff_l_min + road_buffer + e.W / 2
-    center_road_max = eff_l_max - road_buffer - e.W / 2
-    l_min = np.full_like(s_arr, center_road_min)
-    l_max = np.full_like(s_arr, center_road_max)
+    center_road_min = global_eff_l_min + road_buffer + e.W / 2
+    center_road_max = global_eff_l_max - road_buffer - e.W / 2
+    l_min = eff_l_min + road_buffer + e.W / 2
+    l_max = eff_l_max - road_buffer - e.W / 2
 
     # —— 步骤1+2：对每个障碍物在其 s_i^- 处计算 SL 投影（τ-shifted 动态位置）+ 差异化 δ_i
     obs_proj = []
     for obs in scn.obstacles:
+        if not scn.dynamic_path_bounds and not obs.is_static:
+            continue
         s_minus_static = obs.s0 - obs.L / 2
         # 动态障碍物：用 τ(s_i^-) 时刻的预测位置；C1 关闭时退化为 t=0 快照
         if obs.is_static or not flags.tau_shift:
@@ -1169,8 +1233,8 @@ def _miku_path_bounds(
             if not left_v and not right_u:
                 continue
 
-            l_lo_ego = max(left_v, default=center_road_min)
-            l_hi_ego = min(right_u, default=center_road_max)
+            l_lo_ego = max(left_v, default=float(l_min[i]))
+            l_hi_ego = min(right_u, default=float(l_max[i]))
 
             # 取多组重叠时的并集收紧（保守）
             l_min[i] = max(l_min[i], l_lo_ego)
@@ -1198,7 +1262,14 @@ def path_bounds_decider(
     """
     flags = AblationFlags.from_mode(mode_or_flags)
     e = scn.ego
-    s_arr = np.arange(0.0, scn.s_max + 0.01, 0.5)
+    # Keep the external goal station as an exact path-QP knot.  A fixed
+    # ``arange(..., 0.5)`` grid can end short of a CommonRoad goal station;
+    # constraining the nearest knot then leaves the native writer to
+    # interpolate an unconstrained terminal lateral state.  The linspace grid
+    # preserves the <=0.5 m resolution while making the real goal endpoint a
+    # hard path constraint.
+    grid_count = max(int(np.ceil(float(scn.s_max) / 0.5)) + 1, 2)
+    s_arr = np.linspace(0.0, float(scn.s_max), grid_count)
     group_decisions = []
     if flags.all_off():
         l_min, l_max, _, _ = _baseline_path_bounds(scn, s_arr)
@@ -1235,14 +1306,48 @@ def path_bounds_decider(
         for i in range(blocked_idx, len(s_arr)):
             l_min[i] = l_max[i] = prev_mid
 
+    if scn.goal_l_min is not None and scn.goal_l_max is not None:
+        goal_index = int(np.argmin(np.abs(s_arr - scn.s_max)))
+        # CommonRoad's rectangle is a region, not a centre-point equality.
+        # Intersect the terminal corridor with its conservative Frenet
+        # projection and leave the centre as a soft objective downstream.
+        l_min[goal_index] = max(l_min[goal_index], float(scn.goal_l_min))
+        l_max[goal_index] = min(l_max[goal_index], float(scn.goal_l_max))
+    elif scn.goal_lateral is not None:
+        goal_index = int(np.argmin(np.abs(s_arr - scn.s_max)))
+        goal_lateral = float(scn.goal_lateral)
+        # A goal rectangle can be outside the currently selected homotopy
+        # corridor.  Keep the candidate infeasible in that case (so the
+        # caller records a real failure) rather than constructing an invalid
+        # QP workspace through crossed endpoint bounds.
+        if l_min[goal_index] - 1e-9 <= goal_lateral <= l_max[goal_index] + 1e-9:
+            l_min[goal_index] = l_max[goal_index] = goal_lateral
+
+    # Goal-region intersection can expose a genuine empty terminal corridor.
+    # Trim it in the same fail-closed manner as Apollo PathBoundsDecider so a
+    # malformed OSQP workspace is never constructed.
+    invalid = np.flatnonzero(l_min > l_max + 1.0e-9)
+    if len(invalid):
+        first_invalid = int(invalid[0])
+        blocked_idx = first_invalid if blocked_idx < 0 else min(blocked_idx, first_invalid)
+        previous = e.l0 if blocked_idx == 0 else 0.5 * (
+            l_min[blocked_idx - 1] + l_max[blocked_idx - 1]
+        )
+        l_min[blocked_idx:] = previous
+        l_max[blocked_idx:] = previous
+
     return s_arr, l_min, l_max, blocked_idx, group_decisions
 
 
 # ============================ ② Path QP（piecewise jerk path） ============================
 
 
-def path_optimizer(s_arr, l_min, l_max):
+def path_optimizer(s_arr, l_min, l_max, terminal_slope: float | None = None):
     N = len(s_arr)
+    if np.any(np.asarray(l_min) > np.asarray(l_max) + 1.0e-9):
+        # Preserve a deterministic fail-closed path for callers that invoke
+        # the QP directly with an empty corridor.
+        return np.minimum(np.maximum(np.zeros(N), l_max), l_min), 0.0
     ds = s_arr[1] - s_arr[0]
     w_l = PATH_W_L
     w_dl = PATH_W_DL
@@ -1264,8 +1369,29 @@ def path_optimizer(s_arr, l_min, l_max):
         for a in range(3):
             for b in range(3):
                 P[idx[a], idx[b]] += c * coef[a] * coef[b]
+    terminal_heading_segments = ()
+    if terminal_slope is not None and N >= 2:
+        # In a Frenet frame, dl/ds = tan(heading - reference_heading) to first
+        # order.  Penalising the last few finite-difference residuals makes
+        # the geometric plan honour the official terminal orientation through
+        # a gradual approach, rather than creating a single sharp endpoint
+        # kink before the KS tracking stage.
+        first_segment = max(0, N - 1 - PATH_GOAL_HEADING_WINDOW)
+        terminal_heading_segments = tuple(range(first_segment, N - 1))
+        c = 2.0 * PATH_W_GOAL_HEADING / ds**2
+        for segment in terminal_heading_segments:
+            left, right = segment, segment + 1
+            P[left, left] += c
+            P[right, right] += c
+            P[left, right] -= c
+            P[right, left] -= c
     P_sp = sp.csc_matrix(P)
     q = np.zeros(N)
+    if terminal_heading_segments:
+        linear = 2.0 * PATH_W_GOAL_HEADING * float(terminal_slope) / ds
+        for segment in terminal_heading_segments:
+            q[segment] += linear
+            q[segment + 1] -= linear
     A = sp.eye(N, format="csc")
     prob = osqp.OSQP()
     prob.setup(
@@ -1315,13 +1441,11 @@ def st_boundary_mapper(
             # path envelope over that interval.
             if obs.occupancy_t:
                 obs_s_lo, obs_s_hi, obs_l_lo, obs_l_hi = obs.occupancy_bounds_at(float(t))
-                longitudinal_half_extent = e.L / 2.0
             else:
                 obs_s_lo = os_ - obs.L / 2.0
                 obs_s_hi = os_ + obs.L / 2.0
                 obs_l_lo = ol_ - obs.W / 2.0
                 obs_l_hi = ol_ + obs.W / 2.0
-                longitudinal_half_extent = (obs.L + e.L) / 2.0
             envelope_lo = max(float(s_arr_path[0]), obs_s_lo - e.L / 2.0)
             envelope_hi = min(float(s_arr_path[-1]), obs_s_hi + e.L / 2.0)
             envelope_mask = (s_arr_path >= envelope_lo) & (s_arr_path <= envelope_hi)
@@ -1334,7 +1458,7 @@ def st_boundary_mapper(
             )
             ego_l_lo = min(envelope_values) - e.W / 2
             ego_l_hi = max(envelope_values) + e.W / 2
-            if robust_prediction and not obs.is_static:
+            if robust_prediction and not obs.is_static and not obs.occupancy_t:
                 lateral_uncertainty = obs.uncertainty_l0 + obs.uncertainty_vl * float(t)
                 longitudinal_uncertainty = (
                     obs.uncertainty_s0 + obs.uncertainty_vs * float(t)
@@ -1369,6 +1493,11 @@ def st_boundary_mapper(
                 "is_static": obs.is_static,
                 "vs": obs.vs,
                 "vl": obs.vl,
+                "rear_approaching": (
+                    not obs.is_static
+                    and obs.s0 + obs.L / 2.0 < e.s0 - 0.25
+                    and obs.vs > 0.0
+                ),
             }
         )
     return boundaries
@@ -1402,7 +1531,7 @@ def speed_dp(scn: Scenario, st_bounds):
     cost[0, start_index] = 0.0
 
     v_ref, w_v, w_a = e.v0, 1.0, 0.5
-    a_min, a_max, v_max = -4.0, 2.0, 13.0
+    a_min, a_max, v_max = scn.a_min, scn.a_max, scn.v_max
 
     for ti in range(nt - 1):
         for si in range(ns):
@@ -1508,7 +1637,7 @@ def build_st_bounds(
         conflict_s_hi = max(float(item[2]) for item in b["intervals"])
         distance = max(conflict_s_hi - scn.ego.s0, 0.0)
         earliest = (
-            (-scn.ego.v0 + np.sqrt(scn.ego.v0**2 + 4.0 * distance)) / 2.0
+            (-scn.ego.v0 + np.sqrt(scn.ego.v0**2 + 2.0 * scn.a_max * distance)) / scn.a_max
             if distance > 0.0
             else 0.0
         )
@@ -1541,7 +1670,7 @@ def build_st_bounds(
         conflict_points,
         start_station=scn.ego.s0,
         start_time=0.0,
-        max_speed=13.0,
+        max_speed=scn.v_max,
         beam_width=temporal_beam_width,
         preferred_window_labels={
             metadata["graph_name"]: preferred_homotopy[b["name"]]
@@ -1568,6 +1697,25 @@ def build_st_bounds(
     for boundary_index, b in enumerate(st_bounds):
         if b["is_static"] or not b["intervals"]:
             continue
+        if b.get("rear_approaching"):
+            # A vehicle initially behind the ego and moving forward has a
+            # pass-before temporal homotopy.  Encoding its rear edge as an
+            # upper bound would force an impossible stop when the front edge
+            # reaches the ego station; the safe alternative is to require the
+            # ego to be ahead of the obstacle's front edge at the conflict
+            # knots, with the same continuous certificate applied later.
+            for t, _s_lo, s_hi in b["intervals"]:
+                ti = int(round(t / dt))
+                if 0 <= ti < nt:
+                    s_lb[ti] = max(s_lb[ti], min(float(s_hi), scn.s_max))
+            decision_log.append(
+                {
+                    "name": b["name"],
+                    "status": "pass_before_rear_approaching",
+                    "interval_count": len(b["intervals"]),
+                }
+            )
+            continue
         # A single arrival window is meaningful for a localized crossing region.
         # Longitudinally moving obstacles instead retain pointwise ST following
         # bounds; collapsing their swept tube to one station would over-constrain.
@@ -1578,7 +1726,12 @@ def build_st_bounds(
             for t, s_lo, _s_hi in b["intervals"]:
                 ti = int(round(t / dt))
                 if 0 <= ti < nt:
-                    s_ub[ti] = min(s_ub[ti], s_lo)
+                    # An occupancy interval can straddle the current ego
+                    # station (e.g. a vehicle starting behind the route origin).
+                    # Never encode that as an impossible negative station; the
+                    # legal response is to stop at the current station and let
+                    # the downstream temporal plan decide whether/when to pass.
+                    s_ub[ti] = min(s_ub[ti], max(float(s_lo), scn.ego.s0))
             continue
 
         metadata = crossing_metadata[boundary_index]
@@ -1637,7 +1790,7 @@ def build_st_bounds(
 # ============================ ⑦ PiecewiseJerkSpeedOptimizer (QP) ============================
 
 
-def speed_qp(scn: Scenario, s_ub, s_lb, ts):
+def speed_qp(scn: Scenario, s_ub, s_lb, ts, goal_index_override: int | None = None):
     e = scn.ego
     K = len(ts)
     dt = ts[1] - ts[0]
@@ -1649,7 +1802,7 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
         SPEED_W_JERK,
         SPEED_W_TERMINAL,
     )
-    v_max, a_min, a_max = 13.0, -4.0, 2.0
+    v_max, a_min, a_max = scn.v_max, scn.a_min, scn.a_max
 
     P = np.zeros((n, n))
     q = np.zeros(n)
@@ -1668,7 +1821,11 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     # long post-yield recovery.  Apollo's speed optimizer also carries progress
     # guidance from the coarse search.  A terminal reference preserves that
     # role without inheriting the discretisation error of this compact DP grid.
-    terminal_target = min(float(s_ub[-1]), scn.s_max - 1.0)
+    if scn.goal_s_min is not None and scn.goal_s_max is not None:
+        goal_centre = 0.5 * (float(scn.goal_s_min) + float(scn.goal_s_max))
+        terminal_target = min(float(s_ub[-1]), max(float(s_lb[-1]), goal_centre))
+    else:
+        terminal_target = min(float(s_ub[-1]), scn.s_max - 1.0)
     P[3 * (K - 1), 3 * (K - 1)] += 2 * w_terminal
     q[3 * (K - 1)] += -2 * w_terminal * terminal_target
 
@@ -1699,15 +1856,42 @@ def speed_qp(scn: Scenario, s_ub, s_lb, ts):
     ub = np.empty(n)
     for j in range(K):
         lb[3 * j] = s_lb[j]
-        ub[3 * j] = max(s_ub[j], s_lb[j] + 1e-6)
+        ub[3 * j] = s_ub[j]
         lb[3 * j + 1] = 0
         ub[3 * j + 1] = v_max
         lb[3 * j + 2] = a_min
         ub[3 * j + 2] = a_max
 
+    # A locally varying lanelet corridor can legitimately collapse at a
+    # knot after ST/goal constraints are intersected.  Reject that candidate
+    # before handing malformed bounds to OSQP; callers retain the failure
+    # stage instead of converting it into a runner exception.
+    if np.any(lb[0::3] > ub[0::3] + 1.0e-8) or np.any(
+        lb[3 * np.arange(K) + 1] > ub[3 * np.arange(K) + 1] + 1.0e-8
+    ):
+        return None, None, None, 0.0
+
+    # CommonRoad goal regions are time-indexed state constraints, not merely
+    # a horizon truncation.  Compile the latest admissible goal instant into
+    # the same speed-QP boundary used by Apollo's terminal progress target.
+    if scn.goal_time_end is not None:
+        goal_index = (
+            int(goal_index_override)
+            if goal_index_override is not None
+            else int(np.floor(float(scn.goal_time_end) / dt + 1.0e-9))
+        )
+        goal_index = min(max(goal_index, 0), K - 1)
+        lb[3 * goal_index] = max(lb[3 * goal_index], float(s_lb[goal_index]))
+        if scn.goal_v_min is not None:
+            lb[3 * goal_index + 1] = max(lb[3 * goal_index + 1], float(scn.goal_v_min))
+        if scn.goal_v_max is not None:
+            ub[3 * goal_index + 1] = min(ub[3 * goal_index + 1], float(scn.goal_v_max))
+
     A = sp.vstack([A_eq, sp.eye(n, format="csc")], format="csc")
     constraint_lower = np.concatenate([b_eq, lb])
     constraint_upper = np.concatenate([b_eq, ub])
+    if np.any(constraint_lower > constraint_upper + 1.0e-8):
+        return None, None, None, 0.0
 
     prob = osqp.OSQP()
     prob.setup(
@@ -1755,7 +1939,22 @@ def run_pipeline(
         split_overrides=split_overrides,
         spatial_top_k=spatial_top_k,
     )
-    l_path, path_qp_ms = path_optimizer(s_arr, l_min, l_max)
+    # The local Frenet slope approximation is valid for a small heading
+    # mismatch.  Large-angle CommonRoad goals require a true curvilinear
+    # vehicle maneuver; forcing tan(delta) into a path QP would create an
+    # artificial lateral excursion and can violate lanelet boundaries.
+    terminal_slope = (
+        float(np.tan(scn.goal_heading_error))
+        if scn.goal_heading_error is not None
+        and abs(float(scn.goal_heading_error)) <= 0.5
+        else None
+    )
+    l_path, path_qp_ms = path_optimizer(
+        s_arr,
+        l_min,
+        l_max,
+        terminal_slope=terminal_slope,
+    )
     st_bounds = st_boundary_mapper(
         scn,
         s_arr,
@@ -1786,7 +1985,19 @@ def run_pipeline(
 
     # 公平比较的统一终点：让轨迹在 s_target 处自然收敛并停车，
     # 避免全程匀速穿透终点后再用 t_max 尾段掩盖减速行为。
-    s_target = max(scn.s_max - 1.0, scn.ego.s0)
+    external_goal_interval = (
+        scn.goal_s_min is not None
+        and scn.goal_s_max is not None
+        and scn.goal_l_min is not None
+        and scn.goal_l_max is not None
+    )
+    s_target = max(
+        scn.s_max
+        if external_goal_interval
+        else (scn.s_max if scn.goal_lateral is not None else scn.s_max - 1.0),
+        scn.ego.s0,
+    )
+    safe_corridor_terminal_upper = float(s_ub[-1])
     s_ub = np.minimum(s_ub, s_target)
 
     # Apollo TrimPathBounds：blocked 时强制 ego 在阻塞 s 之前停下
@@ -1795,15 +2006,78 @@ def run_pipeline(
         blocked_s = max(s_arr[blocked_idx] - scn.ego.L / 2, 0.0)
         s_ub = np.minimum(s_ub, blocked_s)
 
+    goal_lower = (
+        max(float(scn.goal_s_min), scn.ego.s0)
+        if external_goal_interval
+        else s_target
+    )
+    terminal_goal_infeasible = bool(
+        scn.goal_time_end is not None
+        and safe_corridor_terminal_upper < goal_lower - 1.0e-6
+    )
+
     # Encode the planning goal as a terminal boundary condition whenever the
     # constructed corridor reaches it. This avoids reporting a false failure
     # merely because a soft objective converges a few centimetres short.
     terminal_lower_before_goal = float(s_lb[-1])
-    s_lb[-1] = min(s_target, s_ub[-1])
-
-    s_qp, v_qp, a_qp, speed_qp_ms = speed_qp(scn, s_ub, s_lb, ts)
+    selected_goal_index: int | None = None
+    if scn.goal_time_end is not None and external_goal_interval:
+        # CommonRoad accepts the first state entering the goal region at any
+        # admissible time.  Enumerate the finite time knots instead of
+        # over-constraining the final horizon knot to the latest instant.
+        dt = float(ts[1] - ts[0]) if len(ts) > 1 else 0.1
+        first_goal_index = max(
+            0, int(np.ceil(float(scn.goal_time_start or 0.0) / dt - 1.0e-9))
+        )
+        last_goal_index = min(
+            len(ts) - 1,
+            int(np.floor(float(scn.goal_time_end) / dt + 1.0e-9)),
+        )
+        candidates = []
+        for goal_index in range(first_goal_index, last_goal_index + 1):
+            candidate_lb = np.array(s_lb, dtype=float, copy=True)
+            candidate_ub = np.array(s_ub, dtype=float, copy=True)
+            candidate_lb[goal_index] = max(
+                candidate_lb[goal_index], float(scn.goal_s_min)
+            )
+            candidate_ub[goal_index] = min(
+                candidate_ub[goal_index], float(scn.goal_s_max)
+            )
+            if candidate_lb[goal_index] > candidate_ub[goal_index] + 1.0e-7:
+                continue
+            candidate = speed_qp(
+                scn,
+                candidate_ub,
+                candidate_lb,
+                ts,
+                goal_index_override=goal_index,
+            )
+            candidates.append((goal_index, candidate_lb, candidate_ub, candidate))
+            if candidate[0] is not None:
+                selected_goal_index, s_lb, s_ub, solved = candidates[-1]
+                s_qp, v_qp, a_qp, speed_qp_ms = solved
+                terminal_goal_infeasible = False
+                break
+        if selected_goal_index is None:
+            s_qp = v_qp = a_qp = None
+            speed_qp_ms = sum(float(item[3][3]) for item in candidates)
+            terminal_goal_infeasible = True
+    elif scn.goal_time_end is not None:
+        # External goal states are hard terminal progress constraints.  Do not
+        # replace an unreachable goal by the last safe partial station; that
+        # would produce a collision-free but evaluator-invalid trajectory and
+        # hide the actual wait/pass infeasibility from the benchmark.
+        s_lb[-1] = goal_lower
+        s_qp, v_qp, a_qp, speed_qp_ms = speed_qp(scn, s_ub, s_lb, ts)
+    else:
+        s_lb[-1] = min(s_target, s_ub[-1])
+        s_qp, v_qp, a_qp, speed_qp_ms = speed_qp(scn, s_ub, s_lb, ts)
     terminal_goal_relaxed = False
-    if s_qp is None and s_lb[-1] > terminal_lower_before_goal + 1e-9:
+    if (
+        s_qp is None
+        and s_lb[-1] > terminal_lower_before_goal + 1e-9
+        and scn.goal_time_end is None
+    ):
         # A hard goal must never turn a safe partial plan into solver failure.
         # Retry with the original corridor bound and expose the relaxation in
         # the result so experiments can count it explicitly.
@@ -1811,6 +2085,33 @@ def run_pipeline(
         s_qp, v_qp, a_qp, retry_ms = speed_qp(scn, s_ub, s_lb, ts)
         speed_qp_ms += retry_ms
         terminal_goal_relaxed = True
+
+    # A temporal homotopy graph may contain several legal wait/pass plans.
+    # If the selected rank cannot reach the goal under its certified corridor,
+    # try the next finite candidate before declaring planner failure.  This is
+    # a bounded algorithmic fallback, not a relaxed collision check.
+    if (
+        use_temporal_homotopy
+        and (s_qp is None or terminal_goal_infeasible)
+        and temporal_plan_rank < max(0, (temporal_beam_width or 1) - 1)
+    ):
+        alternate = run_pipeline(
+            mode_or_flags,
+            scn,
+            tau_fn=tau_fn,
+            safe_window_mode=safe_window_mode,
+            candidate_rank=candidate_rank,
+            split_overrides=split_overrides,
+            preferred_homotopy=preferred_homotopy,
+            temporal_plan_rank=temporal_plan_rank + 1,
+            spatial_top_k=spatial_top_k,
+            temporal_beam_width=temporal_beam_width,
+        )
+        if alternate.get("s_qp") is not None and not alternate.get(
+            "terminal_goal_infeasible", False
+        ):
+            alternate["temporal_plan_fallback_from_rank"] = temporal_plan_rank
+            return alternate
 
     # 横向加速度 a_y(t) = v(t)^2 · κ(s(t))
     # 直道前提：κ_ref = 0 → κ(s) ≈ l''(s)，由 l_path 二阶中心差分得到
@@ -1849,6 +2150,15 @@ def run_pipeline(
         corridor=corridor,
         time_window_decisions=time_window_decisions,
         terminal_goal_relaxed=terminal_goal_relaxed,
+        terminal_goal_infeasible=terminal_goal_infeasible,
+        selected_goal_index=selected_goal_index,
+        selected_goal_time=(
+            float(ts[selected_goal_index])
+            if selected_goal_index is not None
+            else None
+        ),
+        safe_corridor_terminal_upper=safe_corridor_terminal_upper,
+        terminal_slope_target=terminal_slope,
         candidate_rank=candidate_rank,
         split_overrides=split_overrides,
         temporal_plan_rank=temporal_plan_rank,
@@ -1970,7 +2280,7 @@ def validate_pipeline_candidate_continuous_safety(
     maximum_speed = (
         float(np.max(np.abs(candidate_speed)))
         if candidate_speed is not None
-        else 13.0
+        else scn.v_max
     )
     if np.any(station_steps <= 0.0):
         path_lateral_speed_bound = 0.0
@@ -2049,7 +2359,42 @@ def validate_pipeline_candidate_continuous_safety(
                         )
                     )
                 samples = adjusted
-            validator = validate_candidate_constant_acceleration_safety
+                # A CommonRoad occupancy prediction is valid only on its
+                # published time interval.  ``occupancy_bounds_at`` clamps
+                # outside that interval for interpolation convenience, but
+                # treating the last rectangle as a persistent obstacle would
+                # create a false collision after the source trajectory ends.
+                occupancy_start = float(obstacle.occupancy_t[0])
+                occupancy_end = float(obstacle.occupancy_t[-1])
+                samples = [
+                    sample
+                    for sample in samples
+                    if occupancy_start - 1.0e-9 <= sample.time <= occupancy_end + 1.0e-9
+                ]
+                # The occupancy envelope is piecewise-linear in time and its
+                # knots need not coincide with the ego QP knots.  Use the
+                # Lipschitz certificate for this external-interface branch;
+                # forcing the envelope into the ego-only constant-acceleration
+                # contract would reject otherwise well-formed candidates due
+                # to a missing/incorrect relative-kinematics annotation.
+                validator = validate_candidate_continuous_safety
+                occupancy_centers = np.column_stack(
+                    (
+                        (np.asarray(obstacle.occupancy_s_min) + np.asarray(obstacle.occupancy_s_max)) / 2.0,
+                        (np.asarray(obstacle.occupancy_l_min) + np.asarray(obstacle.occupancy_l_max)) / 2.0,
+                    )
+                )
+                occupancy_dt = np.diff(np.asarray(obstacle.occupancy_t, dtype=float))
+                occupancy_speed_s = float(
+                    np.max(np.abs(np.diff(occupancy_centers[:, 0]) / occupancy_dt))
+                )
+                occupancy_speed_l = float(
+                    np.max(np.abs(np.diff(occupancy_centers[:, 1]) / occupancy_dt))
+                )
+            else:
+                occupancy_speed_s = abs(float(obstacle.vs))
+                occupancy_speed_l = abs(float(obstacle.vl))
+                validator = validate_candidate_constant_acceleration_safety
         else:
             samples = []
             for index, time_value in enumerate(ts):
@@ -2072,11 +2417,21 @@ def validate_pipeline_candidate_continuous_safety(
                         sample_half_width,
                     )
                 )
+            if obstacle.occupancy_t:
+                occupancy_start = float(obstacle.occupancy_t[0])
+                occupancy_end = float(obstacle.occupancy_t[-1])
+                samples = [
+                    sample
+                    for sample in samples
+                    if occupancy_start - 1.0e-9 <= sample.time <= occupancy_end + 1.0e-9
+                ]
             validator = validate_candidate_continuous_safety
+            occupancy_speed_s = abs(float(obstacle.vs))
+            occupancy_speed_l = abs(float(obstacle.vl))
         certificates[name] = validator(
             samples,
-            relative_longitudinal_speed_bound=maximum_speed + abs(obstacle.vs),
-            relative_lateral_speed_bound=path_lateral_speed_bound + abs(obstacle.vl),
+            relative_longitudinal_speed_bound=maximum_speed + occupancy_speed_s,
+            relative_lateral_speed_bound=path_lateral_speed_bound + occupancy_speed_l,
         )
     return certificates
 

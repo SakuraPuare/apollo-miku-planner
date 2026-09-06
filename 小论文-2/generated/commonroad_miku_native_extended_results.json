@@ -1,0 +1,2532 @@
+{
+  "benchmark": "CommonRoad NGSIM Lankershim",
+  "source": "https://gitlab.lrz.de/tum-cps/commonroad-scenarios/-/raw/2020a_scenarios/scenarios/recorded/NGSIM/Lankershim/",
+  "runner": "run_commonroad_miku_native.py",
+  "parameters": {
+    "dt": 0.1,
+    "horizon_steps": 100
+  },
+  "packages": {
+    "commonroad-io": "2024.3",
+    "commonroad-drivability-checker": "2025.4.0",
+    "commonroad-route-planner": "2025.1.0"
+  },
+  "scenario_count": 16,
+  "method_count": 2,
+  "rows": [
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "planning_problem_id": 1215,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 3,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 24,
+      "projected_obstacles": 24,
+      "planner_relevant_obstacles": 18,
+      "route_irrelevant_obstacles": 6,
+      "route_lateral_bounds_m": [
+        -46.17986664734872,
+        63.1231820203357
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156484730403605,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 914,
+      "occupancy_obstacles": 24,
+      "occupancy_samples": 938,
+      "maximum_projection_residual_m": 28.466242022464847,
+      "planner_success": true,
+      "planner_runtime_ms": 338.762769009918,
+      "goal_time_window_s": [
+        3.0,
+        4.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.9825,
+        11.9825
+      ],
+      "goal_station_m": 37.84225200848894,
+      "goal_station_interval_m": [
+        36.808215533499336,
+        38.87628897984836
+      ],
+      "goal_lateral_interval_m": [
+        -0.9934604688772081,
+        0.6196196680668664
+      ],
+      "goal_heading_error_rad": -0.01806159176849542,
+      "planner_terminal_slope_target": -0.018063556048906405,
+      "selected_goal_time_s": 3.9000000000000004,
+      "selected_goal_knot": 39,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 92,
+        "st_upper_min_m": 19.65679194389201,
+        "ego_station_m": 7.922000404626854,
+        "projected_obstacle_count": 24
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1215": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 37.59214530365885,
+      "terminal_speed_mps": 7.850901355320145,
+      "native_solution_written": true,
+      "wall_time_ms": 3016.496291034855
+    },
+    {
+      "scenario": "USA_Lanker-1_1_T-1",
+      "benchmark_id": "USA_Lanker-1_1_T-1",
+      "planning_problem_id": 1215,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 3,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 24,
+      "projected_obstacles": 24,
+      "planner_relevant_obstacles": 18,
+      "route_irrelevant_obstacles": 6,
+      "route_lateral_bounds_m": [
+        -46.17986664734872,
+        63.1231820203357
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156484730403605,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 914,
+      "occupancy_obstacles": 24,
+      "occupancy_samples": 938,
+      "maximum_projection_residual_m": 28.466242022464847,
+      "planner_success": true,
+      "planner_runtime_ms": 386.0479280119762,
+      "goal_time_window_s": [
+        3.0,
+        4.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.9825,
+        11.9825
+      ],
+      "goal_station_m": 37.84225200848894,
+      "goal_station_interval_m": [
+        36.808215533499336,
+        38.87628897984836
+      ],
+      "goal_lateral_interval_m": [
+        -0.9934604688772081,
+        0.6196196680668664
+      ],
+      "goal_heading_error_rad": -0.01806159176849542,
+      "planner_terminal_slope_target": -0.018063556048906405,
+      "selected_goal_time_s": 3.9000000000000004,
+      "selected_goal_knot": 39,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 92,
+        "st_upper_min_m": 19.65679194389201,
+        "ego_station_m": 7.922000404626854,
+        "projected_obstacle_count": 24
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1215": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 37.59214530365885,
+      "terminal_speed_mps": 7.850901355320145,
+      "native_solution_written": true,
+      "wall_time_ms": 2699.433407979086
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "planning_problem_id": 11425,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 42,
+      "projected_obstacles": 42,
+      "planner_relevant_obstacles": 21,
+      "route_irrelevant_obstacles": 21,
+      "route_lateral_bounds_m": [
+        -67.13678252551603,
+        28.449074135326835
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.347786845111857,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2111,
+      "occupancy_obstacles": 42,
+      "occupancy_samples": 2153,
+      "maximum_projection_residual_m": 48.93207979618805,
+      "planner_success": true,
+      "planner_runtime_ms": 635.3992120129988,
+      "goal_time_window_s": [
+        4.4,
+        5.4
+      ],
+      "goal_velocity_interval_mps": [
+        5.9794,
+        11.9794
+      ],
+      "goal_station_m": 44.52088352819918,
+      "goal_station_interval_m": [
+        43.241568522359465,
+        45.798230358409775
+      ],
+      "goal_lateral_interval_m": [
+        -1.10395449723029,
+        0.8630042934155828
+      ],
+      "goal_heading_error_rad": -0.01422433724548594,
+      "planner_terminal_slope_target": -0.014225296668245697,
+      "selected_goal_time_s": 5.2,
+      "selected_goal_knot": 52,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 116,
+        "st_upper_min_m": 38.18506144006104,
+        "ego_station_m": 6.63087812318353,
+        "projected_obstacle_count": 42
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "11425": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 44.52088352819917,
+      "terminal_speed_mps": 6.287355943661885,
+      "native_solution_written": true,
+      "wall_time_ms": 6180.919522012118
+    },
+    {
+      "scenario": "USA_Lanker-1_2_T-1",
+      "benchmark_id": "USA_Lanker-1_2_T-1",
+      "planning_problem_id": 11425,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 42,
+      "projected_obstacles": 42,
+      "planner_relevant_obstacles": 21,
+      "route_irrelevant_obstacles": 21,
+      "route_lateral_bounds_m": [
+        -67.13678252551603,
+        28.449074135326835
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.347786845111857,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2111,
+      "occupancy_obstacles": 42,
+      "occupancy_samples": 2153,
+      "maximum_projection_residual_m": 48.93207979618805,
+      "planner_success": true,
+      "planner_runtime_ms": 712.6178789767437,
+      "goal_time_window_s": [
+        4.4,
+        5.4
+      ],
+      "goal_velocity_interval_mps": [
+        5.9794,
+        11.9794
+      ],
+      "goal_station_m": 44.52088352819918,
+      "goal_station_interval_m": [
+        43.241568522359465,
+        45.798230358409775
+      ],
+      "goal_lateral_interval_m": [
+        -1.10395449723029,
+        0.8630042934155828
+      ],
+      "goal_heading_error_rad": -0.01422433724548594,
+      "planner_terminal_slope_target": -0.014225296668245697,
+      "selected_goal_time_s": 5.2,
+      "selected_goal_knot": 52,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 116,
+        "st_upper_min_m": 38.18506144006104,
+        "ego_station_m": 6.63087812318353,
+        "projected_obstacle_count": 42
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "11425": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 44.52088352819917,
+      "terminal_speed_mps": 6.287355943661885,
+      "native_solution_written": true,
+      "wall_time_ms": 6204.472017008811
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "planning_problem_id": 1590,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 3,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 36,
+      "projected_obstacles": 36,
+      "planner_relevant_obstacles": 20,
+      "route_irrelevant_obstacles": 16,
+      "route_lateral_bounds_m": [
+        -47.64099174992383,
+        61.53266869523022
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.473743449224331,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 1321,
+      "occupancy_obstacles": 36,
+      "occupancy_samples": 1357,
+      "maximum_projection_residual_m": 24.632143683033075,
+      "planner_success": false,
+      "planner_runtime_ms": 1251.193890988361,
+      "goal_time_window_s": [
+        3.0,
+        4.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.51,
+        11.51
+      ],
+      "goal_station_m": 40.17571965559845,
+      "goal_station_interval_m": [
+        39.20610027092345,
+        41.145339040273434
+      ],
+      "goal_lateral_interval_m": [
+        -0.9725894490275222,
+        0.5240104530124643
+      ],
+      "goal_heading_error_rad": 0.03426983757282409,
+      "planner_terminal_slope_target": 0.03428325962585527,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 2,
+        "st_interval_count": 97,
+        "st_upper_min_m": 40.17571965559845,
+        "ego_station_m": 6.498647939555782,
+        "projected_obstacle_count": 36
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1752.7627379749902
+    },
+    {
+      "scenario": "USA_Lanker-1_3_T-1",
+      "benchmark_id": "USA_Lanker-1_3_T-1",
+      "planning_problem_id": 1590,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 3,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 36,
+      "projected_obstacles": 36,
+      "planner_relevant_obstacles": 20,
+      "route_irrelevant_obstacles": 16,
+      "route_lateral_bounds_m": [
+        -47.64099174992383,
+        61.53266869523022
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.473743449224331,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 1321,
+      "occupancy_obstacles": 36,
+      "occupancy_samples": 1357,
+      "maximum_projection_residual_m": 24.632143683033075,
+      "planner_success": false,
+      "planner_runtime_ms": 1248.571531032212,
+      "goal_time_window_s": [
+        3.0,
+        4.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.51,
+        11.51
+      ],
+      "goal_station_m": 40.17571965559845,
+      "goal_station_interval_m": [
+        39.20610027092345,
+        41.145339040273434
+      ],
+      "goal_lateral_interval_m": [
+        -0.9725894490275222,
+        0.5240104530124643
+      ],
+      "goal_heading_error_rad": 0.03426983757282409,
+      "planner_terminal_slope_target": 0.03428325962585527,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 2,
+        "st_interval_count": 97,
+        "st_upper_min_m": 40.17571965559845,
+        "ego_station_m": 6.498647939555782,
+        "projected_obstacle_count": 36
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1744.893663970288
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "planning_problem_id": 1737,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 34,
+      "projected_obstacles": 34,
+      "planner_relevant_obstacles": 7,
+      "route_irrelevant_obstacles": 27,
+      "route_lateral_bounds_m": [
+        -15.802032349568075,
+        65.87665206521565
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 24.447073184237926,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 506,
+      "occupancy_obstacles": 34,
+      "occupancy_samples": 540,
+      "maximum_projection_residual_m": 25.072831000470433,
+      "planner_success": true,
+      "planner_runtime_ms": 3.5089540178887546,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        0.83134,
+        6.8313
+      ],
+      "goal_station_m": 9.237306142680094,
+      "goal_station_interval_m": [
+        8.213175061717129,
+        10.261437173055377
+      ],
+      "goal_lateral_interval_m": [
+        -0.05026078906563724,
+        1.6053972693800906
+      ],
+      "goal_heading_error_rad": 1.294305253224445,
+      "planner_terminal_slope_target": null,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 9.237306142680094,
+        "ego_station_m": 6.641738432063334,
+        "projected_obstacle_count": 34
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1737": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1737.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 9.184664716996437,
+      "terminal_speed_mps": 2.718750003594512,
+      "native_solution_written": true,
+      "wall_time_ms": 1928.0992259737104
+    },
+    {
+      "scenario": "USA_Lanker-1_4_T-1",
+      "benchmark_id": "USA_Lanker-1_4_T-1",
+      "planning_problem_id": 1737,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 34,
+      "projected_obstacles": 34,
+      "planner_relevant_obstacles": 7,
+      "route_irrelevant_obstacles": 27,
+      "route_lateral_bounds_m": [
+        -15.802032349568075,
+        65.87665206521565
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 24.447073184237926,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 506,
+      "occupancy_obstacles": 34,
+      "occupancy_samples": 540,
+      "maximum_projection_residual_m": 25.072831000470433,
+      "planner_success": true,
+      "planner_runtime_ms": 7.353493943810463,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        0.83134,
+        6.8313
+      ],
+      "goal_station_m": 9.237306142680094,
+      "goal_station_interval_m": [
+        8.213175061717129,
+        10.261437173055377
+      ],
+      "goal_lateral_interval_m": [
+        -0.05026078906563724,
+        1.6053972693800906
+      ],
+      "goal_heading_error_rad": 1.294305253224445,
+      "planner_terminal_slope_target": null,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 9.237306142680094,
+        "ego_station_m": 6.641738432063334,
+        "projected_obstacle_count": 34
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1737": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1737.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 9.184664716996437,
+      "terminal_speed_mps": 2.718750003594512,
+      "native_solution_written": true,
+      "wall_time_ms": 1939.3214450101368
+    },
+    {
+      "scenario": "USA_Lanker-1_5_T-1",
+      "benchmark_id": "USA_Lanker-1_5_T-1",
+      "planning_problem_id": 1771,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 35,
+      "projected_obstacles": 35,
+      "planner_relevant_obstacles": 5,
+      "route_irrelevant_obstacles": 30,
+      "route_lateral_bounds_m": [
+        -3.668226359131544,
+        29.98902674206687
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 4.6841837851980594,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 350,
+      "occupancy_obstacles": 35,
+      "occupancy_samples": 385,
+      "maximum_projection_residual_m": 80.66321680288003,
+      "planner_success": true,
+      "planner_runtime_ms": 1.4477000222541392,
+      "goal_time_window_s": [
+        0.6000000000000001,
+        1.0
+      ],
+      "goal_velocity_interval_mps": [
+        3.5867,
+        9.5867
+      ],
+      "goal_station_m": 6.348160275656268,
+      "goal_station_interval_m": [
+        3.71184439893731,
+        9.335454986203768
+      ],
+      "goal_lateral_interval_m": [
+        -2.5709915670830252,
+        0.5640910234274976
+      ],
+      "goal_heading_error_rad": -0.2949689488949865,
+      "planner_terminal_slope_target": -0.30383230196299355,
+      "selected_goal_time_s": 0.6000000000000001,
+      "selected_goal_knot": 6,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 6.348160275656268,
+        "ego_station_m": 2.6094911448593106,
+        "projected_obstacle_count": 35
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1771": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1771.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 6.306722669805927,
+      "terminal_speed_mps": 3.697283227306734,
+      "native_solution_written": true,
+      "wall_time_ms": 1071.236581017729
+    },
+    {
+      "scenario": "USA_Lanker-1_5_T-1",
+      "benchmark_id": "USA_Lanker-1_5_T-1",
+      "planning_problem_id": 1771,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 35,
+      "projected_obstacles": 35,
+      "planner_relevant_obstacles": 5,
+      "route_irrelevant_obstacles": 30,
+      "route_lateral_bounds_m": [
+        -3.668226359131544,
+        29.98902674206687
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 4.6841837851980594,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 350,
+      "occupancy_obstacles": 35,
+      "occupancy_samples": 385,
+      "maximum_projection_residual_m": 80.66321680288003,
+      "planner_success": true,
+      "planner_runtime_ms": 3.707438998389989,
+      "goal_time_window_s": [
+        0.6000000000000001,
+        1.0
+      ],
+      "goal_velocity_interval_mps": [
+        3.5867,
+        9.5867
+      ],
+      "goal_station_m": 6.348160275656268,
+      "goal_station_interval_m": [
+        3.71184439893731,
+        9.335454986203768
+      ],
+      "goal_lateral_interval_m": [
+        -2.5709915670830252,
+        0.5640910234274976
+      ],
+      "goal_heading_error_rad": -0.2949689488949865,
+      "planner_terminal_slope_target": -0.30383230196299355,
+      "selected_goal_time_s": 0.6000000000000001,
+      "selected_goal_knot": 6,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 6.348160275656268,
+        "ego_station_m": 2.6094911448593106,
+        "projected_obstacle_count": 35
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1771": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1771.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 6.306722669805927,
+      "terminal_speed_mps": 3.697283227306734,
+      "native_solution_written": true,
+      "wall_time_ms": 1060.5597089743242
+    },
+    {
+      "scenario": "USA_Lanker-2_1_T-1",
+      "benchmark_id": "USA_Lanker-2_1_T-1",
+      "planning_problem_id": 2125,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 5,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 43,
+      "projected_obstacles": 43,
+      "planner_relevant_obstacles": 36,
+      "route_irrelevant_obstacles": 7,
+      "route_lateral_bounds_m": [
+        -48.274443213554434,
+        56.04484520249926
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156449113846946,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2928,
+      "occupancy_obstacles": 43,
+      "occupancy_samples": 2971,
+      "maximum_projection_residual_m": 28.82269873742567,
+      "planner_success": true,
+      "planner_runtime_ms": 154.87530402606353,
+      "goal_time_window_s": [
+        8.6,
+        9.0
+      ],
+      "goal_velocity_interval_mps": [
+        9.0183,
+        15.0183
+      ],
+      "goal_station_m": 112.6699220457643,
+      "goal_station_interval_m": [
+        111.71532701871406,
+        113.6245170728145
+      ],
+      "goal_lateral_interval_m": [
+        -0.45218207460236104,
+        1.0242358519814991
+      ],
+      "goal_heading_error_rad": -0.15645719224829358,
+      "planner_terminal_slope_target": -0.1577464483963674,
+      "selected_goal_time_s": 8.9,
+      "selected_goal_knot": 89,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 4,
+        "st_interval_count": 253,
+        "st_upper_min_m": 38.5473442043081,
+        "ego_station_m": 23.30148079548336,
+        "projected_obstacle_count": 43
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "2125": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 2125.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 112.66992204576428,
+      "terminal_speed_mps": 9.521033599929268,
+      "native_solution_written": true,
+      "wall_time_ms": 2068.9155680011027
+    },
+    {
+      "scenario": "USA_Lanker-2_1_T-1",
+      "benchmark_id": "USA_Lanker-2_1_T-1",
+      "planning_problem_id": 2125,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 5,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 43,
+      "projected_obstacles": 43,
+      "planner_relevant_obstacles": 36,
+      "route_irrelevant_obstacles": 7,
+      "route_lateral_bounds_m": [
+        -48.274443213554434,
+        56.04484520249926
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156449113846946,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2928,
+      "occupancy_obstacles": 43,
+      "occupancy_samples": 2971,
+      "maximum_projection_residual_m": 28.82269873742567,
+      "planner_success": true,
+      "planner_runtime_ms": 506.92646199604496,
+      "goal_time_window_s": [
+        8.6,
+        9.0
+      ],
+      "goal_velocity_interval_mps": [
+        9.0183,
+        15.0183
+      ],
+      "goal_station_m": 112.6699220457643,
+      "goal_station_interval_m": [
+        111.71532701871406,
+        113.6245170728145
+      ],
+      "goal_lateral_interval_m": [
+        -0.45218207460236104,
+        1.0242358519814991
+      ],
+      "goal_heading_error_rad": -0.15645719224829358,
+      "planner_terminal_slope_target": -0.1577464483963674,
+      "selected_goal_time_s": 8.9,
+      "selected_goal_knot": 89,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 4,
+        "st_interval_count": 253,
+        "st_upper_min_m": 38.5473442043081,
+        "ego_station_m": 23.30148079548336,
+        "projected_obstacle_count": 43
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "2125": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 2125.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 112.66992204576428,
+      "terminal_speed_mps": 9.521033599929268,
+      "native_solution_written": true,
+      "wall_time_ms": 2425.8626419468783
+    },
+    {
+      "scenario": "USA_Lanker-1_6_T-1",
+      "benchmark_id": "USA_Lanker-1_6_T-1",
+      "planning_problem_id": 1664,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 34,
+      "projected_obstacles": 34,
+      "planner_relevant_obstacles": 18,
+      "route_irrelevant_obstacles": 16,
+      "route_lateral_bounds_m": [
+        -67.03651565573695,
+        16.179033321985216
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.337226718716783,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 331,
+      "occupancy_obstacles": 34,
+      "occupancy_samples": 365,
+      "maximum_projection_residual_m": 55.04509122453157,
+      "planner_success": true,
+      "planner_runtime_ms": 15.346267959102988,
+      "goal_time_window_s": [
+        0.6000000000000001,
+        1.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.1138,
+        11.1138
+      ],
+      "goal_station_m": 28.45636469193909,
+      "goal_station_interval_m": [
+        27.137894206697535,
+        29.747126571130647
+      ],
+      "goal_lateral_interval_m": [
+        -0.6959993843275414,
+        1.32491285288107
+      ],
+      "goal_heading_error_rad": -0.10759752596448569,
+      "planner_terminal_slope_target": -0.10801468490417179,
+      "selected_goal_time_s": 0.6000000000000001,
+      "selected_goal_knot": 6,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 28.45636469193909,
+        "ego_station_m": 23.10665089748831,
+        "projected_obstacle_count": 34
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1664": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1664.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 28.45636490718481,
+      "terminal_speed_mps": 1.3832793181456335,
+      "native_solution_written": true,
+      "wall_time_ms": 803.0455050175078
+    },
+    {
+      "scenario": "USA_Lanker-1_6_T-1",
+      "benchmark_id": "USA_Lanker-1_6_T-1",
+      "planning_problem_id": 1664,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 34,
+      "projected_obstacles": 34,
+      "planner_relevant_obstacles": 18,
+      "route_irrelevant_obstacles": 16,
+      "route_lateral_bounds_m": [
+        -67.03651565573695,
+        16.179033321985216
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.337226718716783,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 331,
+      "occupancy_obstacles": 34,
+      "occupancy_samples": 365,
+      "maximum_projection_residual_m": 55.04509122453157,
+      "planner_success": true,
+      "planner_runtime_ms": 25.082941981963813,
+      "goal_time_window_s": [
+        0.6000000000000001,
+        1.0
+      ],
+      "goal_velocity_interval_mps": [
+        5.1138,
+        11.1138
+      ],
+      "goal_station_m": 28.45636469193909,
+      "goal_station_interval_m": [
+        27.137894206697535,
+        29.747126571130647
+      ],
+      "goal_lateral_interval_m": [
+        -0.6959993843275414,
+        1.32491285288107
+      ],
+      "goal_heading_error_rad": -0.10759752596448569,
+      "planner_terminal_slope_target": -0.10801468490417179,
+      "selected_goal_time_s": 0.6000000000000001,
+      "selected_goal_knot": 6,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 28.45636469193909,
+        "ego_station_m": 23.10665089748831,
+        "projected_obstacle_count": 34
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1664": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1664.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 28.45636490718481,
+      "terminal_speed_mps": 1.3832793181456335,
+      "native_solution_written": true,
+      "wall_time_ms": 803.4499429631978
+    },
+    {
+      "scenario": "USA_Lanker-1_7_T-1",
+      "benchmark_id": "USA_Lanker-1_7_T-1",
+      "planning_problem_id": 1782,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 22,
+      "projected_obstacles": 22,
+      "planner_relevant_obstacles": 9,
+      "route_irrelevant_obstacles": 13,
+      "route_lateral_bounds_m": [
+        -46.1793279414282,
+        63.12318280505912
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156484707742164,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 317,
+      "occupancy_obstacles": 22,
+      "occupancy_samples": 339,
+      "maximum_projection_residual_m": 18.055860837223427,
+      "planner_success": true,
+      "planner_runtime_ms": 33.24972599511966,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        6.7506,
+        12.7506
+      ],
+      "goal_station_m": 22.85349659479649,
+      "goal_station_interval_m": [
+        21.851549756433723,
+        23.855382661096304
+      ],
+      "goal_lateral_interval_m": [
+        -0.5162571491662069,
+        1.0251706295497083
+      ],
+      "goal_heading_error_rad": 0.0057532707205891764,
+      "planner_terminal_slope_target": 0.005753334199421029,
+      "selected_goal_time_s": 1.4000000000000001,
+      "selected_goal_knot": 14,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 17,
+        "st_upper_min_m": 22.85349659479649,
+        "ego_station_m": 11.197766033666138,
+        "projected_obstacle_count": 22
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1782": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 22.853496594822097,
+      "terminal_speed_mps": 6.825756089891775,
+      "native_solution_written": true,
+      "wall_time_ms": 515.8090899931267
+    },
+    {
+      "scenario": "USA_Lanker-1_7_T-1",
+      "benchmark_id": "USA_Lanker-1_7_T-1",
+      "planning_problem_id": 1782,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 22,
+      "projected_obstacles": 22,
+      "planner_relevant_obstacles": 9,
+      "route_irrelevant_obstacles": 13,
+      "route_lateral_bounds_m": [
+        -46.1793279414282,
+        63.12318280505912
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 9.156484707742164,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 317,
+      "occupancy_obstacles": 22,
+      "occupancy_samples": 339,
+      "maximum_projection_residual_m": 18.055860837223427,
+      "planner_success": true,
+      "planner_runtime_ms": 41.46926203975454,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        6.7506,
+        12.7506
+      ],
+      "goal_station_m": 22.85349659479649,
+      "goal_station_interval_m": [
+        21.851549756433723,
+        23.855382661096304
+      ],
+      "goal_lateral_interval_m": [
+        -0.5162571491662069,
+        1.0251706295497083
+      ],
+      "goal_heading_error_rad": 0.0057532707205891764,
+      "planner_terminal_slope_target": 0.005753334199421029,
+      "selected_goal_time_s": 1.4000000000000001,
+      "selected_goal_knot": 14,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 17,
+        "st_upper_min_m": 22.85349659479649,
+        "ego_station_m": 11.197766033666138,
+        "projected_obstacle_count": 22
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1782": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 22.853496594822097,
+      "terminal_speed_mps": 6.825756089891775,
+      "native_solution_written": true,
+      "wall_time_ms": 537.720630003605
+    },
+    {
+      "scenario": "USA_Lanker-1_8_T-1",
+      "benchmark_id": "USA_Lanker-1_8_T-1",
+      "planning_problem_id": 1880,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 31,
+      "projected_obstacles": 31,
+      "planner_relevant_obstacles": 9,
+      "route_irrelevant_obstacles": 22,
+      "route_lateral_bounds_m": [
+        -73.2973132406777,
+        14.353605505502285
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 15.285084401439342,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 465,
+      "occupancy_obstacles": 31,
+      "occupancy_samples": 496,
+      "maximum_projection_residual_m": 48.80037927131605,
+      "planner_success": true,
+      "planner_runtime_ms": 8.260979026090354,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        4.2177,
+        10.2177
+      ],
+      "goal_station_m": 9.149521518913808,
+      "goal_station_interval_m": [
+        7.226598895178599,
+        11.08236806684424
+      ],
+      "goal_lateral_interval_m": [
+        -0.06545852234808831,
+        2.868112463580408
+      ],
+      "goal_heading_error_rad": 0.21318632862277176,
+      "planner_terminal_slope_target": 0.2164758020675735,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 9.149521518913808,
+        "ego_station_m": 1.706143666442315,
+        "projected_obstacle_count": 31
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1880": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 9.149521524244873,
+      "terminal_speed_mps": 4.125098303908622,
+      "native_solution_written": true,
+      "wall_time_ms": 2092.373746971134
+    },
+    {
+      "scenario": "USA_Lanker-1_8_T-1",
+      "benchmark_id": "USA_Lanker-1_8_T-1",
+      "planning_problem_id": 1880,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 31,
+      "projected_obstacles": 31,
+      "planner_relevant_obstacles": 9,
+      "route_irrelevant_obstacles": 22,
+      "route_lateral_bounds_m": [
+        -73.2973132406777,
+        14.353605505502285
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 15.285084401439342,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 465,
+      "occupancy_obstacles": 31,
+      "occupancy_samples": 496,
+      "maximum_projection_residual_m": 48.80037927131605,
+      "planner_success": true,
+      "planner_runtime_ms": 16.331561957485974,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        4.2177,
+        10.2177
+      ],
+      "goal_station_m": 9.149521518913808,
+      "goal_station_interval_m": [
+        7.226598895178599,
+        11.08236806684424
+      ],
+      "goal_lateral_interval_m": [
+        -0.06545852234808831,
+        2.868112463580408
+      ],
+      "goal_heading_error_rad": 0.21318632862277176,
+      "planner_terminal_slope_target": 0.2164758020675735,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 9.149521518913808,
+        "ego_station_m": 1.706143666442315,
+        "projected_obstacle_count": 31
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1880": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 9.149521524244873,
+      "terminal_speed_mps": 4.125098303908622,
+      "native_solution_written": true,
+      "wall_time_ms": 2136.6313010221347
+    },
+    {
+      "scenario": "USA_Lanker-2_2_T-1",
+      "benchmark_id": "USA_Lanker-2_2_T-1",
+      "planning_problem_id": 2144,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 7,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 40,
+      "projected_obstacles": 40,
+      "planner_relevant_obstacles": 35,
+      "route_irrelevant_obstacles": 5,
+      "route_lateral_bounds_m": [
+        -40.563580887002594,
+        63.62844712270984
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 1.507891571366806,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2500,
+      "occupancy_obstacles": 40,
+      "occupancy_samples": 2540,
+      "maximum_projection_residual_m": 26.665441691311866,
+      "planner_success": false,
+      "planner_runtime_ms": 168.8258700305596,
+      "goal_time_window_s": [
+        7.1000000000000005,
+        7.5
+      ],
+      "goal_velocity_interval_mps": [
+        12.6423,
+        18.6423
+      ],
+      "goal_station_m": 106.73385573208974,
+      "goal_station_interval_m": [
+        105.75392284357345,
+        107.7180352291495
+      ],
+      "goal_lateral_interval_m": [
+        -0.7679397448458761,
+        0.7436920358738947
+      ],
+      "goal_heading_error_rad": -0.008754958697080097,
+      "planner_terminal_slope_target": -0.008755182391095599,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 4,
+        "st_interval_count": 242,
+        "st_upper_min_m": 22.860417787884696,
+        "ego_station_m": 1.5877903904301618,
+        "projected_obstacle_count": 40
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1929.4359750347212
+    },
+    {
+      "scenario": "USA_Lanker-2_2_T-1",
+      "benchmark_id": "USA_Lanker-2_2_T-1",
+      "planning_problem_id": 2144,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 7,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 40,
+      "projected_obstacles": 40,
+      "planner_relevant_obstacles": 35,
+      "route_irrelevant_obstacles": 5,
+      "route_lateral_bounds_m": [
+        -40.563580887002594,
+        63.62844712270984
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 1.507891571366806,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2500,
+      "occupancy_obstacles": 40,
+      "occupancy_samples": 2540,
+      "maximum_projection_residual_m": 26.665441691311866,
+      "planner_success": false,
+      "planner_runtime_ms": 151.24911500606686,
+      "goal_time_window_s": [
+        7.1000000000000005,
+        7.5
+      ],
+      "goal_velocity_interval_mps": [
+        12.6423,
+        18.6423
+      ],
+      "goal_station_m": 106.73385573208974,
+      "goal_station_interval_m": [
+        105.75392284357345,
+        107.7180352291495
+      ],
+      "goal_lateral_interval_m": [
+        -0.7679397448458761,
+        0.7436920358738947
+      ],
+      "goal_heading_error_rad": -0.008754958697080097,
+      "planner_terminal_slope_target": -0.008755182391095599,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 4,
+        "st_interval_count": 242,
+        "st_upper_min_m": 22.860417787884696,
+        "ego_station_m": 1.5877903904301618,
+        "projected_obstacle_count": 40
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1926.0159559780732
+    },
+    {
+      "scenario": "USA_Lanker-2_3_T-1",
+      "benchmark_id": "USA_Lanker-2_3_T-1",
+      "planning_problem_id": 2159,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 39,
+      "projected_obstacles": 39,
+      "planner_relevant_obstacles": 31,
+      "route_irrelevant_obstacles": 8,
+      "route_lateral_bounds_m": [
+        -1.6157233048741422,
+        62.241460442657896
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 3.1586082310499064,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2523,
+      "occupancy_obstacles": 39,
+      "occupancy_samples": 2562,
+      "maximum_projection_residual_m": 103.77110436058094,
+      "planner_success": true,
+      "planner_runtime_ms": 283.9549509808421,
+      "goal_time_window_s": [
+        7.6000000000000005,
+        8.0
+      ],
+      "goal_velocity_interval_mps": [
+        6.8511,
+        12.8511
+      ],
+      "goal_station_m": 40.69318916228983,
+      "goal_station_interval_m": [
+        39.67871908579824,
+        41.70765923878155
+      ],
+      "goal_lateral_interval_m": [
+        -0.5942546568077098,
+        0.9924124365813003
+      ],
+      "goal_heading_error_rad": 0.025212240402529673,
+      "planner_terminal_slope_target": 0.025217583874101456,
+      "selected_goal_time_s": 7.9,
+      "selected_goal_knot": 79,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 97,
+        "st_upper_min_m": 3.011803106850974,
+        "ego_station_m": 1.9828161648194569,
+        "projected_obstacle_count": 39
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "2159": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": null,
+      "boundary_collision_error": "CollisionException: There is a collision between lanelet boundaries and the ego vehicle in planning problem solution 2159",
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 2159.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 40.543889930886856,
+      "terminal_speed_mps": 8.683505141878808,
+      "native_solution_written": true,
+      "wall_time_ms": 1430.8042819611728
+    },
+    {
+      "scenario": "USA_Lanker-2_3_T-1",
+      "benchmark_id": "USA_Lanker-2_3_T-1",
+      "planning_problem_id": 2159,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 39,
+      "projected_obstacles": 39,
+      "planner_relevant_obstacles": 31,
+      "route_irrelevant_obstacles": 8,
+      "route_lateral_bounds_m": [
+        -1.6157233048741422,
+        62.241460442657896
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 3.1586082310499064,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 2523,
+      "occupancy_obstacles": 39,
+      "occupancy_samples": 2562,
+      "maximum_projection_residual_m": 103.77110436058094,
+      "planner_success": true,
+      "planner_runtime_ms": 452.78746698750183,
+      "goal_time_window_s": [
+        7.6000000000000005,
+        8.0
+      ],
+      "goal_velocity_interval_mps": [
+        6.8511,
+        12.8511
+      ],
+      "goal_station_m": 40.69318916228983,
+      "goal_station_interval_m": [
+        39.67871908579824,
+        41.70765923878155
+      ],
+      "goal_lateral_interval_m": [
+        -0.5942546568077098,
+        0.9924124365813003
+      ],
+      "goal_heading_error_rad": 0.025212240402529673,
+      "planner_terminal_slope_target": 0.025217583874101456,
+      "selected_goal_time_s": 7.9,
+      "selected_goal_knot": 79,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 3,
+        "st_interval_count": 97,
+        "st_upper_min_m": 3.011803106850974,
+        "ego_station_m": 1.9828161648194569,
+        "projected_obstacle_count": 39
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "2159": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": null,
+      "boundary_collision_error": "CollisionException: There is a collision between lanelet boundaries and the ego vehicle in planning problem solution 2159",
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 2159.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 40.543889930886856,
+      "terminal_speed_mps": 8.683505141878808,
+      "native_solution_written": true,
+      "wall_time_ms": 1614.5515729440376
+    },
+    {
+      "scenario": "USA_Lanker-1_9_T-1",
+      "benchmark_id": "USA_Lanker-1_9_T-1",
+      "planning_problem_id": 1868,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 26,
+      "projected_obstacles": 26,
+      "planner_relevant_obstacles": 23,
+      "route_irrelevant_obstacles": 3,
+      "route_lateral_bounds_m": [
+        -67.03651565573692,
+        16.17865122580988
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.33722671871678,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 484,
+      "occupancy_obstacles": 26,
+      "occupancy_samples": 510,
+      "maximum_projection_residual_m": 53.61248371738841,
+      "planner_success": true,
+      "planner_runtime_ms": 5.307599960360676,
+      "goal_time_window_s": [
+        1.6,
+        2.0
+      ],
+      "goal_velocity_interval_mps": [
+        1.569,
+        7.569
+      ],
+      "goal_station_m": 17.91744561152226,
+      "goal_station_interval_m": [
+        16.167580180352477,
+        19.454048230207263
+      ],
+      "goal_lateral_interval_m": [
+        -0.5430956828949243,
+        1.933304187164826
+      ],
+      "goal_heading_error_rad": -0.0316708407313504,
+      "planner_terminal_slope_target": -0.031681434044340755,
+      "selected_goal_time_s": 1.6,
+      "selected_goal_knot": 16,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 23,
+        "st_upper_min_m": 17.91744561152226,
+        "ego_station_m": 10.969886546264538,
+        "projected_obstacle_count": 26
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1868": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 17.91744561152226,
+      "terminal_speed_mps": 2.6836826283727384,
+      "native_solution_written": true,
+      "wall_time_ms": 3355.716448975727
+    },
+    {
+      "scenario": "USA_Lanker-1_9_T-1",
+      "benchmark_id": "USA_Lanker-1_9_T-1",
+      "planning_problem_id": 1868,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 26,
+      "projected_obstacles": 26,
+      "planner_relevant_obstacles": 23,
+      "route_irrelevant_obstacles": 3,
+      "route_lateral_bounds_m": [
+        -67.03651565573692,
+        16.17865122580988
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.33722671871678,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 484,
+      "occupancy_obstacles": 26,
+      "occupancy_samples": 510,
+      "maximum_projection_residual_m": 53.61248371738841,
+      "planner_success": true,
+      "planner_runtime_ms": 24.575740040745586,
+      "goal_time_window_s": [
+        1.6,
+        2.0
+      ],
+      "goal_velocity_interval_mps": [
+        1.569,
+        7.569
+      ],
+      "goal_station_m": 17.91744561152226,
+      "goal_station_interval_m": [
+        16.167580180352477,
+        19.454048230207263
+      ],
+      "goal_lateral_interval_m": [
+        -0.5430956828949243,
+        1.933304187164826
+      ],
+      "goal_heading_error_rad": -0.0316708407313504,
+      "planner_terminal_slope_target": -0.031681434044340755,
+      "selected_goal_time_s": 1.6,
+      "selected_goal_knot": 16,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 23,
+        "st_upper_min_m": 17.91744561152226,
+        "ego_station_m": 10.969886546264538,
+        "projected_obstacle_count": 26
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1868": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 17.91744561152226,
+      "terminal_speed_mps": 2.6836826283727384,
+      "native_solution_written": true,
+      "wall_time_ms": 3393.459972983692
+    },
+    {
+      "scenario": "USA_Lanker-1_10_T-1",
+      "benchmark_id": "USA_Lanker-1_10_T-1",
+      "planning_problem_id": 1927,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 32,
+      "projected_obstacles": 32,
+      "planner_relevant_obstacles": 10,
+      "route_irrelevant_obstacles": 22,
+      "route_lateral_bounds_m": [
+        -71.3781031502379,
+        28.44907413532679
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.274643130978669,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 472,
+      "occupancy_obstacles": 32,
+      "occupancy_samples": 504,
+      "maximum_projection_residual_m": 59.761799983746094,
+      "planner_success": true,
+      "planner_runtime_ms": 51.09940504189581,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        5.5679,
+        11.5679
+      ],
+      "goal_station_m": 22.7585165792383,
+      "goal_station_interval_m": [
+        21.127962773539394,
+        24.395637898468188
+      ],
+      "goal_lateral_interval_m": [
+        -1.4428602568946294,
+        1.130893063058556
+      ],
+      "goal_heading_error_rad": -0.1331313660679232,
+      "planner_terminal_slope_target": -0.13392352095475285,
+      "selected_goal_time_s": 1.2000000000000002,
+      "selected_goal_knot": 12,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 16,
+        "st_upper_min_m": 22.7585165792383,
+        "ego_station_m": 10.838587284059804,
+        "projected_obstacle_count": 32
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1927": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 22.75851657929678,
+      "terminal_speed_mps": 4.542147146979798,
+      "native_solution_written": true,
+      "wall_time_ms": 1866.4300229866058
+    },
+    {
+      "scenario": "USA_Lanker-1_10_T-1",
+      "benchmark_id": "USA_Lanker-1_10_T-1",
+      "planning_problem_id": 1927,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 32,
+      "projected_obstacles": 32,
+      "planner_relevant_obstacles": 10,
+      "route_irrelevant_obstacles": 22,
+      "route_lateral_bounds_m": [
+        -71.3781031502379,
+        28.44907413532679
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.274643130978669,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 472,
+      "occupancy_obstacles": 32,
+      "occupancy_samples": 504,
+      "maximum_projection_residual_m": 59.761799983746094,
+      "planner_success": true,
+      "planner_runtime_ms": 61.052552016917616,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        5.5679,
+        11.5679
+      ],
+      "goal_station_m": 22.7585165792383,
+      "goal_station_interval_m": [
+        21.127962773539394,
+        24.395637898468188
+      ],
+      "goal_lateral_interval_m": [
+        -1.4428602568946294,
+        1.130893063058556
+      ],
+      "goal_heading_error_rad": -0.1331313660679232,
+      "planner_terminal_slope_target": -0.13392352095475285,
+      "selected_goal_time_s": 1.2000000000000002,
+      "selected_goal_knot": 12,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 1,
+        "st_interval_count": 16,
+        "st_upper_min_m": 22.7585165792383,
+        "ego_station_m": 10.838587284059804,
+        "projected_obstacle_count": 32
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1927": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 22.75851657929678,
+      "terminal_speed_mps": 4.542147146979798,
+      "native_solution_written": true,
+      "wall_time_ms": 1898.8397170323879
+    },
+    {
+      "scenario": "USA_Lanker-1_11_T-1",
+      "benchmark_id": "USA_Lanker-1_11_T-1",
+      "planning_problem_id": 1995,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 19,
+      "projected_obstacles": 19,
+      "planner_relevant_obstacles": 4,
+      "route_irrelevant_obstacles": 15,
+      "route_lateral_bounds_m": [
+        -6.956259889217193,
+        58.0461245890151
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 24.454356411423994,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 304,
+      "occupancy_obstacles": 19,
+      "occupancy_samples": 323,
+      "maximum_projection_residual_m": 32.84770298716623,
+      "planner_success": true,
+      "planner_runtime_ms": 11.469903984107077,
+      "goal_time_window_s": [
+        1.2000000000000002,
+        1.6
+      ],
+      "goal_velocity_interval_mps": [
+        2.0749,
+        8.0749
+      ],
+      "goal_station_m": 11.691768660248473,
+      "goal_station_interval_m": [
+        10.511058123042497,
+        12.752207885707637
+      ],
+      "goal_lateral_interval_m": [
+        -0.837294193231999,
+        0.9867895406087892
+      ],
+      "goal_heading_error_rad": -0.04015574316138992,
+      "planner_terminal_slope_target": -0.04017734058558284,
+      "selected_goal_time_s": 1.2000000000000002,
+      "selected_goal_knot": 12,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 11.691768660248473,
+        "ego_station_m": 5.029583617163471,
+        "projected_obstacle_count": 19
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1995": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 11.691768660236951,
+      "terminal_speed_mps": 2.475550149101855,
+      "native_solution_written": true,
+      "wall_time_ms": 2256.55148900114
+    },
+    {
+      "scenario": "USA_Lanker-1_11_T-1",
+      "benchmark_id": "USA_Lanker-1_11_T-1",
+      "planning_problem_id": 1995,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 2,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 19,
+      "projected_obstacles": 19,
+      "planner_relevant_obstacles": 4,
+      "route_irrelevant_obstacles": 15,
+      "route_lateral_bounds_m": [
+        -6.956259889217193,
+        58.0461245890151
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 24.454356411423994,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 304,
+      "occupancy_obstacles": 19,
+      "occupancy_samples": 323,
+      "maximum_projection_residual_m": 32.84770298716623,
+      "planner_success": true,
+      "planner_runtime_ms": 14.565958001185209,
+      "goal_time_window_s": [
+        1.2000000000000002,
+        1.6
+      ],
+      "goal_velocity_interval_mps": [
+        2.0749,
+        8.0749
+      ],
+      "goal_station_m": 11.691768660248473,
+      "goal_station_interval_m": [
+        10.511058123042497,
+        12.752207885707637
+      ],
+      "goal_lateral_interval_m": [
+        -0.837294193231999,
+        0.9867895406087892
+      ],
+      "goal_heading_error_rad": -0.04015574316138992,
+      "planner_terminal_slope_target": -0.04017734058558284,
+      "selected_goal_time_s": 1.2000000000000002,
+      "selected_goal_knot": 12,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 11.691768660248473,
+        "ego_station_m": 5.029583617163471,
+        "projected_obstacle_count": 19
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1995": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": true,
+      "valid_solution": true,
+      "outcome": "valid_solution",
+      "failure_category": "valid",
+      "terminal_station_m": 11.691768660236951,
+      "terminal_speed_mps": 2.475550149101855,
+      "native_solution_written": true,
+      "wall_time_ms": 2252.436188980937
+    },
+    {
+      "scenario": "USA_Lanker-1_12_T-1",
+      "benchmark_id": "USA_Lanker-1_12_T-1",
+      "planning_problem_id": 1949,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 19,
+      "projected_obstacles": 19,
+      "planner_relevant_obstacles": 7,
+      "route_irrelevant_obstacles": 12,
+      "route_lateral_bounds_m": [
+        -74.64420886730859,
+        25.717691487292488
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.295750003462566,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 285,
+      "occupancy_obstacles": 19,
+      "occupancy_samples": 304,
+      "maximum_projection_residual_m": 59.934921036044564,
+      "planner_success": true,
+      "planner_runtime_ms": 12.178913981188089,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        3.6416,
+        9.6416
+      ],
+      "goal_station_m": 25.145520766706593,
+      "goal_station_interval_m": [
+        23.715570290360002,
+        26.201159535972305
+      ],
+      "goal_lateral_interval_m": [
+        1.0642961653433334,
+        2.673324448010839
+      ],
+      "goal_heading_error_rad": -0.9327714841962325,
+      "planner_terminal_slope_target": null,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 25.145520766706593,
+        "ego_station_m": 15.736722987313248,
+        "projected_obstacle_count": 19
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1949": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1949.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 25.145520766826493,
+      "terminal_speed_mps": 1.6749818653335036,
+      "native_solution_written": true,
+      "wall_time_ms": 1759.9665169836953
+    },
+    {
+      "scenario": "USA_Lanker-1_12_T-1",
+      "benchmark_id": "USA_Lanker-1_12_T-1",
+      "planning_problem_id": 1949,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 1,
+      "source_lanelets": 95,
+      "source_dynamic_obstacles": 19,
+      "projected_obstacles": 19,
+      "planner_relevant_obstacles": 7,
+      "route_irrelevant_obstacles": 12,
+      "route_lateral_bounds_m": [
+        -74.64420886730859,
+        25.717691487292488
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.295750003462566,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 285,
+      "occupancy_obstacles": 19,
+      "occupancy_samples": 304,
+      "maximum_projection_residual_m": 59.934921036044564,
+      "planner_success": true,
+      "planner_runtime_ms": 18.22866901056841,
+      "goal_time_window_s": [
+        1.1,
+        1.5
+      ],
+      "goal_velocity_interval_mps": [
+        3.6416,
+        9.6416
+      ],
+      "goal_station_m": 25.145520766706593,
+      "goal_station_interval_m": [
+        23.715570290360002,
+        26.201159535972305
+      ],
+      "goal_lateral_interval_m": [
+        1.0642961653433334,
+        2.673324448010839
+      ],
+      "goal_heading_error_rad": -0.9327714841962325,
+      "planner_terminal_slope_target": null,
+      "selected_goal_time_s": 1.1,
+      "selected_goal_knot": 11,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "solved",
+        "failure_reason": "candidate_solved",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 0,
+        "st_interval_count": 0,
+        "st_upper_min_m": 25.145520766706593,
+        "ego_station_m": 15.736722987313248,
+        "projected_obstacle_count": 19
+      },
+      "dynamics_feasible": true,
+      "dynamics_details": {
+        "1949": true
+      },
+      "obstacle_collision": false,
+      "boundary_collision": false,
+      "ego_collision": false,
+      "goal_reached": false,
+      "goal_error": "GoalNotReachedException: Ego vehicle has not reached the goal in planning planning problem solution 1949.",
+      "valid_solution": false,
+      "outcome": "invalid_solution",
+      "failure_category": "goal_not_reached",
+      "terminal_station_m": 25.145520766826493,
+      "terminal_speed_mps": 1.6749818653335036,
+      "native_solution_written": true,
+      "wall_time_ms": 1729.5029829838313
+    },
+    {
+      "scenario": "USA_Lanker-2_4_T-1",
+      "benchmark_id": "USA_Lanker-2_4_T-1",
+      "planning_problem_id": 283,
+      "method": "B0",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 4,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 54,
+      "projected_obstacles": 54,
+      "planner_relevant_obstacles": 41,
+      "route_irrelevant_obstacles": 13,
+      "route_lateral_bounds_m": [
+        -66.8407101094844,
+        15.719086490093915
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.257248573827125,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 3743,
+      "occupancy_obstacles": 54,
+      "occupancy_samples": 3797,
+      "maximum_projection_residual_m": 91.18052633058261,
+      "planner_success": false,
+      "planner_runtime_ms": 208.44899798976257,
+      "goal_time_window_s": [
+        7.0,
+        7.4
+      ],
+      "goal_velocity_interval_mps": [
+        5.2448,
+        11.2448
+      ],
+      "goal_station_m": 66.014819785459,
+      "goal_station_interval_m": [
+        64.87838650233857,
+        67.15125306857934
+      ],
+      "goal_lateral_interval_m": [
+        -1.1747310746127142,
+        0.6063203703021718
+      ],
+      "goal_heading_error_rad": 0.0477995400544029,
+      "planner_terminal_slope_target": 0.04783597742198771,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 5,
+        "st_interval_count": 320,
+        "st_upper_min_m": 24.048339098666826,
+        "ego_station_m": 24.048339098666826,
+        "projected_obstacle_count": 54
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1717.7337209577672
+    },
+    {
+      "scenario": "USA_Lanker-2_4_T-1",
+      "benchmark_id": "USA_Lanker-2_4_T-1",
+      "planning_problem_id": 283,
+      "method": "MIKU",
+      "dt": 0.1,
+      "horizon_steps": 100,
+      "native_commonroad_protocol": true,
+      "planner_protocol": "MIKU_or_B0_same_initial_state_dt_horizon_and_official_evaluator",
+      "planner_input_semantics": "official_lanelet_reference_path_and_station_varying_polygon_cross_section; relevant_sampled_shape_pose_occupancy_envelope; all_source_obstacles_audited",
+      "occupancy_semantics": "conservative_frenet_envelope_from_all_published_rectangle_states; route-relevance filter before planning",
+      "reference_path_source": "CommonRoad RoutePlanner/ReferencePathPlanner",
+      "route_lanelet_count": 4,
+      "source_lanelets": 116,
+      "source_dynamic_obstacles": 54,
+      "projected_obstacles": 54,
+      "planner_relevant_obstacles": 41,
+      "route_irrelevant_obstacles": 13,
+      "route_lateral_bounds_m": [
+        -66.8407101094844,
+        15.719086490093915
+      ],
+      "station_varying_road_bounds": true,
+      "road_center_width_min_m": 7.257248573827125,
+      "skipped_obstacles": 0,
+      "trajectory_states_used": 3743,
+      "occupancy_obstacles": 54,
+      "occupancy_samples": 3797,
+      "maximum_projection_residual_m": 91.18052633058261,
+      "planner_success": false,
+      "planner_runtime_ms": 209.3711809720844,
+      "goal_time_window_s": [
+        7.0,
+        7.4
+      ],
+      "goal_velocity_interval_mps": [
+        5.2448,
+        11.2448
+      ],
+      "goal_station_m": 66.014819785459,
+      "goal_station_interval_m": [
+        64.87838650233857,
+        67.15125306857934
+      ],
+      "goal_lateral_interval_m": [
+        -1.1747310746127142,
+        0.6063203703021718
+      ],
+      "goal_heading_error_rad": 0.0477995400544029,
+      "planner_terminal_slope_target": 0.04783597742198771,
+      "selected_goal_time_s": null,
+      "selected_goal_knot": null,
+      "temporal_plan_fallback_from_rank": null,
+      "failure_diagnostics": {
+        "failure_stage": "goal_bounds",
+        "failure_reason": "goal_station_unreachable_under_safe_corridor",
+        "path_min_width_m": 0.0,
+        "path_infeasible_knot_count": 0,
+        "st_active_obstacle_count": 5,
+        "st_interval_count": 320,
+        "st_upper_min_m": 24.048339098666826,
+        "ego_station_m": 24.048339098666826,
+        "projected_obstacle_count": 54
+      },
+      "outcome": "planner_failure",
+      "failure_category": "planner_failure",
+      "native_solution_written": false,
+      "wall_time_ms": 1685.0468440097757
+    }
+  ],
+  "native_solution_protocol": true,
+  "miku_native_benchmark": true,
+  "benchmark_scope": "official_route_goal_dynamic_rectangle_pose_occupancy_envelope_and_evaluator; traffic_control_rules_recorded_only",
+  "miku_valid_solution_count": 7,
+  "miku_planner_failure_count": 3,
+  "miku_non_valid_count": 9
+}
