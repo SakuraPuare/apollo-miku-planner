@@ -27,17 +27,15 @@
 
 \draw[algflow] (input) -- (occupancy);
 \draw[algflow] (occupancy) -- (spatial);
-\draw[solveflow] (spatial) -- node[note,below]{中心路径边界} (pathqp);
-\draw[solveflow] (pathqp) |- node[note,pos=.55,right]{$l(s)$ 与冲突区} (temporal);
+\draw[solveflow] (spatial) -- node[note,above]{中心路径边界} (pathqp);
+\draw[solveflow] (pathqp) |- node[note,pos=.56,right, xshift=2pt]{$l(s)$ 与冲突区} (temporal);
 \draw[algflow] (temporal) -- (speedqp);
 \draw[solveflow] (speedqp) -- (trajectory);
-\draw[algflow,rounded corners] (speedqp.south) |- ++(0,-.75) -|
-  node[note,pos=.52,below]{速度解更新 $\tau(s)$} (occupancy.south);
-\draw[solveflow,rounded corners] (trajectory.north) |- ++(0,.6) -|
-  node[note,pos=.55,above]{滚动同伦保持} (temporal.east);
-
-\node[font=\scriptsize,text=deeppink,anchor=west] at (2.7,-3.05)
-  {\rule{.7cm}{1.1pt}\;MIKU 离散候选与约束构造};
-\node[font=\scriptsize,text=deepblue,anchor=west] at (8.5,-3.05)
-  {\rule{.7cm}{1.1pt}\;通用解耦连续求解器};
+% 两条反馈边放在图外侧，并将说明文字置于空白区域，避免穿过节点。
+\draw[algflow,rounded corners]
+  (speedqp.south) -- ++(0,-.55) -- ++(-7.0,0) -- ++(0,1.05)
+  node[pos=.18,below, note] {速度解更新 $\tau(s)$} -| (occupancy.south);
+\draw[solveflow,rounded corners]
+  (trajectory.north) -- ++(0,.45) -- ++(-1.0,0)
+  node[pos=.45,above, note] {滚动同伦保持} -| (temporal.east);
 \end{tikzpicture}
