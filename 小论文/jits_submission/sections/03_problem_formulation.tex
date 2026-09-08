@@ -1,0 +1,49 @@
+\section{Problem formulation and evidence scope}
+\label{sec:problem}
+
+\subsection{Path--velocity interface}
+
+We consider a road-aligned Frenet frame in which $s$ denotes station and $l$ denotes lateral displacement from a reference line. A PVD planner first optimizes a lateral path $l(s)$ in SL space and then optimizes a longitudinal motion $s(t)$ in ST space. With path states $\mathbf{x}_p=(l_j,l'_j,l''_j)_{j=0}^{K}$ and speed states $\mathbf{x}_v=(s_r,v_r,a_r)_{r=0}^{N}$, the common downstream solver can be written as
+\begin{align}
+ \mathbf{x}_p^*={}&\arg\min_{\mathbf{x}_p}
+ \frac{1}{2}\mathbf{x}_p^{\mathsf T}H_p\mathbf{x}_p+q_p^{\mathsf T}\mathbf{x}_p,\\[-2pt]
+ &\quad\text{s.t. }A_p\mathbf{x}_p=b_p,\quad l_j^-\leq l_j\leq l_j^+, \label{eq:path_qp_en}\
+ \mathbf{x}_v^*={}&\arg\min_{\mathbf{x}_v}
+ \frac{1}{2}\mathbf{x}_v^{\mathsf T}H_v\mathbf{x}_v+q_v^{\mathsf T}\mathbf{x}_v,\\[-2pt]
+ &\quad\text{s.t. }A_v\mathbf{x}_v=b_v,\quad s_r^{lb}\leq s_r\leq s_r^{ub},\notag\\[-2pt]
+ &\qquad 0\leq v_r\leq v_{\max},\quad a_{\min}\leq a_r\leq a_{\max}. \label{eq:speed_qp_en}
+\end{align}
+Here $H_p$ and $H_v$ encode smoothness costs, while $A_p$ and $A_v$ encode the piecewise-jerk kinematic equalities. The path-boundary set $\mathcal{B}_l=\{[l_j^-,l_j^+]\}$ and the ST position-boundary set $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}$ are the environmental interfaces. MIKU changes these interfaces but leaves the downstream objective matrices, kinematic equalities, and QP solver unchanged.
+
+\subsection{Center-coordinate obstacle model}
+
+For obstacle $i$, let $O_i(t)=[s_i^-(t),s_i^+(t)]\times[l_i^-(t),l_i^+(t)]$ be its physical rectangle. If the physical road limits are $[l_{\mathrm{road}}^-,l_{\mathrm{road}}^+]$, ego width is $W_{\mathrm{ego}}$, and the roadside margin is $d_{\mathrm{road}}$, the feasible interval for the ego center is
+\begin{equation}
+ [L^-,L^+]=[l_{\mathrm{road}}^-+W_{\mathrm{ego}}/2+d_{\mathrm{road}},\ l_{\mathrm{road}}^+-W_{\mathrm{ego}}/2-d_{\mathrm{road}}].
+ \label{eq:center_road_en}
+\end{equation}
+The obstacle interval passed to the center-coordinate planner is expanded once by half the ego width and the obstacle-specific extra margin $d_{\mathrm{buf},i}$:
+\begin{equation}
+ [u_i,v_i]=[l_i^- -W_{\mathrm{ego}}/2-d_{\mathrm{buf},i},\ l_i^+ +W_{\mathrm{ego}}/2+d_{\mathrm{buf},i}].
+ \label{eq:center_forbidden_en}
+\end{equation}
+All four quantities in (\ref{eq:center_road_en})--(\ref{eq:center_forbidden_en}) refer to the ego center. Thus a gap width is a center-placement width; vehicle width is not subtracted again in later feasibility tests.
+
+For an active set of $k$ obstacles at one station, assign each obstacle to the left ($L$) or right ($R$) side of the ego band. For decision vector $\mathbf{d}$, the resulting center band is
+\begin{equation}
+ l^-(\mathbf{d})=\max\left(L^-,\max_{i\in\mathcal{L}}v_i\right),\qquad
+ l^+(\mathbf{d})=\min\left(L^+,\min_{i\in\mathcal{R}}u_i\right),
+ \label{eq:center_band_en}
+\end{equation}
+with empty extrema omitted. The band is feasible when $W(\mathbf{d})=l^+(\mathbf{d})-l^-(\mathbf{d})\geq\varepsilon$ for a numerical tolerance $\varepsilon$.
+
+\subsection{Two failure mechanisms and study boundary}
+
+When the path stage ignores time, it may replace a dynamic occupancy by the horizon union
+\begin{equation}
+ \overline{O}_i=\bigcup_{t\in[0,T_{\mathrm{pred}}]}O_i(t),
+ \label{eq:prob_union_en}
+\end{equation}
+which treats positions occupied at different times as simultaneous. Conversely, an obstacle-wise greedy policy may commit to a side before seeing the effect of another obstacle in the same longitudinal component. Either mechanism can produce $l^+(s)<l^-(s)$ even though a temporally consistent passage exists.
+
+The study tests whether reconstructing the missing arrival-time and group-level information at the boundary interface improves planning outcomes. The principal evidence is generated on straight-road scenarios with constant-velocity obstacle models and bounded perturbations. The 3,500-case experiment is a matched numerical evaluation, not a public-data or field study. Apollo Planning is used only for interface and representative behavior evidence; it is not treated as a physical-road test or a native runtime benchmark.

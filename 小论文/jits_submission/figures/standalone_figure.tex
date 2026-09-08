@@ -1,0 +1,32 @@
+% Compile one active figure independently, for example:
+% pdflatex -jobname=fig_teaser_en
+%   '\def\figurefile{figures/fig_teaser_en}\input{figures/standalone_figure.tex}'
+\documentclass[border=3pt]{standalone}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,patterns,decorations.pathreplacing}
+
+\definecolor{deepblue}{RGB}{0,114,178}
+\definecolor{lightblue}{RGB}{187,220,238}
+\definecolor{inputyellow}{RGB}{240,228,66}
+\definecolor{outputpink}{RGB}{204,121,167}
+\definecolor{improvedpink}{RGB}{213,94,0}
+\definecolor{deeppink}{RGB}{213,94,0}
+\definecolor{bglight}{RGB}{244,244,244}
+\definecolor{lightgreen}{RGB}{0,158,115}
+\definecolor{dangerred}{RGB}{213,94,0}
+\tikzset{
+  mod/.style={rectangle,rounded corners=2pt,draw=deepblue,fill=lightblue,minimum height=0.9cm,align=center,font=\small},
+  modimp/.style={rectangle,rounded corners=2pt,draw=deeppink,fill=improvedpink!25,minimum height=0.9cm,align=center,font=\small},
+  modin/.style={rectangle,draw=deepblue,fill=inputyellow!45,minimum height=0.9cm,align=center,font=\small},
+  modout/.style={rectangle,draw=deeppink,fill=outputpink!35,minimum height=0.9cm,align=center,font=\small},
+  flow/.style={-Stealth,thick,deepblue},
+  flowimp/.style={-Stealth,thick,deeppink}
+}
+
+\providecommand{\figurefile}{figures/fig_teaser_en}
+\begin{document}
+\input{\figurefile}
+\end{document}

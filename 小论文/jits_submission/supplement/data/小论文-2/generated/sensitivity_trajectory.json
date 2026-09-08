@@ -1,0 +1,958 @@
+{
+  "protocol": "miku-sensitivity-v2",
+  "weight_trials_per_scenario": 20,
+  "weight_range": [
+    -0.2,
+    0.2
+  ],
+  "tau_error_percent": [
+    -20,
+    20
+  ],
+  "obstacle_speed_error_mps": [
+    -0.5,
+    0.5
+  ],
+  "obstacle_lateral_error_m": [
+    -0.2,
+    0.2
+  ],
+  "rows": [
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 0,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 1,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 2,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 3,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 4,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 5,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 6,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 7,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 8,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 9,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 10,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 11,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 12,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 13,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 14,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 15,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 16,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 17,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 18,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "threat_weights",
+      "trial": 19,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 0,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5208190159950818
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 1,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5125672640687504
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 2,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5164035470108227
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 3,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5158513679739587
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 4,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5114709075138392
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 5,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.51735925593387
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 6,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5234206754917955
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 7,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5246109463902701
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 8,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5044123120961461
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 9,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5121295715239055
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 10,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5032709819436267
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 11,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5200790322769779
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 12,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5103045849486347
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 13,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5150225505623282
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 14,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5113624193401515
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 15,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5223772832694007
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 16,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.507689227150577
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 17,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5188107594303033
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 18,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5101249415156588
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "threat_weights",
+      "trial": 19,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5157080045908669
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 1,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 2,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 3,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 4,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 5,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 6,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 7,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 8,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 9,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 10,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 11,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 12,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 13,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 14,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 15,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 16,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 17,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 18,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "threat_weights",
+      "trial": 19,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.841359377177306
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 1,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.836653770015114
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 2,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.831687781643072
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 3,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8361582962114666
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 4,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8336591967479943
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 5,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8364232852158535
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 6,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.838518022774688
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 7,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8377769802261836
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 8,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.841000531266279
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 9,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8367888694130405
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 10,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8271440530130625
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 11,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.833680805138396
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 12,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.835594687744666
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 13,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8352852081088558
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 14,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.833257614125645
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 15,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.843632228259999
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 16,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8317970479132284
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 17,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8304286694175365
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 18,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8428849956020192
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "threat_weights",
+      "trial": 19,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.837024571960959
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "tau_-20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "tau_+20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "obstacle_speed_-0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 23.99999999999916,
+      "jerk_rms": 4.013478464467515,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "obstacle_speed_+0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.885232192254743,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "obstacle_lateral_-0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 23.999999999999893,
+      "jerk_rms": 3.608737435959668,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "01_crossing_ped",
+      "variant": "obstacle_lateral_+0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 24.0,
+      "jerk_rms": 2.4316457921611807,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "tau_-20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "tau_+20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "obstacle_speed_-0.5mps",
+      "trial": 0,
+      "success": 0,
+      "s_end": 0.0,
+      "jerk_rms": 0.0,
+      "l_max_dev": 0.5145750781116654
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "obstacle_speed_+0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.5145750781116654
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "obstacle_lateral_-0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 30.99999999999995,
+      "jerk_rms": 3.1502759475856883,
+      "l_max_dev": 0.7200000000000009
+    },
+    {
+      "scenario": "02_ped_plus_parked",
+      "variant": "obstacle_lateral_+0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 31.000001,
+      "jerk_rms": 2.236532660734774,
+      "l_max_dev": 0.29606746880503476
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "tau_-20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "tau_+20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "obstacle_speed_-0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "obstacle_speed_+0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.0
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "obstacle_lateral_-0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.10070385564396099
+    },
+    {
+      "scenario": "03_narrow_cones",
+      "variant": "obstacle_lateral_+0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 49.00000099999999,
+      "jerk_rms": 0.03316550121052048,
+      "l_max_dev": 0.17248983550815133
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "tau_-20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8346054096397455
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "tau_+20pct",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8346054096397455
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "obstacle_speed_-0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8346054096397455
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "obstacle_speed_+0.5mps",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.8346054096397455
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "obstacle_lateral_-0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 3.6303773740373457
+    },
+    {
+      "scenario": "04_dense_construction",
+      "variant": "obstacle_lateral_+0.2m",
+      "trial": 0,
+      "success": 1,
+      "s_end": 84.00000099999998,
+      "jerk_rms": 0.02511318333585803,
+      "l_max_dev": 4.0388333293029195
+    }
+  ]
+}

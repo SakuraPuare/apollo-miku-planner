@@ -1,0 +1,38 @@
+\begin{tikzpicture}[x=0.82cm,y=0.82cm,>=Stealth]
+\begin{scope}
+  \fill[bglight] (-.4,-2.25) rectangle (7.8,2.25);
+  \draw[gray,thick] (-.4,2.25)--(7.8,2.25) (-.4,-2.25)--(7.8,-2.25);
+  \draw[dashed,gray!60] (-.4,0)--(7.8,0);
+  \fill[dangerred!70] (2.7,.45) rectangle (4.3,1.0);
+  \fill[dangerred!70] (2.7,-1.0) rectangle (4.3,-.45);
+  \draw[dangerred!60,dashed] (2.3,.05) rectangle (4.7,1.4);
+  \draw[dangerred!60,dashed] (2.3,-1.4) rectangle (4.7,-.05);
+  \node[font=\scriptsize] at (3.5,.73) {$O_a$};
+  \node[font=\scriptsize] at (3.5,-.73) {$O_b$};
+  \node[deeppink,font=\scriptsize\bfseries] at (5.0,.8) {$R$};
+  \node[deepblue,font=\scriptsize\bfseries] at (2.0,-.8) {$L$};
+  \draw[deeppink,very thick] (-.4,2.25)--(2.1,2.25)--(2.1,0)--(4.9,0)--(4.9,2.25)--(7.8,2.25);
+  \draw[deepblue,very thick] (-.4,-2.25)--(2.1,-2.25)--(2.1,0)--(4.9,0)--(4.9,-2.25)--(7.8,-2.25);
+  \node[dangerred,font=\scriptsize\bfseries] at (3.5,1.75) {$l^+\le l^-\;\Rightarrow\;$ blocked};
+  \node[font=\small\bfseries] at (3.5,-2.75) {Obstacle-wise greedy choice};
+\end{scope}
+\begin{scope}[xshift=9cm]
+  \fill[bglight] (-.4,-2.25) rectangle (7.8,2.25);
+  \draw[gray,thick] (-.4,2.25)--(7.8,2.25) (-.4,-2.25)--(7.8,-2.25);
+  \draw[dashed,gray!60] (-.4,0)--(7.8,0);
+  \fill[dangerred!70] (2.7,.45) rectangle (4.3,1.0);
+  \fill[dangerred!70] (2.7,-1.0) rectangle (4.3,-.45);
+  \draw[dangerred!60,dashed] (2.3,.05) rectangle (4.7,1.4);
+  \draw[dangerred!60,dashed] (2.3,-1.4) rectangle (4.7,-.05);
+  \node[font=\scriptsize] at (3.5,.73) {$O_a$};
+  \node[font=\scriptsize] at (3.5,-.73) {$O_b$};
+  \node[deepblue,font=\scriptsize\bfseries] at (5.0,.8) {$R$};
+  \node[deepblue,font=\scriptsize\bfseries] at (5.0,-.8) {$R$};
+  \fill[lightgreen,opacity=.28] (-.4,-2.25) rectangle (7.8,-1.45);
+  \draw[deeppink,very thick] (-.4,2.25)--(2.1,2.25)--(2.1,-1.45)--(4.9,-1.45)--(4.9,2.25)--(7.8,2.25);
+  \draw[deepblue,dashed,very thick] (-.4,-2.25)--(7.8,-2.25);
+  \draw[deepblue,very thick,->] (.4,0)--(1.7,-.45)--(2.3,-1.75)--(4.3,-1.85)--(5.5,-.6)--(6.8,0);
+  \node[lightgreen!60!black,font=\scriptsize\bfseries] at (3.5,-1.85) {continuous passage band};
+  \node[font=\small\bfseries] at (3.5,-2.75) {Group-level continuous partition};
+\end{scope}
+\end{tikzpicture}

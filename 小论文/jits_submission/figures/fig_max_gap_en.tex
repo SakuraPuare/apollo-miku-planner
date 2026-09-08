@@ -1,0 +1,15 @@
+\begin{tikzpicture}[x=1cm,y=1cm]
+  \fill[bglight] (0,-.45) rectangle (10,.45);
+  \draw[gray,thick] (0,0)--(10,0);
+  \foreach \x/\name in {1.2/$O_1$,3.0/$O_2$,6.0/$O_3$,8.1/$O_4$}{
+    \fill[dangerred!70] (\x-.38,-.25) rectangle (\x+.38,.25);
+    \node[font=\scriptsize] at (\x,.7) {\name};
+  }
+  \draw[deepblue,very thick,<->] (3.38,-.85)--(5.62,-.85);
+  \node[deepblue,font=\scriptsize] at (4.5,-1.15) {$g_2=U_2-V_2$ (maximum gap)};
+  \foreach \x/\lab in {0/$p=0$,2.62/$p=1$,4.62/$p=2$,6.62/$p=3$,8.48/$p=4$}{
+    \draw[gray!70,dashed] (\x,-.48)--(\x,.48);
+    \node[font=\tiny] at (\x,-.63) {\lab};
+  }
+  \node[font=\scriptsize,align=center] at (5,1.15) {$k=4$ intervals yield $k+1=5$ continuous split candidates};
+\end{tikzpicture}

@@ -1,0 +1,34 @@
+\section{Related work}
+\label{sec:related_work}
+
+\subsection{Joint space--time planning}
+
+Joint planners retain geometric and temporal coupling by searching or optimizing an expanded state. Conformal spatiotemporal lattices coordinate position, velocity, and time directly \citep{mcnaughton2011lattice}; instantaneous-analysis and SLT formulations similarly combine lateral and longitudinal decisions in dense traffic \citep{yang2021_ia_planner,hu2023_hybrid_astar_slt,hu2025_dp_nmpc,qiao2025stjoint}. Mixed-integer formulations can encode obstacle-side choices as discrete variables \citep{kessler2023}. These approaches provide strong coordination, but their expanded search spaces, integer decisions, or nonlinear programs differ structurally from the two sequential convex QPs used by many PVD stacks. The finite-grid joint search used later in this paper is therefore a computational reference rather than a claimed continuous optimum.
+
+\subsection{Decomposed and iterative coordination}
+
+PVD planners obtain tractability by optimizing a path first and then a speed profile \citep{kant1986pvd,werling2010}. Convex smoothing and piecewise-jerk optimization make this structure suitable for production-oriented software \citep{fan2018baidu,zhou2021dliaps,zhou2021pathqp}. Temporal optimization, iterative anchoring, candidate pairing, and risk-aware coordination can return information between the two stages \citep{liu2017speed,chen2019em,zhang2023_dp_rcg,han2026_contingency,pathspeedstructured2024}. Their usefulness depends on what information each stage exposes: repeated arrival-time updates cannot recover a lateral alternative that was discarded by an irreversible local side decision.
+
+Safe-corridor methods make the feasible region explicit before continuous optimization. Spatial flight corridors demonstrate how convex sets can bridge discrete search and trajectory optimization \citep{liu2017sfc}, while recent autonomous-driving work extends this idea to spatiotemporal lane-change or Frenet corridors \citep{yoon2024stcorridor,frenetcorridor2025}. MIKU shares the explicit-feasible-region principle but targets a narrower interface question: how to generate mutually consistent SL and ST bounds without replacing the path and speed QPs.
+
+\subsection{Interaction prediction and safety margins}
+
+Prediction-aware planning can account for pedestrian and vehicle interactions that a static obstacle footprint misses \citep{yangbo2023ped,jeong2021ml}. Such predictions remain uncertain, so a planner must distinguish a nominal arrival estimate from the occupancy set used for collision checking. MIKU uses the former to query and rank alternatives, while bounded position and velocity errors expand the latter. Threat-dependent extra margins further allocate scarce lateral space according to collision urgency, overlap, relative motion, object type, and local density; time-to-collision is used only as one normalized urgency factor \citep{minderhoud2001extended}.
+
+Table~\ref{tab:method_classes} summarizes the solver-level distinction. Existing families are effective under their stated assumptions; the unresolved case is a PVD stack that must preserve its downstream QPs while jointly coordinating time-dependent projection, group-level side selection, and speed-stage timing constraints.
+
+\begin{table}
+\tbl{Relationship between planning families and the constraint-interface problem.}{%
+\begin{tabular}{p{0.19\textwidth}p{0.24\textwidth}p{0.23\textwidth}p{0.24\textwidth}}
+\toprule
+Family & Space--time coordination & Solver implication & Interface-level gap addressed here \\
+\midrule
+Time-blind PVD & Sequential path then speed & Two structured QPs & Loses arrival-conditioned occupancy and group choices \\
+Iterative PVD & Repeated path--speed updates & Multiple solver calls & Cannot restore discarded lateral classes by timing alone \\
+Joint lattice or mixed-integer planning & Coupled state or discrete variables & Expanded search or a different optimizer & Does not preserve the original two-QP interface \\
+Safe-corridor planning & Convex feasible sets before optimization & Corridor generator plus continuous solver & Often focuses on a selected corridor rather than coupled spatial and temporal classes \\
+MIKU & Spatial and temporal homotopies compiled into bounds & Retains the two downstream QPs & Targets arrival timing, group decisions, and cross-stage constraint transfer \\
+\bottomrule
+\end{tabular}}
+\label{tab:method_classes}
+\end{table}

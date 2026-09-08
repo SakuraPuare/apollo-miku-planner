@@ -1,0 +1,22 @@
+# LaTeX and local inspection outputs
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+build/
+
+# Version the final submission PDFs even though the repository ignores PDFs.
+!manuscript.pdf
+!anonymous.pdf
+!figures/*.pdf
+!deliverables/*.pdf
+
+# Local Python environments and caches
+supplement/code/.venv/
+supplement/code/**/__pycache__/
+supplement/code/.pytest_cache/
+__pycache__/

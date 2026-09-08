@@ -1,0 +1,33 @@
+\section{Experimental design}
+\label{sec:experimental_design}
+
+The evaluation separates statistical planning evidence from mechanism and software-integration evidence. The statistical experiments use deterministic scenario generators and fixed seeds so that every method receives the same planning input and the same vehicle constraints. Collision and clearance are evaluated against a separately retained truth scenario. Apollo Planning is used in a second evidence stream to check interface compatibility and representative behavior.
+
+\subsection{Protocols and scenarios}
+
+The main open-loop protocol contains 3,500 paired scenarios, with 500 seeds in each of seven families: crossing pedestrians, vehicle cut-ins, parked vehicles with oncoming traffic, narrow multi-obstacle passages, interleaved dynamic obstacles, prediction noise, and delayed crossings. Obstacle and ego parameters are sampled within the family ranges, while the seed and family determine the complete case. The planning and truth scenarios are identical except in the prediction-noise family, where bounded errors are injected only into the planning input. The generators, raw rows, metadata, and hashes are provided in the supplement.
+
+The 4,000-instance geometry check uses 20 deterministic seeds and 200 fixed-section interval instances per seed. Each instance contains zero to eight possibly overlapping, nested, or road-crossing forbidden intervals. The scan is compared with exhaustive enumeration of all $2^k$ side assignments. This experiment tests center-band width equality under the stated interval model, not tracking error or full-trajectory optimality.
+
+To test rolling behavior, an independent 700-scenario protocol uses 100 seeds per family. Every 0.5 s, the first planned segment is executed, the ego and obstacles are updated, and the planner is called again until arrival or the scenario horizon. These cases are not pooled with the 3,500 open-loop cases. Finally, a 70-case stratified finite-grid joint reference uses 10 seeds per family and grid spacings $\Delta t=0.5$ s, $\Delta s=0.5$ m, $\Delta l=0.25$ m, and $\Delta v=1.0$ m/s, with beam width 20,000. It is explicitly a coarse finite search, not a continuous global oracle.
+
+\subsection{Baselines and implementation}
+
+The matched PVD baselines are defined by the information exchanged at the constraint interface:
+\begin{itemize}
+  \item B0 is time-blind and uses the fixed local side policy.
+  \item B1 adds arrival-time-dependent projection but retains obstacle-wise greedy side selection.
+  \item B2 allows three arrival-time refinement iterations in the B1 policy.
+  \item MIKU adds group-level continuous partition, Top-$K$ spatial homotopy, threat-aware margins, uncertainty-expanded occupancy, temporal homotopy, and at most two planning iterations with alternating updates.
+\end{itemize}
+All four methods share the same path and speed QP objectives, kinematic constraints, scenario input, and numerical metric implementation. B3 is the finite-grid joint reference and uses a different solver by design. The implementation was evaluated on an Intel i9-14900HX processor with 64 GB RAM and Arch Linux. The Apollo integration uses the Apollo 11.0 path-boundary and ST-boundary interfaces. It confirms that the compiled constraints can enter the existing planning chain; it does not provide a native Apollo benchmark.
+
+\subsection{Outcomes and statistical analysis}
+
+The primary outcome is collision-free goal reaching: a run is successful when it remains collision-free over the full horizon and reaches $s_{\mathrm{end}}\geq s_{\max}-1$ m. Collision rate is evaluated against truth rectangles, and degraded-stop rate records runs that stop or fail to reach the goal without a collision. Progress ratio, average speed, jerk RMS, minimum signed clearance, minimum longitudinal TTC, penalized travel time, and complete planning latency provide operational, safety, comfort, and computational context. Penalized travel time equals arrival time for collision-free arrivals and the scenario horizon plus 5 s otherwise. Runtime includes the complete method call; B2 includes all coordination iterations.
+
+For each fixed seed, we compute MIKU minus baseline differences before aggregation. Continuous metrics use 5,000-resample paired percentile bootstrap intervals. Binary success and collision outcomes use exact McNemar tests. Effect sizes are paired Cohen's $d_z$. Runtime is reported at the 50th, 95th, and 99th percentiles because a typical-cycle value alone can conceal an operational tail. No external leaderboard comparison is made: B0--B2 are internal matched variants, and B3 is a finite computational reference.
+
+\subsection{Mechanism and interface cases}
+
+Four deterministic mechanism cases expose the two target failure modes: time-blind occupancy and incompatible obstacle-wise side choices. Four paired control cases alter only the time horizon or lateral placement so that the baseline is feasible. Three Apollo Dreamview cases illustrate dynamic overtaking, a narrow passage, and single-lane diversion. They are qualitative interface cases and are reported separately from the numerical protocols.

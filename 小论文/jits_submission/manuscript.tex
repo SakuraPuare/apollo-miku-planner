@@ -1,0 +1,112 @@
+% Journal of Intelligent Transportation Systems submission manuscript.
+% Compile the named version with: latexmk -pdf manuscript.tex
+% Compile the anonymous version with: latexmk -pdf anonymous.tex
+\documentclass[largeformat]{interact}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,array}
+\usepackage{graphicx}
+\usepackage[caption=false]{subfig}
+\usepackage{adjustbox}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc,patterns,decorations.pathreplacing}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usepgfplotslibrary{fillbetween}
+\usepackage[natbibapa]{apacite}
+\setlength\bibhang{12pt}
+\renewcommand\bibliographytypesize{\fontsize{10}{12}\selectfont}
+\usepackage[hidelinks]{hyperref}
+\usepackage{microtype}
+
+% The Interact class reserves \doi for article metadata.  Rebind it for
+% apacite's bibliography DOI links after hyperref has been loaded.
+\renewcommand{\doi}[1]{\href{https://doi.org/#1}{https://doi.org/#1}}
+
+\graphicspath{{figures/}{figures/dreamview/}}
+\input{figures/ped_macros}
+
+\definecolor{deepblue}{RGB}{0,114,178}
+\definecolor{lightblue}{RGB}{187,220,238}
+\definecolor{skyblue}{RGB}{86,180,233}
+\definecolor{inputyellow}{RGB}{240,228,66}
+\definecolor{outputpink}{RGB}{204,121,167}
+\definecolor{improvedpink}{RGB}{213,94,0}
+\definecolor{lightpink}{RGB}{230,159,0}
+\definecolor{deeppink}{RGB}{213,94,0}
+\definecolor{bglight}{RGB}{244,244,244}
+\definecolor{lightgreen}{RGB}{0,158,115}
+\definecolor{lightorange}{RGB}{230,159,0}
+\definecolor{dangerred}{RGB}{213,94,0}
+\definecolor{vibrantgreen}{RGB}{0,158,115}
+\definecolor{vibrantorange}{RGB}{230,159,0}
+\definecolor{vibrantred}{RGB}{213,94,0}
+\tikzset{
+  mod/.style={rectangle,rounded corners=2pt,draw=deepblue,fill=lightblue,minimum height=0.9cm,align=center,font=\small},
+  modimp/.style={rectangle,rounded corners=2pt,draw=deeppink,fill=improvedpink!25,minimum height=0.9cm,align=center,font=\small},
+  modin/.style={rectangle,draw=deepblue,fill=inputyellow!45,minimum height=0.9cm,align=center,font=\small},
+  modout/.style={rectangle,draw=deeppink,fill=outputpink!35,minimum height=0.9cm,align=center,font=\small},
+  axx/.style={->,thick,black!80},
+  flow/.style={-Stealth,thick,deepblue},
+  flowimp/.style={-Stealth,thick,deeppink},
+  obsstatic/.style={fill=dangerred!70,draw=dangerred,thick},
+  obsdyn/.style={fill=lightorange,draw=dangerred,thick},
+  obsbuf/.style={draw=dangerred!70,dashed,thick},
+  bandok/.style={fill=lightgreen,opacity=0.35},
+  bandbad/.style={fill=dangerred!25,opacity=0.55},
+  egopt/.style={fill=deepblue,draw=deepblue},
+  reflinestyle/.style={deepblue,very thick}
+}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+
+\DontPrintSemicolon
+\SetAlgoCaptionSeparator{.}
+\SetAlgorithmName{Algorithm}{Algorithm}{List of Algorithms}
+\providecommand{\pp}{percentage points}
+\providecommand{\MIKU}{MIKU}
+\providecommand{\code}[1]{\texttt{#1}}
+
+\articletype{Research Article}
+\received{Manuscript prepared for peer review}
+\title{Interaction-Aware Space--Time Homotopy Constraints for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic}
+
+\ifdefined\anonymousversion
+  \author{\name{Anonymous authors}\affil{Affiliations withheld for anonymous review}}
+  \hypersetup{pdftitle={Interaction-Aware Space-Time Homotopy Constraints for Path-Velocity Planning in Dynamic Multi-Obstacle Traffic},pdfauthor={Anonymous}}
+\else
+  \input{named_metadata}
+\fi
+
+\begin{document}
+\maketitle
+\enlargethispage{4pt}
+
+\begin{abstract}
+Path--velocity decomposition supports efficient planning but can discard interaction timing: time-blind path bounds merge occupancies that occur at different times, while obstacle-wise side decisions can create false blockage. We develop MIKU, an interaction-aware constraint interface that retains the downstream path and speed quadratic programs. Arrival-time-dependent projection prevents temporally disjoint occupancies from being merged; threat-aware margins and a continuous partition generate group-level lateral bands; and a temporal homotopy graph compiles safe passage windows into station--time box constraints. For the fixed-section interval model, the maximum-gap scan reduces the $k$-obstacle side-assignment search from $O(2^k)$ to $O(k\log k)$ and matched exhaustive enumeration on 4,000 deterministic interval instances. Across 3,500 paired simulated scenarios covering seven traffic configurations, MIKU increased collision-free goal reaching from 62.7\% to 77.5\% (difference 14.8 percentage points, 95\% CI 13.5--16.0) and reduced collision from 2.2\% to 1.1\%, while mean progress increased by 8.9 percentage points. Median and 95th-percentile planning times were 9.98 and 55.93\,ms, although the 99th percentile was 221.8\,ms versus 138.9\,ms for the baseline. A separate 700-scenario rolling-replanning study and Apollo 11.0 interface cases support replanning behavior and software integration, but do not constitute road testing. The results show how preserving interaction timing at the constraint interface can reduce unnecessary stopping without replacing established convex optimizers, subject to tail-latency and simulation-to-road validation.
+\end{abstract}
+
+\begin{keywords}
+autonomous driving; path--velocity decomposition; space--time homotopy; dynamic obstacles; motion planning
+\end{keywords}
+
+\input{sections/01_introduction}
+\input{sections/02_related_work}
+\input{sections/03_problem_formulation}
+\input{sections/04_methodology}
+\input{sections/05_experimental_design}
+\input{sections/06_results}
+\input{sections/07_discussion}
+\input{sections/08_limitations_conclusion}
+\input{sections/09_declarations}
+
+\bibliographystyle{apacite}
+\bibliography{references}
+
+\end{document}
