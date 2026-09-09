@@ -1,0 +1,35 @@
+\section{相关工作}
+\label{zh:sec:related_work}
+
+\subsection{联合时空规划}
+
+联合规划器通过搜索或优化扩展状态保留几何和时间耦合。共形时空格栅直接协调位置、速度和时间 \citep{mcnaughton2011lattice}。瞬时分析方法以及 SLT 形式化方法也在密集交通中联合处理横向和纵向决策 \citep{yang2021_ia_planner,hu2023_hybrid_astar_slt,hu2025_dp_nmpc,qiao2025stjoint}。混合整数形式化则可以用离散变量编码障碍物侧向选择 \citep{kessler2023}。这些方法具有较强的协调能力，但其扩大的搜索空间、整数决策或非线性规划结构，与许多 PVD 栈使用的两个串联凸 QP 存在结构差异。因此，本文后续使用的有限网格联合搜索只作为计算参考，不将其声称为连续问题的最优解。
+
+\subsection{分解式与迭代式协调}
+
+PVD 规划器先优化路径，再优化速度轮廓，从而获得计算可处理性 \citep{kant1986pvd,werling2010}。凸平滑和分段加加速度优化使这种结构适用于面向生产的软件 \citep{fan2018baidu,zhou2021dliaps,zhou2021pathqp}。时间优化、迭代锚定、候选配对和风险感知协调能够在两个阶段之间回传信息 \citep{liu2017speed,chen2019em,zhang2023_dp_rcg,han2026_contingency,pathspeedstructured2024}。但它们的有效性取决于每个阶段暴露了哪些信息。反复更新到达时间，无法恢复已经被不可逆局部侧向决策丢弃的横向类别。
+
+安全走廊方法在连续优化之前显式给出可行域。空间飞行走廊展示了凸集如何连接离散搜索和轨迹优化 \citep{liu2017sfc}，近期自动驾驶研究又将这一思想扩展到时空换道走廊或 Frenet 走廊 \citep{yoon2024stcorridor,frenetcorridor2025}。MIKU 同样强调显式可行域，但关注更窄的接口问题，即如何在不替换路径 QP 和速度 QP 的情况下，生成相互一致的 SL 边界与 ST 边界。
+
+\subsection{交互预测与安全裕度}
+
+预测感知规划能够处理静态障碍物轮廓无法表达的行人和车辆交互 \citep{yangbo2023ped,jeong2021ml}。这类预测仍然存在不确定性，因此规划器需要区分用于估计到达时刻的名义状态和用于碰撞检查的占用集合。MIKU 使用前者查询并排序候选方案，同时用有界的位置误差和速度误差扩展后者。进一步的威胁相关附加裕度按照碰撞紧迫性、横向重叠、相对运动、目标类型和局部密度分配有限的横向空间，其中碰撞时间仅作为一个归一化紧迫性因子 \citep{minderhoud2001extended}。
+
+表~\ref{zh:tab:method_classes} 从求解器层面总结了这些差异。已有方法在各自假设下都具有价值，但仍缺少一种 PVD 栈，能够在保留下游 QP 的同时，联合协调依赖时间的投影、群组级侧向选择以及速度阶段的时序约束。
+
+\begin{table}
+\tbl{规划方法族与约束接口问题的关系。}{%
+\small
+\begin{tabular}{p{0.18\textwidth}p{0.24\textwidth}p{0.23\textwidth}p{0.25\textwidth}}
+\toprule
+方法族 & 时空协调方式 & 对求解器的影响 & 本文所处理的接口缺口 \\
+\midrule
+无时间意识的 PVD & 先路径后速度 & 两个结构化 QP & 丢失依赖到达时刻的占用信息和群组选择 \\
+迭代式 PVD & 反复更新路径与速度 & 多次调用求解器 & 仅靠时序无法恢复已丢弃的横向类别 \\
+联合格栅或混合整数规划 & 耦合状态或离散变量 & 扩大搜索或更换优化器 & 不保留原有的双 QP 接口 \\
+安全走廊规划 & 优化前构造凸可行集 & 走廊生成器加连续求解器 & 往往只关注选定走廊，而非耦合的空间和时间类别 \\
+MIKU & 将空间和时间同伦编译为边界 & 保留两个下游 QP & 处理到达时序、群组决策和跨阶段约束传递 \\
+\bottomrule
+\end{tabular}}
+\label{zh:tab:method_classes}
+\end{table}

@@ -1,0 +1,95 @@
+% 中文校对稿，仅供作者核对，不用于期刊投稿。
+\documentclass[largeformat]{interact}
+
+\usepackage{fontspec}
+\usepackage{xeCJK}
+\setmainfont{TeX Gyre Termes}
+\setCJKmainfont[AutoFakeSlant=0.2]{Noto Serif CJK SC}
+\setCJKsansfont{Noto Sans CJK SC}
+\setCJKmonofont{Noto Sans Mono CJK SC}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs,array}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage[caption=false]{subfig}
+\usepackage{adjustbox}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage[natbibapa]{apacite}
+\setlength\bibhang{12pt}
+\renewcommand\bibliographytypesize{\fontsize{10}{12}\selectfont}
+\usepackage[hidelinks,unicode]{hyperref}
+\usepackage{microtype}
+
+\renewcommand{\doi}[1]{\href{https://doi.org/#1}{https://doi.org/#1}}
+\graphicspath{{figures/}{figures/dreamview/}}
+
+\definecolor{deepblue}{RGB}{0,114,178}
+\definecolor{lightblue}{RGB}{187,220,238}
+\definecolor{skyblue}{RGB}{86,180,233}
+\definecolor{inputyellow}{RGB}{240,228,66}
+\definecolor{outputpink}{RGB}{204,121,167}
+\definecolor{improvedpink}{RGB}{213,94,0}
+\definecolor{lightpink}{RGB}{230,159,0}
+\definecolor{deeppink}{RGB}{213,94,0}
+\definecolor{bglight}{RGB}{244,244,244}
+\definecolor{lightgreen}{RGB}{0,158,115}
+\definecolor{lightorange}{RGB}{230,159,0}
+\definecolor{dangerred}{RGB}{213,94,0}
+\definecolor{vibrantgreen}{RGB}{0,158,115}
+\definecolor{vibrantorange}{RGB}{230,159,0}
+\definecolor{vibrantred}{RGB}{213,94,0}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+
+\DontPrintSemicolon
+\SetAlgoCaptionSeparator{。}
+\SetAlgorithmName{算法}{算法}{算法目录}
+\SetKwInput{KwIn}{输入}
+\SetKwInput{KwOut}{输出}
+\SetKw{Return}{返回}
+\renewcommand{\abstractname}{摘要}
+\renewcommand{\keywordsname}{关键词}
+\renewcommand{\figurename}{图}
+\renewcommand{\tablename}{表}
+\renewcommand{\refname}{参考文献}
+\providecommand{\pp}{百分点}
+\providecommand{\MIKU}{MIKU}
+\providecommand{\code}[1]{\texttt{#1}}
+
+\articletype{研究论文}
+\received{中文校对稿，非投稿版本}
+\title{动态多障碍交通中的交互感知时空同伦约束路径—速度规划}
+\author{%
+  \name{JiaWang Liao\textsuperscript{a}, YuFei Hu\textsuperscript{a}, ChaoYang Shi\textsuperscript{a} and ChengJiao Sun\textsuperscript{a}\thanks{通讯作者：ChengJiao Sun。邮箱：jiao1952@126.com}}
+  \affil{\textsuperscript{a}湖北文理学院计算机工程学院，湖北省襄阳市隆中路296号，邮政编码441053}}
+\hypersetup{pdftitle={动态多障碍交通中的交互感知时空同伦约束路径—速度规划},pdfauthor={JiaWang Liao, YuFei Hu, ChaoYang Shi, ChengJiao Sun}}
+
+\begin{document}
+\maketitle
+\enlargethispage{8pt}
+
+\begin{abstract}
+路径—速度分解有利于高效规划，但可能丢失交互时序信息。无时间意识的路径边界会把不同时间发生的占用合并，逐障碍物的侧向选择还可能产生相互冲突的阻塞。本文提出多障碍交互感知运动学约束统一方法 MIKU。该方法保留下游路径二次规划和速度二次规划，通过依赖到达时间的投影避免合并时间上不相交的占用，通过威胁感知裕度和连续划分生成群组级横向带，并利用时空同伦图将安全通行时间窗编译为站位—时间盒约束。在固定截面区间模型下，最大间隙扫描将 $k$ 个障碍物的侧向分配搜索从 $O(2^k)$ 降为 $O(k\log k)$，并在 4,000 个确定性区间实例上与穷举结果一致。在覆盖七类交通构型的 3,500 个配对仿真场景中，MIKU 将无碰撞到达目标率从 62.7\% 提高到 77.5\%，差值为 14.8 个百分点，95\% 置信区间为 13.5--16.0，并将碰撞率从 2.2\% 降至 1.1\%，平均进度提高 8.9 个百分点。规划时间的中位数和第 95 百分位分别为 9.98 ms 和 55.93 ms，但第 99 百分位为 221.8 ms，高于基线的 138.9 ms。独立的 700 场景滚动重规划实验和 Apollo 11.0 接口案例支持重规划行为与软件接入判断，但不构成道路测试。结果表明，在不替换既有凸优化器的前提下，在约束接口处保留交互时序能够减少不必要的停车，但仍需接受尾部延迟和仿真到道路验证的限制。
+\end{abstract}
+
+\begin{keywords}
+自动驾驶；路径—速度分解；时空同伦；动态障碍物；运动规划
+\end{keywords}
+
+\input{sections/01_introduction_zh}
+\input{sections/02_related_work_zh}
+\input{sections/03_problem_formulation_zh}
+\input{sections/04_methodology_zh}
+\input{sections/05_experimental_design_zh}
+\input{sections/06_results_zh}
+\input{sections/07_discussion_zh}
+\input{sections/08_limitations_conclusion_zh}
+\input{sections/09_declarations_zh}
+
+\bibliographystyle{apacite}
+\bibliography{references}
+
+\end{document}

@@ -1,0 +1,49 @@
+\section{问题形式化与证据范围}
+\label{zh:sec:problem}
+
+\subsection{路径—速度接口}
+
+考虑与道路对齐的 Frenet 坐标系，其中 $s$ 表示站位，$l$ 表示相对于参考线的横向位移。PVD 规划器首先在 SL 空间中优化横向路径 $l(s)$，随后在 ST 空间中优化纵向运动 $s(t)$。令路径状态为 $\mathbf{x}_p=(l_j,l'_j,l''_j)_{j=0}^{K}$，速度状态为 $\mathbf{x}_v=(s_r,v_r,a_r)_{r=0}^{N}$，则常见的下游求解器可写为
+\begin{align}
+ \mathbf{x}_p^*={}&\arg\min_{\mathbf{x}_p}
+ \frac{1}{2}\mathbf{x}_p^{\mathsf T}H_p\mathbf{x}_p+q_p^{\mathsf T}\mathbf{x}_p,\\[-2pt]
+ &\quad\text{s.t. }A_p\mathbf{x}_p=b_p,\quad l_j^-\leq l_j\leq l_j^+, \label{zh:eq:path_qp}\\
+ \mathbf{x}_v^*={}&\arg\min_{\mathbf{x}_v}
+ \frac{1}{2}\mathbf{x}_v^{\mathsf T}H_v\mathbf{x}_v+q_v^{\mathsf T}\mathbf{x}_v,\\[-2pt]
+ &\quad\text{s.t. }A_v\mathbf{x}_v=b_v,\quad s_r^{lb}\leq s_r\leq s_r^{ub},\\[-2pt]
+ &\qquad 0\leq v_r\leq v_{\max},\quad a_{\min}\leq a_r\leq a_{\max}. \label{zh:eq:speed_qp}
+\end{align}
+其中，$H_p$ 和 $H_v$ 编码平滑性代价，$A_p$ 和 $A_v$ 编码分段加加速度运动学等式。路径边界集合 $\mathcal{B}_l=\{[l_j^-,l_j^+]\}$ 与 ST 位置边界集合 $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}$ 是环境信息的接口。MIKU 只改变这两个接口，不改变下游目标矩阵、运动学等式和 QP 求解器。
+
+\subsection{中心坐标障碍物模型}
+
+对于障碍物 $i$，令 $O_i(t)=[s_i^-(t),s_i^+(t)]\times[l_i^-(t),l_i^+(t)]$ 表示其物理矩形。若道路物理边界为 $[l_{\mathrm{road}}^-,l_{\mathrm{road}}^+]$，自车宽度为 $W_{\mathrm{ego}}$，路侧裕度为 $d_{\mathrm{road}}$，则自车中心的可行区间为
+\begin{equation}
+ [L^-,L^+]=[l_{\mathrm{road}}^-+W_{\mathrm{ego}}/2+d_{\mathrm{road}},\ l_{\mathrm{road}}^+-W_{\mathrm{ego}}/2-d_{\mathrm{road}}].
+ \label{zh:eq:center_road}
+\end{equation}
+传递给中心坐标规划器的障碍物区间会一次性扩展自车宽度的一半以及障碍物特定的附加裕度 $d_{\mathrm{buf},i}$：
+\begin{equation}
+ [u_i,v_i]=[l_i^- -W_{\mathrm{ego}}/2-d_{\mathrm{buf},i},\ l_i^+ +W_{\mathrm{ego}}/2+d_{\mathrm{buf},i}].
+ \label{zh:eq:center_forbidden}
+\end{equation}
+式~(\ref{zh:eq:center_road})--式~(\ref{zh:eq:center_forbidden})中的四个量均指自车中心。因此，间隙宽度表示中心位置可用的宽度，后续可行性测试不再重复减去车辆宽度。
+
+在某一站位处的 $k$ 个活动障碍物集合中，将每个障碍物分配到自车带的左侧（$L$）或右侧（$R$）。对于决策向量 $\mathbf{d}$，得到的中心带为
+\begin{equation}
+ l^-(\mathbf{d})=\max\left(L^-,\max_{i\in\mathcal{L}}v_i\right),\qquad
+ l^+(\mathbf{d})=\min\left(L^+,\min_{i\in\mathcal{R}}u_i\right),
+ \label{zh:eq:center_band}
+\end{equation}
+其中空集合的极值项省略。当数值容差为 $\varepsilon$ 时，若 $W(\mathbf{d})=l^+(\mathbf{d})-l^-(\mathbf{d})\geq\varepsilon$，则该中心带可行。
+
+\subsection{两种失效机制与研究边界}
+
+当路径阶段忽略时间时，可能用预测时域上的并集替代动态占用
+\begin{equation}
+ \overline{O}_i=\bigcup_{t\in[0,T_{\mathrm{pred}}]}O_i(t),
+ \label{zh:eq:prob_union}
+\end{equation}
+从而把不同时间被占用的位置当成同时存在。相反，逐障碍物的贪心策略可能在尚未看到同一纵向连通分量中另一个障碍物影响之前，就提前确定侧向。两种机制都可能造成 $l^+(s)<l^-(s)$，即使从时间上保持一致的通道仍然存在。
+
+本文检验的是，在边界接口处恢复缺失的到达时间信息和群组级信息，是否能够改善规划结果。主要证据来自直道路段、恒定速度障碍物模型和有界扰动场景。3,500 个场景实验是匹配的数值评估，不是公共数据或道路现场研究。Apollo Planning 仅用于接口和代表性行为证据，不将其视为物理道路测试或 Apollo 原生运行时间基准。

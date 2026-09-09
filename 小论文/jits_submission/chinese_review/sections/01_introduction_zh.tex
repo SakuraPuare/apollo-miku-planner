@@ -1,0 +1,32 @@
+\section{引言}
+\label{zh:sec:introduction}
+
+自动驾驶车辆需要在动态交通中持续前进，同时满足碰撞规避和乘坐舒适性要求。因此，过度保守的运动规划并非没有代价。反复触发的兜底停车会降低服务可靠性、阻碍周围交通，并削弱智能交通系统应有的机动性收益。运动规划综述因此通常将可行性、安全性、舒适性和计算代价视为相互耦合的运营结果，而不是可以相互替代的单一指标 \citep{gonzalez2016,paden2016,schwarting2018planning}。
+
+路径—速度分解（path--velocity decomposition，PVD）适合在线运行，因为它在站位—横向（station--lateral，SL）坐标中生成横向路径，在站位—时间（station--time，ST）坐标中优化纵向速度 \citep{kant1986pvd,werling2010,zhou2021dliaps}。工业实现由此可以求解两个结构化二次规划（quadratic program，QP），并通过路径边界和 ST 边界向求解器传递环境信息 \citep{fan2018baidu,zhou2021pathqp,wang2022_jfr}。然而，这种分解也可能丢失密集动态场景所需要的关键信息。由当前时刻快照或整个预测时域的并集构成的路径边界，无法区分某一区域是当前被占用，还是在自车到达时已经空闲。此外，逐障碍物做出的不可逆侧向选择，可能以互不兼容的方式抬高路径下界并压低路径上界，即使联合选择后仍存在可通行的通道。
+
+联合时空搜索、混合整数优化和走廊方法可以协调这些决策，但通常需要替换原有求解器、扩大状态空间，或反复调用路径和速度阶段 \citep{mcnaughton2011lattice,kessler2023,yoon2024stcorridor}。本文考察的是另一种可能性，即能否在已有 PVD 栈的约束接口处恢复丢失的交互信息。本文提出的多障碍交互感知运动学约束统一方法（Multi-obstacle Interaction-aware Kinematic constraint Unification，MIKU）构造随时间变化的横向带，选择空间和时间同伦类别，并将其编译为两个 QP 已经支持的盒约束。
+
+本文围绕以下四个研究问题展开：
+\begin{enumerate}
+  \item[RQ1.] 与匹配的 PVD 基线相比，交互感知约束构造在多大程度上能够改善无碰撞到达目标和交通进度。
+  \item[RQ2.] 哪些空间、时间和不确定性处理组件造成了观测到的效果。
+  \item[RQ3.] 在哪些运行条件下，鲁棒性、舒适性或计算代价会限制方法收益。
+  \item[RQ4.] 在不改变下游 QP 结构的情况下，同一约束接口能否接入已有的 PVD 软件栈。
+\end{enumerate}
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{fig_teaser_en.pdf}
+\caption{MIKU 针对的失效模式。即使群组级连续通道仍然存在，独立的侧向选择也可能使路径下界和上界相互穿越。图内变量和模块名称保留英文，以便与实现对应。}
+\label{zh:fig:teaser}
+\end{figure}
+
+本文的主要贡献如下。
+\begin{enumerate}
+  \item 在中心坐标边界中形式化了依赖到达时间的 SL 投影和群组级障碍物侧向分配。连续划分引理将 $k$ 个活动障碍物的 $2^k$ 种分配缩减为 $k+1$ 个候选点，并在固定截面区间模型下通过 $O(k\log k)$ 最大间隙扫描确定最宽横向带。
+  \item 通过不确定性扩展占用管、可安全通行时间窗和分层时间同伦图，将空间决策连接到速度规划。选定的时序条件仍然表现为线性 ST 盒约束，因此保留下游路径 QP 和速度 QP 的目标函数、运动学等式、凸性及稀疏结构。
+  \item 通过匹配的证据链检验每项主张，包括 4,000 个确定性区间检查、带置信区间和组件消融的 3,500 个配对场景、独立的 700 场景滚动重规划实验、有限网格联合参考以及三个 Apollo 11.0 接口案例。分析在报告收益的同时，也报告不利的尾部延迟和依赖条件的权衡。
+\end{enumerate}
+
+第~\ref{zh:sec:related_work} 节将约束接口方法置于联合规划器和分解式规划器之间进行定位。第~\ref{zh:sec:problem} 节定义 PVD 接口及其两种失效机制。第~\ref{zh:sec:method} 节介绍 MIKU，第~\ref{zh:sec:experimental_design} 节和第~\ref{zh:sec:results} 节说明评估设计与结果，第~\ref{zh:sec:discussion}--\ref{zh:sec:conclusion} 节讨论工程含义、局限和结论。

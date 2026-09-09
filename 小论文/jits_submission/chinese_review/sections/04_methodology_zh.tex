@@ -1,0 +1,146 @@
+\section{MIKU 方法}
+\label{zh:sec:method}
+
+\subsection{总体流程}
+
+MIKU 重建无时间意识的 PVD 和逐障碍物 PVD 所丢失的两类信息。首先估计自车到达时间 $\tau(s)$，并查询依赖时间的障碍物占用。随后计算依赖威胁的中心边界，对纵向连通的障碍物进行分组，并选择连续的横向带。在路径 QP 求解之后，用不确定性扩展的占用管定义安全通行时间窗。分层时间同伦图选择具有因果一致性的时间窗序列，并将其写入 ST 位置边界。图~\ref{zh:fig:miku_flow} 总结了数据流。
+
+\begin{figure}
+\centering
+\includegraphics[width=\textwidth]{fig_framework_en.pdf}
+\caption{MIKU 在 PVD 规划栈中的约束构造与传递。图内模块和变量名称保留英文，以便与实现对应。}
+\label{zh:fig:miku_flow}
+\end{figure}
+
+\subsection{威胁感知裕度}
+\label{zh:sec:method_threat}
+
+对于障碍物 $i$，MIKU 将碰撞紧迫性、横向重叠、相对运动、目标类型和局部交互密度组合为归一化威胁分数：
+\begin{equation}
+ \Theta_i=w_1f_{\mathrm{TTC}}(i)+w_2f_{\mathrm{overlap}}(i)+w_3f_{\mathrm{vel}}(i)+w_4f_{\mathrm{type}}(i)+w_5f_{\mathrm{inter}}(i).
+ \label{zh:eq:threat_score}
+\end{equation}
+所有因子均位于 $[0,1]$，权重为 $(0.30,0.20,0.15,0.10,0.25)$。当自车位于障碍物后方且正在接近时，$\mathrm{TTC}_i=(s_i-s_{\mathrm{ego}})/(\dot{s}_{\mathrm{ego}}-\dot{s}_i)$，否则取 $+\infty$。分段线性 TTC 因子在 $\mathrm{TTC}_i\leq2.0$ s 时取 1，在 $\mathrm{TTC}_i\geq7.0$ s 时取 0，中间区间线性下降 \citep{minderhoud2001extended}。重叠因子和相对速度因子为
+\begin{align}
+ f_{\mathrm{overlap}}(i)&=\min\!\left(1,\frac{\max(0,\min(l_i^+,l_{\mathrm{ego}}^+)-\max(l_i^-,l_{\mathrm{ego}}^-))}{\max(0.1,\min(W_i,W_{\mathrm{ego}}))}\right),\\
+ f_{\mathrm{vel}}(i)&=\sigma(v_{\mathrm{rel},i}/v_{\max}),\qquad \sigma(x)=\frac{1}{1+e^{-5x}}.
+\end{align}
+其中 $W_i=l_i^+-l_i^-$ 表示障碍物宽度。截断操作使障碍物宽于自车时的重叠因子仍处于 $[0,1]$。易受伤道路使用者、机动车、未知可移动物体、静态障碍物和小型标记物的类型因子分别为 $1.0$、$0.7$、$0.5$、$0.3$ 和 $0.15$。密度在 10 m 邻域内计算，单个障碍物的密度取 0。附加裕度为
+\begin{equation}
+ d_{\mathrm{buf},i}=d_{\mathrm{buf,min}}+(d_{\mathrm{buf,max}}-d_{\mathrm{buf,min}})\Theta_i,
+ \label{zh:eq:dynamic_delta}
+\end{equation}
+其中 $[d_{\mathrm{buf,min}},d_{\mathrm{buf,max}}]=[0.10,0.40]$ m。该项只改变边界数值，不改变排序或扫描结构。
+
+\subsection{连续横向划分与最大间隙}
+\label{zh:sec:method_band}
+
+纵向区间相互重叠的障碍物被分配到同一个连通分量。按较低站位边缘排序，并维护最大的上界，即可在 $O(n\log n)$ 时间内构造所有分量。在一个分量内部，再按 $u_i$ 对活动区间排序，$u_i$ 相同时按 $v_i$ 降序排列。下面的引理限制侧向分配搜索范围。
+
+\begin{lemma}[连续最优划分]
+\label{zh:lem:continuous_partition}
+对于式~(\ref{zh:eq:center_band})中的中心带目标，存在一个最优分配，使得按 $u_i$ 排序的障碍物中，前缀被分配到 $L$ 侧，后缀被分配到 $R$ 侧。因此只需考察 $k+1$ 个分割点。
+\end{lemma}
+
+\emph{证明。} 若两侧均非空，令 $\beta=\min_{i\in\mathcal{R}}u_i$。将当前位于 $\mathcal{L}$ 且满足 $u_i\geq\beta$ 的每个障碍物移到 $\mathcal{R}$。由于每个被移动的下边缘都不小于 $\beta$，上界保持不变，而从 $\mathcal{L}$ 中移除元素不会抬高下界，因此带宽不会减小。重复该操作即可得到连续分割。空侧情况对应 $p=0$ 或 $p=k$。对于 $u_i$ 相同的情况按 $v_i$ 降序排列即可消除歧义。\hfill$\Box$
+
+对于分割点 $p$，定义前缀最大值和候选上边缘
+\begin{equation}
+ V_0=L^-,\qquad V_p=\max\left(L^-,\max_{1\leq q\leq p}v_{(q)}\right),
+ \label{zh:eq:prefix_v}
+\end{equation}
+\begin{equation}
+ U_p=\begin{cases}\min(L^+,u_{(p+1)}),&p<k,\\L^+,&p=k,\end{cases}\qquad g_p=U_p-V_p.
+ \label{zh:eq:gap_def}
+\end{equation}
+
+\begin{theorem}[最大间隙最优性]
+\label{zh:thm:max_gap}
+对于固定截面区间模型，最优中心带宽度为 $W^*=\max_{p=0,\ldots,k}g_p$。候选解通过排序和一次前缀扫描获得，复杂度为 $O(k\log k)$。
+\end{theorem}
+
+\emph{证明。} 对于分割点 $p$，式~(\ref{zh:eq:center_band})给出下边缘 $V_p$ 和最紧的上边缘 $U_p$，因此带宽为 $g_p$。引理~\ref{zh:lem:continuous_partition} 保证存在连续最优分割，枚举 $k+1$ 个分割点即可取得最优值。\hfill$\Box$
+
+该定理只对固定截面区间抽象成立，不能证明完整非凸轨迹问题的连续全局最优性。MIKU 在每个分量中保留 $Q=3$ 个最宽的正带，并通过动态规划在带宽与横向中心变化之间进行权衡。若分量 $j$ 中的带 $B_{jq}$ 具有中心 $c_{jq}$ 和宽度 $g_{jq}$，则序列最小化
+\begin{equation}
+ -\sum_jg_{jq_j}+\lambda_s\left(|c_{1q_1}-l_0|+\sum_{j>1}|c_{jq_j}-c_{j-1,q_{j-1}}|\right),
+ \label{zh:eq:spatial_homotopy}
+\end{equation}
+递推关系为
+\begin{equation}
+ D_{jq}=-g_{jq}+\min_r\{D_{j-1,r}+\lambda_s|c_{jq}-c_{j-1,r}|\}.
+ \label{zh:eq:spatial_dp}
+\end{equation}
+
+\begin{figure}
+\centering
+\includegraphics[width=0.82\textwidth]{fig_max_gap_en.pdf}
+\caption{固定截面最大间隙问题的连续分割候选。四个排序后的禁行区间产生五个候选分割点。当区间上边缘相互嵌套时，需要维护前缀最大值。图内变量保留英文。}
+\label{zh:fig:max_gap}
+\end{figure}
+
+\subsection{依赖到达时间的投影}
+\label{zh:sec:method_projection}
+
+在站位 $s$ 处，路径阶段查询预计自车到达时刻对应的障碍物占用。根据当前状态并采用恒定加速度近似，有
+\begin{equation}
+ \tau(s)=\frac{-v_{\mathrm{ego}}+\sqrt{v_{\mathrm{ego}}^2+2a_{\mathrm{ego}}(s-s_{\mathrm{ego}})}}{a_{\mathrm{ego}}},
+ \label{zh:eq:arrival_time}
+\end{equation}
+当 $|a_{\mathrm{ego}}|<10^{-3}$ 时使用恒速极限。判别式为负时，将该点标记为位于规划时域之外。在滚动重规划中，$\tau(s)$ 由上一次速度解插值得到，并在每个周期更新。
+
+数值场景采用 $s_i(t)=s_{i,0}+v_{s,i}t$ 和 $l_i(t)=l_{i,0}+v_{l,i}t$。对于有界预测误差，时刻 $t$ 的纵向和横向扩展为
+\begin{equation}
+ \epsilon_{s,i}(t)=\epsilon_{s0,i}+t\epsilon_{vs,i},\qquad
+ \epsilon_{l,i}(t)=\epsilon_{l0,i}+t\epsilon_{vl,i}.
+ \label{zh:eq:prediction_tube}
+\end{equation}
+在构造 ST 占用图之前，将物理障碍物和自车轮廓按上述量扩展。名义的 $\tau(s)$ 用于选择并排序候选方案，碰撞检查则使用扩展后的占用。
+
+\subsection{时间同伦与 ST 传递}
+\label{zh:sec:method_temporal}
+
+对于冲突区域 $c$，令 $I_{cr}=[t_{cr}^{in},t_{cr}^{out}]$ 表示路径与预测占用管之间的每个重叠区间。经过时间安全扩展 $\eta_c$ 后，安全时间窗为
+\begin{equation}
+ \mathcal{W}_c=[0,T]\setminus\bigcup_r[t_{cr}^{in}-\eta_c,t_{cr}^{out}+\eta_c].
+ \label{zh:eq:safe_windows}
+\end{equation}
+将这些时间窗与最早可到达时间相交，得到 $W_{cq}=[\alpha_{cq},\beta_{cq}]$。对于按站位排序的冲突点，当满足
+\begin{equation}
+ \hat t_c\geq\hat t_{c-1}+\frac{s_c-s_{c-1}}{v_{\max}},\qquad \hat t_c\in W_{cq}
+ \label{zh:eq:temporal_edge}
+\end{equation}
+时，连接相邻节点。节点代价衡量其与 $\tau(s_c)$ 的偏离，边代价抑制在障碍物前后通行之间进行不必要的切换。带宽受限的动态规划选择一条具有因果关系的序列。
+
+对于选定的时间窗，其语义以线性盒约束进入速度 QP：
+\begin{equation}
+ \begin{aligned}
+ s_j^{ub}&=\min(s_j^{ub,0},s_c^- -\epsilon_s),&&t_j<\alpha_{cq},\\
+ s_j^{lb}&=\max(s_j^{lb,0},s_c^+ +\epsilon_s),&&t_j\geq\beta_{cq}.
+ \end{aligned}
+ \label{zh:eq:window_to_st}
+\end{equation}
+如果没有完整的可达时间窗序列，规划器会在第一个不可达冲突之前施加停车上界。下游速度 QP 仍然是具有相同目标函数和运动学等式的凸 QP。
+
+\subsection{算法与复杂度}
+
+\begin{algorithm}
+\small
+\caption{MIKU 约束编译}
+\label{zh:alg:miku}
+\KwIn{道路边界、自车状态以及 $n$ 个障碍物的预测轨迹}
+\KwOut{中心路径边界和 ST 位置边界}
+估计 $\tau(s)$，并为每个障碍物计算依赖威胁的中心区间。\;
+对站位区间排序并构造纵向连通分量。\;
+\ForEach{连通分量}{
+  按 $(u_i,-v_i)$ 排序，计算前缀最大值，并保留 $Q$ 个最宽的正带。\;
+}
+依据式~(\ref{zh:eq:spatial_homotopy})选择连续的空间同伦序列。\;
+将选定的侧向分配写入各站位的活动路径边界。\;
+构造不确定性扩展的占用管和安全时间窗。\;
+依据式~(\ref{zh:eq:temporal_edge})选择具有因果关系的时间同伦序列，并将其编译为式~(\ref{zh:eq:window_to_st})。\;
+若启用迭代，则根据速度解更新 $\tau(s)$，直到达到迭代上限或收敛。\;
+\Return{路径边界和 ST 边界}
+\end{algorithm}
+
+对于 $K$ 个路径采样点、$m$ 个分量、每个分量至多 $Q$ 个空间候选以及有界时间束宽度 $B$，排序和分组的代价为 $O(n\log n)$。若每个终端空间带保留 $K_s$ 个前缀，分层空间动态规划的代价为 $O(mK_sQ^2\log(K_sQ))$。对于 $h$ 个冲突点以及每层 $R$ 个可达时间窗，时间束扩展和排序的代价为 $O(hBR\log(BR))$。实现采用 $Q=3$、$K_s=3$ 和 $B=8$。占用查询的代价为 $O(nK)$，朴素交互密度计算在最坏情况下为 $O(n^2)$。
