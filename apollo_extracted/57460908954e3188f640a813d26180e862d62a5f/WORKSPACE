@@ -35,10 +35,10 @@ http_archive(
 )
 http_archive(
     name = "build_bazel_rules_apple",
-    sha256 = "0052d452af7742c8f3a4e0929763388a66403de363775db7e90adecb2ba4944b",
+    sha256 = "e4649d4649ef14adbc421738377d21ea75a1053d8e8f6838fc08e82328599a0f",
     urls = [
-        "https://apollo-system.cdn.bcebos.com/archive/8.0/rules_apple.0.31.3.tar.gz",
-        "https://github.com/bazelbuild/rules_apple/releases/download/0.31.3/rules_apple.0.31.3.tar.gz",
+        "https://apollo-system.cdn.bcebos.com/archive/8.0/rules_apple.4.5.3.tar.gz",
+        "https://github.com/bazelbuild/rules_apple/releases/download/4.5.3/rules_apple.4.5.3.tar.gz",
     ],
 )
 http_archive(
