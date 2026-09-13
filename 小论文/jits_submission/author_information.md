@@ -3,7 +3,7 @@
 ## Manuscript
 
 - Article type: Research Article
-- Title: Interaction-Aware Space--Time Homotopy Constraints for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic
+- Title: Interaction-Aware Constraint Interface for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic
 
 ## Authors
 

@@ -1,0 +1,90 @@
+{
+  "runtime_scope": "solve_max_gap + enumerate_lateral_bands(top_k=3) per active group",
+  "elapsed_s": 6.815926457173191,
+  "case_group_count": 3115,
+  "repeat_count": 500,
+  "call_pair_count": 1557500,
+  "microseconds_per_call_pair": 4.376196762229978,
+  "checksum": -860844.6331795052,
+  "raw_timing_csv": "submission_artifacts/cpp_benchmark/miku_geometry_3500.python_raw.csv",
+  "interpreter": "3.12.13",
+  "platform": "Linux-7.2.2-arch1-1-x86_64-with-glibc2.44",
+  "schema_version": "miku-geometry-v1",
+  "input_file": "submission_artifacts/cpp_benchmark/miku_geometry_3500.csv",
+  "seed_start": 0,
+  "seed_count_per_kind": 500,
+  "scenario_family_count": 7,
+  "validation": "all expected splits, bounds and Top-3 bands match",
+  "geometry_share_diagnostic": {
+    "scope": "instrumented geometry functions within complete Python run_method(MIKU)",
+    "seed_start": 0,
+    "seed_stride": 25,
+    "sample_count_per_family": 20,
+    "total_case_count": 140,
+    "full_python_runtime_ms": 3045.3828283352777,
+    "geometry_python_runtime_ms": 2.048968,
+    "geometry_share": 0.0006728113066559989,
+    "function_call_counts": {
+      "solve_max_gap": 211,
+      "enumerate_lateral_bands": 135
+    },
+    "by_family": [
+      {
+        "case_kind": "crossing_pedestrian",
+        "case_count": 20,
+        "full_python_runtime_ms": 184.0212580282241,
+        "geometry_python_runtime_ms": 0.0,
+        "geometry_share": 0.0,
+        "geometry_call_count": 0
+      },
+      {
+        "case_kind": "vehicle_cut_in",
+        "case_count": 20,
+        "full_python_runtime_ms": 805.0614718813449,
+        "geometry_python_runtime_ms": 0.27019,
+        "geometry_share": 0.00033561412319061063,
+        "geometry_call_count": 31
+      },
+      {
+        "case_kind": "parked_and_oncoming",
+        "case_count": 20,
+        "full_python_runtime_ms": 381.8625849671662,
+        "geometry_python_runtime_ms": 0.467946,
+        "geometry_share": 0.001225430346993109,
+        "geometry_call_count": 74
+      },
+      {
+        "case_kind": "narrow_multi_obstacle",
+        "case_count": 20,
+        "full_python_runtime_ms": 335.9937003115192,
+        "geometry_python_runtime_ms": 0.854953,
+        "geometry_share": 0.002544550684156648,
+        "geometry_call_count": 184
+      },
+      {
+        "case_kind": "interleaved_dynamic",
+        "case_count": 20,
+        "full_python_runtime_ms": 233.50415111053735,
+        "geometry_python_runtime_ms": 0.155233,
+        "geometry_share": 0.0006647976032191182,
+        "geometry_call_count": 20
+      },
+      {
+        "case_kind": "prediction_noise",
+        "case_count": 20,
+        "full_python_runtime_ms": 374.2604770231992,
+        "geometry_python_runtime_ms": 0.300646,
+        "geometry_share": 0.0008033068369689594,
+        "geometry_call_count": 37
+      },
+      {
+        "case_kind": "delayed_crossing",
+        "case_count": 20,
+        "full_python_runtime_ms": 730.6791850132868,
+        "geometry_python_runtime_ms": 0.0,
+        "geometry_share": 0.0,
+        "geometry_call_count": 0
+      }
+    ]
+  }
+}

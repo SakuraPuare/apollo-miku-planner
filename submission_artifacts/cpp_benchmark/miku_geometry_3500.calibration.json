@@ -1,0 +1,111 @@
+{
+  "schema_version": "miku-geometry-paired-calibration-v1",
+  "status": "measured_geometry_primitives_only",
+  "runtime_scope": "solve_max_gap + enumerate_lateral_bands(top_k=3) per active group",
+  "python_to_cpp_ratio": 40.55226436014364,
+  "python_aggregate_elapsed_s": 6.815926457173191,
+  "cpp_aggregate_elapsed_s": 0.16807758,
+  "python_microseconds_per_call_pair": 4.376196762229978,
+  "cpp_microseconds_per_call_pair": 0.10791497913322634,
+  "python_median_microseconds_per_call_pair": 4.077595891430974,
+  "cpp_median_microseconds_per_call_pair": 0.102266,
+  "case_scenario_count": 3500,
+  "case_group_count": 3115,
+  "repeat_count": 500,
+  "call_pair_count": 1557500,
+  "matched_groups": 3115,
+  "matched_bands": 7113,
+  "floating_point_tolerance": 1e-09,
+  "geometry_share_diagnostic": {
+    "scope": "instrumented geometry functions within complete Python run_method(MIKU)",
+    "seed_start": 0,
+    "seed_stride": 25,
+    "sample_count_per_family": 20,
+    "total_case_count": 140,
+    "full_python_runtime_ms": 3045.3828283352777,
+    "geometry_python_runtime_ms": 2.048968,
+    "geometry_share": 0.0006728113066559989,
+    "function_call_counts": {
+      "solve_max_gap": 211,
+      "enumerate_lateral_bands": 135
+    },
+    "by_family": [
+      {
+        "case_kind": "crossing_pedestrian",
+        "case_count": 20,
+        "full_python_runtime_ms": 184.0212580282241,
+        "geometry_python_runtime_ms": 0.0,
+        "geometry_share": 0.0,
+        "geometry_call_count": 0
+      },
+      {
+        "case_kind": "vehicle_cut_in",
+        "case_count": 20,
+        "full_python_runtime_ms": 805.0614718813449,
+        "geometry_python_runtime_ms": 0.27019,
+        "geometry_share": 0.00033561412319061063,
+        "geometry_call_count": 31
+      },
+      {
+        "case_kind": "parked_and_oncoming",
+        "case_count": 20,
+        "full_python_runtime_ms": 381.8625849671662,
+        "geometry_python_runtime_ms": 0.467946,
+        "geometry_share": 0.001225430346993109,
+        "geometry_call_count": 74
+      },
+      {
+        "case_kind": "narrow_multi_obstacle",
+        "case_count": 20,
+        "full_python_runtime_ms": 335.9937003115192,
+        "geometry_python_runtime_ms": 0.854953,
+        "geometry_share": 0.002544550684156648,
+        "geometry_call_count": 184
+      },
+      {
+        "case_kind": "interleaved_dynamic",
+        "case_count": 20,
+        "full_python_runtime_ms": 233.50415111053735,
+        "geometry_python_runtime_ms": 0.155233,
+        "geometry_share": 0.0006647976032191182,
+        "geometry_call_count": 20
+      },
+      {
+        "case_kind": "prediction_noise",
+        "case_count": 20,
+        "full_python_runtime_ms": 374.2604770231992,
+        "geometry_python_runtime_ms": 0.300646,
+        "geometry_share": 0.0008033068369689594,
+        "geometry_call_count": 37
+      },
+      {
+        "case_kind": "delayed_crossing",
+        "case_count": 20,
+        "full_python_runtime_ms": 730.6791850132868,
+        "geometry_python_runtime_ms": 0.0,
+        "geometry_share": 0.0,
+        "geometry_call_count": 0
+      }
+    ]
+  },
+  "python": {
+    "version": "3.12.13",
+    "checksum": -860844.6331795052,
+    "raw_timing_csv": "submission_artifacts/cpp_benchmark/miku_geometry_3500.python_raw.csv"
+  },
+  "cpp": {
+    "compiler": "g++ (GCC) 16.2.1 20260810",
+    "flags": "-std=c++17 -O3 -DNDEBUG -Wall -Wextra -Wpedantic -Werror",
+    "raw_timing_csv": "submission_artifacts/cpp_benchmark/miku_geometry_3500.cpp_raw.csv",
+    "source": "tools/miku_geometry_cpp_benchmark.cpp",
+    "source_sha256": "ced5d353bdfbb4a2b8f637057a25a4d4a7f3d41dfc35dcc20a7855cfa923037f"
+  },
+  "machine": {
+    "cpu_model": "Intel(R) Core(TM) i9-14900HX",
+    "architecture": "x86_64",
+    "system": "Linux-7.2.2-arch1-1-x86_64-with-glibc2.44"
+  },
+  "input_csv": "submission_artifacts/cpp_benchmark/miku_geometry_3500.csv",
+  "input_sha256": "44125a386fd80f27c41dafee44dd22f90c100fed69081e1db29f32e540d2d112",
+  "limitation": "A geometry-kernel speed ratio is not an end-to-end C++ planner runtime. No QP solve, ST stage, certified joint search, safety verification, iteration, Apollo task scheduling, or CyberRT cycle was measured. Scaling a complete Python runtime by this ratio is an extrapolation."
+}

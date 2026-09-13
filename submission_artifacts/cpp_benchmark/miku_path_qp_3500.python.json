@@ -1,0 +1,86 @@
+{
+  "runtime_scope": "path_optimizer: Hessian/CSC assembly + OSQP setup/solve + fallback",
+  "input_file": "submission_artifacts/cpp_benchmark/miku_path_qp_3500.tsv",
+  "input_sha256": "52dde53cea23e191e60f7aeca0aff0311a598b7a484300547d0268df10b85db0",
+  "case_count": 3500,
+  "station_count": 286500,
+  "repeat_count": 5,
+  "measured_call_count": 17500,
+  "python_aggregate_elapsed_s": 11.130930805113167,
+  "python_mean_runtime_ms": 0.6360531888636095,
+  "max_python_rerun_abs_error_m": 0.0,
+  "checksum": 264281.49168742984,
+  "raw_timing_csv": "submission_artifacts/cpp_benchmark/miku_path_qp_3500.python_raw.csv",
+  "interpreter": "3.12.13",
+  "osqp_python_version": "1.1.1",
+  "machine": "Linux-7.2.2-arch1-1-x86_64-with-glibc2.44",
+  "path_qp_share_diagnostic": {
+    "scope": "path_optimizer within complete Python run_method(MIKU)",
+    "seed_start": 0,
+    "seed_stride": 25,
+    "sample_count_per_family": 20,
+    "total_case_count": 140,
+    "full_python_runtime_ms": 3052.7663552202284,
+    "path_optimizer_runtime_ms": 112.0294,
+    "path_qp_share": 0.03669766597382397,
+    "path_optimizer_call_count": 163,
+    "by_family": [
+      {
+        "case_kind": "crossing_pedestrian",
+        "case_count": 20,
+        "full_python_runtime_ms": 185.12620916590095,
+        "path_optimizer_runtime_ms": 11.695118,
+        "path_qp_share": 0.0631737561779781,
+        "path_optimizer_call_count": 21
+      },
+      {
+        "case_kind": "vehicle_cut_in",
+        "case_count": 20,
+        "full_python_runtime_ms": 819.4707336369902,
+        "path_optimizer_runtime_ms": 17.073497,
+        "path_qp_share": 0.02083478555021006,
+        "path_optimizer_call_count": 27
+      },
+      {
+        "case_kind": "parked_and_oncoming",
+        "case_count": 20,
+        "full_python_runtime_ms": 380.1823331741616,
+        "path_optimizer_runtime_ms": 18.728637,
+        "path_qp_share": 0.04926224962541962,
+        "path_optimizer_call_count": 20
+      },
+      {
+        "case_kind": "narrow_multi_obstacle",
+        "case_count": 20,
+        "full_python_runtime_ms": 326.9536317093298,
+        "path_optimizer_runtime_ms": 15.568009,
+        "path_qp_share": 0.04761534202452402,
+        "path_optimizer_call_count": 20
+      },
+      {
+        "case_kind": "interleaved_dynamic",
+        "case_count": 20,
+        "full_python_runtime_ms": 241.81163497269154,
+        "path_optimizer_runtime_ms": 12.836839,
+        "path_qp_share": 0.05308610977900091,
+        "path_optimizer_call_count": 20
+      },
+      {
+        "case_kind": "prediction_noise",
+        "case_count": 20,
+        "full_python_runtime_ms": 376.6375344712287,
+        "path_optimizer_runtime_ms": 23.51405,
+        "path_qp_share": 0.06243151000075441,
+        "path_optimizer_call_count": 33
+      },
+      {
+        "case_kind": "delayed_crossing",
+        "case_count": 20,
+        "full_python_runtime_ms": 722.5842780899256,
+        "path_optimizer_runtime_ms": 12.61325,
+        "path_qp_share": 0.01745574929106094,
+        "path_optimizer_call_count": 22
+      }
+    ]
+  }
+}

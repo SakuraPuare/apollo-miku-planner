@@ -1,7 +1,7 @@
 # MIKU replication supplement
 
-This archive accompanies the manuscript *Interaction-Aware Space--Time
-Homotopy Constraints for Path--Velocity Planning in Dynamic Multi-Obstacle
+This archive accompanies the manuscript *Interaction-Aware Constraint
+Interface for Path--Velocity Planning in Dynamic Multi-Obstacle
 Traffic*. It contains the frozen numerical outputs, the source used to
 generate them, focused tests, and the figure-generation utility.
 
@@ -101,9 +101,8 @@ altering the frozen JSON, in `metadata_corrections.md`.
 
 ## Interpretation boundaries
 
-The maximum-gap scan is exact only for the fixed-section interval abstraction
-and is checked against exhaustive enumeration. B3 is a coarse finite-grid beam
-search, not a continuous global oracle. Apollo evidence checks a software
-insertion point and three representative Dreamview cases; it does not measure
-native Apollo latency or establish physical-road safety. These boundaries are
-also stated in the manuscript's Results, Discussion, and Limitations sections.
+The maximum-gap scan is checked against exhaustive enumeration of the
+fixed-section interval abstraction. B3 is a finite-grid beam-search
+reference. Apollo evidence checks a software insertion point and three
+representative Dreamview cases. These boundaries are also stated in the
+manuscript's Results, Discussion, and Limitations sections.

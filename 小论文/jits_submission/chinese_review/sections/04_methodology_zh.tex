@@ -3,48 +3,53 @@
 
 \subsection{总体流程}
 
-MIKU 重建无时间意识的 PVD 和逐障碍物 PVD 所丢失的两类信息。首先估计自车到达时间 $\tau(s)$，并查询依赖时间的障碍物占用。随后计算依赖威胁的中心边界，对纵向连通的障碍物进行分组，并选择连续的横向带。在路径 QP 求解之后，用不确定性扩展的占用管定义安全通行时间窗。分层时间同伦图选择具有因果一致性的时间窗序列，并将其写入 ST 位置边界。图~\ref{zh:fig:miku_flow} 总结了数据流。
+为克服传统两阶段解耦规划在密集动态交通中的时空耦合割裂与虚假死锁缺陷，MIKU 在外部交通环境与下游二次规划求解器之间构建了交互感知的约束接口 $(\mathcal{B}_l, \mathcal{B}_s)$。该方法通过四个紧密协同的模块开展规划计算：
+第一，基于到达时间的投影，详见第~\ref{zh:sec:method_projection}节，用于分离时间上不相交的障碍物占用；
+第二，威胁感知安全裕度，详见第~\ref{zh:sec:method_threat}节，依据交互紧迫性自适应调节横向通行间隙；
+第三，连续横向划分，详见第~\ref{zh:sec:method_band}节，用于确定群组级侧向分配并提取候选空间走廊；
+第四，时间同伦图，详见第~\ref{zh:sec:method_temporal}节，用于构建速度优化所需的无碰撞站位—时间可行区间。
+如图~\ref{zh:fig:miku_flow}与算法~\ref{zh:alg:miku}所示，上述模块在严格保留式~\eqref{zh:eq:path_qp}与式~\eqref{zh:eq:speed_qp}标准凸二次规划结构的前提下，系统性重构了空间与时间约束接口。表~\ref{zh:tab:ablation_results} 中第 A1--A6 行详细展示了各组件的逐项消融验证。
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{fig_framework_en.pdf}
-\caption{MIKU 在 PVD 规划栈中的约束构造与传递。图内模块和变量名称保留英文，以便与实现对应。}
+\caption{MIKU 在不改动求解器结构的前提下，将交通预测编译为路径二次规划与速度二次规划所用的凸盒约束 $\mathcal{B}_l$ 与 $\mathcal{B}_s$。}
 \label{zh:fig:miku_flow}
 \end{figure}
 
 \subsection{威胁感知裕度}
 \label{zh:sec:method_threat}
 
-对于障碍物 $i$，MIKU 将碰撞紧迫性、横向重叠、相对运动、目标类型和局部交互密度组合为归一化威胁分数：
+固定裕度要么封闭窄通道，要么迫使制动吸收残余风险。该模块仅调节 $d_{\mathrm{buf},i}$，第~\ref{zh:sec:method_band}节的排序与前缀扫描保持不变；A4 对其加以隔离。紧迫性、重叠、相对运动、类型与密度组合为威胁分数
 \begin{equation}
  \Theta_i=w_1f_{\mathrm{TTC}}(i)+w_2f_{\mathrm{overlap}}(i)+w_3f_{\mathrm{vel}}(i)+w_4f_{\mathrm{type}}(i)+w_5f_{\mathrm{inter}}(i).
  \label{zh:eq:threat_score}
 \end{equation}
-所有因子均位于 $[0,1]$，权重为 $(0.30,0.20,0.15,0.10,0.25)$。当自车位于障碍物后方且正在接近时，$\mathrm{TTC}_i=(s_i-s_{\mathrm{ego}})/(\dot{s}_{\mathrm{ego}}-\dot{s}_i)$，否则取 $+\infty$。分段线性 TTC 因子在 $\mathrm{TTC}_i\leq2.0$ s 时取 1，在 $\mathrm{TTC}_i\geq7.0$ s 时取 0，中间区间线性下降 \citep{minderhoud2001extended}。重叠因子和相对速度因子为
+各因子位于 $[0,1]$，各权重依次设为 $0.30$、$0.20$、$0.15$、$0.10$ 与 $0.25$。当自车位于障碍物后方且正在接近时，$\mathrm{TTC}_i=(s_i-s_{\mathrm{ego}})/(\dot{s}_{\mathrm{ego}}-\dot{s}_i)$，否则为 $+\infty$；分段线性的 $f_{\mathrm{TTC}}$ 在 $\mathrm{TTC}_i\leq2.0$ s 时取 $1$，$\geq7.0$ s 时取 $0$，中间线性 \citep{minderhoud2001extended}。重叠与相对速度：
 \begin{align}
  f_{\mathrm{overlap}}(i)&=\min\!\left(1,\frac{\max(0,\min(l_i^+,l_{\mathrm{ego}}^+)-\max(l_i^-,l_{\mathrm{ego}}^-))}{\max(0.1,\min(W_i,W_{\mathrm{ego}}))}\right),\\
  f_{\mathrm{vel}}(i)&=\sigma(v_{\mathrm{rel},i}/v_{\max}),\qquad \sigma(x)=\frac{1}{1+e^{-5x}}.
 \end{align}
-其中 $W_i=l_i^+-l_i^-$ 表示障碍物宽度。截断操作使障碍物宽于自车时的重叠因子仍处于 $[0,1]$。易受伤道路使用者、机动车、未知可移动物体、静态障碍物和小型标记物的类型因子分别为 $1.0$、$0.7$、$0.5$、$0.3$ 和 $0.15$。密度在 10 m 邻域内计算，单个障碍物的密度取 0。附加裕度为
+其中 $W_i=l_i^+-l_i^-$，截断使 $f_{\mathrm{overlap}}\!\in\![0,1]$。易受伤道路使用者、机动车、未知可移动物、静态障碍与小型标记物的类型因子分别为 $1.0$、$0.7$、$0.5$、$0.3$、$0.15$；密度采用 10 m 邻域，单个障碍物取 $0$。附加裕度为
 \begin{equation}
  d_{\mathrm{buf},i}=d_{\mathrm{buf,min}}+(d_{\mathrm{buf,max}}-d_{\mathrm{buf,min}})\Theta_i,
  \label{zh:eq:dynamic_delta}
 \end{equation}
-其中 $[d_{\mathrm{buf,min}},d_{\mathrm{buf,max}}]=[0.10,0.40]$ m。该项只改变边界数值，不改变排序或扫描结构。
+其中 $[d_{\mathrm{buf,min}},d_{\mathrm{buf,max}}]=[0.10,0.40]$ m。
 
 \subsection{连续横向划分与最大间隙}
 \label{zh:sec:method_band}
 
-纵向区间相互重叠的障碍物被分配到同一个连通分量。按较低站位边缘排序，并维护最大的上界，即可在 $O(n\log n)$ 时间内构造所有分量。在一个分量内部，再按 $u_i$ 对活动区间排序，$u_i$ 相同时按 $v_i$ 降序排列。下面的引理限制侧向分配搜索范围。
+逐障碍物的策略可能把上下界推过彼此，清空中心区间；MIKU 仅改变式~\eqref{zh:eq:center_band} 中 $\mathcal{L}/\mathcal{R}$ 的分配。纵向区间重叠的障碍物在 $O(n\log n)$ 时间内构成连通分量；分量内按 $u_i$ 升序排序，并在 $u_i$ 相同时按 $v_i$ 降序打破并列。
 
 \begin{lemma}[连续最优划分]
 \label{zh:lem:continuous_partition}
-对于式~(\ref{zh:eq:center_band})中的中心带目标，存在一个最优分配，使得按 $u_i$ 排序的障碍物中，前缀被分配到 $L$ 侧，后缀被分配到 $R$ 侧。因此只需考察 $k+1$ 个分割点。
+对于式~\eqref{zh:eq:center_band}，存在某个最优分配，使按 $u_i$ 排序后的障碍物在 $L$ 侧形成前缀、$R$ 侧形成后缀；只需考察 $k+1$ 个分割点。
 \end{lemma}
 
-\emph{证明。} 若两侧均非空，令 $\beta=\min_{i\in\mathcal{R}}u_i$。将当前位于 $\mathcal{L}$ 且满足 $u_i\geq\beta$ 的每个障碍物移到 $\mathcal{R}$。由于每个被移动的下边缘都不小于 $\beta$，上界保持不变，而从 $\mathcal{L}$ 中移除元素不会抬高下界，因此带宽不会减小。重复该操作即可得到连续分割。空侧情况对应 $p=0$ 或 $p=k$。对于 $u_i$ 相同的情况按 $v_i$ 降序排列即可消除歧义。\hfill$\Box$
+\emph{证明。} 令 $\beta=\min_{i\in\mathcal{R}}u_i$。将 $\mathcal{L}$ 中所有满足 $u_i\geq\beta$ 的障碍物移到 $\mathcal{R}$：上界不变、下界不会抬高，带宽不减。迭代可得连续分割；空侧对应 $p=0$ 或 $k$；$v_i$ 降序打破并列。\hfill$\Box$
 
-对于分割点 $p$，定义前缀最大值和候选上边缘
+对分割点 $p$，前缀最大值与候选上边缘为
 \begin{equation}
  V_0=L^-,\qquad V_p=\max\left(L^-,\max_{1\leq q\leq p}v_{(q)}\right),
  \label{zh:eq:prefix_v}
@@ -56,63 +61,60 @@ MIKU 重建无时间意识的 PVD 和逐障碍物 PVD 所丢失的两类信息�
 
 \begin{theorem}[最大间隙最优性]
 \label{zh:thm:max_gap}
-对于固定截面区间模型，最优中心带宽度为 $W^*=\max_{p=0,\ldots,k}g_p$。候选解通过排序和一次前缀扫描获得，复杂度为 $O(k\log k)$。
+对于固定截面区间模型，最优中心带宽度为 $W^*=\max_{p=0,\ldots,k}g_p$，可由排序与一次前缀扫描在 $O(k\log k)$ 内得到。
 \end{theorem}
 
-\emph{证明。} 对于分割点 $p$，式~(\ref{zh:eq:center_band})给出下边缘 $V_p$ 和最紧的上边缘 $U_p$，因此带宽为 $g_p$。引理~\ref{zh:lem:continuous_partition} 保证存在连续最优分割，枚举 $k+1$ 个分割点即可取得最优值。\hfill$\Box$
+\emph{证明。} 式~\eqref{zh:eq:center_band} 在分割点 $p$ 给出带宽 $g_p$；引理~\ref{zh:lem:continuous_partition} 保证枚举 $k+1$ 个分割点已足够。如图~\ref{zh:fig:max_gap}所示，针对 $k=4$ 个排序障碍物禁行区间，算法仅需在道路边界 $[L^-, L^+]$ 内评估 $k+1=5$ 个候选连续分割边界；其中分割点 $p=2$ 取得最大可行间隙 $g_2 = U_2 - V_2$，在固定截面模型下彻底消除指数级组合搜索而不损失最优性。\hfill$\Box$
 
-该定理只对固定截面区间抽象成立，不能证明完整非凸轨迹问题的连续全局最优性。MIKU 在每个分量中保留 $Q=3$ 个最宽的正带，并通过动态规划在带宽与横向中心变化之间进行权衡。若分量 $j$ 中的带 $B_{jq}$ 具有中心 $c_{jq}$ 和宽度 $g_{jq}$，则序列最小化
+MIKU 保留 $Q=3$ 个最宽的正带；每个中心为 $c_{jq}$ 且宽度为 $g_{jq}$ 的候选带 $B_{jq}$ 进入动态规划，最小化
 \begin{equation}
  -\sum_jg_{jq_j}+\lambda_s\left(|c_{1q_1}-l_0|+\sum_{j>1}|c_{jq_j}-c_{j-1,q_{j-1}}|\right),
  \label{zh:eq:spatial_homotopy}
 \end{equation}
-递推关系为
+递推为
 \begin{equation}
  D_{jq}=-g_{jq}+\min_r\{D_{j-1,r}+\lambda_s|c_{jq}-c_{j-1,r}|\}.
  \label{zh:eq:spatial_dp}
 \end{equation}
+权重参数 $\lambda_s$ 在第~\ref{zh:sec:experimental_design}节中标定，消融实验 A3 隔离验证了 Top-$K$ 空间同伦。
 
 \begin{figure}
 \centering
 \includegraphics[width=0.82\textwidth]{fig_max_gap_en.pdf}
-\caption{固定截面最大间隙问题的连续分割候选。四个排序后的禁行区间产生五个候选分割点。当区间上边缘相互嵌套时，需要维护前缀最大值。图内变量保留英文。}
+\caption{排序后的禁行区间 $[u_i,v_i]$ 在道路边界 $L^-$ 与 $L^+$ 之间给出 $k+1=5$ 个分割候选。分割点 $p=2$ 由 $O(k\log k)$ 前缀扫描得到 $W^*=g_2=U_2-V_2$（引理~\ref{zh:lem:continuous_partition}，定理~\ref{zh:thm:max_gap}）。}
 \label{zh:fig:max_gap}
 \end{figure}
 
 \subsection{依赖到达时间的投影}
 \label{zh:sec:method_projection}
 
-在站位 $s$ 处，路径阶段查询预计自车到达时刻对应的障碍物占用。根据当前状态并采用恒定加速度近似，有
+无时间意识的投影会把不同到达时刻的占用合并为单一阻塞区间；用 $\tau(s)$ 对每个占用作参数化，只暴露自车经过该站位时仍存在的障碍物。排序、扫描与 QP 结构均保持不变；消融实验 A1 隔离该模块，其在滚动重规划中的闭环表现见第~\ref{zh:subsec:results_robustness}节。恒定加速度下，
 \begin{equation}
  \tau(s)=\frac{-v_{\mathrm{ego}}+\sqrt{v_{\mathrm{ego}}^2+2a_{\mathrm{ego}}(s-s_{\mathrm{ego}})}}{a_{\mathrm{ego}}},
  \label{zh:eq:arrival_time}
 \end{equation}
-当 $|a_{\mathrm{ego}}|<10^{-3}$ 时使用恒速极限。判别式为负时，将该点标记为位于规划时域之外。在滚动重规划中，$\tau(s)$ 由上一次速度解插值得到，并在每个周期更新。
-
-数值场景采用 $s_i(t)=s_{i,0}+v_{s,i}t$ 和 $l_i(t)=l_{i,0}+v_{l,i}t$。对于有界预测误差，时刻 $t$ 的纵向和横向扩展为
+$|a_{\mathrm{ego}}|<10^{-3}$ 时取恒速极限；判别式为负标记该站位超出规划时域。在滚动重规划中，$\tau(s)$ 由上一次速度解插值并在每个周期刷新，其敏感性分析见第~\ref{zh:sec:experimental_design}节。场景采用 $s_i(t)=s_{i,0}+v_{s,i}t$、$l_i(t)=l_{i,0}+v_{l,i}t$；有界预测误差给出
 \begin{equation}
  \epsilon_{s,i}(t)=\epsilon_{s0,i}+t\epsilon_{vs,i},\qquad
  \epsilon_{l,i}(t)=\epsilon_{l0,i}+t\epsilon_{vl,i}.
  \label{zh:eq:prediction_tube}
 \end{equation}
-在构造 ST 占用图之前，将物理障碍物和自车轮廓按上述量扩展。名义的 $\tau(s)$ 用于选择并排序候选方案，碰撞检查则使用扩展后的占用。
+在生成 ST 图之前先扩展轮廓；名义 $\tau(s)$ 用于对候选方案排序，碰撞检查使用扩展后的占用。关于 $t$ 的线性增长给出名义占用包络；参数 $\epsilon_{s0,i}$、$\epsilon_{vs,i}$、$\epsilon_{l0,i}$、$\epsilon_{vl,i}$ 见第~\ref{zh:sec:experimental_design}节，并由消融实验 A6 专门检验。
 
 \subsection{时间同伦与 ST 传递}
 \label{zh:sec:method_temporal}
 
-对于冲突区域 $c$，令 $I_{cr}=[t_{cr}^{in},t_{cr}^{out}]$ 表示路径与预测占用管之间的每个重叠区间。经过时间安全扩展 $\eta_c$ 后，安全时间窗为
+若两个时空解相对于每个动态障碍物的通过顺序相同，则视为属于同一时间同伦类。本文的图在离散通行窗口序列上选择候选类。若无时间同伦，"障碍物之前"与"障碍物之后"两条备选会坍缩，因果顺序丢失。该图仅改变输入速度 QP 的 ST 边界，保留式~\eqref{zh:eq:speed_qp} 的凸目标与运动学等式。$\eta_c$、$\epsilon_s$ 在第~\ref{zh:sec:experimental_design}节标定；A5、A6 隔离该模块。对冲突 $c$，令 $I_{cr}=[t_{cr}^{in},t_{cr}^{out}]$ 为路径与占用管的每个重叠区间，扩展后
 \begin{equation}
  \mathcal{W}_c=[0,T]\setminus\bigcup_r[t_{cr}^{in}-\eta_c,t_{cr}^{out}+\eta_c].
  \label{zh:eq:safe_windows}
 \end{equation}
-将这些时间窗与最早可到达时间相交，得到 $W_{cq}=[\alpha_{cq},\beta_{cq}]$。对于按站位排序的冲突点，当满足
+与最早可达时间相交得到 $W_{cq}=[\alpha_{cq},\beta_{cq}]$。按站位排序的冲突点在满足
 \begin{equation}
- \hat t_c\geq\hat t_{c-1}+\frac{s_c-s_{c-1}}{v_{\max}},\qquad \hat t_c\in W_{cq}
+ \hat t_c\geq\hat t_{c-1}+\frac{s_c-s_{c-1}}{v_{\max}},\qquad \hat t_c\in W_{cq}.
  \label{zh:eq:temporal_edge}
 \end{equation}
-时，连接相邻节点。节点代价衡量其与 $\tau(s_c)$ 的偏离，边代价抑制在障碍物前后通行之间进行不必要的切换。带宽受限的动态规划选择一条具有因果关系的序列。
-
-对于选定的时间窗，其语义以线性盒约束进入速度 QP：
+时相连。节点代价衡量与 $\tau(s_c)$ 的偏离，边代价抑制侧向切换。宽度受限的 DP 为速度 QP 选出一条因果序列：
 \begin{equation}
  \begin{aligned}
  s_j^{ub}&=\min(s_j^{ub,0},s_c^- -\epsilon_s),&&t_j<\alpha_{cq},\\
@@ -120,27 +122,64 @@ MIKU 重建无时间意识的 PVD 和逐障碍物 PVD 所丢失的两类信息�
  \end{aligned}
  \label{zh:eq:window_to_st}
 \end{equation}
-如果没有完整的可达时间窗序列，规划器会在第一个不可达冲突之前施加停车上界。下游速度 QP 仍然是具有相同目标函数和运动学等式的凸 QP。
+若无完整可达序列，在首个不可达冲突之前施加停车上界。
 
 \subsection{算法与复杂度}
 
 \begin{algorithm}
 \small
-\caption{MIKU 约束编译}
+\caption{MIKU 约束生成与映射}
 \label{zh:alg:miku}
-\KwIn{道路边界、自车状态以及 $n$ 个障碍物的预测轨迹}
-\KwOut{中心路径边界和 ST 位置边界}
-估计 $\tau(s)$，并为每个障碍物计算依赖威胁的中心区间。\;
-对站位区间排序并构造纵向连通分量。\;
-\ForEach{连通分量}{
-  按 $(u_i,-v_i)$ 排序，计算前缀最大值，并保留 $Q$ 个最宽的正带。\;
+\KwIn{道路边界 $[L^-,L^+]$、自车状态 $(s_{\mathrm{ego}},v_{\mathrm{ego}},a_{\mathrm{ego}})$ 以及 $n$ 个障碍物的预测轨迹 $\{O_i(t)\}_{i=1}^{n}$}
+\KwOut{路径边界 $\mathcal{B}_l=\{[l_j^-,l_j^+]\}$；ST 位置边界 $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}$}
+\BlankLine
+\tcc{阶段 1：到达时间估计与威胁感知区间计算}
+\ForEach{站位 $s_j$}{
+  依式~\eqref{zh:eq:arrival_time} 计算 $\tau(s_j)$\;
+  \ForEach{满足 $s_i^-({\tau}) \leq s_j \leq s_i^+({\tau})$ 的障碍物 $i$}{
+    依式~\eqref{zh:eq:threat_score} 计算威胁得分 $\Theta_i$；依式~\eqref{zh:eq:dynamic_delta} 确定缓冲裕度 $d_{\mathrm{buf},i}$\;
+    依式~\eqref{zh:eq:center_forbidden} 扩展为中心坐标禁行区间 $[u_i, v_i]$\;
+  }
 }
-依据式~(\ref{zh:eq:spatial_homotopy})选择连续的空间同伦序列。\;
-将选定的侧向分配写入各站位的活动路径边界。\;
-构造不确定性扩展的占用管和安全时间窗。\;
-依据式~(\ref{zh:eq:temporal_edge})选择具有因果关系的时间同伦序列，并将其编译为式~(\ref{zh:eq:window_to_st})。\;
-若启用迭代，则根据速度解更新 $\tau(s)$，直到达到迭代上限或收敛。\;
-\Return{路径边界和 ST 边界}
+\BlankLine
+\tcc{阶段 2：连通分量划分与连续侧向划分}
+按起始站位排序障碍物区间；以 $O(n\log n)$ 复杂度通过区间并集构造连通分量\;
+\ForEach{包含 $k_m$ 个障碍物的连通分量 $\mathcal{C}_m$}{
+  将 $\mathcal{C}_m$ 内的障碍物按 $(u_i, -v_i)$ 排序\;
+  $V_0 \leftarrow L^-$\;
+  \For{$p \leftarrow 1$ \KwTo $k_m$}{
+    $V_p \leftarrow \max(V_{p-1},\, v_{(p)})$ \tcp*{上边界前缀最大值}
+    $U_p \leftarrow \min(L^+,\, u_{(p+1)})$；$g_p \leftarrow U_p - V_p$\;
+  }
+  $g_0 \leftarrow \min(L^+, u_{(1)}) - L^-$；$g_{k_m} \leftarrow L^+ - V_{k_m}$\;
+  保留具有最大正间隙 $g_p$ 的前 $Q$ 个候选；记录带中心 $c_{jq}$ 与宽度 $g_{jq}$\;
+}
+\BlankLine
+\tcc{阶段 3：基于动态规划的空间同伦选择}
+\For{$j \leftarrow 1$ \KwTo $K$}{
+  \ForEach{候选分支 $q \in \{1,\ldots,Q\}$}{
+    $D_{jq} \leftarrow -g_{jq} + \min_{r}\{D_{j-1,r} + \lambda_s |c_{jq} - c_{j-1,r}|\}$ \tcp*{式~\eqref{zh:eq:spatial_dp}}
+  }
+}
+回溯最优同伦序列 $\{q_j^*\}$；将 $l_j^- \leftarrow V_{p^*_j}$, $l_j^+ \leftarrow U_{p^*_j}$ 写入路径边界 $\mathcal{B}_l$\;
+\BlankLine
+\tcc{阶段 4：时间同伦图构建与 ST 边界传递}
+\ForEach{在站位 $s_c$ 处的路径—障碍物冲突 $c$}{
+  计算规划路径与不确定性扩展占用管之间的重叠区间 $\{I_{cr}\}$\;
+  $\mathcal{W}_c \leftarrow [0,T] \setminus \bigcup_r [t_{cr}^{in}-\eta_c,\, t_{cr}^{out}+\eta_c]$ \tcp*{式~\eqref{zh:eq:safe_windows}}
+  将 $\mathcal{W}_c$ 与最早可达到达时间求交得到候选安全窗 $W_{cq}$\;
+}
+在式~\eqref{zh:eq:temporal_edge} 约束下通过有界宽度 DP 选取因果时间序列\;
+\ForEach{选定的时间窗 $[\alpha_{cq},\beta_{cq}]$}{
+  对于 $t_r < \alpha_{cq}$，令 $s_r^{ub} \leftarrow \min(s_r^{ub},\, s_c^- - \epsilon_s)$\;
+  对于 $t_r \geq \beta_{cq}$，令 $s_r^{lb} \leftarrow \max(s_r^{lb},\, s_c^+ + \epsilon_s)$ \tcp*{式~\eqref{zh:eq:window_to_st}}
+}
+\BlankLine
+\tcc{可选：交替迭代细化}
+\If{启用细化 \textbf{且} 迭代次数 $< 2$}{
+  根据速度 QP 解更新 $\tau(s)$；返回阶段 1\;
+}
+\Return{$\mathcal{B}_l$, $\mathcal{B}_s$}
 \end{algorithm}
 
-对于 $K$ 个路径采样点、$m$ 个分量、每个分量至多 $Q$ 个空间候选以及有界时间束宽度 $B$，排序和分组的代价为 $O(n\log n)$。若每个终端空间带保留 $K_s$ 个前缀，分层空间动态规划的代价为 $O(mK_sQ^2\log(K_sQ))$。对于 $h$ 个冲突点以及每层 $R$ 个可达时间窗，时间束扩展和排序的代价为 $O(hBR\log(BR))$。实现采用 $Q=3$、$K_s=3$ 和 $B=8$。占用查询的代价为 $O(nK)$，朴素交互密度计算在最坏情况下为 $O(n^2)$。
+设 $K$ 为路径采样点数、$m$ 为分量数、$Q$ 个候选、时间束宽度 $B$、$K_s$ 个前缀：排序与分组 $O(n\log n)$；空间 DP $O(mK_sQ^2\log(K_sQ))$；对 $h$ 个冲突与每层 $R$ 个时间窗，时间束 $O(hBR\log(BR))$。占用查询 $O(nK)$；朴素交互密度 $O(n^2)$。默认参数在第~\ref{zh:sec:experimental_design}节中设为 $Q=3$、$K_s=3$ 与 $B=8$。下游路径与速度 QP 依式~\eqref{zh:eq:path_qp} 与式~\eqref{zh:eq:speed_qp} 分别保持 $O(K)$ 与 $O(N_t)$。

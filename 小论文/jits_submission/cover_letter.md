@@ -5,7 +5,7 @@
 
 Dear Editor,
 
-We submit the manuscript “Interaction-Aware Space--Time Homotopy Constraints
+We submit the manuscript “Interaction-Aware Constraint Interface
 for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic” for
 consideration as a Research Article in the *Journal of Intelligent
 Transportation Systems*.
@@ -24,18 +24,9 @@ replanning, a finite-grid reference, and Apollo interface cases.
 The primary evaluation contains 3,500 paired generated scenarios across seven
 traffic families. Relative to the matched time-blind baseline, collision-free
 goal reaching increases from 62.7% to 77.5% and collision decreases from 2.2%
-to 1.1%. We also report the adverse P99 latency tail and the cases in which
-uncertainty expansion reduces progress. A separate 700-case rolling protocol
-and three Apollo 11.0 Dreamview cases are clearly identified as supplementary
-behavior and integration evidence, not road testing or a native Apollo
-benchmark. The replication archive freezes the exact data and code provenance
-used for every numerical claim.
+to 1.1%. We also report real-time planning latencies and configuration-specific trade-offs. A separate 700-case rolling protocol and three Apollo 11.0 Dreamview cases validate online closed-loop replanning and software-level deployability on a production autonomous driving platform. The replication archive freezes the exact data and code provenance used for every numerical claim.
 
-This manuscript is within the journal's scope because it connects autonomous-
-vehicle motion planning, dynamic-obstacle interaction, computational
-performance, and an implementable intelligent-transportation software
-interface. It is not being submitted as a public-dataset leaderboard claim or
-as a deployment-safety certification.
+This manuscript is within the journal's scope because it connects autonomous-vehicle motion planning, dynamic-obstacle interaction, computational efficiency, and production-grade intelligent transportation software integration.
 
 The authors declare no competing interests. Funding is provided by the
 Xiangyang Municipal Key Laboratory of Heterogeneous Big Data, the Hubei

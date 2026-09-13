@@ -1,22 +1,34 @@
-\begin{tikzpicture}[x=0.8cm,y=0.8cm]
+\begin{tikzpicture}[x=0.82cm,y=0.82cm,>=Stealth]
 \begin{scope}
-  \fill[bglight] (0,0) rectangle (7,3.6);
-  \draw[gray,thick] (0,0)--(7,0) (0,3.6)--(7,3.6);
-  \foreach \x in {1.5,3.2,4.9}{\fill[dangerred!70] (\x,2.65) rectangle (\x+.55,3.25);\fill[dangerred!70] (\x,-.05) rectangle (\x+.35,.55);}
-  \draw[deeppink,very thick] (0,3.1)--(1.3,3.1)--(1.3,1.8)--(5.5,1.8)--(5.5,3.1)--(7,3.1);
-  \draw[deepblue,very thick] (0,.5)--(1.3,.5)--(1.3,1.8)--(5.5,1.8)--(5.5,.5)--(7,.5);
-  \node[dangerred,font=\scriptsize\bfseries] at (3.5,2.3) {empty center band};
-  \node[font=\small\bfseries] at (3.5,-.55) {Greedy bounds};
+  \fill[bglight] (-.4,-2.25) rectangle (7.8,2.25);
+  \draw[gray,thick] (-.4,2.25)--(7.8,2.25) (-.4,-2.25)--(7.8,-2.25);
+  \draw[dashed,gray!60] (-.4,0)--(7.8,0);
+  \foreach \x in {1.5,3.5,5.5}{
+    \fill[dangerred!70] (\x,.50) rectangle (\x+.7,1.65);
+    \fill[dangerred!70] (\x,-1.65) rectangle (\x+.5,-.50);
+  }
+  \draw[deeppink,very thick] (-.4,2.25)--(1.25,2.25)--(1.25,-1.65)--(6.35,-1.65)--(6.35,2.25)--(7.8,2.25);
+  \draw[deepblue,very thick] (-.4,-2.25)--(1.25,-2.25)--(1.25,1.65)--(6.35,1.65)--(6.35,-2.25)--(7.8,-2.25);
+  \node[deepblue,font=\scriptsize\bfseries] at (.55,1.10) {$\mathcal{L}$};
+  \node[deeppink,font=\scriptsize\bfseries] at (.55,-1.10) {$\mathcal{R}$};
+  \node[dangerred,font=\scriptsize\bfseries] at (3.8,.25) {$l^+<l^-$};
+  \node[font=\small\bfseries] at (3.7,-2.75) {(a) Greedy obstacle-wise bounds};
 \end{scope}
-\begin{scope}[xshift=8.5cm]
-  \fill[bglight] (0,0) rectangle (7,3.6);
-  \draw[gray,thick] (0,0)--(7,0) (0,3.6)--(7,3.6);
-  \foreach \x in {1.5,3.2,4.9}{\fill[dangerred!70] (\x,2.65) rectangle (\x+.55,3.25);\fill[dangerred!70] (\x,-.05) rectangle (\x+.35,.55);}
-  \fill[lightgreen,opacity=.28] (0,.55) rectangle (7,1.35);
-  \draw[deepblue,very thick,->] (.3,.95)--(1.5,.8)--(3.0,.85)--(4.6,.9)--(6.5,.95);
-  \draw[deepblue,dashed,thick] (0,.55)--(7,.55);
-  \draw[deeppink,thick] (0,1.35)--(7,1.35);
-  \node[lightgreen!60!black,font=\scriptsize\bfseries] at (3.5,1.85) {retained passage band};
-  \node[font=\small\bfseries] at (3.5,-.55) {Group-level MIKU bounds};
+\begin{scope}[xshift=9cm]
+  \fill[bglight] (-.4,-2.25) rectangle (7.8,2.25);
+  \draw[gray,thick] (-.4,2.25)--(7.8,2.25) (-.4,-2.25)--(7.8,-2.25);
+  \draw[dashed,gray!60] (-.4,0)--(7.8,0);
+  \foreach \x in {1.5,3.5,5.5}{
+    \fill[dangerred!70] (\x,.50) rectangle (\x+.7,1.65);
+    \fill[dangerred!70] (\x,-1.65) rectangle (\x+.5,-.50);
+  }
+  \fill[lightgreen,opacity=.28] (-.4,-.50) rectangle (7.8,.50);
+  \draw[deeppink,very thick] (-.4,.50)--(7.8,.50);
+  \draw[deepblue,dashed,very thick] (-.4,-.50)--(7.8,-.50);
+  \draw[deepblue,very thick,->] (.2,0)--(1.7,-.08)--(3.3,.06)--(4.9,-.05)--(6.5,.08)--(7.4,.02);
+  \node[deeppink,font=\scriptsize\bfseries] at (.55,1.10) {$\mathcal{R}$};
+  \node[deepblue,font=\scriptsize\bfseries] at (.55,-1.10) {$\mathcal{L}$};
+  \node[lightgreen!60!black,font=\scriptsize\bfseries] at (3.8,1.95) {center corridor};
+  \node[font=\small\bfseries] at (3.7,-2.75) {(b) Group-level MIKU bounds};
 \end{scope}
 \end{tikzpicture}

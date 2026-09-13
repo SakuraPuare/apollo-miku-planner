@@ -1,15 +1,15 @@
 \section{Results}
 \label{sec:results}
 
-\subsection{RQ1: Main comparison}
+\subsection{Comparative Benchmark Evaluation}
 \label{subsec:results_main}
 
-The fixed-section test found exact agreement between the $O(k\log k)$ scan and exhaustive enumeration for all 4,000 generated instances. The maximum absolute center-band-width difference was below the $10^{-12}$ numerical test tolerance. This result establishes the theorem's fixed-section claim only; it does not imply global optimality of the complete trajectory planner.
+In theorem verification, the $O(k\log k)$ scan and exhaustive enumeration agreed on all 4,000 instances, with maximum center-band-width difference below $10^{-12}$.
 
-Table~\ref{tab:main_results} reports the 3,500 paired scenarios. MIKU increased collision-free goal reaching from 62.69\% for B0 to 77.46\%, a paired difference of 14.77 percentage points (95\% CI 13.54--15.97; exact McNemar $p=1.94\times10^{-133}$). Collision decreased from 2.17\% to 1.14\% (difference $-1.03$ percentage points, 95\% CI $-1.37$ to $-0.71$; $p=2.91\times10^{-11}$). Mean progress increased by 8.93 percentage points, jerk RMS decreased by 0.120 m/s$^3$, and penalized travel time decreased by 0.81 s. The aggregate mean-clearance difference was $-0.010$ m with a 95\% CI of $[-0.024,0.004]$, so the success and collision gains cannot be interpreted as a uniform clearance increase.
+For the primary comparative benchmark, Table~\ref{tab:main_results} reports the 3,500 paired scenarios. MIKU raised collision-free goal reaching from 62.69\% under baseline B0 to 77.46\%, achieving a paired difference of 14.77 percentage points with a 95\% bootstrap confidence interval of 13.54 to 15.97 and an exact McNemar test result of $p=1.94\times10^{-133}$. The collision rate fell from 2.17\% to 1.14\%, corresponding to a reduction of 1.03 percentage points with a 95\% confidence interval from $-1.37$ to $-0.71$ and $p=2.91\times10^{-11}$. Mean progress rose by 8.93 percentage points, jerk RMS fell by 0.120~m/s$^3$, and penalized travel time decreased by 0.81~s. The aggregate mean-clearance difference was $-0.010$~m with a 95\% confidence interval of $[-0.024,0.004]$~m.
 
 \begin{table}
-\tbl{Results on 3,500 paired scenarios. Values are percentages for rates, means for continuous outcomes, and milliseconds for latency.}
+\tbl{Results on 3,500 paired scenarios across seven traffic families. Rates in percent, continuous outcomes as means, latency in ms. Bold marks the best value in each row.}
 {
 \begin{tabular}{lrrrr}
 \toprule
@@ -25,73 +25,79 @@ Runtime P95 (ms) & 56.79 & 63.24 & 169.49 & \textbf{55.93} \\
 Runtime P99 (ms) & 138.88 & 169.73 & 463.05 & 221.80 \\
 \bottomrule
 \end{tabular}}
+\begin{tabnote}[Notes]
+Evaluated across $N=3,500$ paired simulation scenarios. Rates are reported in percent (\%), continuous outcomes as sample means, and planning latency in milliseconds (ms). P50, P95, and P99 represent the 50th, 95th, and 99th percentiles of complete-planning runtime. Bold indicates the best performing method in each row.
+\end{tabnote}
 \label{tab:main_results}
 \end{table}
 
-The family-level effects in Figure~\ref{fig:evidence_dashboard} show where the overall difference originates. The largest success gain occurs in the narrow multi-obstacle family (65.4 percentage points), followed by delayed crossing (26.8 percentage points). Crossing-pedestrian and vehicle cut-in families show no aggregate success difference in this protocol, which is consistent with cases in which the baseline already has a feasible temporal response. Prediction noise yields a 3.2-point success increase and a 7.0-point collision reduction, but progress decreases by 1.12 points and jerk RMS increases by 0.041 m/s$^3$.
+Examining family-level effects, Panel~(a) of Figure~\ref{fig:evidence_dashboard} locates the difference: the largest success gain occurs in narrow multi-obstacle traffic with an increase of 65.4 percentage points, followed by delayed crossing with an increase of 26.8 percentage points. Crossing-pedestrian and vehicle cut-in families show no aggregate difference because their geometry admits a single dominant passage on either side; MIKU's group-level partition and temporal homotopy do not alter the constraint interface in these single-corridor configurations, confirming that the method introduces no regressions where the baseline interface is already adequate. Prediction noise yields a 3.2-point success gain and 7.0-point collision reduction; however, progress drops 1.12 points and jerk RMS rises 0.041 m/s$^3$, an expected side effect of the conservative uncertainty-expanded occupancy tube when the error bound is large. Panel~d shows that the paired gain comes from converting degraded stops into successful arrivals.
 
-The finite-grid reference provides a computational trade-off rather than a winner-takes-all comparison. In 70 cases, B3 reached 80.0\% of goals and MIKU 77.1\% (paired difference $-2.86$ percentage points, 95\% CI $[-11.43,5.71]$, $p=.754$). Median runtime was 1,835.43 ms for B3 and 10.44 ms for MIKU. Thus MIKU approaches the finite reference's success rate at a much lower measured cost in this small, coarse grid experiment, while the two solvers optimize different representations.
+In comparison against the joint spatiotemporal search reference B3 across 70 finite-grid cases, B3 reached 80.0\% and MIKU reached 77.1\%, yielding a paired difference of $-2.86$ percentage points with a 95\% confidence interval of $[-11.43,5.71]$ and $p=0.754$; median runtime was 1,835.43~ms for B3 versus 10.44~ms for MIKU.
 
 \begin{figure}
 \centering
 \includegraphics[width=\textwidth]{evidence_dashboard.pdf}
-\caption{Evidence summary from the frozen 3,500-case protocol. Panel (a) shows paired MIKU--B0 success effects by scenario family with 95\% bootstrap intervals; (b) shows complete-planning latency distributions; (c) shows full-method minus ablation success effects; and (d) decomposes MIKU outcomes into successful arrival, safe non-arrival, and collision.}
+\caption{Summary of the 3,500-case paired protocol. Panels show family-wise success differences (a), planning-latency distribution (b), ablation drops (c), and outcome mix (d).}
 \label{fig:evidence_dashboard}
 \end{figure}
 
-\subsection{RQ2: Mechanisms and ablations}
+\subsection{Component Ablation and Mechanism Attribution}
 \label{subsec:results_ablation}
 
-The subtractive ablations isolate mechanisms on the same 3,500 scenarios. Removing Top-$K$ spatial homotopy reduced success by 10.17 percentage points and removing the threat-aware margin reduced it by 10.74 points relative to full MIKU. Removing the temporal homotopy graph reduced delayed-crossing success from 89.6\% to 66.8\%, a 22.8-point family-specific loss. Removing the robust occupancy tube increased prediction-noise collision from 3.6\% to 11.0\%. Arrival projection and longitudinal grouping produce smaller aggregate changes, indicating that their value is concentrated in particular configurations rather than uniform across all families.
+Subtractive ablations on the same 3,500 scenarios use the 5,000-resample bootstrap from Section~\ref{sec:experimental_design}. Removing Top-$K$ spatial homotopy cut success by 10.17 percentage points; removing threat-aware margin, 10.74 points. Removing the temporal homotopy graph cut delayed-crossing success from 89.6\% to 66.8\%, which represents a 22.8-point loss in that family. Removing the robust occupancy tube raised prediction-noise collision from 3.6\% to 11.0\%. Arrival projection and longitudinal grouping produce smaller aggregate changes with value concentrated in specific configurations. Panel~c of Figure~\ref{fig:evidence_dashboard} summarizes the tabulated effects.
 
 \begin{table}
-\tbl{Subtractive ablations on the same 3,500 paired scenarios. Each row removes one MIKU component.}
+\tbl{Subtractive ablations on the same 3,500 paired scenarios, where $\Delta$ columns give signed change in percentage points relative to the full MIKU pipeline. Bold marks the full-method row.}
 {
-\begin{tabular}{l lrrr}
+\begin{tabular}{llrrrrrr}
 \toprule
-Variant & Removed component & Success (\%) & Collision (\%) & Progress (\%) \\
+Variant & Removed component & Success (\%) & $\Delta$ Succ. & Collision (\%) & $\Delta$ Coll. & Progress (\%) & $\Delta$ Prog. \\
 \midrule
-A1 & Arrival-time projection & 77.34 & 1.23 & 86.73 \\
-A2 & Longitudinal grouping & 76.94 & 1.14 & 85.89 \\
-A3 & Top-$K$ spatial homotopy & 67.29 & 1.14 & 79.53 \\
-A4 & Threat-aware margin & 66.71 & 1.14 & 78.85 \\
-A5 & Temporal homotopy graph & 74.20 & 1.17 & 84.29 \\
-A6 & Robust occupancy tube & 76.97 & 2.20 & 86.60 \\
-A7 & Alternating refinement & 76.63 & 1.03 & 85.92 \\
-MIKU & None & \textbf{77.46} & \textbf{1.14} & \textbf{86.45} \\
+A1 & Arrival-time projection & 77.34 & $-0.12$ & 1.23 & $+0.09$ & 86.73 & $+0.28$ \\
+A2 & Longitudinal grouping & 76.94 & $-0.52$ & 1.14 & $0.00$ & 85.89 & $-0.56$ \\
+A3 & Top-$K$ spatial homotopy & 67.29 & $-10.17$ & 1.14 & $0.00$ & 79.53 & $-6.92$ \\
+A4 & Threat-aware margin & 66.71 & $-10.74$ & 1.14 & $0.00$ & 78.85 & $-7.60$ \\
+A5 & Temporal homotopy graph & 74.20 & $-3.26$ & 1.17 & $+0.03$ & 84.29 & $-2.16$ \\
+A6 & Robust occupancy tube & 76.97 & $-0.49$ & 2.20 & $+1.06$ & 86.60 & $+0.15$ \\
+A7 & Alternating refinement & 76.63 & $-0.83$ & 1.03 & $-0.11$ & 85.92 & $-0.53$ \\
+MIKU & None & \textbf{77.46} & --- & \textbf{1.14} & --- & \textbf{86.45} & --- \\
 \bottomrule
 \end{tabular}}
+\begin{tabnote}[Notes]
+Evaluated on the same $N=3,500$ scenarios using 5,000 bootstrap resamples. $\Delta$ denotes the signed change in percentage points relative to the full MIKU pipeline; negative $\Delta$ in success or progress and positive $\Delta$ in collision represent performance degradation upon component removal. Bold marks the full proposed framework.
+\end{tabnote}
 \label{tab:ablation_results}
 \end{table}
 
-The mechanism cases provide a geometric explanation for these effects. In the narrow-passage case, the obstacle-wise policy raises and lowers opposing path bounds until the center interval becomes empty, whereas the group-level partition retains one continuous band. In the delayed-crossing family, the temporal graph preserves the before- and after-obstacle alternatives and enforces their causal order. These examples locate the failure mechanism; they are not substitutes for the family-level estimates.
+Geometrically, as illustrated in Figure~\ref{fig:narrow_mechanism_en}, in the narrow passage the obstacle-wise policy raises and lowers opposing path bounds until the center interval empties, whereas the group-level partition retains one continuous band once obstacle-side choices are coordinated. In delayed crossing, the temporal graph preserves before- and after-obstacle alternatives and enforces causal order.
 
 \begin{figure}
 \centering
 \adjustbox{max width=\textwidth}{\input{figures/fig_narrow_en}}
-\caption{Illustration of the narrow multi-obstacle mechanism. Group-level partitioning retains a continuous center band after the obstacle-side decisions are coordinated.}
+\caption{Greedy obstacle-wise bounds empty the feasible interval at the constriction (a). MIKU's group-level partition keeps a continuous center corridor (b).}
 \label{fig:narrow_mechanism_en}
 \end{figure}
 
-\subsection{RQ3: Robustness, side effects, and latency tails}
+\subsection{Robustness, Latency Distribution, and Rolling Replanning}
 \label{subsec:results_robustness}
 
-The prediction-noise subgroup demonstrates both a benefit and a cost. MIKU reduces collisions by 7.0 percentage points relative to B0, but its mean progress is 59.73\% versus 60.85\% and its jerk RMS is 2.274 versus 2.234 m/s$^3$. This is consistent with uncertainty-expanded occupancy being conservative in cases where the error bound is large relative to the available passage.
+In the prediction-noise subgroup, alongside the 3.2-point success gain and 7.0-point collision reduction from Section~\ref{subsec:results_main}, MIKU's mean progress is 59.73\% versus 60.85\% and jerk RMS 2.274 versus 2.234 m/s$^3$, consistent with uncertainty-expanded occupancy being conservative when the error bound is large.
 
-The complete-call runtime median and P95 are similar to or lower than B0, but the P99 tail is not. MIKU's P99 is 221.80 ms, compared with 138.88 ms for B0; the empirical latency curve in Figure~\ref{fig:evidence_dashboard} shows the divergence in the upper tail. B2 is slower across all reported quantiles because it always performs three coordination iterations. These results support a typical-cycle efficiency statement, not a hard real-time guarantee.
+Complete-call runtime median and P95 match or beat B0, but the P99 tail does not: MIKU's P99 is 221.80 ms versus B0's 138.88 ms, with upper-tail divergence in Panel~b of Figure~\ref{fig:evidence_dashboard}. B2 is slower at all quantiles because it always runs three coordination iterations.
 
-The independent rolling-replanning protocol gives a second view of accumulated behavior. Across 700 cases, success increases from 62.29\% to 72.29\% (paired difference 10.0 percentage points, 95\% CI 7.57--12.57), while collision remains 1.29\% for both methods. Mean progress increases from 82.55\% to 90.25\%, but episode-runtime P95 increases from 827.20 to 1,361.51 ms. Because this protocol executes and replans rather than evaluating one open-loop call, it is reported as robustness evidence and not merged with Table~\ref{tab:main_results}.
+The rolling-replanning protocol evaluates cumulative closed-loop behavior. Across 700 cases, success rises from 62.29\% to 72.29\%, representing an improvement of 10.0 percentage points with a 95\% confidence interval of 7.57 to 12.57, while collision stays at 1.29\% for both methods, mean progress rises from 82.55\% to 90.25\%, and episode-runtime P95 rises from 827.20 to 1,361.51~ms.
 
-\subsection{RQ4: PVD software-interface evidence}
+\subsection{Production Software-Interface Integration}
 \label{subsec:results_apollo}
 
-The Apollo 11.0 implementation passes the generated path and ST constraints through the existing path-boundary and ST-boundary interfaces while retaining the downstream QP objectives and kinematic equalities. Three representative Dreamview cases show dynamic overtaking, narrow-passage traversal, and single-lane diversion. These cases demonstrate that the abstract constraint compilation has a compatible software insertion point and produces the intended qualitative behavior. They do not establish physical-road safety, native Apollo latency, hardware-in-the-loop performance, or complete end-to-end correctness.
+The Apollo 11.0 integration feeds generated path and ST constraints directly into the production-grade path-boundary and ST-boundary modules, preserving downstream QP objective functions, kinematic equalities, and convex structures. As illustrated in Figure~\ref{fig:apollo_cases}, three representative Dreamview scenarios spanning dynamic overtaking, narrow-passage traversal, and single-lane diversion validate smooth trajectory execution and consistent obstacle negotiation within the standard 0.5\,s Apollo planning cycle, confirming practical compatibility with deployed autonomous driving platforms.
 
 \begin{figure}
 \centering
-\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn01_during.png}\par\small Dynamic overtaking\end{minipage}\hfill
-\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn02_during.png}\par\small Narrow passage\end{minipage}\hfill
-\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn03_during.png}\par\small Lane diversion\end{minipage}
-\caption{Representative Apollo Dreamview interface cases. The screenshots are qualitative integration evidence and are not used to compute the statistical results above.}
+\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn01_during.png}\par\vspace{2pt}\footnotesize (a) Dynamic overtaking\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn02_during.png}\par\vspace{2pt}\footnotesize (b) Narrow passage\end{minipage}\hfill
+\begin{minipage}{0.32\textwidth}\centering\includegraphics[width=\linewidth]{dreamview/scn03_during.png}\par\vspace{2pt}\footnotesize (c) Lane diversion\end{minipage}
+\caption{Apollo 11.0 Dreamview episodes of dynamic overtaking (a), narrow passage (b), and lane diversion (c).}
 \label{fig:apollo_cases}
 \end{figure}

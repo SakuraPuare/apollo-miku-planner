@@ -1,0 +1,196 @@
+{
+  "scope": "one initial speed stage of MIKU on exported Python path samples",
+  "included": "ST mapper + speed DP + ST bounds/temporal graph + goal/blocked trim + speed QP with setup and conditional retry",
+  "excluded": "path construction/QP, scenario generation, JSON/CSV I/O, verification, outer iteration, alternate spatial/temporal candidates, Apollo runtime",
+  "warmups_per_case": 1,
+  "timed_repeats_per_case": 3,
+  "case_time_aggregation": "median of 3 individually timed repetitions",
+  "count_total": 3500,
+  "count_parity": 3500,
+  "count_unmatched": 0,
+  "count_solved": 3157,
+  "count_qp_failed": 343,
+  "count_terminal_goal_relaxed": 525,
+  "mismatch_reasons": {},
+  "python_ms": {
+    "mean": 15.7890103663913,
+    "p50": 8.588185475669999,
+    "p95": 49.478900595555,
+    "p99": 150.20585121471854
+  },
+  "cpp_ms": {
+    "mean": 12.089044419428571,
+    "p50": 3.799995,
+    "p95": 45.081836349999996,
+    "p99": 147.16762751999835
+  },
+  "paired_sum_ratio_python_over_cpp": 1.3060594219520305,
+  "paired_case_ratio_python_over_cpp": {
+    "mean": 2.6586452634219206,
+    "p50": 1.7780867414778057,
+    "p95": 7.355186019355424,
+    "p99": 7.587939474256823
+  },
+  "case_kinds": {
+    "crossing_pedestrian": {
+      "case_count": 500,
+      "python_mean_ms": 8.21810344420316,
+      "cpp_mean_ms": 6.308863152,
+      "python_ms": {
+        "mean": 8.21810344420316,
+        "p50": 4.452339024285,
+        "p95": 19.395263300989864,
+        "p99": 64.83423036642081
+      },
+      "cpp_ms": {
+        "mean": 6.308863152,
+        "p50": 2.4476364999999998,
+        "p95": 17.528550549999867,
+        "p99": 63.82060113999982
+      },
+      "qp_failed": 3,
+      "terminal_goal_relaxed": 3,
+      "paired_sum_ratio": 1.3026282622088423
+    },
+    "delayed_crossing": {
+      "case_count": 500,
+      "python_mean_ms": 34.59741160343756,
+      "cpp_mean_ms": 31.520084588,
+      "python_ms": {
+        "mean": 34.59741160343756,
+        "p50": 11.329174507400001,
+        "p95": 159.5443978266493,
+        "p99": 466.06601903346
+      },
+      "cpp_ms": {
+        "mean": 31.520084588,
+        "p50": 9.061984500000001,
+        "p95": 156.41851709999932,
+        "p99": 457.34003792000004
+      },
+      "qp_failed": 29,
+      "terminal_goal_relaxed": 63,
+      "paired_sum_ratio": 1.0976306712263433
+    },
+    "interleaved_dynamic": {
+      "case_count": 500,
+      "python_mean_ms": 14.52182745514356,
+      "cpp_mean_ms": 9.433272128,
+      "python_ms": {
+        "mean": 14.52182745514356,
+        "p50": 9.719777503054999,
+        "p95": 37.569708953379966,
+        "p99": 58.76558776946098
+      },
+      "cpp_ms": {
+        "mean": 9.433272128,
+        "p50": 4.623485499999999,
+        "p95": 32.612308549999966,
+        "p99": 53.754127629999964
+      },
+      "qp_failed": 0,
+      "terminal_goal_relaxed": 0,
+      "paired_sum_ratio": 1.5394263261037093
+    },
+    "narrow_multi_obstacle": {
+      "case_count": 500,
+      "python_mean_ms": 14.53069476434086,
+      "cpp_mean_ms": 7.0039475300000005,
+      "python_ms": {
+        "mean": 14.53069476434086,
+        "p50": 8.73080751626,
+        "p95": 45.845299109309835,
+        "p99": 66.26310253978497
+      },
+      "cpp_ms": {
+        "mean": 7.0039475300000005,
+        "p50": 1.1807225,
+        "p95": 39.255598849999906,
+        "p99": 57.93011364999997
+      },
+      "qp_failed": 0,
+      "terminal_goal_relaxed": 0,
+      "paired_sum_ratio": 2.074643578082439
+    },
+    "parked_and_oncoming": {
+      "case_count": 500,
+      "python_mean_ms": 18.68574297846934,
+      "cpp_mean_ms": 15.282771952000001,
+      "python_ms": {
+        "mean": 18.68574297846934,
+        "p50": 4.1507194982849995,
+        "p95": 60.776988405269975,
+        "p99": 108.57187237918988
+      },
+      "cpp_ms": {
+        "mean": 15.282771952000001,
+        "p50": 0.8486085,
+        "p95": 57.07901569999996,
+        "p99": 107.96451277999996
+      },
+      "qp_failed": 63,
+      "terminal_goal_relaxed": 189,
+      "paired_sum_ratio": 1.2226671337606398
+    },
+    "prediction_noise": {
+      "case_count": 500,
+      "python_mean_ms": 11.29276161081982,
+      "cpp_mean_ms": 8.556445302,
+      "python_ms": {
+        "mean": 11.29276161081982,
+        "p50": 9.14942997042,
+        "p95": 24.428837851129998,
+        "p99": 41.921375059753935
+      },
+      "cpp_ms": {
+        "mean": 8.556445302,
+        "p50": 6.2279255,
+        "p95": 20.833262999999995,
+        "p99": 38.51539234999993
+      },
+      "qp_failed": 248,
+      "terminal_goal_relaxed": 257,
+      "paired_sum_ratio": 1.3197959213483463
+    },
+    "vehicle_cut_in": {
+      "case_count": 500,
+      "python_mean_ms": 8.6765307083248,
+      "cpp_mean_ms": 6.517926284,
+      "python_ms": {
+        "mean": 8.6765307083248,
+        "p50": 3.66056303028,
+        "p95": 25.056831713284996,
+        "p99": 65.28538112175258
+      },
+      "cpp_ms": {
+        "mean": 6.517926284,
+        "p50": 1.5526375,
+        "p95": 22.780599399999993,
+        "p99": 62.99137373999958
+      },
+      "qp_failed": 0,
+      "terminal_goal_relaxed": 13,
+      "paired_sum_ratio": 1.3311796314149293
+    }
+  },
+  "environment": {
+    "python": "3.12.13",
+    "python_executable": "/home/kent/apollo-miku-planner/小论文/jits_submission/supplement/code/.venv/bin/python",
+    "osqp_python": "1.1.1",
+    "platform": "Linux-7.2.2-arch1-1-x86_64-with-glibc2.44",
+    "compiler": "g++ -std=c++17 -O2 -Wall -Wextra -Werror -losqp"
+  },
+  "sha256": {
+    "submission_artifacts/cpp_benchmark/miku_speed_stage_3500.jsonl": "ebf1564020bf031b9bb4cbec6e5ae1e5cd178214a7f6edd5f0d3a527ca97376c",
+    "submission_artifacts/cpp_benchmark/miku_speed_stage.python_raw.csv": "f5f2a7861c74667e7e6ec71cad65cdcc507cfb9823d75f707140ddcddd2306dc",
+    "submission_artifacts/cpp_benchmark/miku_speed_stage.cpp_raw.csv": "cf78c8aec4ff5976a1e5ae494079bf7a4935a2b4c7840819f4ed012e7a447931",
+    "小论文/jits_submission/supplement/code/可视化/apollo_pipeline.py": "4f438ea656e6b71b6a86561933a272de72ce4036e655caed1067cba4d37b481d",
+    "小论文/jits_submission/supplement/code/可视化/miku_time.py": "55ac406b0298f16d9c5b2621e3e386c591efcc8f13d65812a5a63474e70b98e7",
+    "小论文/jits_submission/supplement/code/可视化/experiment_cases.py": "4d15e13e013caf8b5e51df6dc79c64a47e1991bc481869d0123c8346a402fec9",
+    "tools/cpp_speed_stage/speed_stage.cpp": "b7cf32fd4f739857cc005d017cc975026bc1c2b9b49d9cfd019f631633c6229a",
+    "tools/cpp_speed_stage/speed_stage.h": "77532b3a6c6954cd51e89023b11ca47e94c8dc8be2419d314bb987982e6fff49",
+    "tools/cpp_speed_stage/benchmark_speed_stage.cpp": "64ca68062877ef00de604be40523423ce3ff85082851074dd515a3a1ee7d793f",
+    "tools/cpp_speed_stage/benchmark_speed_stage.py": "d7275c2d1c123b540e6cd46f6cd93435ec6f3a26678c1fc9d88b43cb4fea90c2",
+    "tools/cpp_speed_stage/export_path_snapshots.py": "cc0d00031b085c368290d08859dfd3bc218c8cd2aacb536e29ffd19647043b64"
+  }
+}

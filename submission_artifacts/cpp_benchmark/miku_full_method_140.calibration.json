@@ -1,0 +1,78 @@
+{
+  "schema_version": "miku-complete-method-paired-calibration-v1",
+  "status": "measured_matching_simulation_method_outputs_on_calibration_sample",
+  "runtime_scope": "MIKU run_method path bounds, path QP, ST/DP/temporal graph, speed QP, fallback, optional refinement, trajectory postprocessing",
+  "python_to_cpp_ratio": 1.3179592516541843,
+  "formula": "sum of matched Python per-scenario medians / sum of matched C++ per-scenario medians",
+  "sample": "20 seeds spaced 25 apart from each of seven 500-seed scenario families",
+  "case_count": 140,
+  "matched_cases": 140,
+  "repeat_count_per_language": 3,
+  "warmup_count_per_language": 1,
+  "python_aggregate_median_runtime_ms": 3065.9178011119366,
+  "cpp_aggregate_median_runtime_ms": 2326.261451,
+  "python_p50_ms": 9.796676982659847,
+  "cpp_p50_ms": 3.9899315,
+  "python_p95_ms": 49.88198297214689,
+  "cpp_p95_ms": 44.26512774999997,
+  "python_p99_ms": 325.21934253745496,
+  "cpp_p99_ms": 308.10940852999784,
+  "families": [
+    {
+      "name": "crossing_pedestrian",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.4736245980061873
+    },
+    {
+      "name": "delayed_crossing",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.092253181916962
+    },
+    {
+      "name": "interleaved_dynamic",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.9899798515753262
+    },
+    {
+      "name": "narrow_multi_obstacle",
+      "case_count": 20,
+      "python_to_cpp_ratio": 2.115588653561015
+    },
+    {
+      "name": "parked_and_oncoming",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.3610406620605413
+    },
+    {
+      "name": "prediction_noise",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.4263657945047408
+    },
+    {
+      "name": "vehicle_cut_in",
+      "case_count": 20,
+      "python_to_cpp_ratio": 1.1543513289415608
+    }
+  ],
+  "source_sha256": {
+    "tools/cpp_planner/benchmark_first_pass.cpp": "be9c0312833b4e7cc1a4276dd37ab58332dcb581a32961426110e8ed1da85692",
+    "tools/cpp_path_stage/miku_path_bounds.cpp": "e0cd6e653f2440623b61e1fce5614f39b1823e0375066ed6861e6a9e9d2ce82b",
+    "tools/cpp_path_stage/miku_path_bounds.h": "0908fa65f2f8cd86beae66de80e1404636274fc34c31182ae43a14edcc6a962f",
+    "tools/cpp_path_qp/miku_path_qp.cpp": "71d4a972deee1b6ed5c7d0068cb55cf42fcd918344a0fbd614d3015a4ceda78d",
+    "tools/cpp_path_qp/miku_path_qp.h": "156fa0b8edf8a1c7a43781fb62192cd556b60d7e677b9f596e45306dd9fac55f",
+    "tools/cpp_speed_stage/speed_stage.cpp": "b7cf32fd4f739857cc005d017cc975026bc1c2b9b49d9cfd019f631633c6229a",
+    "tools/cpp_speed_stage/speed_stage.h": "77532b3a6c6954cd51e89023b11ca47e94c8dc8be2419d314bb987982e6fff49",
+    "小论文/jits_submission/supplement/code/可视化/experiment_methods.py": "d760b477b12cfbbc0f5cf1dd9521b76717f926db6032cff479d9b9bdf4d6828c",
+    "小论文/jits_submission/supplement/code/可视化/apollo_pipeline.py": "4f438ea656e6b71b6a86561933a272de72ce4036e655caed1067cba4d37b481d",
+    "小论文/jits_submission/supplement/code/可视化/miku_geometry.py": "5434ff36c98f0f99893169a472b5ebf6319e171140b48b13299e6688e06d2f9b",
+    "小论文/jits_submission/supplement/code/可视化/miku_time.py": "55ac406b0298f16d9c5b2621e3e386c591efcc8f13d65812a5a63474e70b98e7"
+  },
+  "input_sha256": {
+    "python_csv": "925ecfab28ad1a97c2c847e40fdc523002db7594a423fe0d95c4884b86939383",
+    "python_report": "1d37dc74a7af3279b80cd7ba7ecc2343624b0010172d39bad3ea2841693e8b36",
+    "cpp_csv": "5e1f4e0a37f43ed0e8219972ea277268c43bdd0200eb3e8433bd3ab374a68c32",
+    "reference_jsonl": "ca1d4fd79394dd71663aaf7a522383b2b9446e8d2cb1fdba8e88519a90c9f115"
+  },
+  "compiler": "g++ -std=c++17 -O3 -DNDEBUG -Wall -Wextra -Wpedantic -Werror -I. -Itools/cpp_path_stage -Itools/cpp_path_qp -Itools/cpp_speed_stage; -losqp",
+  "boundary": "Native C++ port of the simulated MIKU planning method on 140 matching cases. This ratio applied to the paper's 3500-scenario Python runtime distribution is an estimate, not measured C++ P99 for all 3500 cases or Apollo/CyberRT latency."
+}

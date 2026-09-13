@@ -1,0 +1,18 @@
+{
+  "schema_version": "miku-cpp-input-v1",
+  "case_kinds": [
+    "crossing_pedestrian",
+    "vehicle_cut_in",
+    "parked_and_oncoming",
+    "narrow_multi_obstacle",
+    "interleaved_dynamic",
+    "prediction_noise",
+    "delayed_crossing"
+  ],
+  "seed_start": 0,
+  "seed_count_per_kind": 500,
+  "case_count": 3500,
+  "max_obstacles": 8,
+  "scenario_role": "planning_scenario",
+  "generator": "小论文/jits_submission/supplement/code/可视化/experiment_cases.py"
+}

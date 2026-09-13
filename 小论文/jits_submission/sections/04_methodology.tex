@@ -3,49 +3,53 @@
 
 \subsection{Overview}
 
-MIKU reconstructs the two pieces of information lost by time-blind and obstacle-wise PVD. It first estimates the ego arrival time $\tau(s)$ and queries time-dependent obstacle occupancy. It then computes threat-dependent center bounds, groups longitudinally connected obstacles, and selects continuous lateral bands. After the path QP, uncertainty-expanded occupancy tubes define safe passage windows. A layered temporal homotopy graph selects a causally compatible window sequence and writes it into the ST position bounds. Figure~\ref{fig:miku_method_flow_en} summarizes the data flow.
+To resolve the spatial blockage and temporal ordering issues identified in baseline PVD planning, MIKU constructs an interaction-aware constraint interface $(\mathcal{B}_l, \mathcal{B}_s)$ between the traffic environment and the downstream optimization solvers. The methodology operates through four coordinated modules:
+first, arrival-time projection, presented in Section~\ref{sec:method_projection_en}, which isolates temporally disjoint obstacle occupancies;
+second, threat-aware safety margins, detailed in Section~\ref{sec:method_threat_en}, which adaptively scale lateral clearance based on interaction urgency;
+third, continuous lateral partition, formulated in Section~\ref{sec:method_band_en}, which determines group-level side assignments and extracts candidate spatial corridors; and
+fourth, a temporal homotopy graph, developed in Section~\ref{sec:method_temporal_en}, which constructs collision-free station--time intervals for velocity optimization.
+As illustrated in Figure~\ref{fig:miku_flow_en} and Algorithm~\ref{alg:miku_en}, these modules systematically enrich the constraint interfaces while strictly preserving the standard convex QP formulations of \eqref{eq:path_qp_en} and \eqref{eq:speed_qp_en}. Table~\ref{tab:ablation_results} details the incremental isolation of each component across rows A1--A6.
 
 \begin{figure}
 \centering
 \adjustbox{max width=\textwidth}{\input{figures/fig_framework_en}}
-\caption{MIKU constraint construction and transfer through a PVD planning stack.}
-\label{fig:miku_method_flow_en}
+\caption{MIKU compiles traffic predictions into convex box bounds $\mathcal{B}_l$ and $\mathcal{B}_s$ for the retained Path QP and Speed QP without changing the solver formulations.}
+\label{fig:miku_flow_en}
 \end{figure}
 
 \subsection{Threat-aware margins}
 \label{sec:method_threat_en}
 
-For obstacle $i$, MIKU combines collision urgency, lateral overlap, relative motion, object type, and local interaction density into a normalized threat score:
+Constant margins either close narrow passages or force braking to absorb residual risk. The module tunes only $d_{\mathrm{buf},i}$, leaving the sort and prefix scan of Section~\ref{sec:method_band_en} unchanged; this component is isolated by ablation~A4. Urgency, overlap, relative motion, type, and density combine into a threat score
 \begin{equation}
  \Theta_i=w_1f_{\mathrm{TTC}}(i)+w_2f_{\mathrm{overlap}}(i)+w_3f_{\mathrm{vel}}(i)+w_4f_{\mathrm{type}}(i)+w_5f_{\mathrm{inter}}(i).
  \label{eq:threat_score_en}
 \end{equation}
-All factors lie in $[0,1]$, and the weights are $(0.30,0.20,0.15,0.10,0.25)$. When the ego vehicle is behind an obstacle and closing, $\mathrm{TTC}_i=(s_i-s_{\mathrm{ego}})/(\dot{s}_{\mathrm{ego}}-\dot{s}_i)$; otherwise it is $+\infty$. The piecewise-linear TTC factor equals one for $\mathrm{TTC}_i\leq2.0$ s, zero for $\mathrm{TTC}_i\geq7.0$ s, and decreases linearly in between \citep{minderhoud2001extended}. The overlap and relative-speed factors are
+All factors lie in $[0,1]$, with weights set to $0.30, 0.20, 0.15, 0.10,$ and $0.25$. $\mathrm{TTC}_i=(s_i-s_{\mathrm{ego}})/(\dot{s}_{\mathrm{ego}}-\dot{s}_i)$ when ego is behind and closing, else $+\infty$; piecewise-linear $f_{\mathrm{TTC}}$ is $1$ for $\mathrm{TTC}_i\leq2.0$ s, $0$ for $\geq7.0$ s, linear between \citep{minderhoud2001extended}. Overlap and relative-speed:
 \begin{align}
  f_{\mathrm{overlap}}(i)&=\min\!\left(1,\frac{\max(0,\min(l_i^+,l_{\mathrm{ego}}^+)-\max(l_i^-,l_{\mathrm{ego}}^-))}{\max(0.1,\min(W_i,W_{\mathrm{ego}}))}\right),\\
  f_{\mathrm{vel}}(i)&=\sigma(v_{\mathrm{rel},i}/v_{\max}),\qquad \sigma(x)=\frac{1}{1+e^{-5x}}.
 \end{align}
-Here $W_i=l_i^+-l_i^-$ is the obstacle width; the cap keeps the overlap factor in $[0,1]$ for obstacles wider than the ego vehicle.
-The type factors for vulnerable road users, motor vehicles, unknown movable objects, static obstacles, and small markers are respectively $1.0$, $0.7$, $0.5$, $0.3$, and $0.15$. Density uses a 10 m neighborhood and is zero for a single obstacle. The extra margin is
+with $W_i=l_i^+-l_i^-$ and the cap keeping $f_{\mathrm{overlap}}\!\in\![0,1]$. Type factors for vulnerable road users, motor vehicles, unknown movable objects, static obstacles, small markers: $1.0$, $0.7$, $0.5$, $0.3$, $0.15$; density uses a 10 m neighborhood, zero for a lone obstacle. Extra margin:
 \begin{equation}
  d_{\mathrm{buf},i}=d_{\mathrm{buf,min}}+(d_{\mathrm{buf,max}}-d_{\mathrm{buf,min}})\Theta_i,
  \label{eq:dynamic_delta_en}
 \end{equation}
-where $[d_{\mathrm{buf,min}},d_{\mathrm{buf,max}}]=[0.10,0.40]$ m. This term changes the boundary value only; it does not change the sorting or scan structure.
+with $[d_{\mathrm{buf,min}},d_{\mathrm{buf,max}}]=[0.10,0.40]$ m. Operationally, this module widens lateral clearance near vulnerable road users and closing high-speed obstacles while permitting tighter passage around slow or distant static objects, directly trading available corridor width for interaction-dependent safety margin.
 
 \subsection{Continuous lateral partition and maximum gap}
 \label{sec:method_band_en}
 
-Obstacles whose longitudinal intervals overlap are assigned to the same connected component. Sorting by the lower station edge and maintaining the largest upper edge constructs all components in $O(n\log n)$. Within one component, sort the active intervals by $u_i$ (ties by descending $v_i$). The following lemma limits the side-assignment search.
+Obstacle-wise policies can push bounds past one another, emptying the center; MIKU changes only $\mathcal{L}/\mathcal{R}$ assignment in \eqref{eq:center_band_en}. Overlapping longitudinal intervals form components in $O(n\log n)$; within each, sort obstacles by $u_i$, breaking ties by descending $v_i$.
 
 \begin{lemma}[Continuous optimal partition]
 \label{lem:continuous_partition_en}
-For the center-band objective in (\ref{eq:center_band_en}), there is an optimal assignment in which the obstacles sorted by $u_i$ form a prefix assigned to $L$ and a suffix assigned to $R$. Hence only $k+1$ split points need be considered.
+For \eqref{eq:center_band_en}, some optimal assignment has obstacles sorted by $u_i$ as a prefix in $L$ and suffix in $R$; only $k+1$ splits need be considered.
 \end{lemma}
 
-\emph{Proof.} If both sides are nonempty, let $\beta=\min_{i\in\mathcal{R}}u_i$. Move every obstacle currently in $\mathcal{L}$ with $u_i\geq\beta$ to $\mathcal{R}$. The upper bound remains unchanged because each moved lower edge is no smaller than $\beta$, whereas the lower bound cannot increase after removing elements from $\mathcal{L}$. The width therefore does not decrease. Repeating this operation yields a continuous split. Empty-side cases give $p=0$ or $p=k$. Descending $v_i$ resolves ties in $u_i$. \hfill$\Box$
+\emph{Proof.} With $\beta=\min_{i\in\mathcal{R}}u_i$, moving every $i\in\mathcal{L}$ with $u_i\geq\beta$ to $\mathcal{R}$ leaves the upper bound unchanged and cannot raise the lower bound, so width does not decrease. Iterating yields a continuous split; empty sides give $p=0$ or $k$; descending $v_i$ breaks ties. \hfill$\Box$
 
-For split $p$, define the prefix maximum and candidate upper edge by
+For split $p$, prefix maximum and candidate upper edge:
 \begin{equation}
  V_0=L^-,\qquad V_p=\max\left(L^-,\max_{1\leq q\leq p}v_{(q)}\right),
  \label{eq:prefix_v_en}
@@ -57,63 +61,60 @@ For split $p$, define the prefix maximum and candidate upper edge by
 
 \begin{theorem}[Maximum-gap optimality]
 \label{thm:max_gap_en}
-For the fixed-section interval model, the optimal center-band width is $W^*=\max_{p=0,\ldots,k}g_p$. The candidates are obtained by sorting and one prefix scan, with complexity $O(k\log k)$.
+For the fixed-section interval model, the optimal center-band width is $W^*=\max_{p=0,\ldots,k}g_p$, obtained by sorting and one prefix scan in $O(k\log k)$.
 \end{theorem}
 
-\emph{Proof.} For split $p$, (\ref{eq:center_band_en}) gives the lower edge $V_p$ and the tightest upper edge $U_p$, so its width is $g_p$. Lemma~\ref{lem:continuous_partition_en} guarantees an optimal continuous split; enumerating the $k+1$ splits therefore attains the optimum. \hfill$\Box$
+\emph{Proof.} Equation~\ref{eq:center_band_en} gives width $g_p$ at split $p$; Lemma~\ref{lem:continuous_partition_en} makes $k+1$ splits sufficient. As illustrated in Figure~\ref{fig:max_gap_en}, for $k=4$ sorted obstacle intervals, the formulation evaluates $k+1=5$ candidate continuous split boundaries between road bounds $L^-$ and $L^+$. Split $p=2$ achieves the maximum feasible gap $g_2 = U_2 - V_2$, fully eliminating the exponential $2^k$ combinatorial search without optimality loss under the fixed-section model. \hfill$\Box$
 
-The theorem is exact only for this fixed-section interval abstraction. It does not certify a continuous global optimum for the full nonconvex trajectory problem. MIKU keeps the $Q=3$ widest positive bands in each component and uses dynamic programming to balance band width against lateral-center changes. If band $B_{jq}$ has center $c_{jq}$ and width $g_{jq}$ in component $j$, the sequence minimizes
+MIKU keeps $Q=3$ widest positive bands; each candidate band $B_{jq}$ with center $c_{jq}$ and width $g_{jq}$ enters a dynamic programming optimization that minimizes
 \begin{equation}
  -\sum_jg_{jq_j}+\lambda_s\left(|c_{1q_1}-l_0|+\sum_{j>1}|c_{jq_j}-c_{j-1,q_{j-1}}|\right),
  \label{eq:spatial_homotopy_en}
 \end{equation}
-with the recurrence
+via the recurrence
 \begin{equation}
  D_{jq}=-g_{jq}+\min_r\{D_{j-1,r}+\lambda_s|c_{jq}-c_{j-1,r}|\}.
  \label{eq:spatial_dp_en}
 \end{equation}
+The weighting parameter $\lambda_s$ is calibrated in Section~\ref{sec:experimental_design}, and ablation~A3 isolates Top-$K$ spatial homotopy.
 
 \begin{figure}
 \centering
-\adjustbox{max width=0.82\textwidth}{\input{figures/fig_max_gap_en}}
-\caption{Continuous split candidates for the fixed-section maximum-gap problem. Four sorted forbidden intervals induce five candidate splits; the prefix maximum is required when interval upper edges are nested.}
+\adjustbox{max width=0.92\textwidth}{\input{figures/fig_max_gap_en}}
+\caption{Sorted forbidden intervals $[u_i,v_i]$ yield $k+1=5$ split candidates between $L^-$ and $L^+$. Split $p=2$ attains $W^*=g_2=U_2-V_2$ by an $O(k\log k)$ prefix scan (Lemma~\ref{lem:continuous_partition_en}, Theorem~\ref{thm:max_gap_en}).}
 \label{fig:max_gap_en}
 \end{figure}
 
 \subsection{Arrival-time-dependent projection}
-\label{sec:method_corridor_en}
+\label{sec:method_projection_en}
 
-At station $s$, the path stage queries obstacle occupancy at the estimated ego arrival time. With the current state and a constant-acceleration approximation,
+Time-blind projection merges occupancies at different arrival times into one blocking interval; parameterizing each by $\tau(s)$ exposes only obstacles present when ego crosses. Sort, scan, and QP structure are unchanged; ablation~A1 isolates this projection, while its closed-loop behavior under rolling replanning is evaluated in Section~\ref{subsec:results_robustness}. Under constant acceleration,
 \begin{equation}
  \tau(s)=\frac{-v_{\mathrm{ego}}+\sqrt{v_{\mathrm{ego}}^2+2a_{\mathrm{ego}}(s-s_{\mathrm{ego}})}}{a_{\mathrm{ego}}},
  \label{eq:arrival_time_en}
 \end{equation}
-with the constant-speed limit used when $|a_{\mathrm{ego}}|<10^{-3}$. A negative discriminant is marked outside the planning horizon. In rolling replanning, $\tau(s)$ is interpolated from the previous speed solution and updated at each cycle.
-
-The numerical scenarios use $s_i(t)=s_{i,0}+v_{s,i}t$ and $l_i(t)=l_{i,0}+v_{l,i}t$. For bounded prediction errors, the longitudinal and lateral expansion at time $t$ are
+with the constant-speed limit for $|a_{\mathrm{ego}}|<10^{-3}$; a negative discriminant marks stations outside the horizon. In rolling replanning $\tau(s)$ is interpolated from the previous speed solution and refreshed each cycle; sensitivity to this profile is analyzed in Section~\ref{sec:experimental_design}. Scenarios use $s_i(t)=s_{i,0}+v_{s,i}t$, $l_i(t)=l_{i,0}+v_{l,i}t$; bounded prediction errors give
 \begin{equation}
  \epsilon_{s,i}(t)=\epsilon_{s0,i}+t\epsilon_{vs,i},\qquad
  \epsilon_{l,i}(t)=\epsilon_{l0,i}+t\epsilon_{vl,i}.
  \label{eq:prediction_tube_en}
 \end{equation}
-The physical obstacle and ego footprint are expanded by these quantities before the ST occupancy map is formed. Nominal $\tau(s)$ selects and ranks alternatives; collision checking uses the expanded occupancy.
+Footprints are expanded before the ST map; nominal $\tau(s)$ ranks alternatives, collision checking uses expanded occupancy. Linear-in-$t$ growth provides a nominal occupancy envelope; the parameters $\epsilon_{s0,i}$, $\epsilon_{vs,i}$, $\epsilon_{l0,i}$, and $\epsilon_{vl,i}$ are configured in Section~\ref{sec:experimental_design} and evaluated under ablation~A6.
 
 \subsection{Temporal homotopy and ST transfer}
-\label{sec:method_inject_en}
+\label{sec:method_temporal_en}
 
-For conflict region $c$, let $I_{cr}=[t_{cr}^{in},t_{cr}^{out}]$ be each overlap interval between the path and the predicted occupancy tube. After temporal safety expansion $\eta_c$, the safe windows are
+Two space-time solutions belong to the same temporal homotopy class if they realize the same passing order relative to each dynamic obstacle. The graph constructed below selects candidate classes over discrete passage-window sequences. Without temporal homotopy, before- and after-obstacle alternatives collapse and causal order is lost. The graph modifies only the ST bounds fed to the speed QP, preserving its convex objective and kinematic equalities in \eqref{eq:speed_qp_en}. The parameters $\eta_c$ and $\epsilon_s$ are set in Section~\ref{sec:experimental_design}, while ablations~A5 and A6 isolate their individual contributions. With $I_{cr}=[t_{cr}^{in},t_{cr}^{out}]$ each path--tube overlap for conflict $c$, after expansion
 \begin{equation}
  \mathcal{W}_c=[0,T]\setminus\bigcup_r[t_{cr}^{in}-\eta_c,t_{cr}^{out}+\eta_c].
  \label{eq:safe_windows_en}
 \end{equation}
-Intersecting these windows with the earliest reachable arrival time yields $W_{cq}=[\alpha_{cq},\beta_{cq}]$. For conflict points ordered by station, connect adjacent nodes when
+Intersecting with earliest reachable arrival gives $W_{cq}=[\alpha_{cq},\beta_{cq}]$. Station-ordered conflicts connect when
 \begin{equation}
  \hat t_c\geq\hat t_{c-1}+\frac{s_c-s_{c-1}}{v_{\max}},\qquad \hat t_c\in W_{cq}.
  \label{eq:temporal_edge_en}
 \end{equation}
-Node cost measures deviation from $\tau(s_c)$, and edge cost discourages unnecessary switching between before- and after-obstacle passage. A bounded-width dynamic program selects one causal sequence.
-
-For a selected window, its semantics enter the speed QP as linear box constraints:
+Node cost is $\tau(s_c)$ deviation, edge cost penalizes side-switching. A bounded-width DP picks one causal sequence for the speed QP:
 \begin{equation}
  \begin{aligned}
  s_j^{ub}&=\min(s_j^{ub,0},s_c^- -\epsilon_s),&&t_j<\alpha_{cq},\\
@@ -121,27 +122,64 @@ For a selected window, its semantics enter the speed QP as linear box constraint
  \end{aligned}
  \label{eq:window_to_st_en}
 \end{equation}
-If no complete window sequence is reachable, the planner imposes a stopping upper bound before the first unreachable conflict. The downstream speed QP remains a convex QP with the same objective and kinematic equalities.
+If no sequence is reachable, a stopping bound precedes the first unreachable conflict. From an operational perspective, the temporal homotopy graph preserves the causal order of ``pass before'' versus ``yield after'' decisions for each obstacle, ensuring the speed planner receives physically consistent timing constraints rather than conflated or collapsed passage alternatives.
 
 \subsection{Algorithm and complexity}
 
 \begin{algorithm}
 \small
-\caption{MIKU constraint compilation}
+\caption{MIKU constraint generation and mapping}
 \label{alg:miku_en}
-\KwIn{Road bounds, ego state, and predicted trajectories for $n$ obstacles}
-\KwOut{Center path bounds and ST position bounds}
-Estimate $\tau(s)$ and compute threat-dependent center intervals for each obstacle.\;
-Sort station intervals and form longitudinal connected components.\;
-\ForEach{component}{
-  Sort by $(u_i,-v_i)$, compute prefix maxima, and retain the $Q$ widest positive bands.\;
+\KwIn{Road bounds $[L^-,L^+]$, ego state $(s_{\mathrm{ego}},v_{\mathrm{ego}},a_{\mathrm{ego}})$, predicted trajectories $\{O_i(t)\}_{i=1}^{n}$}
+\KwOut{Path bounds $\mathcal{B}_l=\{[l_j^-,l_j^+]\}$; ST bounds $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}$}
+\BlankLine
+\tcc{Stage 1: Arrival-time estimation and threat-aware intervals}
+\ForEach{station $s_j$}{
+  Compute $\tau(s_j)$ via \eqref{eq:arrival_time_en}\;
+  \ForEach{obstacle $i$ with $s_i^-({\tau}) \leq s_j \leq s_i^+({\tau})$}{
+    Compute threat score $\Theta_i$ via \eqref{eq:threat_score_en}; set $d_{\mathrm{buf},i}$ via \eqref{eq:dynamic_delta_en}\;
+    Expand to center-coordinate interval $[u_i, v_i]$ via \eqref{eq:center_forbidden_en}\;
+  }
 }
-Select a continuous spatial-homotopy sequence by (\ref{eq:spatial_homotopy_en}).\;
-Write the selected side assignments into the active path bounds at each station.\;
-Construct uncertainty-expanded occupancy tubes and safe windows.\;
-Select a causal temporal-homotopy sequence by (\ref{eq:temporal_edge_en}) and compile it into (\ref{eq:window_to_st_en}).\;
-If enabled, update $\tau(s)$ from the speed solution and repeat until the iteration limit or convergence.\;
-\Return{Path and ST bounds}
+\BlankLine
+\tcc{Stage 2: Connected-component grouping and continuous lateral partition}
+Sort obstacle station intervals by start position; form connected components via interval union in $O(n\log n)$\;
+\ForEach{component $\mathcal{C}_m$ with $k_m$ active obstacles}{
+  Sort obstacles in $\mathcal{C}_m$ by $(u_i, -v_i)$\;
+  $V_0 \leftarrow L^-$\;
+  \For{$p \leftarrow 1$ \KwTo $k_m$}{
+    $V_p \leftarrow \max(V_{p-1},\, v_{(p)})$ \tcp*{prefix maximum of upper edges}
+    $U_p \leftarrow \min(L^+,\, u_{(p+1)})$;  $g_p \leftarrow U_p - V_p$\;
+  }
+  $g_0 \leftarrow \min(L^+, u_{(1)}) - L^-$;  $g_{k_m} \leftarrow L^+ - V_{k_m}$\;
+  Keep $Q$ splits with largest positive $g_p$; record centers $c_{jq}$ and widths $g_{jq}$\;
+}
+\BlankLine
+\tcc{Stage 3: Spatial homotopy selection via dynamic programming}
+\For{$j \leftarrow 1$ \KwTo $K$}{
+  \ForEach{candidate $q \in \{1,\ldots,Q\}$}{
+    $D_{jq} \leftarrow -g_{jq} + \min_{r}\{D_{j-1,r} + \lambda_s |c_{jq} - c_{j-1,r}|\}$ \tcp*{\eqref{eq:spatial_dp_en}}
+  }
+}
+Backtrack optimal $\{q_j^*\}$; write $l_j^- \leftarrow V_{p^*_j}$, $l_j^+ \leftarrow U_{p^*_j}$ into $\mathcal{B}_l$\;
+\BlankLine
+\tcc{Stage 4: Temporal homotopy graph and ST bound transfer}
+\ForEach{path--obstacle conflict $c$ at station $s_c$}{
+  Compute overlap intervals $\{I_{cr}\}$ between planned path and expanded occupancy tube\;
+  $\mathcal{W}_c \leftarrow [0,T] \setminus \bigcup_r [t_{cr}^{in}-\eta_c,\, t_{cr}^{out}+\eta_c]$ \tcp*{\eqref{eq:safe_windows_en}}
+  Intersect $\mathcal{W}_c$ with earliest reachable arrival to obtain windows $W_{cq}$\;
+}
+Select causal temporal sequence via bounded-width DP over \eqref{eq:temporal_edge_en}\;
+\ForEach{selected window $[\alpha_{cq},\beta_{cq}]$}{
+  $s_r^{ub} \leftarrow \min(s_r^{ub},\, s_c^- - \epsilon_s)$ for $t_r < \alpha_{cq}$\;
+  $s_r^{lb} \leftarrow \max(s_r^{lb},\, s_c^+ + \epsilon_s)$ for $t_r \geq \beta_{cq}$ \tcp*{\eqref{eq:window_to_st_en}}
+}
+\BlankLine
+\tcc{Optional: alternating refinement}
+\If{refinement enabled \textbf{and} iteration $< 2$}{
+  Update $\tau(s)$ from speed QP solution; go to Stage 1\;
+}
+\Return{$\mathcal{B}_l$, $\mathcal{B}_s$}
 \end{algorithm}
 
-For $K$ path samples, $m$ components, at most $Q$ spatial candidates per component, and a bounded temporal beam width $B$, sorting and grouping cost $O(n\log n)$. With $K_s$ retained prefixes per terminal spatial band, the layered spatial dynamic program costs $O(mK_sQ^2\log(K_sQ))$; temporal beam expansion and ranking cost $O(hBR\log(BR))$ for $h$ conflict points and $R$ reachable windows per layer. The implementation uses $Q=3$, $K_s=3$, and $B=8$. Occupancy queries are $O(nK)$ and naive interaction-density computation is $O(n^2)$ in the worst case.
+For $K$ path samples, $m$ components, $Q$ candidates, temporal beam $B$, $K_s$ prefixes: sorting/grouping $O(n\log n)$; spatial DP $O(mK_sQ^2\log(K_sQ))$; temporal beam $O(hBR\log(BR))$ over $h$ conflicts and $R$ windows. Occupancy queries $O(nK)$; naive interaction-density $O(n^2)$. Default parameters are set to $Q=3$, $K_s=3$, and $B=8$ as specified in Section~\ref{sec:experimental_design}. Downstream path and speed QPs maintain complexities of $O(K)$ and $O(N_t)$ per \eqref{eq:path_qp_en} and \eqref{eq:speed_qp_en}.

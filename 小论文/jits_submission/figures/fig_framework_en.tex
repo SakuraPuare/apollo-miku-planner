@@ -1,5 +1,5 @@
 \begin{tikzpicture}[x=.92cm,y=.92cm,>=Stealth]
-\node[modin,minimum width=2.55cm] (input) at (0,1.05) {Road geometry\\Ego state\\Obstacle predictions};
+\node[modin,minimum width=2.55cm] (input) at (-0.5,1.05) {Road geometry\\Ego state\\Obstacle predictions};
 \node[modimp,minimum width=2.55cm] (occupancy) at (3.35,1.05) {Arrival-time query\\Threat margin\\Robust occupancy};
 \node[modimp,minimum width=2.45cm,text width=2.35cm] (spatial) at (6.70,1.05) {Continuous partition\\Top-$K$ spatial classes};
 \node[mod,minimum width=1.95cm] (path) at (9.55,1.05) {Path QP\\$l(s)$};
@@ -15,6 +15,6 @@
 \draw[flow] (speed)--(out);
 \draw[flow,dashed] (speed.south) .. controls (9.35,-2.35) and (3.35,-2.35) ..
   node[below,font=\scriptsize]{arrival-time update} (occupancy.south);
-\node[font=\scriptsize,align=center] at (5.00,2.08) {MIKU constraint compiler};
-\node[font=\scriptsize,align=center] at (10.70,-2.78) {Existing convex solvers retained};
+% \node[font=\scriptsize,align=center] at (5.00,2.08) {MIKU constraint compiler};
+% \node[font=\scriptsize,align=center] at (10.70,-2.78) {Existing convex solvers retained};
 \end{tikzpicture}

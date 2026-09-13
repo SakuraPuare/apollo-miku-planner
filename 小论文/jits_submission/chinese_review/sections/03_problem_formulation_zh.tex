@@ -1,49 +1,57 @@
-\section{问题形式化与证据范围}
+\section{问题形式化}
 \label{zh:sec:problem}
 
-\subsection{路径—速度接口}
+考虑自动驾驶车辆在规划时域 $T_{\mathrm{pred}}$ 内沿包含 $k(t)$ 个静态与动态障碍物的道路行驶。在给定自车运动状态与障碍物运动预测的前提下，本文旨在为两阶段路径—速度优化构建空间与时间约束接口 $(\mathcal{B}_l,\mathcal{B}_s)$，且无需改动下游凸二次规划求解器的命题结构。依据自动驾驶运动规划的分层设计范式，本文聚焦于行为决策与轨迹规划层；底层运动控制算法负责轨迹跟踪，系统层面的通信延迟与执行机构动态迟滞与上层轨迹规划解耦。
 
-考虑与道路对齐的 Frenet 坐标系，其中 $s$ 表示站位，$l$ 表示相对于参考线的横向位移。PVD 规划器首先在 SL 空间中优化横向路径 $l(s)$，随后在 ST 空间中优化纵向运动 $s(t)$。令路径状态为 $\mathbf{x}_p=(l_j,l'_j,l''_j)_{j=0}^{K}$，速度状态为 $\mathbf{x}_v=(s_r,v_r,a_r)_{r=0}^{N}$，则常见的下游求解器可写为
+\subsection{路径—速度解耦接口}
+
+我们在相对于道路参考线建立的 Frenet 坐标系中对自动驾驶车辆运动规划进行建模。在该坐标系中，纵向坐标 $s$ 表示沿道路参考线的弧长里程，用于表征车辆的纵向行驶距离；横向坐标 $l$ 表示垂直于参考线的带符号法向偏移，用于表征横向位置。
+
+在经典的两阶段路径—速度解耦规划框架下，完整的时空运动规划被解耦为两个前后串联的子任务：
+首先在空间域中求解横向路径函数 $l(s)$，用于确定车辆在各纵向站位处的横向避障位移；
+随后在时域中求解纵向轨迹函数 $s(t)$，用于规划车辆在时域 $t \in [0, T_{\mathrm{pred}}]$ 内的纵向位置、速度与加速度时间剖面。
+
+为满足实时数值优化的计算要求，上述连续曲线分别在空间采样点 $s_0,\dots,s_K$ 与离散时间步长 $t_0,\dots,t_N$ 处进行离散化。令离散空间路径状态向量为 $\mathbf{x}_p=(l_j,l'_j,l''_j)_{j=0}^{K}$，其中一阶导数 $l'_j = \mathrm{d}l/\mathrm{d}s$ 与二阶导数 $l''_j = \mathrm{d}^2l/\mathrm{d}s^2$ 分别对应横向航向角偏差与曲率变化率；令离散纵向轨迹状态向量为 $\mathbf{x}_v=(s_r,v_r,a_r)_{r=0}^{N}$，其中 $v_r = \dot{s}(t_r)$ 与 $a_r = \ddot{s}(t_r)$ 分别对应纵向速度与纵向加速度。两个规划阶段依次通过凸二次规划求解：
 \begin{align}
  \mathbf{x}_p^*={}&\arg\min_{\mathbf{x}_p}
  \frac{1}{2}\mathbf{x}_p^{\mathsf T}H_p\mathbf{x}_p+q_p^{\mathsf T}\mathbf{x}_p,\\[-2pt]
  &\quad\text{s.t. }A_p\mathbf{x}_p=b_p,\quad l_j^-\leq l_j\leq l_j^+, \label{zh:eq:path_qp}\\
  \mathbf{x}_v^*={}&\arg\min_{\mathbf{x}_v}
  \frac{1}{2}\mathbf{x}_v^{\mathsf T}H_v\mathbf{x}_v+q_v^{\mathsf T}\mathbf{x}_v,\\[-2pt]
- &\quad\text{s.t. }A_v\mathbf{x}_v=b_v,\quad s_r^{lb}\leq s_r\leq s_r^{ub},\\[-2pt]
+ &\quad\text{s.t. }A_v\mathbf{x}_v=b_v,\quad s_r^{lb}\leq s_r\leq s_r^{ub},\notag\\[-2pt]
  &\qquad 0\leq v_r\leq v_{\max},\quad a_{\min}\leq a_r\leq a_{\max}. \label{zh:eq:speed_qp}
 \end{align}
-其中，$H_p$ 和 $H_v$ 编码平滑性代价，$A_p$ 和 $A_v$ 编码分段加加速度运动学等式。路径边界集合 $\mathcal{B}_l=\{[l_j^-,l_j^+]\}$ 与 ST 位置边界集合 $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}$ 是环境信息的接口。MIKU 只改变这两个接口，不改变下游目标矩阵、运动学等式和 QP 求解器。
+式中 $H_p$ 与 $H_v$ 编码轨迹平滑性代价，$A_p$ 与 $A_v$ 编码相邻离散点之间的分段加加速度运动学等式约束。外部交通环境信息严格通过空间路径边界 $\mathcal{B}_l=\{[l_j^-,l_j^+]\}_{j=0}^K$ 与时间位置边界 $\mathcal{B}_s=\{[s_r^{lb},s_r^{ub}]\}_{r=0}^N$ 传递给下游求解器。MIKU 的核心任务便是在保持目标矩阵、运动学等式与凸二次规划求解器结构完全不变的前提下，系统性重构这两个关键的约束接口。
 
 \subsection{中心坐标障碍物模型}
 
-对于障碍物 $i$，令 $O_i(t)=[s_i^-(t),s_i^+(t)]\times[l_i^-(t),l_i^+(t)]$ 表示其物理矩形。若道路物理边界为 $[l_{\mathrm{road}}^-,l_{\mathrm{road}}^+]$，自车宽度为 $W_{\mathrm{ego}}$，路侧裕度为 $d_{\mathrm{road}}$，则自车中心的可行区间为
+对于障碍物 $i$，令 $O_i(t)=[s_i^-(t),s_i^+(t)]\times[l_i^-(t),l_i^+(t)]$ 表示其物理矩形包络。在道路物理边界 $[l_{\mathrm{road}}^-,l_{\mathrm{road}}^+]$、自车宽度 $W_{\mathrm{ego}}$ 以及路侧安全裕度 $d_{\mathrm{road}}$ 约束下，自车中心的可行区间为
 \begin{equation}
  [L^-,L^+]=[l_{\mathrm{road}}^-+W_{\mathrm{ego}}/2+d_{\mathrm{road}},\ l_{\mathrm{road}}^+-W_{\mathrm{ego}}/2-d_{\mathrm{road}}].
  \label{zh:eq:center_road}
 \end{equation}
-传递给中心坐标规划器的障碍物区间会一次性扩展自车宽度的一半以及障碍物特定的附加裕度 $d_{\mathrm{buf},i}$：
+障碍物占用的横向禁行区间一次性外扩半车宽与威胁相关附加裕度 $d_{\mathrm{buf},i}$：
 \begin{equation}
  [u_i,v_i]=[l_i^- -W_{\mathrm{ego}}/2-d_{\mathrm{buf},i},\ l_i^+ +W_{\mathrm{ego}}/2+d_{\mathrm{buf},i}].
  \label{zh:eq:center_forbidden}
 \end{equation}
-式~(\ref{zh:eq:center_road})--式~(\ref{zh:eq:center_forbidden})中的四个量均指自车中心。因此，间隙宽度表示中心位置可用的宽度，后续可行性测试不再重复减去车辆宽度。
+公式~\ref{zh:eq:center_road} 至~\ref{zh:eq:center_forbidden} 中的所有物理量均相对于自车中心定义，保证车宽尺寸在下游模块中不被重复扣除。
 
-在某一站位处的 $k$ 个活动障碍物集合中，将每个障碍物分配到自车带的左侧（$L$）或右侧（$R$）。对于决策向量 $\mathbf{d}$，得到的中心带为
+在给定纵向站位处，通过决策向量 $\mathbf{d}$ 将 $k$ 个活动障碍物分别指定分配至自车左侧或右侧，可得横向中心通行带：
 \begin{equation}
  l^-(\mathbf{d})=\max\left(L^-,\max_{i\in\mathcal{L}}v_i\right),\qquad
  l^+(\mathbf{d})=\min\left(L^+,\min_{i\in\mathcal{R}}u_i\right),
  \label{zh:eq:center_band}
 \end{equation}
-其中空集合的极值项省略。当数值容差为 $\varepsilon$ 时，若 $W(\mathbf{d})=l^+(\mathbf{d})-l^-(\mathbf{d})\geq\varepsilon$，则该中心带可行。
+其中空集极值自然省略。当可用通道宽度满足 $W(\mathbf{d})=l^+(\mathbf{d})-l^-(\mathbf{d})\geq\varepsilon$ 时，其中 $\varepsilon$ 为通行容差阈值，该横向带为几何可行。
 
-\subsection{两种失效机制与研究边界}
+\subsection{传统规划基线的失效机理与评估准则}
 
-当路径阶段忽略时间时，可能用预测时域上的并集替代动态占用
+无时间意识的路径规划阶段采用整个预测时域的并集
 \begin{equation}
  \overline{O}_i=\bigcup_{t\in[0,T_{\mathrm{pred}}]}O_i(t),
  \label{zh:eq:prob_union}
 \end{equation}
-从而把不同时间被占用的位置当成同时存在。相反，逐障碍物的贪心策略可能在尚未看到同一纵向连通分量中另一个障碍物影响之前，就提前确定侧向。两种机制都可能造成 $l^+(s)<l^-(s)$，即使从时间上保持一致的通道仍然存在。
+作为空间投影，将不同时刻发生的占用视为同时冲突。此外，贪心且不可逆的逐障碍物侧向分配极易使公式~\ref{zh:eq:center_band} 中的上界与下界相互对顶穿越，即出现 $l^+(s)<l^-(s)$，即便时空上存在可行通道也会错误触发阻塞停车。
 
-本文检验的是，在边界接口处恢复缺失的到达时间信息和群组级信息，是否能够改善规划结果。主要证据来自直道路段、恒定速度障碍物模型和有界扰动场景。3,500 个场景实验是匹配的数值评估，不是公共数据或道路现场研究。Apollo Planning 仅用于接口和代表性行为证据，不将其视为物理道路测试或 Apollo 原生运行时间基准。
+当包含路径 $\mathbf{x}_p^*$ 与速度 $\mathbf{x}_v^*$ 的规划轨迹在 $[0,T_{\mathrm{pred}}]$ 整个时域内均无碰撞并成功到达目标纵向站位 $s\geq s_{\mathrm{end}}-1$~m 时，判定该回合规划成功；完整的运营评估指标体系在第~\ref{zh:sec:experimental_design}~节中详细给出。

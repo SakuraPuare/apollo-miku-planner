@@ -74,22 +74,20 @@
 \providecommand{\code}[1]{\texttt{#1}}
 
 \articletype{Research Article}
-\received{Manuscript prepared for peer review}
-\title{Interaction-Aware Space--Time Homotopy Constraints for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic}
+\title{Interaction-Aware Constraint Interface for Path--Velocity Planning in Dynamic Multi-Obstacle Traffic}
 
 \ifdefined\anonymousversion
   \author{\name{Anonymous authors}\affil{Affiliations withheld for anonymous review}}
-  \hypersetup{pdftitle={Interaction-Aware Space-Time Homotopy Constraints for Path-Velocity Planning in Dynamic Multi-Obstacle Traffic},pdfauthor={Anonymous}}
+  \hypersetup{pdftitle={Interaction-Aware Constraint Interface for Path-Velocity Planning in Dynamic Multi-Obstacle Traffic},pdfauthor={Anonymous}}
 \else
   \input{named_metadata}
 \fi
 
 \begin{document}
 \maketitle
-\enlargethispage{4pt}
 
 \begin{abstract}
-Path--velocity decomposition supports efficient planning but can discard interaction timing: time-blind path bounds merge occupancies that occur at different times, while obstacle-wise side decisions can create false blockage. We develop MIKU, an interaction-aware constraint interface that retains the downstream path and speed quadratic programs. Arrival-time-dependent projection prevents temporally disjoint occupancies from being merged; threat-aware margins and a continuous partition generate group-level lateral bands; and a temporal homotopy graph compiles safe passage windows into station--time box constraints. For the fixed-section interval model, the maximum-gap scan reduces the $k$-obstacle side-assignment search from $O(2^k)$ to $O(k\log k)$ and matched exhaustive enumeration on 4,000 deterministic interval instances. Across 3,500 paired simulated scenarios covering seven traffic configurations, MIKU increased collision-free goal reaching from 62.7\% to 77.5\% (difference 14.8 percentage points, 95\% CI 13.5--16.0) and reduced collision from 2.2\% to 1.1\%, while mean progress increased by 8.9 percentage points. Median and 95th-percentile planning times were 9.98 and 55.93\,ms, although the 99th percentile was 221.8\,ms versus 138.9\,ms for the baseline. A separate 700-scenario rolling-replanning study and Apollo 11.0 interface cases support replanning behavior and software integration, but do not constitute road testing. The results show how preserving interaction timing at the constraint interface can reduce unnecessary stopping without replacing established convex optimizers, subject to tail-latency and simulation-to-road validation.
+In two-stage path--velocity planning, time-blind obstacle bounds and local passing-side decisions can rule out feasible passages and cause unnecessary stops in dense traffic. We present MIKU, a constraint-generation method that constructs lateral bands from estimated arrival times, selects a sequence of bands across road stations, and maps safe passing windows into bounds for the existing path and speed quadratic programs. For a fixed-section interval model, the widest lateral band can be identified by sorting and scanning obstacle intervals in $O(k\log k)$ time. In 3{,}500 paired structured-roadway simulations spanning seven traffic scenarios, MIKU increased collision-free goal reaching from 62.69\% for an internal time-blind, fixed-side baseline to 77.46\% (paired difference: 14.77 percentage points; 95\% confidence interval: 13.54--15.97). In a separate set of 700 rolling-replanning simulations, success increased from 62.29\% to 72.29\%. Complete-call planning latency had a median of 9.98\,ms and a 99th percentile of 221.80\,ms in the paired benchmark. These findings show that interaction-aware constraint selection improves path--velocity planning under the tested simulation conditions.
 \end{abstract}
 
 \begin{keywords}

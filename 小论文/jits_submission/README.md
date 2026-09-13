@@ -2,7 +2,7 @@
 
 This directory is the prepared submission workspace for the Journal of
 Intelligent Transportation Systems Research Article
-“Interaction-Aware Space--Time Homotopy Constraints for Path--Velocity
+“Interaction-Aware Constraint Interface for Path--Velocity
 Planning in Dynamic Multi-Obstacle Traffic.” It contains a named version for
 the standard submission and a separately validated anonymous version to use
 only if the live submission portal requests double-anonymous review.

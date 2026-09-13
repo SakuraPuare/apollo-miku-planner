@@ -1,0 +1,14 @@
+{
+  "runtime_scope": "frozen Python path_bounds_decider(scenario, 'miku') only",
+  "input_file": "submission_artifacts/cpp_benchmark/miku_cases_3500.csv",
+  "input_sha256": "1bd5c6964af7b9e535ba3ecfc81d9d81547c682d97aa4901db6f22353c1a3823",
+  "case_count": 3500,
+  "station_count": 286500,
+  "repeat_count": 20,
+  "elapsed_s": 3.6685975426808,
+  "mean_runtime_us": 52.40853632401143,
+  "checksum": 202153.71594702496,
+  "interpreter": "3.12.13",
+  "machine": "Linux-7.2.2-arch1-1-x86_64-with-glibc2.44",
+  "raw_timing_csv": "submission_artifacts/cpp_benchmark/miku_path_bounds_3500.python_raw.csv"
+}
