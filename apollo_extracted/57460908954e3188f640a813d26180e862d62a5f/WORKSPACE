@@ -54,8 +54,8 @@ load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_depende
 rules_foreign_cc_dependencies()
 http_archive(
     name = "rules_cc",
-    urls = ["https://apollo-system.cdn.bcebos.com/archive/8.0/rules_cc-0.0.1.tar.gz", "https://github.com/bazelbuild/rules_cc/releases/download/0.0.1/rules_cc-0.0.1.tar.gz"],
-    sha256 = "4dccbfd22c0def164c8f47458bd50e0c7148f3d92002cdb459c2a96a68498241",
+    urls = ["https://apollo-system.cdn.bcebos.com/archive/8.0/rules_cc-0.2.22.tar.gz", "https://github.com/bazelbuild/rules_cc/releases/download/0.2.22/rules_cc-0.2.22.tar.gz"],
+    sha256 = "81c10a95a5c22d838276ee90d712635d6042419fdfca5ef88328226b6321e53b",
     patches = ["//tools/package:rules_cc.patch"],
 )
 load("//dev/bazel:deps.bzl", "init_deps")
