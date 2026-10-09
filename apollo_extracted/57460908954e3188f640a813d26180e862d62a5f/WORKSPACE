@@ -47,7 +47,7 @@ http_archive(
     strip_prefix = "rules_foreign_cc-0.8.0",
     urls = [
         "https://apollo-system.bj.bcebos.com/archive/6.0/rules_foreign_cc-0.8.0.tar.gz",
-        "https://github.com/bazelbuild/rules_foreign_cc/archive/0.8.0.tar.gz",
+        "https://github.com/bazelbuild/rules_foreign_cc/archive/0.16.0.tar.gz",
     ],
 )
 load("@rules_foreign_cc//foreign_cc:repositories.bzl", "rules_foreign_cc_dependencies")
